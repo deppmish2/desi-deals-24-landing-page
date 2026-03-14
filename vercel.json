@@ -1,0 +1,17 @@
+{
+  "version": 2,
+  "buildCommand": "npm install && npm --prefix client install && node scripts/build-seed.js && npm run build:client",
+  "outputDirectory": "client/dist",
+  "rewrites": [
+    { "source": "/api/:path*", "destination": "/api/server" },
+    { "source": "/:path*", "destination": "/index.html" }
+  ],
+  "crons": [{ "path": "/api/cron", "schedule": "0 6 * * *" }],
+  "functions": {
+    "api/server.js": {
+      "maxDuration": 300,
+      "includeFiles": "server/deals-seed.json"
+    },
+    "api/cron.js": { "maxDuration": 300 }
+  }
+}

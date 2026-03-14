@@ -1,0 +1,551 @@
+<!doctype html>
+<html lang="de">
+  <head>
+       
+    <meta charset="UTF-8" />
+       
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+       
+    <title>DesiDeals24 Design System: "Komal"</title>
+       
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+       
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+       
+    <link
+      href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;900&display=swap"
+      rel="stylesheet"
+    />
+       
+    <style>
+      :root {
+        /* New "Komal" Palette */
+        --marigold: #ffb703;
+        /* Vibrant, singular CTA color */
+        --deep-slate: #343a40;
+        /* Muted, modern text & secondary elements */
+        --light-gray: #e9ecef;
+        /* Clean borders and dividers */
+        --cloud-gray: #f8f9fa;
+        /* Soft, minimalistic background for sections */
+        --white: #ffffff;
+        /* Pure white for primary background */
+
+        /* Semantic variables */
+        --success: #2a9d8f;
+        /* A calming teal for success */
+        --error: #d62828;
+        /* A clear, serious red for errors */
+        --info: #0077b6;
+        /* A trustworthy blue for info */
+      }
+
+      body {
+        font-family:
+          "Inter",
+          -apple-system,
+          BlinkMacSystemFont,
+          "Segoe UI",
+          Roboto,
+          Helvetica,
+          Arial,
+          sans-serif;
+        line-height: 1.6;
+        color: var(--deep-slate);
+        background-color: var(--white);
+        margin: 0;
+        padding: 0;
+        font-size: 16px;
+      }
+
+      .container {
+        max-width: 960px;
+        margin: 40px auto;
+        padding: 0 20px;
+      }
+
+      h1,
+      h2,
+      h3,
+      h4,
+      h5,
+      h6 {
+        color: var(--deep-slate);
+        line-height: 1.3;
+        font-weight: 700;
+        margin-top: 2em;
+        margin-bottom: 1em;
+      }
+
+      h1 {
+        font-size: 2.5rem;
+        font-weight: 900;
+        border-bottom: 2px solid var(--light-gray);
+        padding-bottom: 0.5em;
+      }
+
+      h2 {
+        font-size: 2rem;
+        border-bottom: 1px solid var(--light-gray);
+        padding-bottom: 0.4em;
+      }
+
+      h3 {
+        font-size: 1.5rem;
+      }
+
+      h4 {
+        font-size: 1.2rem;
+        font-weight: 600;
+      }
+
+      p {
+        margin-bottom: 1em;
+      }
+
+      a {
+        color: var(--marigold);
+        text-decoration: none;
+        font-weight: 600;
+      }
+
+      a:hover {
+        text-decoration: underline;
+      }
+
+      strong {
+        font-weight: 700;
+      }
+
+      table {
+        width: 100%;
+        border-collapse: collapse;
+        margin: 2em 0;
+        box-shadow: 0 1px 2px rgba(0, 0, 0, 0.03);
+        border: 1px solid var(--light-gray);
+      }
+
+      th,
+      td {
+        padding: 12px 16px;
+        text-align: left;
+        border-bottom: 1px solid var(--light-gray);
+      }
+
+      thead {
+        background-color: var(--cloud-gray);
+      }
+
+      th {
+        font-weight: 600;
+        color: var(--deep-slate);
+      }
+
+      tbody tr:nth-child(even) {
+        background-color: var(--cloud-gray);
+      }
+
+      pre {
+        background-color: #2d2d2d;
+        color: #f8f8f2;
+        padding: 20px;
+        border-radius: 8px;
+        overflow-x: auto;
+        font-size: 0.9em;
+      }
+
+      code {
+        font-family: "Menlo", "Consolas", monospace;
+        background-color: var(--light-gray);
+        padding: 0.2em 0.4em;
+        border-radius: 3px;
+      }
+
+      pre code {
+        background-color: transparent;
+        padding: 0;
+        border-radius: 0;
+      }
+
+      .brand-attributes {
+        background-color: var(--cloud-gray);
+        border-left: 5px solid var(--marigold);
+        padding: 15px 25px;
+        margin: 2em 0;
+        border-radius: 0 8px 8px 0;
+      }
+
+      .color-swatch {
+        display: inline-block;
+        width: 1em;
+        height: 1em;
+        border-radius: 50%;
+        margin-right: 8px;
+        vertical-align: middle;
+        border: 1px solid rgba(0, 0, 0, 0.1);
+      }
+    </style>
+  </head>
+
+  <body>
+       
+    <div class="container">
+             
+      <h1>DesiDeals24 Design System: "Komal"</h1>
+             
+      <div class="brand-attributes">
+                   
+        <p><strong>Markenattribute:</strong></p>
+                   
+        <ul>
+                         
+          <li>
+            <strong>Persönlichkeit:</strong> Minimalistisch, Sauber, Lebendig
+          </li>
+                         
+          <li><strong>Primäres Gefühl:</strong> Klarheit & Entdeckung</li>
+                         
+          <li>
+            <strong>Zielgruppe:</strong> In Deutschland lebende indische Expats
+          </li>
+                     
+        </ul>
+               
+      </div>
+
+             
+      <h2>1. Grundlagen (Foundations)</h2>
+             
+      <p>
+        Das "Komal"-System ist auf Minimalismus und Klarheit ausgelegt. Eine
+        gedämpfte, neutrale Basis wird durch einen einzigen, leuchtenden Akzent
+        zum Leben erweckt, der den Nutzer zu den wichtigsten Aktionen führt.
+      </p>
+
+             
+      <h3>Farbpalette</h3>
+                     
+      <h4>Primärpalette</h4>
+             
+      <table>
+                   
+        <thead>
+                         
+          <tr>
+                               
+            <th>Farbe</th>
+                               
+            <th>Hex</th>
+                               
+            <th>Verwendung</th>
+                           
+          </tr>
+                     
+        </thead>
+                   
+        <tbody>
+                         
+          <tr>
+                               
+            <td>
+              <span
+                class="color-swatch"
+                style="background-color: #ffb703"
+              ></span
+              ><strong>Marigold</strong> (Accent)
+            </td>
+                               
+            <td>#FFB703</td>
+                               
+            <td>
+              Primäre CTAs, Links und alle interaktiven Elemente, die
+              Aufmerksamkeit erfordern.
+            </td>
+                           
+          </tr>
+                         
+          <tr>
+                               
+            <td>
+              <span
+                class="color-swatch"
+                style="background-color: #343a40"
+              ></span
+              ><strong>Deep Slate</strong> (Text & UI)
+            </td>
+                               
+            <td>#343A40</td>
+                               
+            <td>
+              Haupttext, Überschriften, Icons und sekundäre Bedienelemente.
+            </td>
+                           
+          </tr>
+                         
+          <tr>
+                               
+            <td>
+              <span
+                class="color-swatch"
+                style="background-color: #f8f9fa"
+              ></span
+              ><strong>Cloud Gray</strong> (Subtle BG)
+            </td>
+                               
+            <td>#F8F9FA</td>
+                               
+            <td>Hintergründe für Sektionen, Cards und Hervorhebungen.</td>
+                           
+          </tr>
+                         
+          <tr>
+                               
+            <td>
+              <span
+                class="color-swatch"
+                style="background-color: #e9ecef"
+              ></span
+              ><strong>Light Gray</strong> (Borders)
+            </td>
+                               
+            <td>#E9ECEF</td>
+                               
+            <td>Trennlinien und Ränder von Eingabefeldern.</td>
+                           
+          </tr>
+                           
+          <tr>
+                               
+            <td>
+              <span
+                class="color-swatch"
+                style="background-color: #ffffff; border-color: #eee"
+              ></span
+              ><strong>White</strong> (Background)
+            </td>
+                               
+            <td>#FFFFFF</td>
+                               
+            <td>
+              Globaler Hintergrund zur Maximierung von Sauberkeit und Fokus.
+            </td>
+                           
+          </tr>
+                     
+        </tbody>
+               
+      </table>
+
+             
+      <h4>Semantische Farben</h4>
+             
+      <table>
+                   
+        <thead>
+                         
+          <tr>
+                               
+            <th>Farbe</th>
+                               
+            <th>Hex</th>
+                               
+            <th>Verwendung</th>
+                           
+          </tr>
+                     
+        </thead>
+                   
+        <tbody>
+                         
+          <tr>
+                               
+            <td>
+              <span
+                class="color-swatch"
+                style="background-color: #2a9d8f"
+              ></span
+              ><strong>Success</strong>
+            </td>
+                               
+            <td>#2A9D8F</td>
+                               
+            <td>Bestätigungen, erfolgreiche Aktionen.</td>
+                           
+          </tr>
+                         
+          <tr>
+                               
+            <td>
+              <span
+                class="color-swatch"
+                style="background-color: #ffb703"
+              ></span
+              ><strong>Warning</strong>
+            </td>
+                               
+            <td>#FFB703</td>
+                               
+            <td>
+              Wichtige Hinweise (nutzt die Hauptakzentfarbe zur Konsistenz).
+            </td>
+                           
+          </tr>
+                         
+          <tr>
+                               
+            <td>
+              <span
+                class="color-swatch"
+                style="background-color: #d62828"
+              ></span
+              ><strong>Error</strong>
+            </td>
+                               
+            <td>#D62828</td>
+                               
+            <td>Fehlermeldungen, ungültige Eingaben.</td>
+                           
+          </tr>
+                         
+          <tr>
+                               
+            <td>
+              <span
+                class="color-swatch"
+                style="background-color: #0077b6"
+              ></span
+              ><strong>Info</strong>
+            </td>
+                               
+            <td>#0077B6</td>
+                               
+            <td>Informative Hinweise und Tipps.</td>
+                           
+          </tr>
+                     
+        </tbody>
+               
+      </table>
+                     
+      <h3>Typografie, Layout & Spacing</h3>
+             
+      <p>
+        Die Spezifikationen für Typografie (Inter), das 12-Spalten-Raster und
+        das 8px-Abstandssystem bleiben unverändert, da sie die minimalistische
+        und saubere Ästhetik dieses Themas perfekt unterstützen.
+      </p>
+
+             
+      <h2>2. Komponenten (Beispiel: Button)</h2>
+             
+      <p>
+        Buttons folgen einem klaren, minimalistischen Muster. Der Fokus liegt
+        auf einer einzigen, primären Aktion.
+      </p>
+             
+      <table>
+                   
+        <thead>
+                         
+          <tr>
+                               
+            <th>Variante</th>
+                               
+            <th>Hintergrund (Default)</th>
+                               
+            <th>Textfarbe (Default)</th>
+                               
+            <th>Verwendung</th>
+                           
+          </tr>
+                     
+        </thead>
+                   
+        <tbody>
+                         
+          <tr>
+                               
+            <td><strong>Primary</strong></td>
+                               
+            <td>Marigold (#FFB703)</td>
+                               
+            <td>Deep Slate (#343A40)</td>
+                               
+            <td>Die wichtigste Aktion auf der Seite ("Zum Deal").</td>
+                           
+          </tr>
+                         
+          <tr>
+                               
+            <td><strong>Secondary</strong></td>
+                               
+            <td>Light Gray (#E9ECEF)</td>
+                               
+            <td>Deep Slate (#343A40)</td>
+                               
+            <td>Zweitwichtigste Aktion, z.B. "Filter anwenden".</td>
+                           
+          </tr>
+                           
+          <tr>
+                               
+            <td><strong>Tertiary</strong></td>
+                               
+            <td>Transparent</td>
+                               
+            <td>Deep Slate (#343A40)</td>
+                               
+            <td>Aktionen mit niedriger Priorität, z.B. "Abbrechen".</td>
+                           
+          </tr>
+                     
+        </tbody>
+               
+      </table>
+
+             
+      <h2>3. Muster & Abläufe</h2>
+             
+      <p>
+        Der visuelle Fluss wird durch den starken Kontrast zwischen dem
+        Marigold-Akzent und dem neutralen Hintergrund noch klarer, was dem
+        Benutzer hilft, sich mühelos zu orientieren.
+      </p>
+                     
+      <h2>4. Design Tokens</h2>
+             
+      <p>Die aktualisierten Tokens für das "Komal"-System.</p>
+             
+      <pre><code class="language-json">{
+  "color": {
+    "accent": {
+      "marigold": { "value": "#FFB703" }
+    },
+    "neutral": {
+      "deep-slate": { "value": "#343A40" },
+      "cloud-gray": { "value": "#F8F9FA" },
+      "light-gray": { "value": "#E9ECEF" },
+      "white": { "value": "#FFFFFF" }
+    },
+    "text": {
+      "default": { "value": "{color.neutral.deep-slate.value}" },
+      "on-accent": { "value": "{color.neutral.deep-slate.value}" }
+    },
+    "background": {
+      "default": { "value": "{color.neutral.white.value}" },
+      "subtle": { "value": "{color.neutral.cloud-gray.value}" }
+    }
+  }
+}</code></pre>
+
+         
+    </div>
+
+       
+    <script src="https://cdn.jsdelivr.net/npm/mermaid@10/dist/mermaid.min.js"></script>
+       
+    <script>
+      mermaid.initialize({ startOnLoad: true });
+    </script>
+  </body>
+</html>

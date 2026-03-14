@@ -1,0 +1,551 @@
+<!doctype html>
+<html lang="de">
+  <head>
+       
+    <meta charset="UTF-8" />
+       
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+       
+    <title>DesiDeals24 Design System: "Aura"</title>
+       
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+       
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+       
+    <link
+      href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap"
+      rel="stylesheet"
+    />
+       
+    <style>
+      :root {
+        /* "Aura" Palette - Inspired by Apple's HIG */
+        --action-blue: #007aff;
+        /* The primary color for all interactive elements */
+        --near-black: #1d1d1f;
+        /* Standard text color, softer than pure black */
+        --secondary-gray: #86868b;
+        /* For secondary text, labels, and icons */
+        --fill-gray: #f5f5f7;
+        /* Subtle backgrounds for sections, inputs, and cards */
+        --divider-gray: #d2d2d7;
+        /* For borders and dividers */
+        --white: #ffffff;
+        /* The primary canvas */
+
+        /* Semantic colors */
+        --success-green: #34c759;
+        --error-red: #ff3b30;
+        --warning-orange: #ff9500;
+      }
+
+      body {
+        font-family:
+          "Inter",
+          -apple-system,
+          BlinkMacSystemFont,
+          "Segoe UI",
+          Roboto,
+          Helvetica,
+          Arial,
+          sans-serif;
+        line-height: 1.6;
+        color: var(--near-black);
+        background-color: var(--white);
+        margin: 0;
+        padding: 0;
+        font-size: 16px;
+        -webkit-font-smoothing: antialiased;
+        -moz-osx-font-smoothing: grayscale;
+      }
+
+      .container {
+        max-width: 900px;
+        margin: 50px auto;
+        padding: 0 20px;
+      }
+
+      h1,
+      h2,
+      h3,
+      h4 {
+        color: var(--near-black);
+        line-height: 1.3;
+        font-weight: 700;
+        margin-top: 2.25em;
+        margin-bottom: 1em;
+      }
+
+      h1 {
+        font-size: 2.75rem;
+        font-weight: 700;
+        letter-spacing: -0.5px;
+        border-bottom: 1px solid var(--divider-gray);
+        padding-bottom: 0.5em;
+      }
+
+      h2 {
+        font-size: 2rem;
+        font-weight: 600;
+        border-bottom: 1px solid var(--divider-gray);
+        padding-bottom: 0.4em;
+      }
+
+      h3 {
+        font-size: 1.5rem;
+      }
+
+      h4 {
+        font-size: 1.2rem;
+      }
+
+      p {
+        margin-bottom: 1em;
+        color: #333;
+      }
+
+      a {
+        color: var(--action-blue);
+        text-decoration: none;
+        font-weight: 500;
+      }
+
+      a:hover {
+        text-decoration: underline;
+      }
+
+      strong {
+        font-weight: 600;
+      }
+
+      table {
+        width: 100%;
+        border-collapse: collapse;
+        margin: 2em 0;
+        border: 1px solid var(--divider-gray);
+        border-radius: 12px;
+        overflow: hidden;
+        box-shadow: 0 2px 8px rgba(0, 0, 0, 0.04);
+      }
+
+      th,
+      td {
+        padding: 14px 18px;
+        text-align: left;
+        border-bottom: 1px solid var(--divider-gray);
+      }
+
+      table tr:last-child td {
+        border-bottom: none;
+      }
+
+      thead {
+        background-color: var(--fill-gray);
+      }
+
+      th {
+        font-weight: 600;
+        color: var(--near-black);
+      }
+
+      pre {
+        background-color: #2d2d2d;
+        color: #f8f8f2;
+        padding: 20px;
+        border-radius: 12px;
+        overflow-x: auto;
+        font-size: 0.9em;
+      }
+
+      code {
+        font-family: "SF Mono", "Menlo", "Consolas", monospace;
+        background-color: var(--fill-gray);
+        color: var(--near-black);
+        padding: 0.2em 0.4em;
+        border-radius: 5px;
+      }
+
+      pre code {
+        background-color: transparent;
+        padding: 0;
+        border-radius: 0;
+        color: #f8f8f2;
+      }
+
+      .brand-attributes {
+        background-color: var(--fill-gray);
+        border-left: 5px solid var(--action-blue);
+        padding: 15px 25px;
+        margin: 2em 0;
+        border-radius: 0 8px 8px 0;
+      }
+
+      .color-swatch {
+        display: inline-block;
+        width: 1em;
+        height: 1em;
+        border-radius: 50%;
+        margin-right: 8px;
+        vertical-align: middle;
+        border: 1px solid rgba(0, 0, 0, 0.1);
+      }
+    </style>
+  </head>
+
+  <body>
+       
+    <div class="container">
+             
+      <h1>DesiDeals24 Design System: "Aura"</h1>
+             
+      <div class="brand-attributes">
+                   
+        <p><strong>Design Principles:</strong></p>
+                   
+        <ul>
+                         
+          <li>
+            <strong>Clarity:</strong> The interface is intuitive, legible, and
+            predictable.
+          </li>
+                         
+          <li>
+            <strong>Deference:</strong> The UI never competes with the content
+            (the deals).
+          </li>
+                         
+          <li>
+            <strong>Efficiency:</strong> User flows are streamlined and focused.
+          </li>
+                     
+        </ul>
+               
+      </div>
+
+             
+      <h2>1. Foundations</h2>
+             
+      <p>
+        The "Aura" system is founded on a clean, neutral palette that elevates
+        the content. A single, vibrant blue is used exclusively for interactive
+        elements, creating an unambiguous user experience.
+      </p>
+
+             
+      <h3>Color Palette</h3>
+                     
+      <h4>Primary Palette</h4>
+             
+      <table>
+                   
+        <thead>
+                         
+          <tr>
+                               
+            <th>Color</th>
+                               
+            <th>Hex</th>
+                               
+            <th>Role</th>
+                           
+          </tr>
+                     
+        </thead>
+                   
+        <tbody>
+                         
+          <tr>
+                               
+            <td>
+              <span
+                class="color-swatch"
+                style="background-color: #007aff"
+              ></span
+              ><strong>Action Blue</strong>
+            </td>
+                               
+            <td>#007AFF</td>
+                               
+            <td>
+              All interactive elements: buttons, links, active states, toggles.
+            </td>
+                           
+          </tr>
+                         
+          <tr>
+                               
+            <td>
+              <span
+                class="color-swatch"
+                style="background-color: #1d1d1f"
+              ></span
+              ><strong>Near Black</strong>
+            </td>
+                               
+            <td>#1D1D1F</td>
+                               
+            <td>
+              Body text, headings, and primary content for maximum readability.
+            </td>
+                           
+          </tr>
+                         
+          <tr>
+                               
+            <td>
+              <span
+                class="color-swatch"
+                style="background-color: #86868b"
+              ></span
+              ><strong>Secondary Gray</strong>
+            </td>
+                               
+            <td>#86868B</td>
+                               
+            <td>
+              Secondary text, captions, disabled states, and non-interactive
+              icons.
+            </td>
+                           
+          </tr>
+                         
+          <tr>
+                               
+            <td>
+              <span
+                class="color-swatch"
+                style="background-color: #f5f5f7"
+              ></span
+              ><strong>Fill Gray</strong>
+            </td>
+                               
+            <td>#F5F5F7</td>
+                               
+            <td>Subtle backgrounds for sections, cards, and input fields.</td>
+                           
+          </tr>
+                         
+          <tr>
+                               
+            <td>
+              <span
+                class="color-swatch"
+                style="background-color: #d2d2d7"
+              ></span
+              ><strong>Divider Gray</strong>
+            </td>
+                               
+            <td>#D2D2D7</td>
+                               
+            <td>Borders, dividers, and separators.</td>
+                           
+          </tr>
+                           
+          <tr>
+                               
+            <td>
+              <span
+                class="color-swatch"
+                style="background-color: #ffffff; border-color: #eee"
+              ></span
+              ><strong>White</strong>
+            </td>
+                               
+            <td>#FFFFFF</td>
+                               
+            <td>The main background canvas, creating space and focus.</td>
+                           
+          </tr>
+                     
+        </tbody>
+               
+      </table>
+
+             
+      <h4>Semantic Colors</h4>
+             
+      <table>
+                   
+        <thead>
+                         
+          <tr>
+                               
+            <th>Color</th>
+                               
+            <th>Hex</th>
+                               
+            <th>Usage</th>
+                           
+          </tr>
+                     
+        </thead>
+                   
+        <tbody>
+                         
+          <tr>
+                               
+            <td>
+              <span
+                class="color-swatch"
+                style="background-color: #34c759"
+              ></span
+              ><strong>Success</strong>
+            </td>
+                               
+            <td>#34C759</td>
+                               
+            <td>Confirmation messages, successful validation.</td>
+                           
+          </tr>
+                         
+          <tr>
+                               
+            <td>
+              <span
+                class="color-swatch"
+                style="background-color: #ff9500"
+              ></span
+              ><strong>Warning</strong>
+            </td>
+                               
+            <td>#FF9500</td>
+                               
+            <td>Non-critical alerts, items nearing expiration.</td>
+                           
+          </tr>
+                         
+          <tr>
+                               
+            <td>
+              <span
+                class="color-swatch"
+                style="background-color: #ff3b30"
+              ></span
+              ><strong>Error</strong>
+            </td>
+                               
+            <td>#FF3B30</td>
+                               
+            <td>Error messages, destructive actions, failed validation.</td>
+                           
+          </tr>
+                     
+        </tbody>
+               
+      </table>
+                     
+      <h3>Typografie, Layout & Spacing</h3>
+             
+      <p>
+        The established guidelines for the <strong>Inter</strong> typeface, the
+        12-column responsive grid, and the 8px spacing system are fundamental to
+        this clean aesthetic and remain unchanged.
+      </p>
+
+             
+      <h2>2. Components (Example: Button)</h2>
+             
+      <p>
+        Button styles are simplified to three clear variants, each with a
+        distinct hierarchical role.
+      </p>
+             
+      <table>
+                   
+        <thead>
+                         
+          <tr>
+                               
+            <th>Variant</th>
+                               
+            <th>Style</th>
+                               
+            <th>Usage</th>
+                           
+          </tr>
+                     
+        </thead>
+                   
+        <tbody>
+                         
+          <tr>
+                               
+            <td><strong>Primary</strong></td>
+                               
+            <td>Solid <code>Action Blue</code> background with white text.</td>
+                               
+            <td>
+              The single most important action on a screen (e.g., "Go to Deal").
+            </td>
+                           
+          </tr>
+                         
+          <tr>
+                               
+            <td><strong>Secondary</strong></td>
+                               
+            <td>
+              <code>Fill Gray</code> background with
+              <code>Action Blue</code> text.
+            </td>
+                               
+            <td>Secondary actions like applying filters or navigating.</td>
+                           
+          </tr>
+                           
+          <tr>
+                               
+            <td><strong>Tertiary (Ghost)</strong></td>
+                               
+            <td>Transparent background with <code>Action Blue</code> text.</td>
+                               
+            <td>Low-emphasis actions like "Cancel" or "Clear All."</td>
+                           
+          </tr>
+                     
+        </tbody>
+               
+      </table>
+
+             
+      <h2>3. Patterns & Flows</h2>
+             
+      <p>
+        User flows are self-evident due to the consistent application of the
+        interactive <code>Action Blue</code> color against the neutral
+        background, guiding the user's eye naturally.
+      </p>
+                     
+      <h2>4. Design Tokens</h2>
+             
+      <p>
+        The "Aura" tokens provide a clear, semantic structure for developers.
+      </p>
+             
+      <pre><code class="language-json">{
+  "color": {
+    "interactive": {
+      "default": { "value": "#007AFF" }
+    },
+    "text": {
+      "primary": { "value": "#1D1D1F" },
+      "secondary": { "value": "#86868B" },
+      "on-accent": { "value": "#FFFFFF" }
+    },
+    "ui": {
+      "background": { "value": "#FFFFFF" },
+      "fill": { "value": "#F5F5F7" },
+      "divider": { "value": "#D2D2D7" }
+    },
+    "semantic": {
+      "success": { "value": "#34C759" },
+      "error": { "value": "#FF3B30" },
+      "warning": { "value": "#FF9500" }
+    }
+  }
+}</code></pre>
+
+         
+    </div>
+  </body>
+</html>

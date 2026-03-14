@@ -1,0 +1,19 @@
+Stores skipped — crawler could not reliably extract deals from static HTML
+
+1. Spicelands (spicelands.de)
+   Reason: Uses Woodmart WooCommerce theme — product title class does not match standard
+   WooCommerce selectors (.woocommerce-loop-product__title / h2). URL and price extract
+   correctly but name always returns empty, dropping every card.
+
+2. Annachi Europe (annachi.fr)
+   Reason: Same Woodmart theme issue as Spicelands. Price and URL extract correctly but
+   the product title element uses a theme-specific class that is not identifiable without
+   rendering JS. Both /annachi-offers/ and /categorie-produit/short-date/ affected.
+
+3. Indische-Lebensmittel-Online (indische-lebensmittel-online.de)
+   Reason: Product listing grid (ul.products) is empty in static HTML — products are
+   loaded via AJAX after page render. Requires Playwright/headless browser to access.
+
+4. Indian Food Store (indianfoodstore.de)
+   Reason: Uses Bricks page builder which renders the product grid dynamically via JS.
+   Static HTML contains no product cards or prices. Requires Playwright/headless browser.

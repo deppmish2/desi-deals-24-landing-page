@@ -1,0 +1,802 @@
+[
+  {
+    "raw_name": "arhar dal",
+    "expected_normalized": "toor dal"
+  },
+  {
+    "raw_name": "premium arhar dal 1kg pack",
+    "expected_normalized": "toor dal"
+  },
+  {
+    "raw_name": "tuvar dhal organic bag",
+    "expected_normalized": "toor dal"
+  },
+  {
+    "raw_name": "arhar dal special pouch",
+    "expected_normalized": "toor dal"
+  },
+  {
+    "raw_name": "tuvar dhal 500 g",
+    "expected_normalized": "toor dal"
+  },
+  {
+    "raw_name": "chana dal",
+    "expected_normalized": "chana dal"
+  },
+  {
+    "raw_name": "premium chana dal 1kg pack",
+    "expected_normalized": "chana dal"
+  },
+  {
+    "raw_name": "chana dal organic bag",
+    "expected_normalized": "chana dal"
+  },
+  {
+    "raw_name": "chana dal special pouch",
+    "expected_normalized": "chana dal"
+  },
+  {
+    "raw_name": "chana dal 500 g",
+    "expected_normalized": "chana dal"
+  },
+  {
+    "raw_name": "moong dal",
+    "expected_normalized": "moong dal"
+  },
+  {
+    "raw_name": "premium moong dal 1kg pack",
+    "expected_normalized": "moong dal"
+  },
+  {
+    "raw_name": "moong dal organic bag",
+    "expected_normalized": "moong dal"
+  },
+  {
+    "raw_name": "moong dal special pouch",
+    "expected_normalized": "moong dal"
+  },
+  {
+    "raw_name": "moong dal 500 g",
+    "expected_normalized": "moong dal"
+  },
+  {
+    "raw_name": "urad dal",
+    "expected_normalized": "urad dal"
+  },
+  {
+    "raw_name": "premium urad dal 1kg pack",
+    "expected_normalized": "urad dal"
+  },
+  {
+    "raw_name": "urad dal organic bag",
+    "expected_normalized": "urad dal"
+  },
+  {
+    "raw_name": "urad dal special pouch",
+    "expected_normalized": "urad dal"
+  },
+  {
+    "raw_name": "urad dal 500 g",
+    "expected_normalized": "urad dal"
+  },
+  {
+    "raw_name": "masoor dal",
+    "expected_normalized": "masoor dal"
+  },
+  {
+    "raw_name": "premium masoor dal 1kg pack",
+    "expected_normalized": "masoor dal"
+  },
+  {
+    "raw_name": "masoor dal organic bag",
+    "expected_normalized": "masoor dal"
+  },
+  {
+    "raw_name": "masoor dal special pouch",
+    "expected_normalized": "masoor dal"
+  },
+  {
+    "raw_name": "masoor dal 500 g",
+    "expected_normalized": "masoor dal"
+  },
+  {
+    "raw_name": "basmati rice",
+    "expected_normalized": "basmati rice"
+  },
+  {
+    "raw_name": "premium basmati rice 1kg pack",
+    "expected_normalized": "basmati rice"
+  },
+  {
+    "raw_name": "basmati rice organic bag",
+    "expected_normalized": "basmati rice"
+  },
+  {
+    "raw_name": "basmati rice special pouch",
+    "expected_normalized": "basmati rice"
+  },
+  {
+    "raw_name": "basmati rice 500 g",
+    "expected_normalized": "basmati rice"
+  },
+  {
+    "raw_name": "sona masoori rice",
+    "expected_normalized": "sona masoori rice"
+  },
+  {
+    "raw_name": "premium sona masoori rice 1kg pack",
+    "expected_normalized": "sona masoori rice"
+  },
+  {
+    "raw_name": "sona masoori rice organic bag",
+    "expected_normalized": "sona masoori rice"
+  },
+  {
+    "raw_name": "sona masoori rice special pouch",
+    "expected_normalized": "sona masoori rice"
+  },
+  {
+    "raw_name": "sona masoori rice 500 g",
+    "expected_normalized": "sona masoori rice"
+  },
+  {
+    "raw_name": "poha",
+    "expected_normalized": "poha"
+  },
+  {
+    "raw_name": "premium poha 1kg pack",
+    "expected_normalized": "poha"
+  },
+  {
+    "raw_name": "poha organic bag",
+    "expected_normalized": "poha"
+  },
+  {
+    "raw_name": "poha special pouch",
+    "expected_normalized": "poha"
+  },
+  {
+    "raw_name": "poha 500 g",
+    "expected_normalized": "poha"
+  },
+  {
+    "raw_name": "besan",
+    "expected_normalized": "chickpea flour"
+  },
+  {
+    "raw_name": "premium besan 1kg pack",
+    "expected_normalized": "chickpea flour"
+  },
+  {
+    "raw_name": "gram flour organic bag",
+    "expected_normalized": "chickpea flour"
+  },
+  {
+    "raw_name": "besan special pouch",
+    "expected_normalized": "chickpea flour"
+  },
+  {
+    "raw_name": "gram flour 500 g",
+    "expected_normalized": "chickpea flour"
+  },
+  {
+    "raw_name": "rava",
+    "expected_normalized": "semolina"
+  },
+  {
+    "raw_name": "premium rava 1kg pack",
+    "expected_normalized": "semolina"
+  },
+  {
+    "raw_name": "sooji organic bag",
+    "expected_normalized": "semolina"
+  },
+  {
+    "raw_name": "rava special pouch",
+    "expected_normalized": "semolina"
+  },
+  {
+    "raw_name": "sooji 500 g",
+    "expected_normalized": "semolina"
+  },
+  {
+    "raw_name": "wheat atta",
+    "expected_normalized": "wheat atta"
+  },
+  {
+    "raw_name": "premium wheat atta 1kg pack",
+    "expected_normalized": "wheat atta"
+  },
+  {
+    "raw_name": "wheat atta organic bag",
+    "expected_normalized": "wheat atta"
+  },
+  {
+    "raw_name": "wheat atta special pouch",
+    "expected_normalized": "wheat atta"
+  },
+  {
+    "raw_name": "wheat atta 500 g",
+    "expected_normalized": "wheat atta"
+  },
+  {
+    "raw_name": "rice flour",
+    "expected_normalized": "rice flour"
+  },
+  {
+    "raw_name": "premium rice flour 1kg pack",
+    "expected_normalized": "rice flour"
+  },
+  {
+    "raw_name": "rice flour organic bag",
+    "expected_normalized": "rice flour"
+  },
+  {
+    "raw_name": "rice flour special pouch",
+    "expected_normalized": "rice flour"
+  },
+  {
+    "raw_name": "rice flour 500 g",
+    "expected_normalized": "rice flour"
+  },
+  {
+    "raw_name": "maida flour",
+    "expected_normalized": "maida flour"
+  },
+  {
+    "raw_name": "premium maida flour 1kg pack",
+    "expected_normalized": "maida flour"
+  },
+  {
+    "raw_name": "maida flour organic bag",
+    "expected_normalized": "maida flour"
+  },
+  {
+    "raw_name": "maida flour special pouch",
+    "expected_normalized": "maida flour"
+  },
+  {
+    "raw_name": "maida flour 500 g",
+    "expected_normalized": "maida flour"
+  },
+  {
+    "raw_name": "ragi flour",
+    "expected_normalized": "ragi flour"
+  },
+  {
+    "raw_name": "premium ragi flour 1kg pack",
+    "expected_normalized": "ragi flour"
+  },
+  {
+    "raw_name": "ragi flour organic bag",
+    "expected_normalized": "ragi flour"
+  },
+  {
+    "raw_name": "ragi flour special pouch",
+    "expected_normalized": "ragi flour"
+  },
+  {
+    "raw_name": "ragi flour 500 g",
+    "expected_normalized": "ragi flour"
+  },
+  {
+    "raw_name": "jowar flour",
+    "expected_normalized": "jowar flour"
+  },
+  {
+    "raw_name": "premium jowar flour 1kg pack",
+    "expected_normalized": "jowar flour"
+  },
+  {
+    "raw_name": "jowar flour organic bag",
+    "expected_normalized": "jowar flour"
+  },
+  {
+    "raw_name": "jowar flour special pouch",
+    "expected_normalized": "jowar flour"
+  },
+  {
+    "raw_name": "jowar flour 500 g",
+    "expected_normalized": "jowar flour"
+  },
+  {
+    "raw_name": "haldi powder",
+    "expected_normalized": "turmeric powder"
+  },
+  {
+    "raw_name": "premium haldi powder 1kg pack",
+    "expected_normalized": "turmeric powder"
+  },
+  {
+    "raw_name": "turmeric powder organic bag",
+    "expected_normalized": "turmeric powder"
+  },
+  {
+    "raw_name": "haldi powder special pouch",
+    "expected_normalized": "turmeric powder"
+  },
+  {
+    "raw_name": "turmeric powder 500 g",
+    "expected_normalized": "turmeric powder"
+  },
+  {
+    "raw_name": "jeera seeds",
+    "expected_normalized": "cumin seeds"
+  },
+  {
+    "raw_name": "premium jeera seeds 1kg pack",
+    "expected_normalized": "cumin seeds"
+  },
+  {
+    "raw_name": "cumin seeds organic bag",
+    "expected_normalized": "cumin seeds"
+  },
+  {
+    "raw_name": "jeera seeds special pouch",
+    "expected_normalized": "cumin seeds"
+  },
+  {
+    "raw_name": "cumin seeds 500 g",
+    "expected_normalized": "cumin seeds"
+  },
+  {
+    "raw_name": "dhania powder",
+    "expected_normalized": "coriander powder"
+  },
+  {
+    "raw_name": "premium dhania powder 1kg pack",
+    "expected_normalized": "coriander powder"
+  },
+  {
+    "raw_name": "coriander powder organic bag",
+    "expected_normalized": "coriander powder"
+  },
+  {
+    "raw_name": "dhania powder special pouch",
+    "expected_normalized": "coriander powder"
+  },
+  {
+    "raw_name": "coriander powder 500 g",
+    "expected_normalized": "coriander powder"
+  },
+  {
+    "raw_name": "red chilli powder",
+    "expected_normalized": "red chilli powder"
+  },
+  {
+    "raw_name": "premium red chilli powder 1kg pack",
+    "expected_normalized": "red chilli powder"
+  },
+  {
+    "raw_name": "red chilli powder organic bag",
+    "expected_normalized": "red chilli powder"
+  },
+  {
+    "raw_name": "red chilli powder special pouch",
+    "expected_normalized": "red chilli powder"
+  },
+  {
+    "raw_name": "red chilli powder 500 g",
+    "expected_normalized": "red chilli powder"
+  },
+  {
+    "raw_name": "garam masala",
+    "expected_normalized": "garam masala"
+  },
+  {
+    "raw_name": "premium garam masala 1kg pack",
+    "expected_normalized": "garam masala"
+  },
+  {
+    "raw_name": "garam masala organic bag",
+    "expected_normalized": "garam masala"
+  },
+  {
+    "raw_name": "garam masala special pouch",
+    "expected_normalized": "garam masala"
+  },
+  {
+    "raw_name": "garam masala 500 g",
+    "expected_normalized": "garam masala"
+  },
+  {
+    "raw_name": "mustard seeds",
+    "expected_normalized": "mustard seeds"
+  },
+  {
+    "raw_name": "premium mustard seeds 1kg pack",
+    "expected_normalized": "mustard seeds"
+  },
+  {
+    "raw_name": "mustard seeds organic bag",
+    "expected_normalized": "mustard seeds"
+  },
+  {
+    "raw_name": "mustard seeds special pouch",
+    "expected_normalized": "mustard seeds"
+  },
+  {
+    "raw_name": "mustard seeds 500 g",
+    "expected_normalized": "mustard seeds"
+  },
+  {
+    "raw_name": "fennel seeds",
+    "expected_normalized": "fennel seeds"
+  },
+  {
+    "raw_name": "premium fennel seeds 1kg pack",
+    "expected_normalized": "fennel seeds"
+  },
+  {
+    "raw_name": "fennel seeds organic bag",
+    "expected_normalized": "fennel seeds"
+  },
+  {
+    "raw_name": "fennel seeds special pouch",
+    "expected_normalized": "fennel seeds"
+  },
+  {
+    "raw_name": "fennel seeds 500 g",
+    "expected_normalized": "fennel seeds"
+  },
+  {
+    "raw_name": "hing",
+    "expected_normalized": "asafoetida"
+  },
+  {
+    "raw_name": "premium hing 1kg pack",
+    "expected_normalized": "asafoetida"
+  },
+  {
+    "raw_name": "asafoetida organic bag",
+    "expected_normalized": "asafoetida"
+  },
+  {
+    "raw_name": "hing special pouch",
+    "expected_normalized": "asafoetida"
+  },
+  {
+    "raw_name": "asafoetida 500 g",
+    "expected_normalized": "asafoetida"
+  },
+  {
+    "raw_name": "methi seeds",
+    "expected_normalized": "fenugreek seeds"
+  },
+  {
+    "raw_name": "premium methi seeds 1kg pack",
+    "expected_normalized": "fenugreek seeds"
+  },
+  {
+    "raw_name": "fenugreek seeds organic bag",
+    "expected_normalized": "fenugreek seeds"
+  },
+  {
+    "raw_name": "methi seeds special pouch",
+    "expected_normalized": "fenugreek seeds"
+  },
+  {
+    "raw_name": "fenugreek seeds 500 g",
+    "expected_normalized": "fenugreek seeds"
+  },
+  {
+    "raw_name": "ajwain seeds",
+    "expected_normalized": "ajwain seeds"
+  },
+  {
+    "raw_name": "premium ajwain seeds 1kg pack",
+    "expected_normalized": "ajwain seeds"
+  },
+  {
+    "raw_name": "ajwain seeds organic bag",
+    "expected_normalized": "ajwain seeds"
+  },
+  {
+    "raw_name": "ajwain seeds special pouch",
+    "expected_normalized": "ajwain seeds"
+  },
+  {
+    "raw_name": "ajwain seeds 500 g",
+    "expected_normalized": "ajwain seeds"
+  },
+  {
+    "raw_name": "cinnamon sticks",
+    "expected_normalized": "cinnamon sticks"
+  },
+  {
+    "raw_name": "premium cinnamon sticks 1kg pack",
+    "expected_normalized": "cinnamon sticks"
+  },
+  {
+    "raw_name": "cinnamon sticks organic bag",
+    "expected_normalized": "cinnamon sticks"
+  },
+  {
+    "raw_name": "cinnamon sticks special pouch",
+    "expected_normalized": "cinnamon sticks"
+  },
+  {
+    "raw_name": "cinnamon sticks 500 g",
+    "expected_normalized": "cinnamon sticks"
+  },
+  {
+    "raw_name": "cardamom pods",
+    "expected_normalized": "cardamom pods"
+  },
+  {
+    "raw_name": "premium cardamom pods 1kg pack",
+    "expected_normalized": "cardamom pods"
+  },
+  {
+    "raw_name": "cardamom pods organic bag",
+    "expected_normalized": "cardamom pods"
+  },
+  {
+    "raw_name": "cardamom pods special pouch",
+    "expected_normalized": "cardamom pods"
+  },
+  {
+    "raw_name": "cardamom pods 500 g",
+    "expected_normalized": "cardamom pods"
+  },
+  {
+    "raw_name": "cloves",
+    "expected_normalized": "cloves"
+  },
+  {
+    "raw_name": "premium cloves 1kg pack",
+    "expected_normalized": "cloves"
+  },
+  {
+    "raw_name": "cloves organic bag",
+    "expected_normalized": "cloves"
+  },
+  {
+    "raw_name": "cloves special pouch",
+    "expected_normalized": "cloves"
+  },
+  {
+    "raw_name": "cloves 500 g",
+    "expected_normalized": "cloves"
+  },
+  {
+    "raw_name": "black pepper",
+    "expected_normalized": "black pepper"
+  },
+  {
+    "raw_name": "premium black pepper 1kg pack",
+    "expected_normalized": "black pepper"
+  },
+  {
+    "raw_name": "black pepper organic bag",
+    "expected_normalized": "black pepper"
+  },
+  {
+    "raw_name": "black pepper special pouch",
+    "expected_normalized": "black pepper"
+  },
+  {
+    "raw_name": "black pepper 500 g",
+    "expected_normalized": "black pepper"
+  },
+  {
+    "raw_name": "lauki",
+    "expected_normalized": "bottle gourd"
+  },
+  {
+    "raw_name": "premium lauki 1kg pack",
+    "expected_normalized": "bottle gourd"
+  },
+  {
+    "raw_name": "bottle gourd organic bag",
+    "expected_normalized": "bottle gourd"
+  },
+  {
+    "raw_name": "lauki special pouch",
+    "expected_normalized": "bottle gourd"
+  },
+  {
+    "raw_name": "bottle gourd 500 g",
+    "expected_normalized": "bottle gourd"
+  },
+  {
+    "raw_name": "bhindi",
+    "expected_normalized": "okra"
+  },
+  {
+    "raw_name": "premium bhindi 1kg pack",
+    "expected_normalized": "okra"
+  },
+  {
+    "raw_name": "okra organic bag",
+    "expected_normalized": "okra"
+  },
+  {
+    "raw_name": "bhindi special pouch",
+    "expected_normalized": "okra"
+  },
+  {
+    "raw_name": "okra 500 g",
+    "expected_normalized": "okra"
+  },
+  {
+    "raw_name": "karela",
+    "expected_normalized": "bitter gourd"
+  },
+  {
+    "raw_name": "premium karela 1kg pack",
+    "expected_normalized": "bitter gourd"
+  },
+  {
+    "raw_name": "bitter gourd organic bag",
+    "expected_normalized": "bitter gourd"
+  },
+  {
+    "raw_name": "karela special pouch",
+    "expected_normalized": "bitter gourd"
+  },
+  {
+    "raw_name": "bitter gourd 500 g",
+    "expected_normalized": "bitter gourd"
+  },
+  {
+    "raw_name": "shimla mirch",
+    "expected_normalized": "capsicum"
+  },
+  {
+    "raw_name": "premium shimla mirch 1kg pack",
+    "expected_normalized": "capsicum"
+  },
+  {
+    "raw_name": "capsicum organic bag",
+    "expected_normalized": "capsicum"
+  },
+  {
+    "raw_name": "shimla mirch special pouch",
+    "expected_normalized": "capsicum"
+  },
+  {
+    "raw_name": "capsicum 500 g",
+    "expected_normalized": "capsicum"
+  },
+  {
+    "raw_name": "kaddu",
+    "expected_normalized": "pumpkin"
+  },
+  {
+    "raw_name": "premium kaddu 1kg pack",
+    "expected_normalized": "pumpkin"
+  },
+  {
+    "raw_name": "pumpkin organic bag",
+    "expected_normalized": "pumpkin"
+  },
+  {
+    "raw_name": "kaddu special pouch",
+    "expected_normalized": "pumpkin"
+  },
+  {
+    "raw_name": "pumpkin 500 g",
+    "expected_normalized": "pumpkin"
+  },
+  {
+    "raw_name": "eggplant",
+    "expected_normalized": "eggplant"
+  },
+  {
+    "raw_name": "premium eggplant 1kg pack",
+    "expected_normalized": "eggplant"
+  },
+  {
+    "raw_name": "eggplant organic bag",
+    "expected_normalized": "eggplant"
+  },
+  {
+    "raw_name": "eggplant special pouch",
+    "expected_normalized": "eggplant"
+  },
+  {
+    "raw_name": "eggplant 500 g",
+    "expected_normalized": "eggplant"
+  },
+  {
+    "raw_name": "spinach",
+    "expected_normalized": "spinach"
+  },
+  {
+    "raw_name": "premium spinach 1kg pack",
+    "expected_normalized": "spinach"
+  },
+  {
+    "raw_name": "spinach organic bag",
+    "expected_normalized": "spinach"
+  },
+  {
+    "raw_name": "spinach special pouch",
+    "expected_normalized": "spinach"
+  },
+  {
+    "raw_name": "spinach 500 g",
+    "expected_normalized": "spinach"
+  },
+  {
+    "raw_name": "cauliflower",
+    "expected_normalized": "cauliflower"
+  },
+  {
+    "raw_name": "premium cauliflower 1kg pack",
+    "expected_normalized": "cauliflower"
+  },
+  {
+    "raw_name": "cauliflower organic bag",
+    "expected_normalized": "cauliflower"
+  },
+  {
+    "raw_name": "cauliflower special pouch",
+    "expected_normalized": "cauliflower"
+  },
+  {
+    "raw_name": "cauliflower 500 g",
+    "expected_normalized": "cauliflower"
+  },
+  {
+    "raw_name": "potato",
+    "expected_normalized": "potato"
+  },
+  {
+    "raw_name": "premium potato 1kg pack",
+    "expected_normalized": "potato"
+  },
+  {
+    "raw_name": "potato organic bag",
+    "expected_normalized": "potato"
+  },
+  {
+    "raw_name": "potato special pouch",
+    "expected_normalized": "potato"
+  },
+  {
+    "raw_name": "potato 500 g",
+    "expected_normalized": "potato"
+  },
+  {
+    "raw_name": "onion",
+    "expected_normalized": "onion"
+  },
+  {
+    "raw_name": "premium onion 1kg pack",
+    "expected_normalized": "onion"
+  },
+  {
+    "raw_name": "onion organic bag",
+    "expected_normalized": "onion"
+  },
+  {
+    "raw_name": "onion special pouch",
+    "expected_normalized": "onion"
+  },
+  {
+    "raw_name": "onion 500 g",
+    "expected_normalized": "onion"
+  },
+  {
+    "raw_name": "tomato",
+    "expected_normalized": "tomato"
+  },
+  {
+    "raw_name": "premium tomato 1kg pack",
+    "expected_normalized": "tomato"
+  },
+  {
+    "raw_name": "tomato organic bag",
+    "expected_normalized": "tomato"
+  },
+  {
+    "raw_name": "tomato special pouch",
+    "expected_normalized": "tomato"
+  },
+  {
+    "raw_name": "tomato 500 g",
+    "expected_normalized": "tomato"
+  }
+]

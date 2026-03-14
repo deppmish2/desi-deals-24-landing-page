@@ -1,0 +1,572 @@
+<!doctype html>
+<html lang="de">
+  <head>
+       
+    <meta charset="UTF-8" />
+       
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+       
+    <title>DesiDeals24 Design System: "Mayur"</title>
+       
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+       
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+       
+    <link
+      href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;900&display=swap"
+      rel="stylesheet"
+    />
+       
+    <style>
+      :root {
+        /* New "Mayur" Palette */
+        --orchid-pink: #d90368;
+        /* Vibrant, modern primary CTA */
+        --peacock-teal: #048a81;
+        /* Rich, professional brand color */
+        --graphite: #212529;
+        /* Crisp, readable text */
+        --sunlight: #ffc107;
+        /* Energetic accent for warnings/highlights */
+        --mist-blue: #f0f8ff;
+        /* Very light, airy background for sections */
+        --stone: #ced4da;
+        /* Neutral border and divider color */
+        --bg-color: #ffffff;
+        /* Clean white background */
+
+        /* Semantic variables */
+        --success: #28a745;
+        --error: #dc3545;
+        --info: #17a2b8;
+      }
+
+      body {
+        font-family:
+          "Inter",
+          -apple-system,
+          BlinkMacSystemFont,
+          "Segoe UI",
+          Roboto,
+          Helvetica,
+          Arial,
+          sans-serif;
+        line-height: 1.6;
+        color: var(--graphite);
+        background-color: var(--bg-color);
+        margin: 0;
+        padding: 0;
+        font-size: 16px;
+      }
+
+      .container {
+        max-width: 960px;
+        margin: 40px auto;
+        padding: 0 20px;
+      }
+
+      h1,
+      h2,
+      h3,
+      h4,
+      h5,
+      h6 {
+        color: var(--peacock-teal);
+        line-height: 1.3;
+        font-weight: 700;
+        margin-top: 2em;
+        margin-bottom: 1em;
+      }
+
+      h1 {
+        font-size: 2.5rem;
+        font-weight: 900;
+        color: var(--graphite);
+        border-bottom: 2px solid var(--stone);
+        padding-bottom: 0.5em;
+      }
+
+      h2 {
+        font-size: 2rem;
+        border-bottom: 1px solid var(--stone);
+        padding-bottom: 0.4em;
+      }
+
+      h3 {
+        font-size: 1.5rem;
+      }
+
+      h4 {
+        font-size: 1.2rem;
+        font-weight: 600;
+      }
+
+      p {
+        margin-bottom: 1em;
+      }
+
+      a {
+        color: var(--orchid-pink);
+        text-decoration: none;
+        font-weight: 500;
+      }
+
+      a:hover {
+        text-decoration: underline;
+      }
+
+      strong {
+        font-weight: 600;
+      }
+
+      table {
+        width: 100%;
+        border-collapse: collapse;
+        margin: 2em 0;
+        box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
+      }
+
+      th,
+      td {
+        padding: 12px 16px;
+        text-align: left;
+        border: 1px solid var(--stone);
+      }
+
+      thead {
+        background-color: var(--mist-blue);
+      }
+
+      th {
+        font-weight: 600;
+        color: var(--graphite);
+      }
+
+      tbody tr:nth-child(even) {
+        background-color: var(--mist-blue);
+      }
+
+      pre {
+        background-color: #2d2d2d;
+        color: #f8f8f2;
+        padding: 20px;
+        border-radius: 8px;
+        overflow-x: auto;
+        font-size: 0.9em;
+      }
+
+      code {
+        font-family: "Menlo", "Consolas", monospace;
+        background-color: #e9ecef;
+        padding: 0.2em 0.4em;
+        border-radius: 3px;
+      }
+
+      pre code {
+        background-color: transparent;
+        padding: 0;
+        border-radius: 0;
+      }
+
+      .brand-attributes {
+        background-color: var(--mist-blue);
+        border-left: 5px solid var(--orchid-pink);
+        padding: 15px 25px;
+        margin: 2em 0;
+        border-radius: 0 8px 8px 0;
+      }
+
+      .color-swatch {
+        display: inline-block;
+        width: 1em;
+        height: 1em;
+        border-radius: 50%;
+        margin-right: 8px;
+        vertical-align: middle;
+        border: 1px solid rgba(0, 0, 0, 0.1);
+      }
+    </style>
+  </head>
+
+  <body>
+       
+    <div class="container">
+             
+      <h1>DesiDeals24 Design System: "Mayur"</h1>
+             
+      <div class="brand-attributes">
+                   
+        <p><strong>Markenattribute:</strong></p>
+                   
+        <ul>
+                         
+          <li><strong>Persönlichkeit:</strong> Professionell & Mutig</li>
+                         
+          <li><strong>Primäres Gefühl:</strong> Vertrauen & Energie</li>
+                         
+          <li>
+            <strong>Zielgruppe:</strong> In Deutschland lebende indische Expats
+          </li>
+                     
+        </ul>
+               
+      </div>
+
+             
+      <h2>1. Grundlagen (Foundations)</h2>
+             
+      <p>
+        Das "Mayur"-System nutzt leuchtende Juwelentöne, die durch klare, helle
+        Neutraltöne ausgeglichen werden, um eine moderne, energiegeladene und
+        dennoch vertrauenswürdige Ästhetik zu schaffen.
+      </p>
+
+             
+      <h3>Farbpalette</h3>
+                     
+      <h4>Primärpalette</h4>
+             
+      <table>
+                   
+        <thead>
+                         
+          <tr>
+                               
+            <th>Farbe</th>
+                               
+            <th>Hex</th>
+                               
+            <th>Verwendung</th>
+                           
+          </tr>
+                     
+        </thead>
+                   
+        <tbody>
+                         
+          <tr>
+                               
+            <td>
+              <span
+                class="color-swatch"
+                style="background-color: #d90368"
+              ></span
+              ><strong>Orchid Pink</strong> (Primary)
+            </td>
+                               
+            <td>#D90368</td>
+                               
+            <td>
+              Primäre CTAs, Aktionen, die Konversion fördern (z.B. "Zum Deal").
+            </td>
+                           
+          </tr>
+                         
+          <tr>
+                               
+            <td>
+              <span
+                class="color-swatch"
+                style="background-color: #048a81"
+              ></span
+              ><strong>Peacock Teal</strong> (Brand)
+            </td>
+                               
+            <td>#048A81</td>
+                               
+            <td>
+              Header, Footer, Icons, sekundäre Akzente; repräsentiert die Marke.
+            </td>
+                           
+          </tr>
+                         
+          <tr>
+                               
+            <td>
+              <span
+                class="color-swatch"
+                style="background-color: #212529"
+              ></span
+              ><strong>Graphite</strong> (Text)
+            </td>
+                               
+            <td>#212529</td>
+                               
+            <td>Haupttext, Überschriften; sorgt für maximale Lesbarkeit.</td>
+                           
+          </tr>
+                         
+          <tr>
+                               
+            <td>
+              <span
+                class="color-swatch"
+                style="background-color: #f0f8ff"
+              ></span
+              ><strong>Mist Blue</strong> (Subtle BG)
+            </td>
+                               
+            <td>#F0F8FF</td>
+                               
+            <td>Hintergründe für Sektionen, Cards und Hervorhebungen.</td>
+                           
+          </tr>
+                         
+          <tr>
+                               
+            <td>
+              <span
+                class="color-swatch"
+                style="background-color: #ffffff; border-color: #eee"
+              ></span
+              ><strong>White</strong> (Light BG)
+            </td>
+                               
+            <td>#FFFFFF</td>
+                               
+            <td>Haupt-Seitenhintergrund für ein sauberes, luftiges Layout.</td>
+                           
+          </tr>
+                         
+          <tr>
+                               
+            <td>
+              <span
+                class="color-swatch"
+                style="background-color: #ced4da"
+              ></span
+              ><strong>Stone</strong> (Borders)
+            </td>
+                               
+            <td>#CED4DA</td>
+                               
+            <td>Trennlinien, Ränder von Eingabefeldern.</td>
+                           
+          </tr>
+                     
+        </tbody>
+               
+      </table>
+
+             
+      <h4>Semantische Farben</h4>
+             
+      <table>
+                   
+        <thead>
+                         
+          <tr>
+                               
+            <th>Farbe</th>
+                               
+            <th>Hex</th>
+                               
+            <th>Verwendung</th>
+                           
+          </tr>
+                     
+        </thead>
+                   
+        <tbody>
+                         
+          <tr>
+                               
+            <td>
+              <span
+                class="color-swatch"
+                style="background-color: #28a745"
+              ></span
+              ><strong>Success</strong>
+            </td>
+                               
+            <td>#28A745</td>
+                               
+            <td>Bestätigungen, erfolgreiche Aktionen.</td>
+                           
+          </tr>
+                         
+          <tr>
+                               
+            <td>
+              <span
+                class="color-swatch"
+                style="background-color: #ffc107"
+              ></span
+              ><strong>Warning</strong>
+            </td>
+                               
+            <td>#FFC107</td>
+                               
+            <td>Wichtige Hinweise, Deals, die bald ablaufen.</td>
+                           
+          </tr>
+                         
+          <tr>
+                               
+            <td>
+              <span
+                class="color-swatch"
+                style="background-color: #dc3545"
+              ></span
+              ><strong>Error</strong>
+            </td>
+                               
+            <td>#DC3545</td>
+                               
+            <td>Fehlermeldungen, ungültige Eingaben.</td>
+                           
+          </tr>
+                         
+          <tr>
+                               
+            <td>
+              <span
+                class="color-swatch"
+                style="background-color: #17a2b8"
+              ></span
+              ><strong>Info</strong>
+            </td>
+                               
+            <td>#17A2B8</td>
+                               
+            <td>Informative Hinweise und Tipps.</td>
+                           
+          </tr>
+                     
+        </tbody>
+               
+      </table>
+
+             
+      <h3>Typografie, Layout & Spacing</h3>
+             
+      <p>
+        Die Spezifikationen für Typografie (Inter), das 12-Spalten-Raster und
+        das 8px-Abstandssystem bleiben unverändert, da sie eine solide und
+        flexible Grundlage bilden, die gut mit der neuen Farbpalette harmoniert.
+      </p>
+
+             
+      <h2>2. Komponenten (Beispiel: Button)</h2>
+             
+      <p>
+        Die Komponentenlogik bleibt gleich, wird aber mit der neuen
+        "Mayur"-Palette aktualisiert.
+      </p>
+             
+      <table>
+                   
+        <thead>
+                         
+          <tr>
+                               
+            <th>Variante</th>
+                               
+            <th>Hintergrund (Default)</th>
+                               
+            <th>Textfarbe (Default)</th>
+                               
+            <th>Verwendung</th>
+                           
+          </tr>
+                     
+        </thead>
+                   
+        <tbody>
+                         
+          <tr>
+                               
+            <td><strong>Primary</strong></td>
+                               
+            <td>Orchid Pink (#D90368)</td>
+                               
+            <td>White (#FFFFFF)</td>
+                               
+            <td>Wichtigste Aktion auf der Seite.</td>
+                           
+          </tr>
+                         
+          <tr>
+                               
+            <td><strong>Secondary</strong></td>
+                               
+            <td>Peacock Teal (#048A81)</td>
+                               
+            <td>White (#FFFFFF)</td>
+                               
+            <td>Zweitwichtigste Aktion.</td>
+                           
+          </tr>
+                           
+          <tr>
+                               
+            <td><strong>Tertiary</strong></td>
+                               
+            <td>Transparent</td>
+                               
+            <td>Graphite (#212529)</td>
+                               
+            <td>Aktionen mit niedriger Priorität.</td>
+                           
+          </tr>
+                     
+        </tbody>
+               
+      </table>
+
+             
+      <h2>3. Muster & Abläufe</h2>
+             
+      <h4>Ablauf: Angebotsfilterung</h4>
+             
+      <p>
+        Dieser zentrale Ablauf bleibt in seiner Logik unverändert, profitiert
+        aber visuell von der neuen, klaren Farbgebung.
+      </p>
+             
+      <div class="mermaid">
+                graph TD             A[Start: Listings-Seite] --> B{Nutzer
+        interagiert mit Filtern};             B --> C[Kategorie auswählen];    
+                B --> D[Shop auswählen];             F[Filter-Tag wird
+        angezeigt] --> G{Angebotsliste wird neu geladen};             C & D -->
+        F;             G --> H[Angebote entsprechen den Filtern];        
+      </div>
+
+             
+      <h2>4. Design Tokens</h2>
+             
+      <p>Die aktualisierten Tokens spiegeln die "Mayur"-Palette wider.</p>
+             
+      <pre><code class="language-json">{
+  "color": {
+    "primary": {
+      "orchid-pink": { "value": "#D90368" },
+      "peacock-teal": { "value": "#048A81" }
+    },
+    "semantic": {
+      "success": { "value": "#28A745" },
+      "warning": { "value": "#FFC107" },
+      "error": { "value": "#DC3545" }
+    },
+    "text": {
+      "default": { "value": "#212529" },
+      "on-primary": { "value": "#FFFFFF" }
+    },
+    "background": {
+      "default": { "value": "#FFFFFF" },
+      "subtle": { "value": "#F0F8FF" }
+    }
+  }
+}</code></pre>
+
+         
+    </div>
+
+       
+    <script src="https://cdn.jsdelivr.net/npm/mermaid@10/dist/mermaid.min.js"></script>
+       
+    <script>
+      mermaid.initialize({ startOnLoad: true });
+    </script>
+  </body>
+</html>

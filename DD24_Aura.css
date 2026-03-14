@@ -1,0 +1,227 @@
+<style>
+/*
+ * ====================================================================
+ * DesiDeals24 Design System: "Aura"
+ * Filename: design-tokens.css
+ * Description: Directly applicable CSS variables and base styles.
+ * ====================================================================
+ */
+
+:root {
+    /* --------------------------------------------------------------------
+   * Color Tokens
+   * -------------------------------------------------------------------- */
+
+    /* Primary Palette */
+    --aura-color-action-blue: #007AFF;
+    --aura-color-near-black: #1D1D1F;
+    --aura-color-secondary-gray: #86868B;
+    --aura-color-fill-gray: #F5F5F7;
+    --aura-color-divider-gray: #D2D2D7;
+    --aura-color-white: #FFFFFF;
+
+    /* Semantic Palette */
+    --aura-color-success: #34C759;
+    --aura-color-error: #FF3B30;
+    --aura-color-warning: #FF9500;
+
+    /* Contextual Aliases (for easier use in components) */
+    --aura-color-text-primary: var(--aura-color-near-black);
+    --aura-color-text-secondary: var(--aura-color-secondary-gray);
+    --aura-color-text-interactive: var(--aura-color-action-blue);
+    --aura-color-text-on-accent: var(--aura-color-white);
+
+    --aura-color-background-primary: var(--aura-color-white);
+    --aura-color-background-secondary: var(--aura-color-fill-gray);
+
+    --aura-color-border-primary: var(--aura-color-divider-gray);
+
+    /* --------------------------------------------------------------------
+   * Typography Tokens
+   * -------------------------------------------------------------------- */
+    --aura-font-family-sans: 'Inter', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+
+    /* Font Sizes (based on 16px root) */
+    --aura-font-size-display: 4rem;
+    /* 64px */
+    --aura-font-size-headline: 2.5rem;
+    /* 40px */
+    --aura-font-size-title: 1.5rem;
+    /* 24px */
+    --aura-font-size-body: 1rem;
+    /* 16px */
+    --aura-font-size-callout: 1.125rem;
+    /* 18px */
+    --aura-font-size-subheadline: 0.875rem;
+    /* 14px */
+    --aura-font-size-footnote: 0.75rem;
+    /* 12px */
+
+    /* Font Weights */
+    --aura-font-weight-regular: 400;
+    --aura-font-weight-medium: 500;
+    --aura-font-weight-semibold: 600;
+    --aura-font-weight-bold: 700;
+
+    /* Line Heights */
+    --aura-line-height-tight: 1.2;
+    --aura-line-height-normal: 1.4;
+    --aura-line-height-loose: 1.6;
+
+    /* --------------------------------------------------------------------
+   * Spacing Tokens (8px base unit)
+   * -------------------------------------------------------------------- */
+    --aura-space-xxs: 0.25rem;
+    /* 4px */
+    --aura-space-xs: 0.5rem;
+    /* 8px */
+    --aura-space-s: 0.75rem;
+    /* 12px */
+    --aura-space-m: 1rem;
+    /* 16px */
+    --aura-space-l: 1.5rem;
+    /* 24px */
+    --aura-space-xl: 2rem;
+    /* 32px */
+    --aura-space-xxl: 3rem;
+    /* 48px */
+
+    /* --------------------------------------------------------------------
+   * Component Tokens
+   * -------------------------------------------------------------------- */
+    --aura-border-radius-small: 4px;
+    --aura-border-radius-medium: 8px;
+    --aura-border-radius-large: 12px;
+    --aura-border-radius-circle: 50%;
+
+    --aura-shadow-small: 0 1px 2px rgba(0, 0, 0, 0.04);
+    --aura-shadow-medium: 0 4px 8px rgba(0, 0, 0, 0.08);
+    --aura-shadow-large: 0 10px 20px rgba(0, 0, 0, 0.1);
+}
+
+/*
+ * ====================================================================
+ * Base Styles & Resets
+ * ====================================================================
+ */
+*,
+*::before,
+*::after {
+    box-sizing: border-box;
+}
+
+body {
+    font-family: var(--aura-font-family-sans);
+    font-size: var(--aura-font-size-body);
+    color: var(--aura-color-text-primary);
+    background-color: var(--aura-color-background-primary);
+    line-height: var(--aura-line-height-loose);
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+    margin: 0;
+}
+
+h1,
+h2,
+h3,
+h4,
+h5,
+h6 {
+    margin: 0 0 var(--aura-space-l) 0;
+    font-weight: var(--aura-font-weight-bold);
+    line-height: var(--aura-line-height-tight);
+}
+
+h1 {
+    font-size: var(--aura-font-size-headline);
+}
+
+h2 {
+    font-size: var(--aura-font-size-title);
+}
+
+h3 {
+    font-size: var(--aura-font-size-callout);
+}
+
+p {
+    margin: 0 0 var(--aura-space-m) 0;
+}
+
+a {
+    color: var(--aura-color-text-interactive);
+    text-decoration: none;
+    font-weight: var(--aura-font-weight-medium);
+}
+
+a:hover {
+    text-decoration: underline;
+}
+
+/*
+ * ====================================================================
+ * Component Example: Button
+ * ====================================================================
+ */
+.btn {
+    display: inline-block;
+    padding: var(--aura-space-s) var(--aura-space-l);
+    font-family: var(--aura-font-family-sans);
+    font-size: var(--aura-font-size-body);
+    font-weight: var(--aura-font-weight-semibold);
+    line-height: 1.2;
+    text-align: center;
+    text-decoration: none;
+    cursor: pointer;
+    border: 1px solid transparent;
+    border-radius: var(--aura-border-radius-medium);
+    transition: all 150ms ease-in-out;
+}
+
+.btn:focus-visible {
+    outline: 2px solid var(--aura-color-action-blue);
+    outline-offset: 2px;
+}
+
+/* Primary Button */
+.btn--primary {
+    background-color: var(--aura-color-action-blue);
+    color: var(--aura-color-text-on-accent);
+}
+
+.btn--primary:hover {
+    background-color: #0069D9;
+    /* Darken(--aura-color-action-blue, 10%) */
+    text-decoration: none;
+}
+
+.btn--primary:disabled {
+    background-color: var(--aura-color-secondary-gray);
+    cursor: not-allowed;
+}
+
+
+/* Secondary Button */
+.btn--secondary {
+    background-color: var(--aura-color-background-secondary);
+    color: var(--aura-color-text-interactive);
+}
+
+.btn--secondary:hover {
+    background-color: #e9e9ed;
+    /* Darken(--aura-color-background-secondary, 3%) */
+    text-decoration: none;
+}
+
+/* Tertiary Button (Ghost) */
+.btn--tertiary {
+    background-color: transparent;
+    color: var(--aura-color-text-interactive);
+}
+
+.btn--tertiary:hover {
+    background-color: var(--aura-color-background-secondary);
+    text-decoration: none;
+}
+
+</style>

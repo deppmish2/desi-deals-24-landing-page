@@ -1,0 +1,1001 @@
+ID,Base Product,Category,Popular Brands,Search Variations,Misspellings/Regional,Popularity Index (1-100)
+1,Chakki Atta,Staples (Flours & Grains),"Aashirvaad, Pillsbury, Fortune, Elephant, Heera, Annapurna","Wheat flour, Roti flour, Whole wheat","Ashirwad, Aata, Atte",85
+2,Maida,Staples (Flours & Grains),"TRS, Heera, Annam, KTC","All purpose flour, Plain flour","Mayda, Maida flour",97
+3,Besan,Staples (Flours & Grains),"TRS, Heera, Annam, Laxmi, KTC","Gram flour, Chickpea flour","Baisan, Basin, Besun",93
+4,Sooji (Coarse),Staples (Flours & Grains),"TRS, Heera, Annam, Natco","Semolina, Rava, Rawa","Suji, Sheera",91
+5,Sooji (Fine),Staples (Flours & Grains),"TRS, Heera, Annam","Fine semolina, Rava fine","Suji fine, Rawa fine",94
+6,Rice Flour,Staples (Flours & Grains),"Annam, TRS, Heera","Chawal ka atta, Rice powder",Arisi maavu,98
+7,Bajra Flour,Staples (Flours & Grains),"TRS, Heera, Annam",Pearl millet flour,Bajari,95
+8,Jowar Flour,Staples (Flours & Grains),"TRS, Heera, Annam",Sorghum flour,Jovar,100
+9,Basmati Rice (Extra Long),Rice,"Tilda, India Gate, Daawat, Kohinoor, Akash, Laila","Long grain rice, Biryani rice, Aged rice","Basmathi, Bismati, Chawal",88
+10,Sona Masoori Rice,Rice,"India Gate, 9Grains, Annam, Royal, TRS, Heera","South Indian rice, Short grain, Ponni","Sona Masuri, Masuri rice",98
+11,Idli Rice,Rice,"Annam, TRS, Heera, Ponni","Short grain, Steamed rice","Idly rice, Arisi",89
+12,Matta Rice,Rice,"Nirapara, Heera, Annam, Double Horse","Red rice, Kerala rice, Palakkadan",Mata rice,86
+13,Poha (Thick),Rice,"TRS, Heera, Annam, Natco","Flattened rice, Beaten rice","Powwa, Aval, Atukulu",100
+14,Poha (Thin),Rice,"TRS, Heera, Annam",Thin flattened rice,Pauwa thin,95
+15,Toor Dal,Lentils & Pulses,"TRS, Heera, Annam, Chitalya, East End","Arhar dal, Split pigeon peas, Yellow lentils","Tur dal, Thoor, Thuvaram",82
+16,Moong Dal (Yellow),Lentils & Pulses,"TRS, Heera, Annam, Chitalya","Split mung beans, Yellow mung","Mong dal, Mung",71
+17,Chana Dal,Lentils & Pulses,"TRS, Heera, Annam, East End","Bengal gram, Split chickpeas","Channa dal, Kadalai paruppu",79
+18,Urad Dal (White Gota),Lentils & Pulses,"TRS, Heera, Annam, Natco","Black gram whole, White urad","Urrad, Urid, Ulutham",84
+19,Masoor Dal (Red),Lentils & Pulses,"TRS, Heera, Annam, East End",Red lentils split,"Masur dal, Mussoor",92
+20,Kala Chana,Lentils & Pulses,"TRS, Heera, Annam",Black chickpeas whole,"Kala channa, Kadala",86
+21,Kabuli Chana,Lentils & Pulses,"TRS, Heera, Annam","Chickpeas, Garbanzo beans","Chole, Channa",70
+22,Rajma (Chitra),Lentils & Pulses,"TRS, Heera, Annam",Speckled kidney beans,Rajmah,70
+23,Moong Whole,Lentils & Pulses,"TRS, Heera, Annam",Green gram whole,Moong sabut,95
+24,Turmeric Powder,Spices & Masalas,"MDH, Everest, TRS, Heera, Catch, Shakti","Haldi, Curcumin","Tumeric, Haldee",81
+25,Red Chili Powder,Spices & Masalas,"MDH, Everest, TRS, Shan, Catch","Mirch, Spicy powder, Lal mirch","Chilly, Chilli",70
+26,Kashmiri Mirch Powder,Spices & Masalas,"Everest, MDH, TRS, Catch","Mild chili, Red color powder",Kashmiri chilli,79
+27,Garam Masala,Spices & Masalas,"MDH, Everest, TRS, Shan, MTR, Badshah","Curry spice mix, Warm spice","Garam masla, Gharam",71
+28,Coriander Powder,Spices & Masalas,"MDH, Everest, TRS, Heera, Catch",Dhaniya powder,"Coriender, Dhanya",93
+29,Cumin Seeds,Spices & Masalas,"TRS, Heera, Annam, MDH",Jeera whole,"Zeera, Jera",84
+30,Mustard Seeds (Black),Spices & Masalas,"TRS, Heera, Annam","Rai, Sarson","Musterd, Rai",95
+31,Sambar Masala,Spices & Masalas,"MTR, Aachi, Everest, Eastern, 777",Sambar powder,"Sambhar, Sambar podi",70
+32,Biryani Masala,Spices & Masalas,"Shan, MDH, Lucky, Everest, Ahmed",Biryani rice spice,"Biriyani, Briyani",71
+33,Kitchen King Masala,Spices & Masalas,"MDH, Everest, Badshah",All purpose spice mix,Kitchen king,83
+34,Chana Masala,Spices & Masalas,"MDH, Everest, Shan, Catch",Chole masala,Channa masala,70
+35,Pav Bhaji Masala,Spices & Masalas,"Everest, MDH, Badshah",Bhaji spice,Paav bhaji,78
+36,Chicken Masala,Spices & Masalas,"MDH, Everest, Shan, Eastern",Poultry spice,Chiken masala,90
+37,Meat Masala,Spices & Masalas,"MDH, Everest, Shan, Eastern",Mutton/Meat spice,Meet masala,93
+38,Aloo Bhujia,Snacks & Sweets,"Haldiram's, Bikano, Heera, Bikaji","Potato sev, Namkeen","Alu bhujia, Haldirams",40
+39,Moong Dal Snack,Snacks & Sweets,"Haldiram's, Bikano, Bikaji",Fried moong lentils,Mung snack,71
+40,Khatta Meetha,Snacks & Sweets,"Haldiram's, Bikano, Heera",Sweet and sour mix,Katta metha,65
+41,Bhujia Sev,Snacks & Sweets,"Haldiram's, Bikaji, Bikano",Fine spicy sev,Bhujiya,60
+42,Parle-G,Snacks & Sweets,Parle,Milk glucose biscuits,"Parleg, Parlay",72
+43,Good Day Cashew,Snacks & Sweets,Britannia,Cashew butter cookies,Gud day,42
+44,Hide & Seek,Snacks & Sweets,Parle,Chocolate chip cookies,Hide n seek,48
+45,Marie Gold,Snacks & Sweets,Britannia,Tea biscuits,Mari gold,55
+46,Bourbon Biscuits,Snacks & Sweets,"Britannia, Parle",Choco cream biscuits,Burbon,46
+47,Gulab Jamun Mix,Snacks & Sweets,"Gits, MTR, Bambino",Milk solid sweet mix,Gulab jamon,73
+48,Soan Papdi,Snacks & Sweets,"Haldiram's, Bikano",Flaky sweet dessert,Son papdi,79
+49,Pure Desi Ghee,"Oils, Ghee & Condiments","Amul, Khanum, KTC, Nanak, Kheer","Clarified butter, Pure ghee","Ghi, Ghe",63
+50,Mustard Oil,"Oils, Ghee & Condiments","Fortune, KTC, P&B, Engine",Sarson ka tel,Musterd oil,54
+51,Coconut Oil (Edible),"Oils, Ghee & Condiments","Parachute, KTC, Heera, KPL Shudhi",Nariyal tel,Cocanut oil,79
+52,Mango Pickle,"Oils, Ghee & Condiments","Mother's Recipe, Priya, Ashoka, Patak's",Aam ka achar,"Mango pikkle, Achar",72
+53,Mixed Pickle,"Oils, Ghee & Condiments","Mother's Recipe, Priya, Ashoka",Mixed veg pickle,Mix achar,67
+54,Ginger Garlic Paste,"Oils, Ghee & Condiments","Mother's Recipe, Priya, TRS, Heera",Adrak lasun paste,GG paste,79
+55,Tamarind Paste,"Oils, Ghee & Condiments","TRS, Tamicon, Heera",Imli paste,Tamrind,49
+56,Paneer,Ready to Eat & Frozen,"Amul, Nanak, Ayurveda, Vadilal, Ashoka",Cottage cheese,"Panir, Panneer",65
+57,Mixed Veg Frozen,Ready to Eat & Frozen,"Vadilal, Ashoka, Daily Delight",Frozen vegetables,Mixed veg,48
+58,Aloo Paratha (Frozen),Ready to Eat & Frozen,"Vadilal, Haldiram's, Ashoka, Shana",Stuffed bread,Parata,69
+59,Dal Makhani (RTE),Ready to Eat & Frozen,"MTR, Ashoka, Kitchens of India",Heat and eat lentils,Daal makhni,59
+60,Idli Batter,Ready to Eat & Frozen,"ID Fresh, Shastha, Annam",Fermented batter,Idly batter,53
+61,Chakki Atta,Staples (Flours & Grains),"Aashirvaad, Pillsbury, Fortune, Elephant, Heera, Annapurna","Wheat flour, Roti flour, Whole wheat","Ashirwad, Aata, Atte",96
+62,Maida,Staples (Flours & Grains),"TRS, Heera, Annam, KTC","All purpose flour, Plain flour","Mayda, Maida flour",99
+63,Besan,Staples (Flours & Grains),"TRS, Heera, Annam, Laxmi, KTC","Gram flour, Chickpea flour","Baisan, Basin, Besun",88
+64,Sooji (Coarse),Staples (Flours & Grains),"TRS, Heera, Annam, Natco","Semolina, Rava, Rawa","Suji, Sheera",92
+65,Sooji (Fine),Staples (Flours & Grains),"TRS, Heera, Annam","Fine semolina, Rava fine","Suji fine, Rawa fine",100
+66,Rice Flour,Staples (Flours & Grains),"Annam, TRS, Heera","Chawal ka atta, Rice powder",Arisi maavu,87
+67,Bajra Flour,Staples (Flours & Grains),"TRS, Heera, Annam",Pearl millet flour,Bajari,94
+68,Jowar Flour,Staples (Flours & Grains),"TRS, Heera, Annam",Sorghum flour,Jovar,90
+69,Basmati Rice (Extra Long),Rice,"Tilda, India Gate, Daawat, Kohinoor, Akash, Laila","Long grain rice, Biryani rice, Aged rice","Basmathi, Bismati, Chawal",92
+70,Sona Masoori Rice,Rice,"India Gate, 9Grains, Annam, Royal, TRS, Heera","South Indian rice, Short grain, Ponni","Sona Masuri, Masuri rice",97
+71,Idli Rice,Rice,"Annam, TRS, Heera, Ponni","Short grain, Steamed rice","Idly rice, Arisi",86
+72,Matta Rice,Rice,"Nirapara, Heera, Annam, Double Horse","Red rice, Kerala rice, Palakkadan",Mata rice,100
+73,Poha (Thick),Rice,"TRS, Heera, Annam, Natco","Flattened rice, Beaten rice","Powwa, Aval, Atukulu",92
+74,Poha (Thin),Rice,"TRS, Heera, Annam",Thin flattened rice,Pauwa thin,86
+75,Toor Dal,Lentils & Pulses,"TRS, Heera, Annam, Chitalya, East End","Arhar dal, Split pigeon peas, Yellow lentils","Tur dal, Thoor, Thuvaram",74
+76,Moong Dal (Yellow),Lentils & Pulses,"TRS, Heera, Annam, Chitalya","Split mung beans, Yellow mung","Mong dal, Mung",88
+77,Chana Dal,Lentils & Pulses,"TRS, Heera, Annam, East End","Bengal gram, Split chickpeas","Channa dal, Kadalai paruppu",77
+78,Urad Dal (White Gota),Lentils & Pulses,"TRS, Heera, Annam, Natco","Black gram whole, White urad","Urrad, Urid, Ulutham",79
+79,Masoor Dal (Red),Lentils & Pulses,"TRS, Heera, Annam, East End",Red lentils split,"Masur dal, Mussoor",94
+80,Kala Chana,Lentils & Pulses,"TRS, Heera, Annam",Black chickpeas whole,"Kala channa, Kadala",87
+81,Kabuli Chana,Lentils & Pulses,"TRS, Heera, Annam","Chickpeas, Garbanzo beans","Chole, Channa",79
+82,Rajma (Chitra),Lentils & Pulses,"TRS, Heera, Annam",Speckled kidney beans,Rajmah,90
+83,Moong Whole,Lentils & Pulses,"TRS, Heera, Annam",Green gram whole,Moong sabut,82
+84,Turmeric Powder,Spices & Masalas,"MDH, Everest, TRS, Heera, Catch, Shakti","Haldi, Curcumin","Tumeric, Haldee",72
+85,Red Chili Powder,Spices & Masalas,"MDH, Everest, TRS, Shan, Catch","Mirch, Spicy powder, Lal mirch","Chilly, Chilli",73
+86,Kashmiri Mirch Powder,Spices & Masalas,"Everest, MDH, TRS, Catch","Mild chili, Red color powder",Kashmiri chilli,79
+87,Garam Masala,Spices & Masalas,"MDH, Everest, TRS, Shan, MTR, Badshah","Curry spice mix, Warm spice","Garam masla, Gharam",86
+88,Coriander Powder,Spices & Masalas,"MDH, Everest, TRS, Heera, Catch",Dhaniya powder,"Coriender, Dhanya",82
+89,Cumin Seeds,Spices & Masalas,"TRS, Heera, Annam, MDH",Jeera whole,"Zeera, Jera",76
+90,Mustard Seeds (Black),Spices & Masalas,"TRS, Heera, Annam","Rai, Sarson","Musterd, Rai",70
+91,Sambar Masala,Spices & Masalas,"MTR, Aachi, Everest, Eastern, 777",Sambar powder,"Sambhar, Sambar podi",76
+92,Biryani Masala,Spices & Masalas,"Shan, MDH, Lucky, Everest, Ahmed",Biryani rice spice,"Biriyani, Briyani",83
+93,Kitchen King Masala,Spices & Masalas,"MDH, Everest, Badshah",All purpose spice mix,Kitchen king,83
+94,Chana Masala,Spices & Masalas,"MDH, Everest, Shan, Catch",Chole masala,Channa masala,89
+95,Pav Bhaji Masala,Spices & Masalas,"Everest, MDH, Badshah",Bhaji spice,Paav bhaji,71
+96,Chicken Masala,Spices & Masalas,"MDH, Everest, Shan, Eastern",Poultry spice,Chiken masala,91
+97,Meat Masala,Spices & Masalas,"MDH, Everest, Shan, Eastern",Mutton/Meat spice,Meet masala,72
+98,Aloo Bhujia,Snacks & Sweets,"Haldiram's, Bikano, Heera, Bikaji","Potato sev, Namkeen","Alu bhujia, Haldirams",42
+99,Moong Dal Snack,Snacks & Sweets,"Haldiram's, Bikano, Bikaji",Fried moong lentils,Mung snack,40
+100,Khatta Meetha,Snacks & Sweets,"Haldiram's, Bikano, Heera",Sweet and sour mix,Katta metha,71
+101,Bhujia Sev,Snacks & Sweets,"Haldiram's, Bikaji, Bikano",Fine spicy sev,Bhujiya,73
+102,Parle-G,Snacks & Sweets,Parle,Milk glucose biscuits,"Parleg, Parlay",74
+103,Good Day Cashew,Snacks & Sweets,Britannia,Cashew butter cookies,Gud day,61
+104,Hide & Seek,Snacks & Sweets,Parle,Chocolate chip cookies,Hide n seek,64
+105,Marie Gold,Snacks & Sweets,Britannia,Tea biscuits,Mari gold,48
+106,Bourbon Biscuits,Snacks & Sweets,"Britannia, Parle",Choco cream biscuits,Burbon,62
+107,Gulab Jamun Mix,Snacks & Sweets,"Gits, MTR, Bambino",Milk solid sweet mix,Gulab jamon,69
+108,Soan Papdi,Snacks & Sweets,"Haldiram's, Bikano",Flaky sweet dessert,Son papdi,41
+109,Pure Desi Ghee,"Oils, Ghee & Condiments","Amul, Khanum, KTC, Nanak, Kheer","Clarified butter, Pure ghee","Ghi, Ghe",56
+110,Mustard Oil,"Oils, Ghee & Condiments","Fortune, KTC, P&B, Engine",Sarson ka tel,Musterd oil,46
+111,Coconut Oil (Edible),"Oils, Ghee & Condiments","Parachute, KTC, Heera, KPL Shudhi",Nariyal tel,Cocanut oil,56
+112,Mango Pickle,"Oils, Ghee & Condiments","Mother's Recipe, Priya, Ashoka, Patak's",Aam ka achar,"Mango pikkle, Achar",51
+113,Mixed Pickle,"Oils, Ghee & Condiments","Mother's Recipe, Priya, Ashoka",Mixed veg pickle,Mix achar,75
+114,Ginger Garlic Paste,"Oils, Ghee & Condiments","Mother's Recipe, Priya, TRS, Heera",Adrak lasun paste,GG paste,75
+115,Tamarind Paste,"Oils, Ghee & Condiments","TRS, Tamicon, Heera",Imli paste,Tamrind,71
+116,Paneer,Ready to Eat & Frozen,"Amul, Nanak, Ayurveda, Vadilal, Ashoka",Cottage cheese,"Panir, Panneer",40
+117,Mixed Veg Frozen,Ready to Eat & Frozen,"Vadilal, Ashoka, Daily Delight",Frozen vegetables,Mixed veg,75
+118,Aloo Paratha (Frozen),Ready to Eat & Frozen,"Vadilal, Haldiram's, Ashoka, Shana",Stuffed bread,Parata,58
+119,Dal Makhani (RTE),Ready to Eat & Frozen,"MTR, Ashoka, Kitchens of India",Heat and eat lentils,Daal makhni,60
+120,Idli Batter,Ready to Eat & Frozen,"ID Fresh, Shastha, Annam",Fermented batter,Idly batter,73
+121,Chakki Atta,Staples (Flours & Grains),"Aashirvaad, Pillsbury, Fortune, Elephant, Heera, Annapurna","Wheat flour, Roti flour, Whole wheat","Ashirwad, Aata, Atte",85
+122,Maida,Staples (Flours & Grains),"TRS, Heera, Annam, KTC","All purpose flour, Plain flour","Mayda, Maida flour",89
+123,Besan,Staples (Flours & Grains),"TRS, Heera, Annam, Laxmi, KTC","Gram flour, Chickpea flour","Baisan, Basin, Besun",100
+124,Sooji (Coarse),Staples (Flours & Grains),"TRS, Heera, Annam, Natco","Semolina, Rava, Rawa","Suji, Sheera",97
+125,Sooji (Fine),Staples (Flours & Grains),"TRS, Heera, Annam","Fine semolina, Rava fine","Suji fine, Rawa fine",95
+126,Rice Flour,Staples (Flours & Grains),"Annam, TRS, Heera","Chawal ka atta, Rice powder",Arisi maavu,94
+127,Bajra Flour,Staples (Flours & Grains),"TRS, Heera, Annam",Pearl millet flour,Bajari,93
+128,Jowar Flour,Staples (Flours & Grains),"TRS, Heera, Annam",Sorghum flour,Jovar,99
+129,Basmati Rice (Extra Long),Rice,"Tilda, India Gate, Daawat, Kohinoor, Akash, Laila","Long grain rice, Biryani rice, Aged rice","Basmathi, Bismati, Chawal",96
+130,Sona Masoori Rice,Rice,"India Gate, 9Grains, Annam, Royal, TRS, Heera","South Indian rice, Short grain, Ponni","Sona Masuri, Masuri rice",85
+131,Idli Rice,Rice,"Annam, TRS, Heera, Ponni","Short grain, Steamed rice","Idly rice, Arisi",95
+132,Matta Rice,Rice,"Nirapara, Heera, Annam, Double Horse","Red rice, Kerala rice, Palakkadan",Mata rice,90
+133,Poha (Thick),Rice,"TRS, Heera, Annam, Natco","Flattened rice, Beaten rice","Powwa, Aval, Atukulu",97
+134,Poha (Thin),Rice,"TRS, Heera, Annam",Thin flattened rice,Pauwa thin,88
+135,Toor Dal,Lentils & Pulses,"TRS, Heera, Annam, Chitalya, East End","Arhar dal, Split pigeon peas, Yellow lentils","Tur dal, Thoor, Thuvaram",93
+136,Moong Dal (Yellow),Lentils & Pulses,"TRS, Heera, Annam, Chitalya","Split mung beans, Yellow mung","Mong dal, Mung",94
+137,Chana Dal,Lentils & Pulses,"TRS, Heera, Annam, East End","Bengal gram, Split chickpeas","Channa dal, Kadalai paruppu",90
+138,Urad Dal (White Gota),Lentils & Pulses,"TRS, Heera, Annam, Natco","Black gram whole, White urad","Urrad, Urid, Ulutham",78
+139,Masoor Dal (Red),Lentils & Pulses,"TRS, Heera, Annam, East End",Red lentils split,"Masur dal, Mussoor",87
+140,Kala Chana,Lentils & Pulses,"TRS, Heera, Annam",Black chickpeas whole,"Kala channa, Kadala",84
+141,Kabuli Chana,Lentils & Pulses,"TRS, Heera, Annam","Chickpeas, Garbanzo beans","Chole, Channa",78
+142,Rajma (Chitra),Lentils & Pulses,"TRS, Heera, Annam",Speckled kidney beans,Rajmah,85
+143,Moong Whole,Lentils & Pulses,"TRS, Heera, Annam",Green gram whole,Moong sabut,72
+144,Turmeric Powder,Spices & Masalas,"MDH, Everest, TRS, Heera, Catch, Shakti","Haldi, Curcumin","Tumeric, Haldee",86
+145,Red Chili Powder,Spices & Masalas,"MDH, Everest, TRS, Shan, Catch","Mirch, Spicy powder, Lal mirch","Chilly, Chilli",84
+146,Kashmiri Mirch Powder,Spices & Masalas,"Everest, MDH, TRS, Catch","Mild chili, Red color powder",Kashmiri chilli,84
+147,Garam Masala,Spices & Masalas,"MDH, Everest, TRS, Shan, MTR, Badshah","Curry spice mix, Warm spice","Garam masla, Gharam",76
+148,Coriander Powder,Spices & Masalas,"MDH, Everest, TRS, Heera, Catch",Dhaniya powder,"Coriender, Dhanya",82
+149,Cumin Seeds,Spices & Masalas,"TRS, Heera, Annam, MDH",Jeera whole,"Zeera, Jera",82
+150,Mustard Seeds (Black),Spices & Masalas,"TRS, Heera, Annam","Rai, Sarson","Musterd, Rai",95
+151,Sambar Masala,Spices & Masalas,"MTR, Aachi, Everest, Eastern, 777",Sambar powder,"Sambhar, Sambar podi",79
+152,Biryani Masala,Spices & Masalas,"Shan, MDH, Lucky, Everest, Ahmed",Biryani rice spice,"Biriyani, Briyani",93
+153,Kitchen King Masala,Spices & Masalas,"MDH, Everest, Badshah",All purpose spice mix,Kitchen king,70
+154,Chana Masala,Spices & Masalas,"MDH, Everest, Shan, Catch",Chole masala,Channa masala,72
+155,Pav Bhaji Masala,Spices & Masalas,"Everest, MDH, Badshah",Bhaji spice,Paav bhaji,91
+156,Chicken Masala,Spices & Masalas,"MDH, Everest, Shan, Eastern",Poultry spice,Chiken masala,86
+157,Meat Masala,Spices & Masalas,"MDH, Everest, Shan, Eastern",Mutton/Meat spice,Meet masala,88
+158,Aloo Bhujia,Snacks & Sweets,"Haldiram's, Bikano, Heera, Bikaji","Potato sev, Namkeen","Alu bhujia, Haldirams",77
+159,Moong Dal Snack,Snacks & Sweets,"Haldiram's, Bikano, Bikaji",Fried moong lentils,Mung snack,54
+160,Khatta Meetha,Snacks & Sweets,"Haldiram's, Bikano, Heera",Sweet and sour mix,Katta metha,82
+161,Bhujia Sev,Snacks & Sweets,"Haldiram's, Bikaji, Bikano",Fine spicy sev,Bhujiya,63
+162,Parle-G,Snacks & Sweets,Parle,Milk glucose biscuits,"Parleg, Parlay",81
+163,Good Day Cashew,Snacks & Sweets,Britannia,Cashew butter cookies,Gud day,47
+164,Hide & Seek,Snacks & Sweets,Parle,Chocolate chip cookies,Hide n seek,59
+165,Marie Gold,Snacks & Sweets,Britannia,Tea biscuits,Mari gold,57
+166,Bourbon Biscuits,Snacks & Sweets,"Britannia, Parle",Choco cream biscuits,Burbon,70
+167,Gulab Jamun Mix,Snacks & Sweets,"Gits, MTR, Bambino",Milk solid sweet mix,Gulab jamon,46
+168,Soan Papdi,Snacks & Sweets,"Haldiram's, Bikano",Flaky sweet dessert,Son papdi,66
+169,Pure Desi Ghee,"Oils, Ghee & Condiments","Amul, Khanum, KTC, Nanak, Kheer","Clarified butter, Pure ghee","Ghi, Ghe",53
+170,Mustard Oil,"Oils, Ghee & Condiments","Fortune, KTC, P&B, Engine",Sarson ka tel,Musterd oil,73
+171,Coconut Oil (Edible),"Oils, Ghee & Condiments","Parachute, KTC, Heera, KPL Shudhi",Nariyal tel,Cocanut oil,69
+172,Mango Pickle,"Oils, Ghee & Condiments","Mother's Recipe, Priya, Ashoka, Patak's",Aam ka achar,"Mango pikkle, Achar",68
+173,Mixed Pickle,"Oils, Ghee & Condiments","Mother's Recipe, Priya, Ashoka",Mixed veg pickle,Mix achar,73
+174,Ginger Garlic Paste,"Oils, Ghee & Condiments","Mother's Recipe, Priya, TRS, Heera",Adrak lasun paste,GG paste,73
+175,Tamarind Paste,"Oils, Ghee & Condiments","TRS, Tamicon, Heera",Imli paste,Tamrind,73
+176,Paneer,Ready to Eat & Frozen,"Amul, Nanak, Ayurveda, Vadilal, Ashoka",Cottage cheese,"Panir, Panneer",73
+177,Mixed Veg Frozen,Ready to Eat & Frozen,"Vadilal, Ashoka, Daily Delight",Frozen vegetables,Mixed veg,53
+178,Aloo Paratha (Frozen),Ready to Eat & Frozen,"Vadilal, Haldiram's, Ashoka, Shana",Stuffed bread,Parata,56
+179,Dal Makhani (RTE),Ready to Eat & Frozen,"MTR, Ashoka, Kitchens of India",Heat and eat lentils,Daal makhni,79
+180,Idli Batter,Ready to Eat & Frozen,"ID Fresh, Shastha, Annam",Fermented batter,Idly batter,43
+181,Chakki Atta,Staples (Flours & Grains),"Aashirvaad, Pillsbury, Fortune, Elephant, Heera, Annapurna","Wheat flour, Roti flour, Whole wheat","Ashirwad, Aata, Atte",92
+182,Maida,Staples (Flours & Grains),"TRS, Heera, Annam, KTC","All purpose flour, Plain flour","Mayda, Maida flour",95
+183,Besan,Staples (Flours & Grains),"TRS, Heera, Annam, Laxmi, KTC","Gram flour, Chickpea flour","Baisan, Basin, Besun",89
+184,Sooji (Coarse),Staples (Flours & Grains),"TRS, Heera, Annam, Natco","Semolina, Rava, Rawa","Suji, Sheera",95
+185,Sooji (Fine),Staples (Flours & Grains),"TRS, Heera, Annam","Fine semolina, Rava fine","Suji fine, Rawa fine",100
+186,Rice Flour,Staples (Flours & Grains),"Annam, TRS, Heera","Chawal ka atta, Rice powder",Arisi maavu,99
+187,Bajra Flour,Staples (Flours & Grains),"TRS, Heera, Annam",Pearl millet flour,Bajari,92
+188,Jowar Flour,Staples (Flours & Grains),"TRS, Heera, Annam",Sorghum flour,Jovar,100
+189,Basmati Rice (Extra Long),Rice,"Tilda, India Gate, Daawat, Kohinoor, Akash, Laila","Long grain rice, Biryani rice, Aged rice","Basmathi, Bismati, Chawal",100
+190,Sona Masoori Rice,Rice,"India Gate, 9Grains, Annam, Royal, TRS, Heera","South Indian rice, Short grain, Ponni","Sona Masuri, Masuri rice",93
+191,Idli Rice,Rice,"Annam, TRS, Heera, Ponni","Short grain, Steamed rice","Idly rice, Arisi",89
+192,Matta Rice,Rice,"Nirapara, Heera, Annam, Double Horse","Red rice, Kerala rice, Palakkadan",Mata rice,98
+193,Poha (Thick),Rice,"TRS, Heera, Annam, Natco","Flattened rice, Beaten rice","Powwa, Aval, Atukulu",97
+194,Poha (Thin),Rice,"TRS, Heera, Annam",Thin flattened rice,Pauwa thin,100
+195,Toor Dal,Lentils & Pulses,"TRS, Heera, Annam, Chitalya, East End","Arhar dal, Split pigeon peas, Yellow lentils","Tur dal, Thoor, Thuvaram",72
+196,Moong Dal (Yellow),Lentils & Pulses,"TRS, Heera, Annam, Chitalya","Split mung beans, Yellow mung","Mong dal, Mung",70
+197,Chana Dal,Lentils & Pulses,"TRS, Heera, Annam, East End","Bengal gram, Split chickpeas","Channa dal, Kadalai paruppu",70
+198,Urad Dal (White Gota),Lentils & Pulses,"TRS, Heera, Annam, Natco","Black gram whole, White urad","Urrad, Urid, Ulutham",89
+199,Masoor Dal (Red),Lentils & Pulses,"TRS, Heera, Annam, East End",Red lentils split,"Masur dal, Mussoor",72
+200,Kala Chana,Lentils & Pulses,"TRS, Heera, Annam",Black chickpeas whole,"Kala channa, Kadala",89
+201,Kabuli Chana,Lentils & Pulses,"TRS, Heera, Annam","Chickpeas, Garbanzo beans","Chole, Channa",71
+202,Rajma (Chitra),Lentils & Pulses,"TRS, Heera, Annam",Speckled kidney beans,Rajmah,92
+203,Moong Whole,Lentils & Pulses,"TRS, Heera, Annam",Green gram whole,Moong sabut,88
+204,Turmeric Powder,Spices & Masalas,"MDH, Everest, TRS, Heera, Catch, Shakti","Haldi, Curcumin","Tumeric, Haldee",75
+205,Red Chili Powder,Spices & Masalas,"MDH, Everest, TRS, Shan, Catch","Mirch, Spicy powder, Lal mirch","Chilly, Chilli",79
+206,Kashmiri Mirch Powder,Spices & Masalas,"Everest, MDH, TRS, Catch","Mild chili, Red color powder",Kashmiri chilli,91
+207,Garam Masala,Spices & Masalas,"MDH, Everest, TRS, Shan, MTR, Badshah","Curry spice mix, Warm spice","Garam masla, Gharam",86
+208,Coriander Powder,Spices & Masalas,"MDH, Everest, TRS, Heera, Catch",Dhaniya powder,"Coriender, Dhanya",90
+209,Cumin Seeds,Spices & Masalas,"TRS, Heera, Annam, MDH",Jeera whole,"Zeera, Jera",93
+210,Mustard Seeds (Black),Spices & Masalas,"TRS, Heera, Annam","Rai, Sarson","Musterd, Rai",77
+211,Sambar Masala,Spices & Masalas,"MTR, Aachi, Everest, Eastern, 777",Sambar powder,"Sambhar, Sambar podi",88
+212,Biryani Masala,Spices & Masalas,"Shan, MDH, Lucky, Everest, Ahmed",Biryani rice spice,"Biriyani, Briyani",72
+213,Kitchen King Masala,Spices & Masalas,"MDH, Everest, Badshah",All purpose spice mix,Kitchen king,82
+214,Chana Masala,Spices & Masalas,"MDH, Everest, Shan, Catch",Chole masala,Channa masala,71
+215,Pav Bhaji Masala,Spices & Masalas,"Everest, MDH, Badshah",Bhaji spice,Paav bhaji,84
+216,Chicken Masala,Spices & Masalas,"MDH, Everest, Shan, Eastern",Poultry spice,Chiken masala,93
+217,Meat Masala,Spices & Masalas,"MDH, Everest, Shan, Eastern",Mutton/Meat spice,Meet masala,88
+218,Aloo Bhujia,Snacks & Sweets,"Haldiram's, Bikano, Heera, Bikaji","Potato sev, Namkeen","Alu bhujia, Haldirams",60
+219,Moong Dal Snack,Snacks & Sweets,"Haldiram's, Bikano, Bikaji",Fried moong lentils,Mung snack,46
+220,Khatta Meetha,Snacks & Sweets,"Haldiram's, Bikano, Heera",Sweet and sour mix,Katta metha,51
+221,Bhujia Sev,Snacks & Sweets,"Haldiram's, Bikaji, Bikano",Fine spicy sev,Bhujiya,67
+222,Parle-G,Snacks & Sweets,Parle,Milk glucose biscuits,"Parleg, Parlay",75
+223,Good Day Cashew,Snacks & Sweets,Britannia,Cashew butter cookies,Gud day,75
+224,Hide & Seek,Snacks & Sweets,Parle,Chocolate chip cookies,Hide n seek,84
+225,Marie Gold,Snacks & Sweets,Britannia,Tea biscuits,Mari gold,81
+226,Bourbon Biscuits,Snacks & Sweets,"Britannia, Parle",Choco cream biscuits,Burbon,78
+227,Gulab Jamun Mix,Snacks & Sweets,"Gits, MTR, Bambino",Milk solid sweet mix,Gulab jamon,84
+228,Soan Papdi,Snacks & Sweets,"Haldiram's, Bikano",Flaky sweet dessert,Son papdi,41
+229,Pure Desi Ghee,"Oils, Ghee & Condiments","Amul, Khanum, KTC, Nanak, Kheer","Clarified butter, Pure ghee","Ghi, Ghe",61
+230,Mustard Oil,"Oils, Ghee & Condiments","Fortune, KTC, P&B, Engine",Sarson ka tel,Musterd oil,73
+231,Coconut Oil (Edible),"Oils, Ghee & Condiments","Parachute, KTC, Heera, KPL Shudhi",Nariyal tel,Cocanut oil,59
+232,Mango Pickle,"Oils, Ghee & Condiments","Mother's Recipe, Priya, Ashoka, Patak's",Aam ka achar,"Mango pikkle, Achar",78
+233,Mixed Pickle,"Oils, Ghee & Condiments","Mother's Recipe, Priya, Ashoka",Mixed veg pickle,Mix achar,51
+234,Ginger Garlic Paste,"Oils, Ghee & Condiments","Mother's Recipe, Priya, TRS, Heera",Adrak lasun paste,GG paste,42
+235,Tamarind Paste,"Oils, Ghee & Condiments","TRS, Tamicon, Heera",Imli paste,Tamrind,59
+236,Paneer,Ready to Eat & Frozen,"Amul, Nanak, Ayurveda, Vadilal, Ashoka",Cottage cheese,"Panir, Panneer",54
+237,Mixed Veg Frozen,Ready to Eat & Frozen,"Vadilal, Ashoka, Daily Delight",Frozen vegetables,Mixed veg,75
+238,Aloo Paratha (Frozen),Ready to Eat & Frozen,"Vadilal, Haldiram's, Ashoka, Shana",Stuffed bread,Parata,41
+239,Dal Makhani (RTE),Ready to Eat & Frozen,"MTR, Ashoka, Kitchens of India",Heat and eat lentils,Daal makhni,56
+240,Idli Batter,Ready to Eat & Frozen,"ID Fresh, Shastha, Annam",Fermented batter,Idly batter,84
+241,Chakki Atta,Staples (Flours & Grains),"Aashirvaad, Pillsbury, Fortune, Elephant, Heera, Annapurna","Wheat flour, Roti flour, Whole wheat","Ashirwad, Aata, Atte",94
+242,Maida,Staples (Flours & Grains),"TRS, Heera, Annam, KTC","All purpose flour, Plain flour","Mayda, Maida flour",96
+243,Besan,Staples (Flours & Grains),"TRS, Heera, Annam, Laxmi, KTC","Gram flour, Chickpea flour","Baisan, Basin, Besun",94
+244,Sooji (Coarse),Staples (Flours & Grains),"TRS, Heera, Annam, Natco","Semolina, Rava, Rawa","Suji, Sheera",97
+245,Sooji (Fine),Staples (Flours & Grains),"TRS, Heera, Annam","Fine semolina, Rava fine","Suji fine, Rawa fine",97
+246,Rice Flour,Staples (Flours & Grains),"Annam, TRS, Heera","Chawal ka atta, Rice powder",Arisi maavu,91
+247,Bajra Flour,Staples (Flours & Grains),"TRS, Heera, Annam",Pearl millet flour,Bajari,93
+248,Jowar Flour,Staples (Flours & Grains),"TRS, Heera, Annam",Sorghum flour,Jovar,91
+249,Basmati Rice (Extra Long),Rice,"Tilda, India Gate, Daawat, Kohinoor, Akash, Laila","Long grain rice, Biryani rice, Aged rice","Basmathi, Bismati, Chawal",91
+250,Sona Masoori Rice,Rice,"India Gate, 9Grains, Annam, Royal, TRS, Heera","South Indian rice, Short grain, Ponni","Sona Masuri, Masuri rice",87
+251,Idli Rice,Rice,"Annam, TRS, Heera, Ponni","Short grain, Steamed rice","Idly rice, Arisi",89
+252,Matta Rice,Rice,"Nirapara, Heera, Annam, Double Horse","Red rice, Kerala rice, Palakkadan",Mata rice,85
+253,Poha (Thick),Rice,"TRS, Heera, Annam, Natco","Flattened rice, Beaten rice","Powwa, Aval, Atukulu",95
+254,Poha (Thin),Rice,"TRS, Heera, Annam",Thin flattened rice,Pauwa thin,90
+255,Toor Dal,Lentils & Pulses,"TRS, Heera, Annam, Chitalya, East End","Arhar dal, Split pigeon peas, Yellow lentils","Tur dal, Thoor, Thuvaram",80
+256,Moong Dal (Yellow),Lentils & Pulses,"TRS, Heera, Annam, Chitalya","Split mung beans, Yellow mung","Mong dal, Mung",85
+257,Chana Dal,Lentils & Pulses,"TRS, Heera, Annam, East End","Bengal gram, Split chickpeas","Channa dal, Kadalai paruppu",94
+258,Urad Dal (White Gota),Lentils & Pulses,"TRS, Heera, Annam, Natco","Black gram whole, White urad","Urrad, Urid, Ulutham",73
+259,Masoor Dal (Red),Lentils & Pulses,"TRS, Heera, Annam, East End",Red lentils split,"Masur dal, Mussoor",70
+260,Kala Chana,Lentils & Pulses,"TRS, Heera, Annam",Black chickpeas whole,"Kala channa, Kadala",74
+261,Kabuli Chana,Lentils & Pulses,"TRS, Heera, Annam","Chickpeas, Garbanzo beans","Chole, Channa",78
+262,Rajma (Chitra),Lentils & Pulses,"TRS, Heera, Annam",Speckled kidney beans,Rajmah,90
+263,Moong Whole,Lentils & Pulses,"TRS, Heera, Annam",Green gram whole,Moong sabut,74
+264,Turmeric Powder,Spices & Masalas,"MDH, Everest, TRS, Heera, Catch, Shakti","Haldi, Curcumin","Tumeric, Haldee",74
+265,Red Chili Powder,Spices & Masalas,"MDH, Everest, TRS, Shan, Catch","Mirch, Spicy powder, Lal mirch","Chilly, Chilli",71
+266,Kashmiri Mirch Powder,Spices & Masalas,"Everest, MDH, TRS, Catch","Mild chili, Red color powder",Kashmiri chilli,95
+267,Garam Masala,Spices & Masalas,"MDH, Everest, TRS, Shan, MTR, Badshah","Curry spice mix, Warm spice","Garam masla, Gharam",88
+268,Coriander Powder,Spices & Masalas,"MDH, Everest, TRS, Heera, Catch",Dhaniya powder,"Coriender, Dhanya",86
+269,Cumin Seeds,Spices & Masalas,"TRS, Heera, Annam, MDH",Jeera whole,"Zeera, Jera",82
+270,Mustard Seeds (Black),Spices & Masalas,"TRS, Heera, Annam","Rai, Sarson","Musterd, Rai",80
+271,Sambar Masala,Spices & Masalas,"MTR, Aachi, Everest, Eastern, 777",Sambar powder,"Sambhar, Sambar podi",76
+272,Biryani Masala,Spices & Masalas,"Shan, MDH, Lucky, Everest, Ahmed",Biryani rice spice,"Biriyani, Briyani",79
+273,Kitchen King Masala,Spices & Masalas,"MDH, Everest, Badshah",All purpose spice mix,Kitchen king,74
+274,Chana Masala,Spices & Masalas,"MDH, Everest, Shan, Catch",Chole masala,Channa masala,85
+275,Pav Bhaji Masala,Spices & Masalas,"Everest, MDH, Badshah",Bhaji spice,Paav bhaji,83
+276,Chicken Masala,Spices & Masalas,"MDH, Everest, Shan, Eastern",Poultry spice,Chiken masala,70
+277,Meat Masala,Spices & Masalas,"MDH, Everest, Shan, Eastern",Mutton/Meat spice,Meet masala,92
+278,Aloo Bhujia,Snacks & Sweets,"Haldiram's, Bikano, Heera, Bikaji","Potato sev, Namkeen","Alu bhujia, Haldirams",48
+279,Moong Dal Snack,Snacks & Sweets,"Haldiram's, Bikano, Bikaji",Fried moong lentils,Mung snack,40
+280,Khatta Meetha,Snacks & Sweets,"Haldiram's, Bikano, Heera",Sweet and sour mix,Katta metha,61
+281,Bhujia Sev,Snacks & Sweets,"Haldiram's, Bikaji, Bikano",Fine spicy sev,Bhujiya,66
+282,Parle-G,Snacks & Sweets,Parle,Milk glucose biscuits,"Parleg, Parlay",81
+283,Good Day Cashew,Snacks & Sweets,Britannia,Cashew butter cookies,Gud day,42
+284,Hide & Seek,Snacks & Sweets,Parle,Chocolate chip cookies,Hide n seek,63
+285,Marie Gold,Snacks & Sweets,Britannia,Tea biscuits,Mari gold,66
+286,Bourbon Biscuits,Snacks & Sweets,"Britannia, Parle",Choco cream biscuits,Burbon,69
+287,Gulab Jamun Mix,Snacks & Sweets,"Gits, MTR, Bambino",Milk solid sweet mix,Gulab jamon,84
+288,Soan Papdi,Snacks & Sweets,"Haldiram's, Bikano",Flaky sweet dessert,Son papdi,43
+289,Pure Desi Ghee,"Oils, Ghee & Condiments","Amul, Khanum, KTC, Nanak, Kheer","Clarified butter, Pure ghee","Ghi, Ghe",71
+290,Mustard Oil,"Oils, Ghee & Condiments","Fortune, KTC, P&B, Engine",Sarson ka tel,Musterd oil,57
+291,Coconut Oil (Edible),"Oils, Ghee & Condiments","Parachute, KTC, Heera, KPL Shudhi",Nariyal tel,Cocanut oil,73
+292,Mango Pickle,"Oils, Ghee & Condiments","Mother's Recipe, Priya, Ashoka, Patak's",Aam ka achar,"Mango pikkle, Achar",48
+293,Mixed Pickle,"Oils, Ghee & Condiments","Mother's Recipe, Priya, Ashoka",Mixed veg pickle,Mix achar,79
+294,Ginger Garlic Paste,"Oils, Ghee & Condiments","Mother's Recipe, Priya, TRS, Heera",Adrak lasun paste,GG paste,85
+295,Tamarind Paste,"Oils, Ghee & Condiments","TRS, Tamicon, Heera",Imli paste,Tamrind,52
+296,Paneer,Ready to Eat & Frozen,"Amul, Nanak, Ayurveda, Vadilal, Ashoka",Cottage cheese,"Panir, Panneer",78
+297,Mixed Veg Frozen,Ready to Eat & Frozen,"Vadilal, Ashoka, Daily Delight",Frozen vegetables,Mixed veg,50
+298,Aloo Paratha (Frozen),Ready to Eat & Frozen,"Vadilal, Haldiram's, Ashoka, Shana",Stuffed bread,Parata,63
+299,Dal Makhani (RTE),Ready to Eat & Frozen,"MTR, Ashoka, Kitchens of India",Heat and eat lentils,Daal makhni,74
+300,Idli Batter,Ready to Eat & Frozen,"ID Fresh, Shastha, Annam",Fermented batter,Idly batter,67
+301,Chakki Atta,Staples (Flours & Grains),"Aashirvaad, Pillsbury, Fortune, Elephant, Heera, Annapurna","Wheat flour, Roti flour, Whole wheat","Ashirwad, Aata, Atte",91
+302,Maida,Staples (Flours & Grains),"TRS, Heera, Annam, KTC","All purpose flour, Plain flour","Mayda, Maida flour",85
+303,Besan,Staples (Flours & Grains),"TRS, Heera, Annam, Laxmi, KTC","Gram flour, Chickpea flour","Baisan, Basin, Besun",94
+304,Sooji (Coarse),Staples (Flours & Grains),"TRS, Heera, Annam, Natco","Semolina, Rava, Rawa","Suji, Sheera",93
+305,Sooji (Fine),Staples (Flours & Grains),"TRS, Heera, Annam","Fine semolina, Rava fine","Suji fine, Rawa fine",92
+306,Rice Flour,Staples (Flours & Grains),"Annam, TRS, Heera","Chawal ka atta, Rice powder",Arisi maavu,95
+307,Bajra Flour,Staples (Flours & Grains),"TRS, Heera, Annam",Pearl millet flour,Bajari,94
+308,Jowar Flour,Staples (Flours & Grains),"TRS, Heera, Annam",Sorghum flour,Jovar,86
+309,Basmati Rice (Extra Long),Rice,"Tilda, India Gate, Daawat, Kohinoor, Akash, Laila","Long grain rice, Biryani rice, Aged rice","Basmathi, Bismati, Chawal",94
+310,Sona Masoori Rice,Rice,"India Gate, 9Grains, Annam, Royal, TRS, Heera","South Indian rice, Short grain, Ponni","Sona Masuri, Masuri rice",91
+311,Idli Rice,Rice,"Annam, TRS, Heera, Ponni","Short grain, Steamed rice","Idly rice, Arisi",95
+312,Matta Rice,Rice,"Nirapara, Heera, Annam, Double Horse","Red rice, Kerala rice, Palakkadan",Mata rice,91
+313,Poha (Thick),Rice,"TRS, Heera, Annam, Natco","Flattened rice, Beaten rice","Powwa, Aval, Atukulu",93
+314,Poha (Thin),Rice,"TRS, Heera, Annam",Thin flattened rice,Pauwa thin,96
+315,Toor Dal,Lentils & Pulses,"TRS, Heera, Annam, Chitalya, East End","Arhar dal, Split pigeon peas, Yellow lentils","Tur dal, Thoor, Thuvaram",77
+316,Moong Dal (Yellow),Lentils & Pulses,"TRS, Heera, Annam, Chitalya","Split mung beans, Yellow mung","Mong dal, Mung",77
+317,Chana Dal,Lentils & Pulses,"TRS, Heera, Annam, East End","Bengal gram, Split chickpeas","Channa dal, Kadalai paruppu",85
+318,Urad Dal (White Gota),Lentils & Pulses,"TRS, Heera, Annam, Natco","Black gram whole, White urad","Urrad, Urid, Ulutham",89
+319,Masoor Dal (Red),Lentils & Pulses,"TRS, Heera, Annam, East End",Red lentils split,"Masur dal, Mussoor",70
+320,Kala Chana,Lentils & Pulses,"TRS, Heera, Annam",Black chickpeas whole,"Kala channa, Kadala",92
+321,Kabuli Chana,Lentils & Pulses,"TRS, Heera, Annam","Chickpeas, Garbanzo beans","Chole, Channa",70
+322,Rajma (Chitra),Lentils & Pulses,"TRS, Heera, Annam",Speckled kidney beans,Rajmah,71
+323,Moong Whole,Lentils & Pulses,"TRS, Heera, Annam",Green gram whole,Moong sabut,82
+324,Turmeric Powder,Spices & Masalas,"MDH, Everest, TRS, Heera, Catch, Shakti","Haldi, Curcumin","Tumeric, Haldee",90
+325,Red Chili Powder,Spices & Masalas,"MDH, Everest, TRS, Shan, Catch","Mirch, Spicy powder, Lal mirch","Chilly, Chilli",70
+326,Kashmiri Mirch Powder,Spices & Masalas,"Everest, MDH, TRS, Catch","Mild chili, Red color powder",Kashmiri chilli,82
+327,Garam Masala,Spices & Masalas,"MDH, Everest, TRS, Shan, MTR, Badshah","Curry spice mix, Warm spice","Garam masla, Gharam",75
+328,Coriander Powder,Spices & Masalas,"MDH, Everest, TRS, Heera, Catch",Dhaniya powder,"Coriender, Dhanya",89
+329,Cumin Seeds,Spices & Masalas,"TRS, Heera, Annam, MDH",Jeera whole,"Zeera, Jera",95
+330,Mustard Seeds (Black),Spices & Masalas,"TRS, Heera, Annam","Rai, Sarson","Musterd, Rai",84
+331,Sambar Masala,Spices & Masalas,"MTR, Aachi, Everest, Eastern, 777",Sambar powder,"Sambhar, Sambar podi",79
+332,Biryani Masala,Spices & Masalas,"Shan, MDH, Lucky, Everest, Ahmed",Biryani rice spice,"Biriyani, Briyani",71
+333,Kitchen King Masala,Spices & Masalas,"MDH, Everest, Badshah",All purpose spice mix,Kitchen king,81
+334,Chana Masala,Spices & Masalas,"MDH, Everest, Shan, Catch",Chole masala,Channa masala,82
+335,Pav Bhaji Masala,Spices & Masalas,"Everest, MDH, Badshah",Bhaji spice,Paav bhaji,92
+336,Chicken Masala,Spices & Masalas,"MDH, Everest, Shan, Eastern",Poultry spice,Chiken masala,77
+337,Meat Masala,Spices & Masalas,"MDH, Everest, Shan, Eastern",Mutton/Meat spice,Meet masala,78
+338,Aloo Bhujia,Snacks & Sweets,"Haldiram's, Bikano, Heera, Bikaji","Potato sev, Namkeen","Alu bhujia, Haldirams",54
+339,Moong Dal Snack,Snacks & Sweets,"Haldiram's, Bikano, Bikaji",Fried moong lentils,Mung snack,68
+340,Khatta Meetha,Snacks & Sweets,"Haldiram's, Bikano, Heera",Sweet and sour mix,Katta metha,49
+341,Bhujia Sev,Snacks & Sweets,"Haldiram's, Bikaji, Bikano",Fine spicy sev,Bhujiya,81
+342,Parle-G,Snacks & Sweets,Parle,Milk glucose biscuits,"Parleg, Parlay",59
+343,Good Day Cashew,Snacks & Sweets,Britannia,Cashew butter cookies,Gud day,43
+344,Hide & Seek,Snacks & Sweets,Parle,Chocolate chip cookies,Hide n seek,78
+345,Marie Gold,Snacks & Sweets,Britannia,Tea biscuits,Mari gold,61
+346,Bourbon Biscuits,Snacks & Sweets,"Britannia, Parle",Choco cream biscuits,Burbon,74
+347,Gulab Jamun Mix,Snacks & Sweets,"Gits, MTR, Bambino",Milk solid sweet mix,Gulab jamon,66
+348,Soan Papdi,Snacks & Sweets,"Haldiram's, Bikano",Flaky sweet dessert,Son papdi,84
+349,Pure Desi Ghee,"Oils, Ghee & Condiments","Amul, Khanum, KTC, Nanak, Kheer","Clarified butter, Pure ghee","Ghi, Ghe",42
+350,Mustard Oil,"Oils, Ghee & Condiments","Fortune, KTC, P&B, Engine",Sarson ka tel,Musterd oil,69
+351,Coconut Oil (Edible),"Oils, Ghee & Condiments","Parachute, KTC, Heera, KPL Shudhi",Nariyal tel,Cocanut oil,67
+352,Mango Pickle,"Oils, Ghee & Condiments","Mother's Recipe, Priya, Ashoka, Patak's",Aam ka achar,"Mango pikkle, Achar",43
+353,Mixed Pickle,"Oils, Ghee & Condiments","Mother's Recipe, Priya, Ashoka",Mixed veg pickle,Mix achar,81
+354,Ginger Garlic Paste,"Oils, Ghee & Condiments","Mother's Recipe, Priya, TRS, Heera",Adrak lasun paste,GG paste,74
+355,Tamarind Paste,"Oils, Ghee & Condiments","TRS, Tamicon, Heera",Imli paste,Tamrind,48
+356,Paneer,Ready to Eat & Frozen,"Amul, Nanak, Ayurveda, Vadilal, Ashoka",Cottage cheese,"Panir, Panneer",63
+357,Mixed Veg Frozen,Ready to Eat & Frozen,"Vadilal, Ashoka, Daily Delight",Frozen vegetables,Mixed veg,73
+358,Aloo Paratha (Frozen),Ready to Eat & Frozen,"Vadilal, Haldiram's, Ashoka, Shana",Stuffed bread,Parata,76
+359,Dal Makhani (RTE),Ready to Eat & Frozen,"MTR, Ashoka, Kitchens of India",Heat and eat lentils,Daal makhni,79
+360,Idli Batter,Ready to Eat & Frozen,"ID Fresh, Shastha, Annam",Fermented batter,Idly batter,64
+361,Chakki Atta,Staples (Flours & Grains),"Aashirvaad, Pillsbury, Fortune, Elephant, Heera, Annapurna","Wheat flour, Roti flour, Whole wheat","Ashirwad, Aata, Atte",99
+362,Maida,Staples (Flours & Grains),"TRS, Heera, Annam, KTC","All purpose flour, Plain flour","Mayda, Maida flour",88
+363,Besan,Staples (Flours & Grains),"TRS, Heera, Annam, Laxmi, KTC","Gram flour, Chickpea flour","Baisan, Basin, Besun",85
+364,Sooji (Coarse),Staples (Flours & Grains),"TRS, Heera, Annam, Natco","Semolina, Rava, Rawa","Suji, Sheera",99
+365,Sooji (Fine),Staples (Flours & Grains),"TRS, Heera, Annam","Fine semolina, Rava fine","Suji fine, Rawa fine",99
+366,Rice Flour,Staples (Flours & Grains),"Annam, TRS, Heera","Chawal ka atta, Rice powder",Arisi maavu,98
+367,Bajra Flour,Staples (Flours & Grains),"TRS, Heera, Annam",Pearl millet flour,Bajari,86
+368,Jowar Flour,Staples (Flours & Grains),"TRS, Heera, Annam",Sorghum flour,Jovar,90
+369,Basmati Rice (Extra Long),Rice,"Tilda, India Gate, Daawat, Kohinoor, Akash, Laila","Long grain rice, Biryani rice, Aged rice","Basmathi, Bismati, Chawal",95
+370,Sona Masoori Rice,Rice,"India Gate, 9Grains, Annam, Royal, TRS, Heera","South Indian rice, Short grain, Ponni","Sona Masuri, Masuri rice",88
+371,Idli Rice,Rice,"Annam, TRS, Heera, Ponni","Short grain, Steamed rice","Idly rice, Arisi",92
+372,Matta Rice,Rice,"Nirapara, Heera, Annam, Double Horse","Red rice, Kerala rice, Palakkadan",Mata rice,93
+373,Poha (Thick),Rice,"TRS, Heera, Annam, Natco","Flattened rice, Beaten rice","Powwa, Aval, Atukulu",100
+374,Poha (Thin),Rice,"TRS, Heera, Annam",Thin flattened rice,Pauwa thin,92
+375,Toor Dal,Lentils & Pulses,"TRS, Heera, Annam, Chitalya, East End","Arhar dal, Split pigeon peas, Yellow lentils","Tur dal, Thoor, Thuvaram",82
+376,Moong Dal (Yellow),Lentils & Pulses,"TRS, Heera, Annam, Chitalya","Split mung beans, Yellow mung","Mong dal, Mung",89
+377,Chana Dal,Lentils & Pulses,"TRS, Heera, Annam, East End","Bengal gram, Split chickpeas","Channa dal, Kadalai paruppu",91
+378,Urad Dal (White Gota),Lentils & Pulses,"TRS, Heera, Annam, Natco","Black gram whole, White urad","Urrad, Urid, Ulutham",84
+379,Masoor Dal (Red),Lentils & Pulses,"TRS, Heera, Annam, East End",Red lentils split,"Masur dal, Mussoor",79
+380,Kala Chana,Lentils & Pulses,"TRS, Heera, Annam",Black chickpeas whole,"Kala channa, Kadala",91
+381,Kabuli Chana,Lentils & Pulses,"TRS, Heera, Annam","Chickpeas, Garbanzo beans","Chole, Channa",81
+382,Rajma (Chitra),Lentils & Pulses,"TRS, Heera, Annam",Speckled kidney beans,Rajmah,74
+383,Moong Whole,Lentils & Pulses,"TRS, Heera, Annam",Green gram whole,Moong sabut,71
+384,Turmeric Powder,Spices & Masalas,"MDH, Everest, TRS, Heera, Catch, Shakti","Haldi, Curcumin","Tumeric, Haldee",77
+385,Red Chili Powder,Spices & Masalas,"MDH, Everest, TRS, Shan, Catch","Mirch, Spicy powder, Lal mirch","Chilly, Chilli",81
+386,Kashmiri Mirch Powder,Spices & Masalas,"Everest, MDH, TRS, Catch","Mild chili, Red color powder",Kashmiri chilli,86
+387,Garam Masala,Spices & Masalas,"MDH, Everest, TRS, Shan, MTR, Badshah","Curry spice mix, Warm spice","Garam masla, Gharam",95
+388,Coriander Powder,Spices & Masalas,"MDH, Everest, TRS, Heera, Catch",Dhaniya powder,"Coriender, Dhanya",81
+389,Cumin Seeds,Spices & Masalas,"TRS, Heera, Annam, MDH",Jeera whole,"Zeera, Jera",88
+390,Mustard Seeds (Black),Spices & Masalas,"TRS, Heera, Annam","Rai, Sarson","Musterd, Rai",87
+391,Sambar Masala,Spices & Masalas,"MTR, Aachi, Everest, Eastern, 777",Sambar powder,"Sambhar, Sambar podi",84
+392,Biryani Masala,Spices & Masalas,"Shan, MDH, Lucky, Everest, Ahmed",Biryani rice spice,"Biriyani, Briyani",82
+393,Kitchen King Masala,Spices & Masalas,"MDH, Everest, Badshah",All purpose spice mix,Kitchen king,89
+394,Chana Masala,Spices & Masalas,"MDH, Everest, Shan, Catch",Chole masala,Channa masala,93
+395,Pav Bhaji Masala,Spices & Masalas,"Everest, MDH, Badshah",Bhaji spice,Paav bhaji,80
+396,Chicken Masala,Spices & Masalas,"MDH, Everest, Shan, Eastern",Poultry spice,Chiken masala,73
+397,Meat Masala,Spices & Masalas,"MDH, Everest, Shan, Eastern",Mutton/Meat spice,Meet masala,78
+398,Aloo Bhujia,Snacks & Sweets,"Haldiram's, Bikano, Heera, Bikaji","Potato sev, Namkeen","Alu bhujia, Haldirams",65
+399,Moong Dal Snack,Snacks & Sweets,"Haldiram's, Bikano, Bikaji",Fried moong lentils,Mung snack,57
+400,Khatta Meetha,Snacks & Sweets,"Haldiram's, Bikano, Heera",Sweet and sour mix,Katta metha,73
+401,Bhujia Sev,Snacks & Sweets,"Haldiram's, Bikaji, Bikano",Fine spicy sev,Bhujiya,85
+402,Parle-G,Snacks & Sweets,Parle,Milk glucose biscuits,"Parleg, Parlay",43
+403,Good Day Cashew,Snacks & Sweets,Britannia,Cashew butter cookies,Gud day,64
+404,Hide & Seek,Snacks & Sweets,Parle,Chocolate chip cookies,Hide n seek,42
+405,Marie Gold,Snacks & Sweets,Britannia,Tea biscuits,Mari gold,59
+406,Bourbon Biscuits,Snacks & Sweets,"Britannia, Parle",Choco cream biscuits,Burbon,72
+407,Gulab Jamun Mix,Snacks & Sweets,"Gits, MTR, Bambino",Milk solid sweet mix,Gulab jamon,41
+408,Soan Papdi,Snacks & Sweets,"Haldiram's, Bikano",Flaky sweet dessert,Son papdi,84
+409,Pure Desi Ghee,"Oils, Ghee & Condiments","Amul, Khanum, KTC, Nanak, Kheer","Clarified butter, Pure ghee","Ghi, Ghe",73
+410,Mustard Oil,"Oils, Ghee & Condiments","Fortune, KTC, P&B, Engine",Sarson ka tel,Musterd oil,62
+411,Coconut Oil (Edible),"Oils, Ghee & Condiments","Parachute, KTC, Heera, KPL Shudhi",Nariyal tel,Cocanut oil,76
+412,Mango Pickle,"Oils, Ghee & Condiments","Mother's Recipe, Priya, Ashoka, Patak's",Aam ka achar,"Mango pikkle, Achar",47
+413,Mixed Pickle,"Oils, Ghee & Condiments","Mother's Recipe, Priya, Ashoka",Mixed veg pickle,Mix achar,61
+414,Ginger Garlic Paste,"Oils, Ghee & Condiments","Mother's Recipe, Priya, TRS, Heera",Adrak lasun paste,GG paste,67
+415,Tamarind Paste,"Oils, Ghee & Condiments","TRS, Tamicon, Heera",Imli paste,Tamrind,61
+416,Paneer,Ready to Eat & Frozen,"Amul, Nanak, Ayurveda, Vadilal, Ashoka",Cottage cheese,"Panir, Panneer",46
+417,Mixed Veg Frozen,Ready to Eat & Frozen,"Vadilal, Ashoka, Daily Delight",Frozen vegetables,Mixed veg,65
+418,Aloo Paratha (Frozen),Ready to Eat & Frozen,"Vadilal, Haldiram's, Ashoka, Shana",Stuffed bread,Parata,60
+419,Dal Makhani (RTE),Ready to Eat & Frozen,"MTR, Ashoka, Kitchens of India",Heat and eat lentils,Daal makhni,76
+420,Idli Batter,Ready to Eat & Frozen,"ID Fresh, Shastha, Annam",Fermented batter,Idly batter,81
+421,Chakki Atta,Staples (Flours & Grains),"Aashirvaad, Pillsbury, Fortune, Elephant, Heera, Annapurna","Wheat flour, Roti flour, Whole wheat","Ashirwad, Aata, Atte",97
+422,Maida,Staples (Flours & Grains),"TRS, Heera, Annam, KTC","All purpose flour, Plain flour","Mayda, Maida flour",88
+423,Besan,Staples (Flours & Grains),"TRS, Heera, Annam, Laxmi, KTC","Gram flour, Chickpea flour","Baisan, Basin, Besun",92
+424,Sooji (Coarse),Staples (Flours & Grains),"TRS, Heera, Annam, Natco","Semolina, Rava, Rawa","Suji, Sheera",95
+425,Sooji (Fine),Staples (Flours & Grains),"TRS, Heera, Annam","Fine semolina, Rava fine","Suji fine, Rawa fine",94
+426,Rice Flour,Staples (Flours & Grains),"Annam, TRS, Heera","Chawal ka atta, Rice powder",Arisi maavu,96
+427,Bajra Flour,Staples (Flours & Grains),"TRS, Heera, Annam",Pearl millet flour,Bajari,100
+428,Jowar Flour,Staples (Flours & Grains),"TRS, Heera, Annam",Sorghum flour,Jovar,94
+429,Basmati Rice (Extra Long),Rice,"Tilda, India Gate, Daawat, Kohinoor, Akash, Laila","Long grain rice, Biryani rice, Aged rice","Basmathi, Bismati, Chawal",90
+430,Sona Masoori Rice,Rice,"India Gate, 9Grains, Annam, Royal, TRS, Heera","South Indian rice, Short grain, Ponni","Sona Masuri, Masuri rice",85
+431,Idli Rice,Rice,"Annam, TRS, Heera, Ponni","Short grain, Steamed rice","Idly rice, Arisi",93
+432,Matta Rice,Rice,"Nirapara, Heera, Annam, Double Horse","Red rice, Kerala rice, Palakkadan",Mata rice,100
+433,Poha (Thick),Rice,"TRS, Heera, Annam, Natco","Flattened rice, Beaten rice","Powwa, Aval, Atukulu",99
+434,Poha (Thin),Rice,"TRS, Heera, Annam",Thin flattened rice,Pauwa thin,99
+435,Toor Dal,Lentils & Pulses,"TRS, Heera, Annam, Chitalya, East End","Arhar dal, Split pigeon peas, Yellow lentils","Tur dal, Thoor, Thuvaram",89
+436,Moong Dal (Yellow),Lentils & Pulses,"TRS, Heera, Annam, Chitalya","Split mung beans, Yellow mung","Mong dal, Mung",74
+437,Chana Dal,Lentils & Pulses,"TRS, Heera, Annam, East End","Bengal gram, Split chickpeas","Channa dal, Kadalai paruppu",71
+438,Urad Dal (White Gota),Lentils & Pulses,"TRS, Heera, Annam, Natco","Black gram whole, White urad","Urrad, Urid, Ulutham",95
+439,Masoor Dal (Red),Lentils & Pulses,"TRS, Heera, Annam, East End",Red lentils split,"Masur dal, Mussoor",70
+440,Kala Chana,Lentils & Pulses,"TRS, Heera, Annam",Black chickpeas whole,"Kala channa, Kadala",94
+441,Kabuli Chana,Lentils & Pulses,"TRS, Heera, Annam","Chickpeas, Garbanzo beans","Chole, Channa",76
+442,Rajma (Chitra),Lentils & Pulses,"TRS, Heera, Annam",Speckled kidney beans,Rajmah,88
+443,Moong Whole,Lentils & Pulses,"TRS, Heera, Annam",Green gram whole,Moong sabut,84
+444,Turmeric Powder,Spices & Masalas,"MDH, Everest, TRS, Heera, Catch, Shakti","Haldi, Curcumin","Tumeric, Haldee",92
+445,Red Chili Powder,Spices & Masalas,"MDH, Everest, TRS, Shan, Catch","Mirch, Spicy powder, Lal mirch","Chilly, Chilli",79
+446,Kashmiri Mirch Powder,Spices & Masalas,"Everest, MDH, TRS, Catch","Mild chili, Red color powder",Kashmiri chilli,81
+447,Garam Masala,Spices & Masalas,"MDH, Everest, TRS, Shan, MTR, Badshah","Curry spice mix, Warm spice","Garam masla, Gharam",92
+448,Coriander Powder,Spices & Masalas,"MDH, Everest, TRS, Heera, Catch",Dhaniya powder,"Coriender, Dhanya",86
+449,Cumin Seeds,Spices & Masalas,"TRS, Heera, Annam, MDH",Jeera whole,"Zeera, Jera",92
+450,Mustard Seeds (Black),Spices & Masalas,"TRS, Heera, Annam","Rai, Sarson","Musterd, Rai",86
+451,Sambar Masala,Spices & Masalas,"MTR, Aachi, Everest, Eastern, 777",Sambar powder,"Sambhar, Sambar podi",90
+452,Biryani Masala,Spices & Masalas,"Shan, MDH, Lucky, Everest, Ahmed",Biryani rice spice,"Biriyani, Briyani",83
+453,Kitchen King Masala,Spices & Masalas,"MDH, Everest, Badshah",All purpose spice mix,Kitchen king,77
+454,Chana Masala,Spices & Masalas,"MDH, Everest, Shan, Catch",Chole masala,Channa masala,78
+455,Pav Bhaji Masala,Spices & Masalas,"Everest, MDH, Badshah",Bhaji spice,Paav bhaji,94
+456,Chicken Masala,Spices & Masalas,"MDH, Everest, Shan, Eastern",Poultry spice,Chiken masala,90
+457,Meat Masala,Spices & Masalas,"MDH, Everest, Shan, Eastern",Mutton/Meat spice,Meet masala,90
+458,Aloo Bhujia,Snacks & Sweets,"Haldiram's, Bikano, Heera, Bikaji","Potato sev, Namkeen","Alu bhujia, Haldirams",76
+459,Moong Dal Snack,Snacks & Sweets,"Haldiram's, Bikano, Bikaji",Fried moong lentils,Mung snack,40
+460,Khatta Meetha,Snacks & Sweets,"Haldiram's, Bikano, Heera",Sweet and sour mix,Katta metha,43
+461,Bhujia Sev,Snacks & Sweets,"Haldiram's, Bikaji, Bikano",Fine spicy sev,Bhujiya,68
+462,Parle-G,Snacks & Sweets,Parle,Milk glucose biscuits,"Parleg, Parlay",62
+463,Good Day Cashew,Snacks & Sweets,Britannia,Cashew butter cookies,Gud day,78
+464,Hide & Seek,Snacks & Sweets,Parle,Chocolate chip cookies,Hide n seek,54
+465,Marie Gold,Snacks & Sweets,Britannia,Tea biscuits,Mari gold,74
+466,Bourbon Biscuits,Snacks & Sweets,"Britannia, Parle",Choco cream biscuits,Burbon,50
+467,Gulab Jamun Mix,Snacks & Sweets,"Gits, MTR, Bambino",Milk solid sweet mix,Gulab jamon,72
+468,Soan Papdi,Snacks & Sweets,"Haldiram's, Bikano",Flaky sweet dessert,Son papdi,42
+469,Pure Desi Ghee,"Oils, Ghee & Condiments","Amul, Khanum, KTC, Nanak, Kheer","Clarified butter, Pure ghee","Ghi, Ghe",44
+470,Mustard Oil,"Oils, Ghee & Condiments","Fortune, KTC, P&B, Engine",Sarson ka tel,Musterd oil,40
+471,Coconut Oil (Edible),"Oils, Ghee & Condiments","Parachute, KTC, Heera, KPL Shudhi",Nariyal tel,Cocanut oil,47
+472,Mango Pickle,"Oils, Ghee & Condiments","Mother's Recipe, Priya, Ashoka, Patak's",Aam ka achar,"Mango pikkle, Achar",47
+473,Mixed Pickle,"Oils, Ghee & Condiments","Mother's Recipe, Priya, Ashoka",Mixed veg pickle,Mix achar,68
+474,Ginger Garlic Paste,"Oils, Ghee & Condiments","Mother's Recipe, Priya, TRS, Heera",Adrak lasun paste,GG paste,52
+475,Tamarind Paste,"Oils, Ghee & Condiments","TRS, Tamicon, Heera",Imli paste,Tamrind,52
+476,Paneer,Ready to Eat & Frozen,"Amul, Nanak, Ayurveda, Vadilal, Ashoka",Cottage cheese,"Panir, Panneer",72
+477,Mixed Veg Frozen,Ready to Eat & Frozen,"Vadilal, Ashoka, Daily Delight",Frozen vegetables,Mixed veg,69
+478,Aloo Paratha (Frozen),Ready to Eat & Frozen,"Vadilal, Haldiram's, Ashoka, Shana",Stuffed bread,Parata,68
+479,Dal Makhani (RTE),Ready to Eat & Frozen,"MTR, Ashoka, Kitchens of India",Heat and eat lentils,Daal makhni,66
+480,Idli Batter,Ready to Eat & Frozen,"ID Fresh, Shastha, Annam",Fermented batter,Idly batter,69
+481,Chakki Atta,Staples (Flours & Grains),"Aashirvaad, Pillsbury, Fortune, Elephant, Heera, Annapurna","Wheat flour, Roti flour, Whole wheat","Ashirwad, Aata, Atte",86
+482,Maida,Staples (Flours & Grains),"TRS, Heera, Annam, KTC","All purpose flour, Plain flour","Mayda, Maida flour",96
+483,Besan,Staples (Flours & Grains),"TRS, Heera, Annam, Laxmi, KTC","Gram flour, Chickpea flour","Baisan, Basin, Besun",91
+484,Sooji (Coarse),Staples (Flours & Grains),"TRS, Heera, Annam, Natco","Semolina, Rava, Rawa","Suji, Sheera",94
+485,Sooji (Fine),Staples (Flours & Grains),"TRS, Heera, Annam","Fine semolina, Rava fine","Suji fine, Rawa fine",95
+486,Rice Flour,Staples (Flours & Grains),"Annam, TRS, Heera","Chawal ka atta, Rice powder",Arisi maavu,94
+487,Bajra Flour,Staples (Flours & Grains),"TRS, Heera, Annam",Pearl millet flour,Bajari,96
+488,Jowar Flour,Staples (Flours & Grains),"TRS, Heera, Annam",Sorghum flour,Jovar,98
+489,Basmati Rice (Extra Long),Rice,"Tilda, India Gate, Daawat, Kohinoor, Akash, Laila","Long grain rice, Biryani rice, Aged rice","Basmathi, Bismati, Chawal",89
+490,Sona Masoori Rice,Rice,"India Gate, 9Grains, Annam, Royal, TRS, Heera","South Indian rice, Short grain, Ponni","Sona Masuri, Masuri rice",96
+491,Idli Rice,Rice,"Annam, TRS, Heera, Ponni","Short grain, Steamed rice","Idly rice, Arisi",95
+492,Matta Rice,Rice,"Nirapara, Heera, Annam, Double Horse","Red rice, Kerala rice, Palakkadan",Mata rice,85
+493,Poha (Thick),Rice,"TRS, Heera, Annam, Natco","Flattened rice, Beaten rice","Powwa, Aval, Atukulu",85
+494,Poha (Thin),Rice,"TRS, Heera, Annam",Thin flattened rice,Pauwa thin,97
+495,Toor Dal,Lentils & Pulses,"TRS, Heera, Annam, Chitalya, East End","Arhar dal, Split pigeon peas, Yellow lentils","Tur dal, Thoor, Thuvaram",78
+496,Moong Dal (Yellow),Lentils & Pulses,"TRS, Heera, Annam, Chitalya","Split mung beans, Yellow mung","Mong dal, Mung",86
+497,Chana Dal,Lentils & Pulses,"TRS, Heera, Annam, East End","Bengal gram, Split chickpeas","Channa dal, Kadalai paruppu",94
+498,Urad Dal (White Gota),Lentils & Pulses,"TRS, Heera, Annam, Natco","Black gram whole, White urad","Urrad, Urid, Ulutham",83
+499,Masoor Dal (Red),Lentils & Pulses,"TRS, Heera, Annam, East End",Red lentils split,"Masur dal, Mussoor",87
+500,Kala Chana,Lentils & Pulses,"TRS, Heera, Annam",Black chickpeas whole,"Kala channa, Kadala",90
+501,Kabuli Chana,Lentils & Pulses,"TRS, Heera, Annam","Chickpeas, Garbanzo beans","Chole, Channa",89
+502,Rajma (Chitra),Lentils & Pulses,"TRS, Heera, Annam",Speckled kidney beans,Rajmah,71
+503,Moong Whole,Lentils & Pulses,"TRS, Heera, Annam",Green gram whole,Moong sabut,94
+504,Turmeric Powder,Spices & Masalas,"MDH, Everest, TRS, Heera, Catch, Shakti","Haldi, Curcumin","Tumeric, Haldee",88
+505,Red Chili Powder,Spices & Masalas,"MDH, Everest, TRS, Shan, Catch","Mirch, Spicy powder, Lal mirch","Chilly, Chilli",71
+506,Kashmiri Mirch Powder,Spices & Masalas,"Everest, MDH, TRS, Catch","Mild chili, Red color powder",Kashmiri chilli,88
+507,Garam Masala,Spices & Masalas,"MDH, Everest, TRS, Shan, MTR, Badshah","Curry spice mix, Warm spice","Garam masla, Gharam",70
+508,Coriander Powder,Spices & Masalas,"MDH, Everest, TRS, Heera, Catch",Dhaniya powder,"Coriender, Dhanya",79
+509,Cumin Seeds,Spices & Masalas,"TRS, Heera, Annam, MDH",Jeera whole,"Zeera, Jera",77
+510,Mustard Seeds (Black),Spices & Masalas,"TRS, Heera, Annam","Rai, Sarson","Musterd, Rai",83
+511,Sambar Masala,Spices & Masalas,"MTR, Aachi, Everest, Eastern, 777",Sambar powder,"Sambhar, Sambar podi",74
+512,Biryani Masala,Spices & Masalas,"Shan, MDH, Lucky, Everest, Ahmed",Biryani rice spice,"Biriyani, Briyani",90
+513,Kitchen King Masala,Spices & Masalas,"MDH, Everest, Badshah",All purpose spice mix,Kitchen king,77
+514,Chana Masala,Spices & Masalas,"MDH, Everest, Shan, Catch",Chole masala,Channa masala,83
+515,Pav Bhaji Masala,Spices & Masalas,"Everest, MDH, Badshah",Bhaji spice,Paav bhaji,85
+516,Chicken Masala,Spices & Masalas,"MDH, Everest, Shan, Eastern",Poultry spice,Chiken masala,87
+517,Meat Masala,Spices & Masalas,"MDH, Everest, Shan, Eastern",Mutton/Meat spice,Meet masala,84
+518,Aloo Bhujia,Snacks & Sweets,"Haldiram's, Bikano, Heera, Bikaji","Potato sev, Namkeen","Alu bhujia, Haldirams",65
+519,Moong Dal Snack,Snacks & Sweets,"Haldiram's, Bikano, Bikaji",Fried moong lentils,Mung snack,53
+520,Khatta Meetha,Snacks & Sweets,"Haldiram's, Bikano, Heera",Sweet and sour mix,Katta metha,68
+521,Bhujia Sev,Snacks & Sweets,"Haldiram's, Bikaji, Bikano",Fine spicy sev,Bhujiya,59
+522,Parle-G,Snacks & Sweets,Parle,Milk glucose biscuits,"Parleg, Parlay",78
+523,Good Day Cashew,Snacks & Sweets,Britannia,Cashew butter cookies,Gud day,54
+524,Hide & Seek,Snacks & Sweets,Parle,Chocolate chip cookies,Hide n seek,79
+525,Marie Gold,Snacks & Sweets,Britannia,Tea biscuits,Mari gold,40
+526,Bourbon Biscuits,Snacks & Sweets,"Britannia, Parle",Choco cream biscuits,Burbon,62
+527,Gulab Jamun Mix,Snacks & Sweets,"Gits, MTR, Bambino",Milk solid sweet mix,Gulab jamon,50
+528,Soan Papdi,Snacks & Sweets,"Haldiram's, Bikano",Flaky sweet dessert,Son papdi,66
+529,Pure Desi Ghee,"Oils, Ghee & Condiments","Amul, Khanum, KTC, Nanak, Kheer","Clarified butter, Pure ghee","Ghi, Ghe",65
+530,Mustard Oil,"Oils, Ghee & Condiments","Fortune, KTC, P&B, Engine",Sarson ka tel,Musterd oil,66
+531,Coconut Oil (Edible),"Oils, Ghee & Condiments","Parachute, KTC, Heera, KPL Shudhi",Nariyal tel,Cocanut oil,65
+532,Mango Pickle,"Oils, Ghee & Condiments","Mother's Recipe, Priya, Ashoka, Patak's",Aam ka achar,"Mango pikkle, Achar",62
+533,Mixed Pickle,"Oils, Ghee & Condiments","Mother's Recipe, Priya, Ashoka",Mixed veg pickle,Mix achar,51
+534,Ginger Garlic Paste,"Oils, Ghee & Condiments","Mother's Recipe, Priya, TRS, Heera",Adrak lasun paste,GG paste,44
+535,Tamarind Paste,"Oils, Ghee & Condiments","TRS, Tamicon, Heera",Imli paste,Tamrind,46
+536,Paneer,Ready to Eat & Frozen,"Amul, Nanak, Ayurveda, Vadilal, Ashoka",Cottage cheese,"Panir, Panneer",68
+537,Mixed Veg Frozen,Ready to Eat & Frozen,"Vadilal, Ashoka, Daily Delight",Frozen vegetables,Mixed veg,53
+538,Aloo Paratha (Frozen),Ready to Eat & Frozen,"Vadilal, Haldiram's, Ashoka, Shana",Stuffed bread,Parata,71
+539,Dal Makhani (RTE),Ready to Eat & Frozen,"MTR, Ashoka, Kitchens of India",Heat and eat lentils,Daal makhni,59
+540,Idli Batter,Ready to Eat & Frozen,"ID Fresh, Shastha, Annam",Fermented batter,Idly batter,51
+541,Chakki Atta,Staples (Flours & Grains),"Aashirvaad, Pillsbury, Fortune, Elephant, Heera, Annapurna","Wheat flour, Roti flour, Whole wheat","Ashirwad, Aata, Atte",89
+542,Maida,Staples (Flours & Grains),"TRS, Heera, Annam, KTC","All purpose flour, Plain flour","Mayda, Maida flour",93
+543,Besan,Staples (Flours & Grains),"TRS, Heera, Annam, Laxmi, KTC","Gram flour, Chickpea flour","Baisan, Basin, Besun",85
+544,Sooji (Coarse),Staples (Flours & Grains),"TRS, Heera, Annam, Natco","Semolina, Rava, Rawa","Suji, Sheera",100
+545,Sooji (Fine),Staples (Flours & Grains),"TRS, Heera, Annam","Fine semolina, Rava fine","Suji fine, Rawa fine",87
+546,Rice Flour,Staples (Flours & Grains),"Annam, TRS, Heera","Chawal ka atta, Rice powder",Arisi maavu,90
+547,Bajra Flour,Staples (Flours & Grains),"TRS, Heera, Annam",Pearl millet flour,Bajari,87
+548,Jowar Flour,Staples (Flours & Grains),"TRS, Heera, Annam",Sorghum flour,Jovar,87
+549,Basmati Rice (Extra Long),Rice,"Tilda, India Gate, Daawat, Kohinoor, Akash, Laila","Long grain rice, Biryani rice, Aged rice","Basmathi, Bismati, Chawal",97
+550,Sona Masoori Rice,Rice,"India Gate, 9Grains, Annam, Royal, TRS, Heera","South Indian rice, Short grain, Ponni","Sona Masuri, Masuri rice",96
+551,Idli Rice,Rice,"Annam, TRS, Heera, Ponni","Short grain, Steamed rice","Idly rice, Arisi",89
+552,Matta Rice,Rice,"Nirapara, Heera, Annam, Double Horse","Red rice, Kerala rice, Palakkadan",Mata rice,91
+553,Poha (Thick),Rice,"TRS, Heera, Annam, Natco","Flattened rice, Beaten rice","Powwa, Aval, Atukulu",90
+554,Poha (Thin),Rice,"TRS, Heera, Annam",Thin flattened rice,Pauwa thin,93
+555,Toor Dal,Lentils & Pulses,"TRS, Heera, Annam, Chitalya, East End","Arhar dal, Split pigeon peas, Yellow lentils","Tur dal, Thoor, Thuvaram",74
+556,Moong Dal (Yellow),Lentils & Pulses,"TRS, Heera, Annam, Chitalya","Split mung beans, Yellow mung","Mong dal, Mung",70
+557,Chana Dal,Lentils & Pulses,"TRS, Heera, Annam, East End","Bengal gram, Split chickpeas","Channa dal, Kadalai paruppu",86
+558,Urad Dal (White Gota),Lentils & Pulses,"TRS, Heera, Annam, Natco","Black gram whole, White urad","Urrad, Urid, Ulutham",84
+559,Masoor Dal (Red),Lentils & Pulses,"TRS, Heera, Annam, East End",Red lentils split,"Masur dal, Mussoor",75
+560,Kala Chana,Lentils & Pulses,"TRS, Heera, Annam",Black chickpeas whole,"Kala channa, Kadala",85
+561,Kabuli Chana,Lentils & Pulses,"TRS, Heera, Annam","Chickpeas, Garbanzo beans","Chole, Channa",89
+562,Rajma (Chitra),Lentils & Pulses,"TRS, Heera, Annam",Speckled kidney beans,Rajmah,88
+563,Moong Whole,Lentils & Pulses,"TRS, Heera, Annam",Green gram whole,Moong sabut,89
+564,Turmeric Powder,Spices & Masalas,"MDH, Everest, TRS, Heera, Catch, Shakti","Haldi, Curcumin","Tumeric, Haldee",75
+565,Red Chili Powder,Spices & Masalas,"MDH, Everest, TRS, Shan, Catch","Mirch, Spicy powder, Lal mirch","Chilly, Chilli",89
+566,Kashmiri Mirch Powder,Spices & Masalas,"Everest, MDH, TRS, Catch","Mild chili, Red color powder",Kashmiri chilli,93
+567,Garam Masala,Spices & Masalas,"MDH, Everest, TRS, Shan, MTR, Badshah","Curry spice mix, Warm spice","Garam masla, Gharam",91
+568,Coriander Powder,Spices & Masalas,"MDH, Everest, TRS, Heera, Catch",Dhaniya powder,"Coriender, Dhanya",79
+569,Cumin Seeds,Spices & Masalas,"TRS, Heera, Annam, MDH",Jeera whole,"Zeera, Jera",72
+570,Mustard Seeds (Black),Spices & Masalas,"TRS, Heera, Annam","Rai, Sarson","Musterd, Rai",71
+571,Sambar Masala,Spices & Masalas,"MTR, Aachi, Everest, Eastern, 777",Sambar powder,"Sambhar, Sambar podi",92
+572,Biryani Masala,Spices & Masalas,"Shan, MDH, Lucky, Everest, Ahmed",Biryani rice spice,"Biriyani, Briyani",81
+573,Kitchen King Masala,Spices & Masalas,"MDH, Everest, Badshah",All purpose spice mix,Kitchen king,76
+574,Chana Masala,Spices & Masalas,"MDH, Everest, Shan, Catch",Chole masala,Channa masala,84
+575,Pav Bhaji Masala,Spices & Masalas,"Everest, MDH, Badshah",Bhaji spice,Paav bhaji,77
+576,Chicken Masala,Spices & Masalas,"MDH, Everest, Shan, Eastern",Poultry spice,Chiken masala,84
+577,Meat Masala,Spices & Masalas,"MDH, Everest, Shan, Eastern",Mutton/Meat spice,Meet masala,94
+578,Aloo Bhujia,Snacks & Sweets,"Haldiram's, Bikano, Heera, Bikaji","Potato sev, Namkeen","Alu bhujia, Haldirams",53
+579,Moong Dal Snack,Snacks & Sweets,"Haldiram's, Bikano, Bikaji",Fried moong lentils,Mung snack,81
+580,Khatta Meetha,Snacks & Sweets,"Haldiram's, Bikano, Heera",Sweet and sour mix,Katta metha,77
+581,Bhujia Sev,Snacks & Sweets,"Haldiram's, Bikaji, Bikano",Fine spicy sev,Bhujiya,81
+582,Parle-G,Snacks & Sweets,Parle,Milk glucose biscuits,"Parleg, Parlay",59
+583,Good Day Cashew,Snacks & Sweets,Britannia,Cashew butter cookies,Gud day,41
+584,Hide & Seek,Snacks & Sweets,Parle,Chocolate chip cookies,Hide n seek,73
+585,Marie Gold,Snacks & Sweets,Britannia,Tea biscuits,Mari gold,70
+586,Bourbon Biscuits,Snacks & Sweets,"Britannia, Parle",Choco cream biscuits,Burbon,54
+587,Gulab Jamun Mix,Snacks & Sweets,"Gits, MTR, Bambino",Milk solid sweet mix,Gulab jamon,74
+588,Soan Papdi,Snacks & Sweets,"Haldiram's, Bikano",Flaky sweet dessert,Son papdi,80
+589,Pure Desi Ghee,"Oils, Ghee & Condiments","Amul, Khanum, KTC, Nanak, Kheer","Clarified butter, Pure ghee","Ghi, Ghe",49
+590,Mustard Oil,"Oils, Ghee & Condiments","Fortune, KTC, P&B, Engine",Sarson ka tel,Musterd oil,62
+591,Coconut Oil (Edible),"Oils, Ghee & Condiments","Parachute, KTC, Heera, KPL Shudhi",Nariyal tel,Cocanut oil,54
+592,Mango Pickle,"Oils, Ghee & Condiments","Mother's Recipe, Priya, Ashoka, Patak's",Aam ka achar,"Mango pikkle, Achar",51
+593,Mixed Pickle,"Oils, Ghee & Condiments","Mother's Recipe, Priya, Ashoka",Mixed veg pickle,Mix achar,50
+594,Ginger Garlic Paste,"Oils, Ghee & Condiments","Mother's Recipe, Priya, TRS, Heera",Adrak lasun paste,GG paste,76
+595,Tamarind Paste,"Oils, Ghee & Condiments","TRS, Tamicon, Heera",Imli paste,Tamrind,72
+596,Paneer,Ready to Eat & Frozen,"Amul, Nanak, Ayurveda, Vadilal, Ashoka",Cottage cheese,"Panir, Panneer",55
+597,Mixed Veg Frozen,Ready to Eat & Frozen,"Vadilal, Ashoka, Daily Delight",Frozen vegetables,Mixed veg,46
+598,Aloo Paratha (Frozen),Ready to Eat & Frozen,"Vadilal, Haldiram's, Ashoka, Shana",Stuffed bread,Parata,46
+599,Dal Makhani (RTE),Ready to Eat & Frozen,"MTR, Ashoka, Kitchens of India",Heat and eat lentils,Daal makhni,44
+600,Idli Batter,Ready to Eat & Frozen,"ID Fresh, Shastha, Annam",Fermented batter,Idly batter,55
+601,Chakki Atta,Staples (Flours & Grains),"Aashirvaad, Pillsbury, Fortune, Elephant, Heera, Annapurna","Wheat flour, Roti flour, Whole wheat","Ashirwad, Aata, Atte",85
+602,Maida,Staples (Flours & Grains),"TRS, Heera, Annam, KTC","All purpose flour, Plain flour","Mayda, Maida flour",91
+603,Besan,Staples (Flours & Grains),"TRS, Heera, Annam, Laxmi, KTC","Gram flour, Chickpea flour","Baisan, Basin, Besun",99
+604,Sooji (Coarse),Staples (Flours & Grains),"TRS, Heera, Annam, Natco","Semolina, Rava, Rawa","Suji, Sheera",87
+605,Sooji (Fine),Staples (Flours & Grains),"TRS, Heera, Annam","Fine semolina, Rava fine","Suji fine, Rawa fine",95
+606,Rice Flour,Staples (Flours & Grains),"Annam, TRS, Heera","Chawal ka atta, Rice powder",Arisi maavu,86
+607,Bajra Flour,Staples (Flours & Grains),"TRS, Heera, Annam",Pearl millet flour,Bajari,87
+608,Jowar Flour,Staples (Flours & Grains),"TRS, Heera, Annam",Sorghum flour,Jovar,86
+609,Basmati Rice (Extra Long),Rice,"Tilda, India Gate, Daawat, Kohinoor, Akash, Laila","Long grain rice, Biryani rice, Aged rice","Basmathi, Bismati, Chawal",95
+610,Sona Masoori Rice,Rice,"India Gate, 9Grains, Annam, Royal, TRS, Heera","South Indian rice, Short grain, Ponni","Sona Masuri, Masuri rice",99
+611,Idli Rice,Rice,"Annam, TRS, Heera, Ponni","Short grain, Steamed rice","Idly rice, Arisi",89
+612,Matta Rice,Rice,"Nirapara, Heera, Annam, Double Horse","Red rice, Kerala rice, Palakkadan",Mata rice,86
+613,Poha (Thick),Rice,"TRS, Heera, Annam, Natco","Flattened rice, Beaten rice","Powwa, Aval, Atukulu",100
+614,Poha (Thin),Rice,"TRS, Heera, Annam",Thin flattened rice,Pauwa thin,96
+615,Toor Dal,Lentils & Pulses,"TRS, Heera, Annam, Chitalya, East End","Arhar dal, Split pigeon peas, Yellow lentils","Tur dal, Thoor, Thuvaram",71
+616,Moong Dal (Yellow),Lentils & Pulses,"TRS, Heera, Annam, Chitalya","Split mung beans, Yellow mung","Mong dal, Mung",85
+617,Chana Dal,Lentils & Pulses,"TRS, Heera, Annam, East End","Bengal gram, Split chickpeas","Channa dal, Kadalai paruppu",79
+618,Urad Dal (White Gota),Lentils & Pulses,"TRS, Heera, Annam, Natco","Black gram whole, White urad","Urrad, Urid, Ulutham",72
+619,Masoor Dal (Red),Lentils & Pulses,"TRS, Heera, Annam, East End",Red lentils split,"Masur dal, Mussoor",78
+620,Kala Chana,Lentils & Pulses,"TRS, Heera, Annam",Black chickpeas whole,"Kala channa, Kadala",76
+621,Kabuli Chana,Lentils & Pulses,"TRS, Heera, Annam","Chickpeas, Garbanzo beans","Chole, Channa",91
+622,Rajma (Chitra),Lentils & Pulses,"TRS, Heera, Annam",Speckled kidney beans,Rajmah,88
+623,Moong Whole,Lentils & Pulses,"TRS, Heera, Annam",Green gram whole,Moong sabut,89
+624,Turmeric Powder,Spices & Masalas,"MDH, Everest, TRS, Heera, Catch, Shakti","Haldi, Curcumin","Tumeric, Haldee",76
+625,Red Chili Powder,Spices & Masalas,"MDH, Everest, TRS, Shan, Catch","Mirch, Spicy powder, Lal mirch","Chilly, Chilli",79
+626,Kashmiri Mirch Powder,Spices & Masalas,"Everest, MDH, TRS, Catch","Mild chili, Red color powder",Kashmiri chilli,85
+627,Garam Masala,Spices & Masalas,"MDH, Everest, TRS, Shan, MTR, Badshah","Curry spice mix, Warm spice","Garam masla, Gharam",91
+628,Coriander Powder,Spices & Masalas,"MDH, Everest, TRS, Heera, Catch",Dhaniya powder,"Coriender, Dhanya",79
+629,Cumin Seeds,Spices & Masalas,"TRS, Heera, Annam, MDH",Jeera whole,"Zeera, Jera",80
+630,Mustard Seeds (Black),Spices & Masalas,"TRS, Heera, Annam","Rai, Sarson","Musterd, Rai",78
+631,Sambar Masala,Spices & Masalas,"MTR, Aachi, Everest, Eastern, 777",Sambar powder,"Sambhar, Sambar podi",92
+632,Biryani Masala,Spices & Masalas,"Shan, MDH, Lucky, Everest, Ahmed",Biryani rice spice,"Biriyani, Briyani",70
+633,Kitchen King Masala,Spices & Masalas,"MDH, Everest, Badshah",All purpose spice mix,Kitchen king,93
+634,Chana Masala,Spices & Masalas,"MDH, Everest, Shan, Catch",Chole masala,Channa masala,94
+635,Pav Bhaji Masala,Spices & Masalas,"Everest, MDH, Badshah",Bhaji spice,Paav bhaji,73
+636,Chicken Masala,Spices & Masalas,"MDH, Everest, Shan, Eastern",Poultry spice,Chiken masala,80
+637,Meat Masala,Spices & Masalas,"MDH, Everest, Shan, Eastern",Mutton/Meat spice,Meet masala,88
+638,Aloo Bhujia,Snacks & Sweets,"Haldiram's, Bikano, Heera, Bikaji","Potato sev, Namkeen","Alu bhujia, Haldirams",45
+639,Moong Dal Snack,Snacks & Sweets,"Haldiram's, Bikano, Bikaji",Fried moong lentils,Mung snack,81
+640,Khatta Meetha,Snacks & Sweets,"Haldiram's, Bikano, Heera",Sweet and sour mix,Katta metha,59
+641,Bhujia Sev,Snacks & Sweets,"Haldiram's, Bikaji, Bikano",Fine spicy sev,Bhujiya,74
+642,Parle-G,Snacks & Sweets,Parle,Milk glucose biscuits,"Parleg, Parlay",72
+643,Good Day Cashew,Snacks & Sweets,Britannia,Cashew butter cookies,Gud day,84
+644,Hide & Seek,Snacks & Sweets,Parle,Chocolate chip cookies,Hide n seek,55
+645,Marie Gold,Snacks & Sweets,Britannia,Tea biscuits,Mari gold,59
+646,Bourbon Biscuits,Snacks & Sweets,"Britannia, Parle",Choco cream biscuits,Burbon,43
+647,Gulab Jamun Mix,Snacks & Sweets,"Gits, MTR, Bambino",Milk solid sweet mix,Gulab jamon,70
+648,Soan Papdi,Snacks & Sweets,"Haldiram's, Bikano",Flaky sweet dessert,Son papdi,72
+649,Pure Desi Ghee,"Oils, Ghee & Condiments","Amul, Khanum, KTC, Nanak, Kheer","Clarified butter, Pure ghee","Ghi, Ghe",47
+650,Mustard Oil,"Oils, Ghee & Condiments","Fortune, KTC, P&B, Engine",Sarson ka tel,Musterd oil,74
+651,Coconut Oil (Edible),"Oils, Ghee & Condiments","Parachute, KTC, Heera, KPL Shudhi",Nariyal tel,Cocanut oil,58
+652,Mango Pickle,"Oils, Ghee & Condiments","Mother's Recipe, Priya, Ashoka, Patak's",Aam ka achar,"Mango pikkle, Achar",76
+653,Mixed Pickle,"Oils, Ghee & Condiments","Mother's Recipe, Priya, Ashoka",Mixed veg pickle,Mix achar,41
+654,Ginger Garlic Paste,"Oils, Ghee & Condiments","Mother's Recipe, Priya, TRS, Heera",Adrak lasun paste,GG paste,57
+655,Tamarind Paste,"Oils, Ghee & Condiments","TRS, Tamicon, Heera",Imli paste,Tamrind,78
+656,Paneer,Ready to Eat & Frozen,"Amul, Nanak, Ayurveda, Vadilal, Ashoka",Cottage cheese,"Panir, Panneer",81
+657,Mixed Veg Frozen,Ready to Eat & Frozen,"Vadilal, Ashoka, Daily Delight",Frozen vegetables,Mixed veg,76
+658,Aloo Paratha (Frozen),Ready to Eat & Frozen,"Vadilal, Haldiram's, Ashoka, Shana",Stuffed bread,Parata,77
+659,Dal Makhani (RTE),Ready to Eat & Frozen,"MTR, Ashoka, Kitchens of India",Heat and eat lentils,Daal makhni,57
+660,Idli Batter,Ready to Eat & Frozen,"ID Fresh, Shastha, Annam",Fermented batter,Idly batter,65
+661,Chakki Atta,Staples (Flours & Grains),"Aashirvaad, Pillsbury, Fortune, Elephant, Heera, Annapurna","Wheat flour, Roti flour, Whole wheat","Ashirwad, Aata, Atte",85
+662,Maida,Staples (Flours & Grains),"TRS, Heera, Annam, KTC","All purpose flour, Plain flour","Mayda, Maida flour",92
+663,Besan,Staples (Flours & Grains),"TRS, Heera, Annam, Laxmi, KTC","Gram flour, Chickpea flour","Baisan, Basin, Besun",85
+664,Sooji (Coarse),Staples (Flours & Grains),"TRS, Heera, Annam, Natco","Semolina, Rava, Rawa","Suji, Sheera",99
+665,Sooji (Fine),Staples (Flours & Grains),"TRS, Heera, Annam","Fine semolina, Rava fine","Suji fine, Rawa fine",93
+666,Rice Flour,Staples (Flours & Grains),"Annam, TRS, Heera","Chawal ka atta, Rice powder",Arisi maavu,91
+667,Bajra Flour,Staples (Flours & Grains),"TRS, Heera, Annam",Pearl millet flour,Bajari,86
+668,Jowar Flour,Staples (Flours & Grains),"TRS, Heera, Annam",Sorghum flour,Jovar,87
+669,Basmati Rice (Extra Long),Rice,"Tilda, India Gate, Daawat, Kohinoor, Akash, Laila","Long grain rice, Biryani rice, Aged rice","Basmathi, Bismati, Chawal",97
+670,Sona Masoori Rice,Rice,"India Gate, 9Grains, Annam, Royal, TRS, Heera","South Indian rice, Short grain, Ponni","Sona Masuri, Masuri rice",95
+671,Idli Rice,Rice,"Annam, TRS, Heera, Ponni","Short grain, Steamed rice","Idly rice, Arisi",94
+672,Matta Rice,Rice,"Nirapara, Heera, Annam, Double Horse","Red rice, Kerala rice, Palakkadan",Mata rice,95
+673,Poha (Thick),Rice,"TRS, Heera, Annam, Natco","Flattened rice, Beaten rice","Powwa, Aval, Atukulu",90
+674,Poha (Thin),Rice,"TRS, Heera, Annam",Thin flattened rice,Pauwa thin,89
+675,Toor Dal,Lentils & Pulses,"TRS, Heera, Annam, Chitalya, East End","Arhar dal, Split pigeon peas, Yellow lentils","Tur dal, Thoor, Thuvaram",85
+676,Moong Dal (Yellow),Lentils & Pulses,"TRS, Heera, Annam, Chitalya","Split mung beans, Yellow mung","Mong dal, Mung",89
+677,Chana Dal,Lentils & Pulses,"TRS, Heera, Annam, East End","Bengal gram, Split chickpeas","Channa dal, Kadalai paruppu",86
+678,Urad Dal (White Gota),Lentils & Pulses,"TRS, Heera, Annam, Natco","Black gram whole, White urad","Urrad, Urid, Ulutham",83
+679,Masoor Dal (Red),Lentils & Pulses,"TRS, Heera, Annam, East End",Red lentils split,"Masur dal, Mussoor",75
+680,Kala Chana,Lentils & Pulses,"TRS, Heera, Annam",Black chickpeas whole,"Kala channa, Kadala",86
+681,Kabuli Chana,Lentils & Pulses,"TRS, Heera, Annam","Chickpeas, Garbanzo beans","Chole, Channa",92
+682,Rajma (Chitra),Lentils & Pulses,"TRS, Heera, Annam",Speckled kidney beans,Rajmah,92
+683,Moong Whole,Lentils & Pulses,"TRS, Heera, Annam",Green gram whole,Moong sabut,71
+684,Turmeric Powder,Spices & Masalas,"MDH, Everest, TRS, Heera, Catch, Shakti","Haldi, Curcumin","Tumeric, Haldee",90
+685,Red Chili Powder,Spices & Masalas,"MDH, Everest, TRS, Shan, Catch","Mirch, Spicy powder, Lal mirch","Chilly, Chilli",81
+686,Kashmiri Mirch Powder,Spices & Masalas,"Everest, MDH, TRS, Catch","Mild chili, Red color powder",Kashmiri chilli,79
+687,Garam Masala,Spices & Masalas,"MDH, Everest, TRS, Shan, MTR, Badshah","Curry spice mix, Warm spice","Garam masla, Gharam",87
+688,Coriander Powder,Spices & Masalas,"MDH, Everest, TRS, Heera, Catch",Dhaniya powder,"Coriender, Dhanya",83
+689,Cumin Seeds,Spices & Masalas,"TRS, Heera, Annam, MDH",Jeera whole,"Zeera, Jera",85
+690,Mustard Seeds (Black),Spices & Masalas,"TRS, Heera, Annam","Rai, Sarson","Musterd, Rai",74
+691,Sambar Masala,Spices & Masalas,"MTR, Aachi, Everest, Eastern, 777",Sambar powder,"Sambhar, Sambar podi",91
+692,Biryani Masala,Spices & Masalas,"Shan, MDH, Lucky, Everest, Ahmed",Biryani rice spice,"Biriyani, Briyani",70
+693,Kitchen King Masala,Spices & Masalas,"MDH, Everest, Badshah",All purpose spice mix,Kitchen king,83
+694,Chana Masala,Spices & Masalas,"MDH, Everest, Shan, Catch",Chole masala,Channa masala,73
+695,Pav Bhaji Masala,Spices & Masalas,"Everest, MDH, Badshah",Bhaji spice,Paav bhaji,75
+696,Chicken Masala,Spices & Masalas,"MDH, Everest, Shan, Eastern",Poultry spice,Chiken masala,71
+697,Meat Masala,Spices & Masalas,"MDH, Everest, Shan, Eastern",Mutton/Meat spice,Meet masala,71
+698,Aloo Bhujia,Snacks & Sweets,"Haldiram's, Bikano, Heera, Bikaji","Potato sev, Namkeen","Alu bhujia, Haldirams",60
+699,Moong Dal Snack,Snacks & Sweets,"Haldiram's, Bikano, Bikaji",Fried moong lentils,Mung snack,66
+700,Khatta Meetha,Snacks & Sweets,"Haldiram's, Bikano, Heera",Sweet and sour mix,Katta metha,85
+701,Bhujia Sev,Snacks & Sweets,"Haldiram's, Bikaji, Bikano",Fine spicy sev,Bhujiya,51
+702,Parle-G,Snacks & Sweets,Parle,Milk glucose biscuits,"Parleg, Parlay",48
+703,Good Day Cashew,Snacks & Sweets,Britannia,Cashew butter cookies,Gud day,73
+704,Hide & Seek,Snacks & Sweets,Parle,Chocolate chip cookies,Hide n seek,56
+705,Marie Gold,Snacks & Sweets,Britannia,Tea biscuits,Mari gold,68
+706,Bourbon Biscuits,Snacks & Sweets,"Britannia, Parle",Choco cream biscuits,Burbon,70
+707,Gulab Jamun Mix,Snacks & Sweets,"Gits, MTR, Bambino",Milk solid sweet mix,Gulab jamon,85
+708,Soan Papdi,Snacks & Sweets,"Haldiram's, Bikano",Flaky sweet dessert,Son papdi,80
+709,Pure Desi Ghee,"Oils, Ghee & Condiments","Amul, Khanum, KTC, Nanak, Kheer","Clarified butter, Pure ghee","Ghi, Ghe",46
+710,Mustard Oil,"Oils, Ghee & Condiments","Fortune, KTC, P&B, Engine",Sarson ka tel,Musterd oil,74
+711,Coconut Oil (Edible),"Oils, Ghee & Condiments","Parachute, KTC, Heera, KPL Shudhi",Nariyal tel,Cocanut oil,71
+712,Mango Pickle,"Oils, Ghee & Condiments","Mother's Recipe, Priya, Ashoka, Patak's",Aam ka achar,"Mango pikkle, Achar",71
+713,Mixed Pickle,"Oils, Ghee & Condiments","Mother's Recipe, Priya, Ashoka",Mixed veg pickle,Mix achar,79
+714,Ginger Garlic Paste,"Oils, Ghee & Condiments","Mother's Recipe, Priya, TRS, Heera",Adrak lasun paste,GG paste,75
+715,Tamarind Paste,"Oils, Ghee & Condiments","TRS, Tamicon, Heera",Imli paste,Tamrind,60
+716,Paneer,Ready to Eat & Frozen,"Amul, Nanak, Ayurveda, Vadilal, Ashoka",Cottage cheese,"Panir, Panneer",76
+717,Mixed Veg Frozen,Ready to Eat & Frozen,"Vadilal, Ashoka, Daily Delight",Frozen vegetables,Mixed veg,43
+718,Aloo Paratha (Frozen),Ready to Eat & Frozen,"Vadilal, Haldiram's, Ashoka, Shana",Stuffed bread,Parata,84
+719,Dal Makhani (RTE),Ready to Eat & Frozen,"MTR, Ashoka, Kitchens of India",Heat and eat lentils,Daal makhni,77
+720,Idli Batter,Ready to Eat & Frozen,"ID Fresh, Shastha, Annam",Fermented batter,Idly batter,65
+721,Chakki Atta,Staples (Flours & Grains),"Aashirvaad, Pillsbury, Fortune, Elephant, Heera, Annapurna","Wheat flour, Roti flour, Whole wheat","Ashirwad, Aata, Atte",85
+722,Maida,Staples (Flours & Grains),"TRS, Heera, Annam, KTC","All purpose flour, Plain flour","Mayda, Maida flour",93
+723,Besan,Staples (Flours & Grains),"TRS, Heera, Annam, Laxmi, KTC","Gram flour, Chickpea flour","Baisan, Basin, Besun",87
+724,Sooji (Coarse),Staples (Flours & Grains),"TRS, Heera, Annam, Natco","Semolina, Rava, Rawa","Suji, Sheera",87
+725,Sooji (Fine),Staples (Flours & Grains),"TRS, Heera, Annam","Fine semolina, Rava fine","Suji fine, Rawa fine",90
+726,Rice Flour,Staples (Flours & Grains),"Annam, TRS, Heera","Chawal ka atta, Rice powder",Arisi maavu,96
+727,Bajra Flour,Staples (Flours & Grains),"TRS, Heera, Annam",Pearl millet flour,Bajari,93
+728,Jowar Flour,Staples (Flours & Grains),"TRS, Heera, Annam",Sorghum flour,Jovar,92
+729,Basmati Rice (Extra Long),Rice,"Tilda, India Gate, Daawat, Kohinoor, Akash, Laila","Long grain rice, Biryani rice, Aged rice","Basmathi, Bismati, Chawal",97
+730,Sona Masoori Rice,Rice,"India Gate, 9Grains, Annam, Royal, TRS, Heera","South Indian rice, Short grain, Ponni","Sona Masuri, Masuri rice",86
+731,Idli Rice,Rice,"Annam, TRS, Heera, Ponni","Short grain, Steamed rice","Idly rice, Arisi",99
+732,Matta Rice,Rice,"Nirapara, Heera, Annam, Double Horse","Red rice, Kerala rice, Palakkadan",Mata rice,95
+733,Poha (Thick),Rice,"TRS, Heera, Annam, Natco","Flattened rice, Beaten rice","Powwa, Aval, Atukulu",93
+734,Poha (Thin),Rice,"TRS, Heera, Annam",Thin flattened rice,Pauwa thin,89
+735,Toor Dal,Lentils & Pulses,"TRS, Heera, Annam, Chitalya, East End","Arhar dal, Split pigeon peas, Yellow lentils","Tur dal, Thoor, Thuvaram",73
+736,Moong Dal (Yellow),Lentils & Pulses,"TRS, Heera, Annam, Chitalya","Split mung beans, Yellow mung","Mong dal, Mung",89
+737,Chana Dal,Lentils & Pulses,"TRS, Heera, Annam, East End","Bengal gram, Split chickpeas","Channa dal, Kadalai paruppu",84
+738,Urad Dal (White Gota),Lentils & Pulses,"TRS, Heera, Annam, Natco","Black gram whole, White urad","Urrad, Urid, Ulutham",77
+739,Masoor Dal (Red),Lentils & Pulses,"TRS, Heera, Annam, East End",Red lentils split,"Masur dal, Mussoor",84
+740,Kala Chana,Lentils & Pulses,"TRS, Heera, Annam",Black chickpeas whole,"Kala channa, Kadala",75
+741,Kabuli Chana,Lentils & Pulses,"TRS, Heera, Annam","Chickpeas, Garbanzo beans","Chole, Channa",84
+742,Rajma (Chitra),Lentils & Pulses,"TRS, Heera, Annam",Speckled kidney beans,Rajmah,94
+743,Moong Whole,Lentils & Pulses,"TRS, Heera, Annam",Green gram whole,Moong sabut,90
+744,Turmeric Powder,Spices & Masalas,"MDH, Everest, TRS, Heera, Catch, Shakti","Haldi, Curcumin","Tumeric, Haldee",95
+745,Red Chili Powder,Spices & Masalas,"MDH, Everest, TRS, Shan, Catch","Mirch, Spicy powder, Lal mirch","Chilly, Chilli",84
+746,Kashmiri Mirch Powder,Spices & Masalas,"Everest, MDH, TRS, Catch","Mild chili, Red color powder",Kashmiri chilli,92
+747,Garam Masala,Spices & Masalas,"MDH, Everest, TRS, Shan, MTR, Badshah","Curry spice mix, Warm spice","Garam masla, Gharam",92
+748,Coriander Powder,Spices & Masalas,"MDH, Everest, TRS, Heera, Catch",Dhaniya powder,"Coriender, Dhanya",77
+749,Cumin Seeds,Spices & Masalas,"TRS, Heera, Annam, MDH",Jeera whole,"Zeera, Jera",70
+750,Mustard Seeds (Black),Spices & Masalas,"TRS, Heera, Annam","Rai, Sarson","Musterd, Rai",74
+751,Sambar Masala,Spices & Masalas,"MTR, Aachi, Everest, Eastern, 777",Sambar powder,"Sambhar, Sambar podi",93
+752,Biryani Masala,Spices & Masalas,"Shan, MDH, Lucky, Everest, Ahmed",Biryani rice spice,"Biriyani, Briyani",94
+753,Kitchen King Masala,Spices & Masalas,"MDH, Everest, Badshah",All purpose spice mix,Kitchen king,86
+754,Chana Masala,Spices & Masalas,"MDH, Everest, Shan, Catch",Chole masala,Channa masala,94
+755,Pav Bhaji Masala,Spices & Masalas,"Everest, MDH, Badshah",Bhaji spice,Paav bhaji,85
+756,Chicken Masala,Spices & Masalas,"MDH, Everest, Shan, Eastern",Poultry spice,Chiken masala,76
+757,Meat Masala,Spices & Masalas,"MDH, Everest, Shan, Eastern",Mutton/Meat spice,Meet masala,82
+758,Aloo Bhujia,Snacks & Sweets,"Haldiram's, Bikano, Heera, Bikaji","Potato sev, Namkeen","Alu bhujia, Haldirams",76
+759,Moong Dal Snack,Snacks & Sweets,"Haldiram's, Bikano, Bikaji",Fried moong lentils,Mung snack,85
+760,Khatta Meetha,Snacks & Sweets,"Haldiram's, Bikano, Heera",Sweet and sour mix,Katta metha,78
+761,Bhujia Sev,Snacks & Sweets,"Haldiram's, Bikaji, Bikano",Fine spicy sev,Bhujiya,60
+762,Parle-G,Snacks & Sweets,Parle,Milk glucose biscuits,"Parleg, Parlay",62
+763,Good Day Cashew,Snacks & Sweets,Britannia,Cashew butter cookies,Gud day,66
+764,Hide & Seek,Snacks & Sweets,Parle,Chocolate chip cookies,Hide n seek,85
+765,Marie Gold,Snacks & Sweets,Britannia,Tea biscuits,Mari gold,78
+766,Bourbon Biscuits,Snacks & Sweets,"Britannia, Parle",Choco cream biscuits,Burbon,70
+767,Gulab Jamun Mix,Snacks & Sweets,"Gits, MTR, Bambino",Milk solid sweet mix,Gulab jamon,55
+768,Soan Papdi,Snacks & Sweets,"Haldiram's, Bikano",Flaky sweet dessert,Son papdi,52
+769,Pure Desi Ghee,"Oils, Ghee & Condiments","Amul, Khanum, KTC, Nanak, Kheer","Clarified butter, Pure ghee","Ghi, Ghe",59
+770,Mustard Oil,"Oils, Ghee & Condiments","Fortune, KTC, P&B, Engine",Sarson ka tel,Musterd oil,45
+771,Coconut Oil (Edible),"Oils, Ghee & Condiments","Parachute, KTC, Heera, KPL Shudhi",Nariyal tel,Cocanut oil,67
+772,Mango Pickle,"Oils, Ghee & Condiments","Mother's Recipe, Priya, Ashoka, Patak's",Aam ka achar,"Mango pikkle, Achar",54
+773,Mixed Pickle,"Oils, Ghee & Condiments","Mother's Recipe, Priya, Ashoka",Mixed veg pickle,Mix achar,57
+774,Ginger Garlic Paste,"Oils, Ghee & Condiments","Mother's Recipe, Priya, TRS, Heera",Adrak lasun paste,GG paste,57
+775,Tamarind Paste,"Oils, Ghee & Condiments","TRS, Tamicon, Heera",Imli paste,Tamrind,62
+776,Paneer,Ready to Eat & Frozen,"Amul, Nanak, Ayurveda, Vadilal, Ashoka",Cottage cheese,"Panir, Panneer",52
+777,Mixed Veg Frozen,Ready to Eat & Frozen,"Vadilal, Ashoka, Daily Delight",Frozen vegetables,Mixed veg,78
+778,Aloo Paratha (Frozen),Ready to Eat & Frozen,"Vadilal, Haldiram's, Ashoka, Shana",Stuffed bread,Parata,78
+779,Dal Makhani (RTE),Ready to Eat & Frozen,"MTR, Ashoka, Kitchens of India",Heat and eat lentils,Daal makhni,84
+780,Idli Batter,Ready to Eat & Frozen,"ID Fresh, Shastha, Annam",Fermented batter,Idly batter,42
+781,Chakki Atta,Staples (Flours & Grains),"Aashirvaad, Pillsbury, Fortune, Elephant, Heera, Annapurna","Wheat flour, Roti flour, Whole wheat","Ashirwad, Aata, Atte",93
+782,Maida,Staples (Flours & Grains),"TRS, Heera, Annam, KTC","All purpose flour, Plain flour","Mayda, Maida flour",93
+783,Besan,Staples (Flours & Grains),"TRS, Heera, Annam, Laxmi, KTC","Gram flour, Chickpea flour","Baisan, Basin, Besun",86
+784,Sooji (Coarse),Staples (Flours & Grains),"TRS, Heera, Annam, Natco","Semolina, Rava, Rawa","Suji, Sheera",86
+785,Sooji (Fine),Staples (Flours & Grains),"TRS, Heera, Annam","Fine semolina, Rava fine","Suji fine, Rawa fine",97
+786,Rice Flour,Staples (Flours & Grains),"Annam, TRS, Heera","Chawal ka atta, Rice powder",Arisi maavu,94
+787,Bajra Flour,Staples (Flours & Grains),"TRS, Heera, Annam",Pearl millet flour,Bajari,100
+788,Jowar Flour,Staples (Flours & Grains),"TRS, Heera, Annam",Sorghum flour,Jovar,87
+789,Basmati Rice (Extra Long),Rice,"Tilda, India Gate, Daawat, Kohinoor, Akash, Laila","Long grain rice, Biryani rice, Aged rice","Basmathi, Bismati, Chawal",96
+790,Sona Masoori Rice,Rice,"India Gate, 9Grains, Annam, Royal, TRS, Heera","South Indian rice, Short grain, Ponni","Sona Masuri, Masuri rice",91
+791,Idli Rice,Rice,"Annam, TRS, Heera, Ponni","Short grain, Steamed rice","Idly rice, Arisi",89
+792,Matta Rice,Rice,"Nirapara, Heera, Annam, Double Horse","Red rice, Kerala rice, Palakkadan",Mata rice,93
+793,Poha (Thick),Rice,"TRS, Heera, Annam, Natco","Flattened rice, Beaten rice","Powwa, Aval, Atukulu",94
+794,Poha (Thin),Rice,"TRS, Heera, Annam",Thin flattened rice,Pauwa thin,96
+795,Toor Dal,Lentils & Pulses,"TRS, Heera, Annam, Chitalya, East End","Arhar dal, Split pigeon peas, Yellow lentils","Tur dal, Thoor, Thuvaram",89
+796,Moong Dal (Yellow),Lentils & Pulses,"TRS, Heera, Annam, Chitalya","Split mung beans, Yellow mung","Mong dal, Mung",80
+797,Chana Dal,Lentils & Pulses,"TRS, Heera, Annam, East End","Bengal gram, Split chickpeas","Channa dal, Kadalai paruppu",77
+798,Urad Dal (White Gota),Lentils & Pulses,"TRS, Heera, Annam, Natco","Black gram whole, White urad","Urrad, Urid, Ulutham",90
+799,Masoor Dal (Red),Lentils & Pulses,"TRS, Heera, Annam, East End",Red lentils split,"Masur dal, Mussoor",70
+800,Kala Chana,Lentils & Pulses,"TRS, Heera, Annam",Black chickpeas whole,"Kala channa, Kadala",75
+801,Kabuli Chana,Lentils & Pulses,"TRS, Heera, Annam","Chickpeas, Garbanzo beans","Chole, Channa",82
+802,Rajma (Chitra),Lentils & Pulses,"TRS, Heera, Annam",Speckled kidney beans,Rajmah,86
+803,Moong Whole,Lentils & Pulses,"TRS, Heera, Annam",Green gram whole,Moong sabut,83
+804,Turmeric Powder,Spices & Masalas,"MDH, Everest, TRS, Heera, Catch, Shakti","Haldi, Curcumin","Tumeric, Haldee",88
+805,Red Chili Powder,Spices & Masalas,"MDH, Everest, TRS, Shan, Catch","Mirch, Spicy powder, Lal mirch","Chilly, Chilli",95
+806,Kashmiri Mirch Powder,Spices & Masalas,"Everest, MDH, TRS, Catch","Mild chili, Red color powder",Kashmiri chilli,83
+807,Garam Masala,Spices & Masalas,"MDH, Everest, TRS, Shan, MTR, Badshah","Curry spice mix, Warm spice","Garam masla, Gharam",80
+808,Coriander Powder,Spices & Masalas,"MDH, Everest, TRS, Heera, Catch",Dhaniya powder,"Coriender, Dhanya",85
+809,Cumin Seeds,Spices & Masalas,"TRS, Heera, Annam, MDH",Jeera whole,"Zeera, Jera",86
+810,Mustard Seeds (Black),Spices & Masalas,"TRS, Heera, Annam","Rai, Sarson","Musterd, Rai",86
+811,Sambar Masala,Spices & Masalas,"MTR, Aachi, Everest, Eastern, 777",Sambar powder,"Sambhar, Sambar podi",86
+812,Biryani Masala,Spices & Masalas,"Shan, MDH, Lucky, Everest, Ahmed",Biryani rice spice,"Biriyani, Briyani",88
+813,Kitchen King Masala,Spices & Masalas,"MDH, Everest, Badshah",All purpose spice mix,Kitchen king,91
+814,Chana Masala,Spices & Masalas,"MDH, Everest, Shan, Catch",Chole masala,Channa masala,91
+815,Pav Bhaji Masala,Spices & Masalas,"Everest, MDH, Badshah",Bhaji spice,Paav bhaji,72
+816,Chicken Masala,Spices & Masalas,"MDH, Everest, Shan, Eastern",Poultry spice,Chiken masala,74
+817,Meat Masala,Spices & Masalas,"MDH, Everest, Shan, Eastern",Mutton/Meat spice,Meet masala,85
+818,Aloo Bhujia,Snacks & Sweets,"Haldiram's, Bikano, Heera, Bikaji","Potato sev, Namkeen","Alu bhujia, Haldirams",56
+819,Moong Dal Snack,Snacks & Sweets,"Haldiram's, Bikano, Bikaji",Fried moong lentils,Mung snack,67
+820,Khatta Meetha,Snacks & Sweets,"Haldiram's, Bikano, Heera",Sweet and sour mix,Katta metha,56
+821,Bhujia Sev,Snacks & Sweets,"Haldiram's, Bikaji, Bikano",Fine spicy sev,Bhujiya,48
+822,Parle-G,Snacks & Sweets,Parle,Milk glucose biscuits,"Parleg, Parlay",63
+823,Good Day Cashew,Snacks & Sweets,Britannia,Cashew butter cookies,Gud day,56
+824,Hide & Seek,Snacks & Sweets,Parle,Chocolate chip cookies,Hide n seek,64
+825,Marie Gold,Snacks & Sweets,Britannia,Tea biscuits,Mari gold,47
+826,Bourbon Biscuits,Snacks & Sweets,"Britannia, Parle",Choco cream biscuits,Burbon,50
+827,Gulab Jamun Mix,Snacks & Sweets,"Gits, MTR, Bambino",Milk solid sweet mix,Gulab jamon,45
+828,Soan Papdi,Snacks & Sweets,"Haldiram's, Bikano",Flaky sweet dessert,Son papdi,67
+829,Pure Desi Ghee,"Oils, Ghee & Condiments","Amul, Khanum, KTC, Nanak, Kheer","Clarified butter, Pure ghee","Ghi, Ghe",44
+830,Mustard Oil,"Oils, Ghee & Condiments","Fortune, KTC, P&B, Engine",Sarson ka tel,Musterd oil,84
+831,Coconut Oil (Edible),"Oils, Ghee & Condiments","Parachute, KTC, Heera, KPL Shudhi",Nariyal tel,Cocanut oil,79
+832,Mango Pickle,"Oils, Ghee & Condiments","Mother's Recipe, Priya, Ashoka, Patak's",Aam ka achar,"Mango pikkle, Achar",72
+833,Mixed Pickle,"Oils, Ghee & Condiments","Mother's Recipe, Priya, Ashoka",Mixed veg pickle,Mix achar,53
+834,Ginger Garlic Paste,"Oils, Ghee & Condiments","Mother's Recipe, Priya, TRS, Heera",Adrak lasun paste,GG paste,51
+835,Tamarind Paste,"Oils, Ghee & Condiments","TRS, Tamicon, Heera",Imli paste,Tamrind,78
+836,Paneer,Ready to Eat & Frozen,"Amul, Nanak, Ayurveda, Vadilal, Ashoka",Cottage cheese,"Panir, Panneer",64
+837,Mixed Veg Frozen,Ready to Eat & Frozen,"Vadilal, Ashoka, Daily Delight",Frozen vegetables,Mixed veg,72
+838,Aloo Paratha (Frozen),Ready to Eat & Frozen,"Vadilal, Haldiram's, Ashoka, Shana",Stuffed bread,Parata,85
+839,Dal Makhani (RTE),Ready to Eat & Frozen,"MTR, Ashoka, Kitchens of India",Heat and eat lentils,Daal makhni,69
+840,Idli Batter,Ready to Eat & Frozen,"ID Fresh, Shastha, Annam",Fermented batter,Idly batter,45
+841,Chakki Atta,Staples (Flours & Grains),"Aashirvaad, Pillsbury, Fortune, Elephant, Heera, Annapurna","Wheat flour, Roti flour, Whole wheat","Ashirwad, Aata, Atte",87
+842,Maida,Staples (Flours & Grains),"TRS, Heera, Annam, KTC","All purpose flour, Plain flour","Mayda, Maida flour",88
+843,Besan,Staples (Flours & Grains),"TRS, Heera, Annam, Laxmi, KTC","Gram flour, Chickpea flour","Baisan, Basin, Besun",95
+844,Sooji (Coarse),Staples (Flours & Grains),"TRS, Heera, Annam, Natco","Semolina, Rava, Rawa","Suji, Sheera",93
+845,Sooji (Fine),Staples (Flours & Grains),"TRS, Heera, Annam","Fine semolina, Rava fine","Suji fine, Rawa fine",90
+846,Rice Flour,Staples (Flours & Grains),"Annam, TRS, Heera","Chawal ka atta, Rice powder",Arisi maavu,87
+847,Bajra Flour,Staples (Flours & Grains),"TRS, Heera, Annam",Pearl millet flour,Bajari,86
+848,Jowar Flour,Staples (Flours & Grains),"TRS, Heera, Annam",Sorghum flour,Jovar,88
+849,Basmati Rice (Extra Long),Rice,"Tilda, India Gate, Daawat, Kohinoor, Akash, Laila","Long grain rice, Biryani rice, Aged rice","Basmathi, Bismati, Chawal",98
+850,Sona Masoori Rice,Rice,"India Gate, 9Grains, Annam, Royal, TRS, Heera","South Indian rice, Short grain, Ponni","Sona Masuri, Masuri rice",97
+851,Idli Rice,Rice,"Annam, TRS, Heera, Ponni","Short grain, Steamed rice","Idly rice, Arisi",85
+852,Matta Rice,Rice,"Nirapara, Heera, Annam, Double Horse","Red rice, Kerala rice, Palakkadan",Mata rice,87
+853,Poha (Thick),Rice,"TRS, Heera, Annam, Natco","Flattened rice, Beaten rice","Powwa, Aval, Atukulu",85
+854,Poha (Thin),Rice,"TRS, Heera, Annam",Thin flattened rice,Pauwa thin,93
+855,Toor Dal,Lentils & Pulses,"TRS, Heera, Annam, Chitalya, East End","Arhar dal, Split pigeon peas, Yellow lentils","Tur dal, Thoor, Thuvaram",92
+856,Moong Dal (Yellow),Lentils & Pulses,"TRS, Heera, Annam, Chitalya","Split mung beans, Yellow mung","Mong dal, Mung",95
+857,Chana Dal,Lentils & Pulses,"TRS, Heera, Annam, East End","Bengal gram, Split chickpeas","Channa dal, Kadalai paruppu",93
+858,Urad Dal (White Gota),Lentils & Pulses,"TRS, Heera, Annam, Natco","Black gram whole, White urad","Urrad, Urid, Ulutham",92
+859,Masoor Dal (Red),Lentils & Pulses,"TRS, Heera, Annam, East End",Red lentils split,"Masur dal, Mussoor",84
+860,Kala Chana,Lentils & Pulses,"TRS, Heera, Annam",Black chickpeas whole,"Kala channa, Kadala",78
+861,Kabuli Chana,Lentils & Pulses,"TRS, Heera, Annam","Chickpeas, Garbanzo beans","Chole, Channa",70
+862,Rajma (Chitra),Lentils & Pulses,"TRS, Heera, Annam",Speckled kidney beans,Rajmah,89
+863,Moong Whole,Lentils & Pulses,"TRS, Heera, Annam",Green gram whole,Moong sabut,81
+864,Turmeric Powder,Spices & Masalas,"MDH, Everest, TRS, Heera, Catch, Shakti","Haldi, Curcumin","Tumeric, Haldee",79
+865,Red Chili Powder,Spices & Masalas,"MDH, Everest, TRS, Shan, Catch","Mirch, Spicy powder, Lal mirch","Chilly, Chilli",78
+866,Kashmiri Mirch Powder,Spices & Masalas,"Everest, MDH, TRS, Catch","Mild chili, Red color powder",Kashmiri chilli,70
+867,Garam Masala,Spices & Masalas,"MDH, Everest, TRS, Shan, MTR, Badshah","Curry spice mix, Warm spice","Garam masla, Gharam",78
+868,Coriander Powder,Spices & Masalas,"MDH, Everest, TRS, Heera, Catch",Dhaniya powder,"Coriender, Dhanya",95
+869,Cumin Seeds,Spices & Masalas,"TRS, Heera, Annam, MDH",Jeera whole,"Zeera, Jera",91
+870,Mustard Seeds (Black),Spices & Masalas,"TRS, Heera, Annam","Rai, Sarson","Musterd, Rai",75
+871,Sambar Masala,Spices & Masalas,"MTR, Aachi, Everest, Eastern, 777",Sambar powder,"Sambhar, Sambar podi",83
+872,Biryani Masala,Spices & Masalas,"Shan, MDH, Lucky, Everest, Ahmed",Biryani rice spice,"Biriyani, Briyani",79
+873,Kitchen King Masala,Spices & Masalas,"MDH, Everest, Badshah",All purpose spice mix,Kitchen king,85
+874,Chana Masala,Spices & Masalas,"MDH, Everest, Shan, Catch",Chole masala,Channa masala,89
+875,Pav Bhaji Masala,Spices & Masalas,"Everest, MDH, Badshah",Bhaji spice,Paav bhaji,73
+876,Chicken Masala,Spices & Masalas,"MDH, Everest, Shan, Eastern",Poultry spice,Chiken masala,87
+877,Meat Masala,Spices & Masalas,"MDH, Everest, Shan, Eastern",Mutton/Meat spice,Meet masala,95
+878,Aloo Bhujia,Snacks & Sweets,"Haldiram's, Bikano, Heera, Bikaji","Potato sev, Namkeen","Alu bhujia, Haldirams",66
+879,Moong Dal Snack,Snacks & Sweets,"Haldiram's, Bikano, Bikaji",Fried moong lentils,Mung snack,73
+880,Khatta Meetha,Snacks & Sweets,"Haldiram's, Bikano, Heera",Sweet and sour mix,Katta metha,56
+881,Bhujia Sev,Snacks & Sweets,"Haldiram's, Bikaji, Bikano",Fine spicy sev,Bhujiya,68
+882,Parle-G,Snacks & Sweets,Parle,Milk glucose biscuits,"Parleg, Parlay",55
+883,Good Day Cashew,Snacks & Sweets,Britannia,Cashew butter cookies,Gud day,65
+884,Hide & Seek,Snacks & Sweets,Parle,Chocolate chip cookies,Hide n seek,83
+885,Marie Gold,Snacks & Sweets,Britannia,Tea biscuits,Mari gold,61
+886,Bourbon Biscuits,Snacks & Sweets,"Britannia, Parle",Choco cream biscuits,Burbon,77
+887,Gulab Jamun Mix,Snacks & Sweets,"Gits, MTR, Bambino",Milk solid sweet mix,Gulab jamon,72
+888,Soan Papdi,Snacks & Sweets,"Haldiram's, Bikano",Flaky sweet dessert,Son papdi,64
+889,Pure Desi Ghee,"Oils, Ghee & Condiments","Amul, Khanum, KTC, Nanak, Kheer","Clarified butter, Pure ghee","Ghi, Ghe",78
+890,Mustard Oil,"Oils, Ghee & Condiments","Fortune, KTC, P&B, Engine",Sarson ka tel,Musterd oil,45
+891,Coconut Oil (Edible),"Oils, Ghee & Condiments","Parachute, KTC, Heera, KPL Shudhi",Nariyal tel,Cocanut oil,48
+892,Mango Pickle,"Oils, Ghee & Condiments","Mother's Recipe, Priya, Ashoka, Patak's",Aam ka achar,"Mango pikkle, Achar",68
+893,Mixed Pickle,"Oils, Ghee & Condiments","Mother's Recipe, Priya, Ashoka",Mixed veg pickle,Mix achar,42
+894,Ginger Garlic Paste,"Oils, Ghee & Condiments","Mother's Recipe, Priya, TRS, Heera",Adrak lasun paste,GG paste,82
+895,Tamarind Paste,"Oils, Ghee & Condiments","TRS, Tamicon, Heera",Imli paste,Tamrind,80
+896,Paneer,Ready to Eat & Frozen,"Amul, Nanak, Ayurveda, Vadilal, Ashoka",Cottage cheese,"Panir, Panneer",46
+897,Mixed Veg Frozen,Ready to Eat & Frozen,"Vadilal, Ashoka, Daily Delight",Frozen vegetables,Mixed veg,67
+898,Aloo Paratha (Frozen),Ready to Eat & Frozen,"Vadilal, Haldiram's, Ashoka, Shana",Stuffed bread,Parata,65
+899,Dal Makhani (RTE),Ready to Eat & Frozen,"MTR, Ashoka, Kitchens of India",Heat and eat lentils,Daal makhni,84
+900,Idli Batter,Ready to Eat & Frozen,"ID Fresh, Shastha, Annam",Fermented batter,Idly batter,59
+901,Chakki Atta,Staples (Flours & Grains),"Aashirvaad, Pillsbury, Fortune, Elephant, Heera, Annapurna","Wheat flour, Roti flour, Whole wheat","Ashirwad, Aata, Atte",96
+902,Maida,Staples (Flours & Grains),"TRS, Heera, Annam, KTC","All purpose flour, Plain flour","Mayda, Maida flour",88
+903,Besan,Staples (Flours & Grains),"TRS, Heera, Annam, Laxmi, KTC","Gram flour, Chickpea flour","Baisan, Basin, Besun",89
+904,Sooji (Coarse),Staples (Flours & Grains),"TRS, Heera, Annam, Natco","Semolina, Rava, Rawa","Suji, Sheera",94
+905,Sooji (Fine),Staples (Flours & Grains),"TRS, Heera, Annam","Fine semolina, Rava fine","Suji fine, Rawa fine",86
+906,Rice Flour,Staples (Flours & Grains),"Annam, TRS, Heera","Chawal ka atta, Rice powder",Arisi maavu,94
+907,Bajra Flour,Staples (Flours & Grains),"TRS, Heera, Annam",Pearl millet flour,Bajari,91
+908,Jowar Flour,Staples (Flours & Grains),"TRS, Heera, Annam",Sorghum flour,Jovar,89
+909,Basmati Rice (Extra Long),Rice,"Tilda, India Gate, Daawat, Kohinoor, Akash, Laila","Long grain rice, Biryani rice, Aged rice","Basmathi, Bismati, Chawal",90
+910,Sona Masoori Rice,Rice,"India Gate, 9Grains, Annam, Royal, TRS, Heera","South Indian rice, Short grain, Ponni","Sona Masuri, Masuri rice",94
+911,Idli Rice,Rice,"Annam, TRS, Heera, Ponni","Short grain, Steamed rice","Idly rice, Arisi",90
+912,Matta Rice,Rice,"Nirapara, Heera, Annam, Double Horse","Red rice, Kerala rice, Palakkadan",Mata rice,85
+913,Poha (Thick),Rice,"TRS, Heera, Annam, Natco","Flattened rice, Beaten rice","Powwa, Aval, Atukulu",97
+914,Poha (Thin),Rice,"TRS, Heera, Annam",Thin flattened rice,Pauwa thin,86
+915,Toor Dal,Lentils & Pulses,"TRS, Heera, Annam, Chitalya, East End","Arhar dal, Split pigeon peas, Yellow lentils","Tur dal, Thoor, Thuvaram",71
+916,Moong Dal (Yellow),Lentils & Pulses,"TRS, Heera, Annam, Chitalya","Split mung beans, Yellow mung","Mong dal, Mung",81
+917,Chana Dal,Lentils & Pulses,"TRS, Heera, Annam, East End","Bengal gram, Split chickpeas","Channa dal, Kadalai paruppu",84
+918,Urad Dal (White Gota),Lentils & Pulses,"TRS, Heera, Annam, Natco","Black gram whole, White urad","Urrad, Urid, Ulutham",94
+919,Masoor Dal (Red),Lentils & Pulses,"TRS, Heera, Annam, East End",Red lentils split,"Masur dal, Mussoor",70
+920,Kala Chana,Lentils & Pulses,"TRS, Heera, Annam",Black chickpeas whole,"Kala channa, Kadala",91
+921,Kabuli Chana,Lentils & Pulses,"TRS, Heera, Annam","Chickpeas, Garbanzo beans","Chole, Channa",88
+922,Rajma (Chitra),Lentils & Pulses,"TRS, Heera, Annam",Speckled kidney beans,Rajmah,75
+923,Moong Whole,Lentils & Pulses,"TRS, Heera, Annam",Green gram whole,Moong sabut,82
+924,Turmeric Powder,Spices & Masalas,"MDH, Everest, TRS, Heera, Catch, Shakti","Haldi, Curcumin","Tumeric, Haldee",78
+925,Red Chili Powder,Spices & Masalas,"MDH, Everest, TRS, Shan, Catch","Mirch, Spicy powder, Lal mirch","Chilly, Chilli",73
+926,Kashmiri Mirch Powder,Spices & Masalas,"Everest, MDH, TRS, Catch","Mild chili, Red color powder",Kashmiri chilli,80
+927,Garam Masala,Spices & Masalas,"MDH, Everest, TRS, Shan, MTR, Badshah","Curry spice mix, Warm spice","Garam masla, Gharam",92
+928,Coriander Powder,Spices & Masalas,"MDH, Everest, TRS, Heera, Catch",Dhaniya powder,"Coriender, Dhanya",84
+929,Cumin Seeds,Spices & Masalas,"TRS, Heera, Annam, MDH",Jeera whole,"Zeera, Jera",93
+930,Mustard Seeds (Black),Spices & Masalas,"TRS, Heera, Annam","Rai, Sarson","Musterd, Rai",75
+931,Sambar Masala,Spices & Masalas,"MTR, Aachi, Everest, Eastern, 777",Sambar powder,"Sambhar, Sambar podi",81
+932,Biryani Masala,Spices & Masalas,"Shan, MDH, Lucky, Everest, Ahmed",Biryani rice spice,"Biriyani, Briyani",84
+933,Kitchen King Masala,Spices & Masalas,"MDH, Everest, Badshah",All purpose spice mix,Kitchen king,82
+934,Chana Masala,Spices & Masalas,"MDH, Everest, Shan, Catch",Chole masala,Channa masala,74
+935,Pav Bhaji Masala,Spices & Masalas,"Everest, MDH, Badshah",Bhaji spice,Paav bhaji,89
+936,Chicken Masala,Spices & Masalas,"MDH, Everest, Shan, Eastern",Poultry spice,Chiken masala,71
+937,Meat Masala,Spices & Masalas,"MDH, Everest, Shan, Eastern",Mutton/Meat spice,Meet masala,73
+938,Aloo Bhujia,Snacks & Sweets,"Haldiram's, Bikano, Heera, Bikaji","Potato sev, Namkeen","Alu bhujia, Haldirams",71
+939,Moong Dal Snack,Snacks & Sweets,"Haldiram's, Bikano, Bikaji",Fried moong lentils,Mung snack,76
+940,Khatta Meetha,Snacks & Sweets,"Haldiram's, Bikano, Heera",Sweet and sour mix,Katta metha,43
+941,Bhujia Sev,Snacks & Sweets,"Haldiram's, Bikaji, Bikano",Fine spicy sev,Bhujiya,42
+942,Parle-G,Snacks & Sweets,Parle,Milk glucose biscuits,"Parleg, Parlay",43
+943,Good Day Cashew,Snacks & Sweets,Britannia,Cashew butter cookies,Gud day,77
+944,Hide & Seek,Snacks & Sweets,Parle,Chocolate chip cookies,Hide n seek,59
+945,Marie Gold,Snacks & Sweets,Britannia,Tea biscuits,Mari gold,79
+946,Bourbon Biscuits,Snacks & Sweets,"Britannia, Parle",Choco cream biscuits,Burbon,44
+947,Gulab Jamun Mix,Snacks & Sweets,"Gits, MTR, Bambino",Milk solid sweet mix,Gulab jamon,55
+948,Soan Papdi,Snacks & Sweets,"Haldiram's, Bikano",Flaky sweet dessert,Son papdi,45
+949,Pure Desi Ghee,"Oils, Ghee & Condiments","Amul, Khanum, KTC, Nanak, Kheer","Clarified butter, Pure ghee","Ghi, Ghe",69
+950,Mustard Oil,"Oils, Ghee & Condiments","Fortune, KTC, P&B, Engine",Sarson ka tel,Musterd oil,40
+951,Coconut Oil (Edible),"Oils, Ghee & Condiments","Parachute, KTC, Heera, KPL Shudhi",Nariyal tel,Cocanut oil,47
+952,Mango Pickle,"Oils, Ghee & Condiments","Mother's Recipe, Priya, Ashoka, Patak's",Aam ka achar,"Mango pikkle, Achar",50
+953,Mixed Pickle,"Oils, Ghee & Condiments","Mother's Recipe, Priya, Ashoka",Mixed veg pickle,Mix achar,52
+954,Ginger Garlic Paste,"Oils, Ghee & Condiments","Mother's Recipe, Priya, TRS, Heera",Adrak lasun paste,GG paste,82
+955,Tamarind Paste,"Oils, Ghee & Condiments","TRS, Tamicon, Heera",Imli paste,Tamrind,72
+956,Paneer,Ready to Eat & Frozen,"Amul, Nanak, Ayurveda, Vadilal, Ashoka",Cottage cheese,"Panir, Panneer",42
+957,Mixed Veg Frozen,Ready to Eat & Frozen,"Vadilal, Ashoka, Daily Delight",Frozen vegetables,Mixed veg,65
+958,Aloo Paratha (Frozen),Ready to Eat & Frozen,"Vadilal, Haldiram's, Ashoka, Shana",Stuffed bread,Parata,52
+959,Dal Makhani (RTE),Ready to Eat & Frozen,"MTR, Ashoka, Kitchens of India",Heat and eat lentils,Daal makhni,55
+960,Idli Batter,Ready to Eat & Frozen,"ID Fresh, Shastha, Annam",Fermented batter,Idly batter,83
+961,Chakki Atta,Staples (Flours & Grains),"Aashirvaad, Pillsbury, Fortune, Elephant, Heera, Annapurna","Wheat flour, Roti flour, Whole wheat","Ashirwad, Aata, Atte",86
+962,Maida,Staples (Flours & Grains),"TRS, Heera, Annam, KTC","All purpose flour, Plain flour","Mayda, Maida flour",98
+963,Besan,Staples (Flours & Grains),"TRS, Heera, Annam, Laxmi, KTC","Gram flour, Chickpea flour","Baisan, Basin, Besun",95
+964,Sooji (Coarse),Staples (Flours & Grains),"TRS, Heera, Annam, Natco","Semolina, Rava, Rawa","Suji, Sheera",89
+965,Sooji (Fine),Staples (Flours & Grains),"TRS, Heera, Annam","Fine semolina, Rava fine","Suji fine, Rawa fine",97
+966,Rice Flour,Staples (Flours & Grains),"Annam, TRS, Heera","Chawal ka atta, Rice powder",Arisi maavu,96
+967,Bajra Flour,Staples (Flours & Grains),"TRS, Heera, Annam",Pearl millet flour,Bajari,97
+968,Jowar Flour,Staples (Flours & Grains),"TRS, Heera, Annam",Sorghum flour,Jovar,89
+969,Basmati Rice (Extra Long),Rice,"Tilda, India Gate, Daawat, Kohinoor, Akash, Laila","Long grain rice, Biryani rice, Aged rice","Basmathi, Bismati, Chawal",87
+970,Sona Masoori Rice,Rice,"India Gate, 9Grains, Annam, Royal, TRS, Heera","South Indian rice, Short grain, Ponni","Sona Masuri, Masuri rice",92
+971,Idli Rice,Rice,"Annam, TRS, Heera, Ponni","Short grain, Steamed rice","Idly rice, Arisi",85
+972,Matta Rice,Rice,"Nirapara, Heera, Annam, Double Horse","Red rice, Kerala rice, Palakkadan",Mata rice,92
+973,Poha (Thick),Rice,"TRS, Heera, Annam, Natco","Flattened rice, Beaten rice","Powwa, Aval, Atukulu",97
+974,Poha (Thin),Rice,"TRS, Heera, Annam",Thin flattened rice,Pauwa thin,99
+975,Toor Dal,Lentils & Pulses,"TRS, Heera, Annam, Chitalya, East End","Arhar dal, Split pigeon peas, Yellow lentils","Tur dal, Thoor, Thuvaram",93
+976,Moong Dal (Yellow),Lentils & Pulses,"TRS, Heera, Annam, Chitalya","Split mung beans, Yellow mung","Mong dal, Mung",74
+977,Chana Dal,Lentils & Pulses,"TRS, Heera, Annam, East End","Bengal gram, Split chickpeas","Channa dal, Kadalai paruppu",77
+978,Urad Dal (White Gota),Lentils & Pulses,"TRS, Heera, Annam, Natco","Black gram whole, White urad","Urrad, Urid, Ulutham",86
+979,Masoor Dal (Red),Lentils & Pulses,"TRS, Heera, Annam, East End",Red lentils split,"Masur dal, Mussoor",75
+980,Kala Chana,Lentils & Pulses,"TRS, Heera, Annam",Black chickpeas whole,"Kala channa, Kadala",78
+981,Kabuli Chana,Lentils & Pulses,"TRS, Heera, Annam","Chickpeas, Garbanzo beans","Chole, Channa",84
+982,Rajma (Chitra),Lentils & Pulses,"TRS, Heera, Annam",Speckled kidney beans,Rajmah,70
+983,Moong Whole,Lentils & Pulses,"TRS, Heera, Annam",Green gram whole,Moong sabut,91
+984,Turmeric Powder,Spices & Masalas,"MDH, Everest, TRS, Heera, Catch, Shakti","Haldi, Curcumin","Tumeric, Haldee",87
+985,Red Chili Powder,Spices & Masalas,"MDH, Everest, TRS, Shan, Catch","Mirch, Spicy powder, Lal mirch","Chilly, Chilli",85
+986,Kashmiri Mirch Powder,Spices & Masalas,"Everest, MDH, TRS, Catch","Mild chili, Red color powder",Kashmiri chilli,76
+987,Garam Masala,Spices & Masalas,"MDH, Everest, TRS, Shan, MTR, Badshah","Curry spice mix, Warm spice","Garam masla, Gharam",78
+988,Coriander Powder,Spices & Masalas,"MDH, Everest, TRS, Heera, Catch",Dhaniya powder,"Coriender, Dhanya",82
+989,Cumin Seeds,Spices & Masalas,"TRS, Heera, Annam, MDH",Jeera whole,"Zeera, Jera",92
+990,Mustard Seeds (Black),Spices & Masalas,"TRS, Heera, Annam","Rai, Sarson","Musterd, Rai",91
+991,Sambar Masala,Spices & Masalas,"MTR, Aachi, Everest, Eastern, 777",Sambar powder,"Sambhar, Sambar podi",79
+992,Biryani Masala,Spices & Masalas,"Shan, MDH, Lucky, Everest, Ahmed",Biryani rice spice,"Biriyani, Briyani",80
+993,Kitchen King Masala,Spices & Masalas,"MDH, Everest, Badshah",All purpose spice mix,Kitchen king,76
+994,Chana Masala,Spices & Masalas,"MDH, Everest, Shan, Catch",Chole masala,Channa masala,77
+995,Pav Bhaji Masala,Spices & Masalas,"Everest, MDH, Badshah",Bhaji spice,Paav bhaji,93
+996,Chicken Masala,Spices & Masalas,"MDH, Everest, Shan, Eastern",Poultry spice,Chiken masala,72
+997,Meat Masala,Spices & Masalas,"MDH, Everest, Shan, Eastern",Mutton/Meat spice,Meet masala,86
+998,Aloo Bhujia,Snacks & Sweets,"Haldiram's, Bikano, Heera, Bikaji","Potato sev, Namkeen","Alu bhujia, Haldirams",63
+999,Moong Dal Snack,Snacks & Sweets,"Haldiram's, Bikano, Bikaji",Fried moong lentils,Mung snack,66
+1000,Khatta Meetha,Snacks & Sweets,"Haldiram's, Bikano, Heera",Sweet and sour mix,Katta metha,57

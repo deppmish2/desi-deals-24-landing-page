@@ -1,0 +1,38 @@
+{
+  "name": "desi-deals-24",
+  "version": "0.1.0",
+  "description": "Desi grocery deals aggregator for Germany — test version (5 stores)",
+  "main": "server/index.js",
+  "scripts": {
+    "start": "node server/index.js",
+    "dev": "nodemon server/index.js",
+    "crawl": "node crawler/index.js",
+    "crawl:validate": "node scripts/crawl-validation.js",
+    "fixture:er": "node scripts/generate-er-fixture.js",
+    "build:client": "npm --prefix client run build",
+    "build": "npm run build:client",
+    "test:er-accuracy": "node scripts/entity-resolution-accuracy.js",
+    "perf:smoke": "node scripts/perf-smoke.js",
+    "test:integration": "node --test tests/integration/*.test.js",
+    "test:e2e": "node --test tests/e2e/*.test.js",
+    "push-snapshot": "node scripts/push-snapshot.js"
+  },
+  "dependencies": {
+    "better-sqlite3": "^9.4.3",
+    "cheerio": "^1.0.0",
+    "cors": "^2.8.5",
+    "dotenv": "^16.4.1",
+    "express": "^4.18.2",
+    "morgan": "^1.10.0",
+    "node-cron": "^3.0.3",
+    "node-fetch": "^2.7.0",
+    "nodemailer": "^8.0.1",
+    "uuid": "^9.0.0"
+  },
+  "devDependencies": {
+    "nodemon": "^3.0.3"
+  },
+  "engines": {
+    "node": "20.x"
+  }
+}

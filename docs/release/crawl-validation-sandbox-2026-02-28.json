@@ -1,0 +1,37 @@
+{
+  "generated_at": "2026-02-28T20:43:38.940Z",
+  "timeout_ms": 12000,
+  "stores_attempted": 3,
+  "stores_succeeded": 0,
+  "stores_empty": 2,
+  "stores_failed": 1,
+  "success_rate": 0,
+  "success_rate_pct": 0,
+  "total_deals": 0,
+  "rows": [
+    {
+      "store_id": "jamoona",
+      "store_name": "Jamoona",
+      "status": "empty",
+      "deals_count": 0,
+      "duration_ms": 20,
+      "error": null
+    },
+    {
+      "store_id": "dookan",
+      "store_name": "Dookan",
+      "status": "error",
+      "deals_count": 0,
+      "duration_ms": 3,
+      "error": "request to https://eu.dookan.com/collections/essential-deals/products.json?limit=250&page=1 failed, reason: getaddrinfo ENOTFOUND eu.dookan.com"
+    },
+    {
+      "store_id": "grocera",
+      "store_name": "Grocera",
+      "status": "empty",
+      "deals_count": 0,
+      "duration_ms": 1,
+      "error": null
+    }
+  ]
+}

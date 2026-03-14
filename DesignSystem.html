@@ -1,0 +1,804 @@
+<!doctype html>
+<html lang="de">
+  <head>
+       
+    <meta charset="UTF-8" />
+       
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+       
+    <title>DesiDeals24 Design System: "Saffron"</title>
+       
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+       
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+       
+    <link
+      href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;900&display=swap"
+      rel="stylesheet"
+    />
+       
+    <style>
+      :root {
+        --saffron: #f4a261;
+        --charcoal: #264653;
+        --spruce: #2a9d8f;
+        --sky: #e9c46a;
+        --snow: #f8f9fa;
+        --smoke: #dee2e6;
+        --error: #e76f51;
+        --text-color: #333;
+        --bg-color: #ffffff;
+        --border-color: #e0e0e0;
+        --header-height: 60px;
+      }
+
+      body {
+        font-family:
+          "Inter",
+          -apple-system,
+          BlinkMacSystemFont,
+          "Segoe UI",
+          Roboto,
+          Helvetica,
+          Arial,
+          sans-serif;
+        line-height: 1.6;
+        color: var(--text-color);
+        background-color: var(--bg-color);
+        margin: 0;
+        padding: 0;
+        font-size: 16px;
+      }
+
+      .container {
+        max-width: 960px;
+        margin: 40px auto;
+        padding: 0 20px;
+      }
+
+      h1,
+      h2,
+      h3,
+      h4,
+      h5,
+      h6 {
+        color: var(--charcoal);
+        line-height: 1.3;
+        font-weight: 700;
+        margin-top: 2em;
+        margin-bottom: 1em;
+      }
+
+      h1 {
+        font-size: 2.5rem;
+        font-weight: 900;
+        border-bottom: 2px solid var(--smoke);
+        padding-bottom: 0.5em;
+      }
+
+      h2 {
+        font-size: 2rem;
+        border-bottom: 1px solid var(--smoke);
+        padding-bottom: 0.4em;
+      }
+
+      h3 {
+        font-size: 1.5rem;
+      }
+
+      h4 {
+        font-size: 1.2rem;
+        font-weight: 600;
+      }
+
+      p {
+        margin-bottom: 1em;
+      }
+
+      a {
+        color: var(--saffron);
+        text-decoration: none;
+      }
+
+      a:hover {
+        text-decoration: underline;
+      }
+
+      strong {
+        font-weight: 600;
+      }
+
+      table {
+        width: 100%;
+        border-collapse: collapse;
+        margin: 2em 0;
+        box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
+      }
+
+      th,
+      td {
+        padding: 12px 16px;
+        text-align: left;
+        border: 1px solid var(--border-color);
+      }
+
+      thead {
+        background-color: var(--snow);
+      }
+
+      th {
+        font-weight: 600;
+        color: var(--charcoal);
+      }
+
+      tbody tr:nth-child(even) {
+        background-color: var(--snow);
+      }
+
+      pre {
+        background-color: #2d2d2d;
+        color: #f8f8f2;
+        padding: 20px;
+        border-radius: 8px;
+        overflow-x: auto;
+        font-size: 0.9em;
+      }
+
+      code {
+        font-family: "Menlo", "Consolas", monospace;
+      }
+
+      .brand-attributes {
+        background-color: var(--snow);
+        border-left: 5px solid var(--saffron);
+        padding: 15px 25px;
+        margin: 2em 0;
+        border-radius: 0 8px 8px 0;
+      }
+
+      .color-swatch {
+        display: inline-block;
+        width: 1em;
+        height: 1em;
+        border-radius: 50%;
+        margin-right: 8px;
+        vertical-align: middle;
+        border: 1px solid rgba(0, 0, 0, 0.1);
+      }
+    </style>
+  </head>
+
+  <body>
+       
+    <div class="container">
+             
+      <h1>DesiDeals24 Design System: "Saffron"</h1>
+             
+      <div class="brand-attributes">
+                   
+        <p><strong>Markenattribute:</strong></p>
+                   
+        <ul>
+                         
+          <li><strong>Persönlichkeit:</strong> Professionell & Mutig</li>
+                         
+          <li><strong>Primäres Gefühl:</strong> Vertrauen</li>
+                         
+          <li>
+            <strong>Zielgruppe:</strong> In Deutschland lebende indische Expats
+          </li>
+                     
+        </ul>
+               
+      </div>
+
+             
+      <h2>1. Grundlagen (Foundations)</h2>
+             
+      <p>
+        Die Grundlagen definieren die grundlegenden visuellen Bausteine unserer
+        Plattform. Sie gewährleisten Konsistenz und Wiedererkennbarkeit.
+      </p>
+
+             
+      <h3>Farbpalette</h3>
+             
+      <p>
+        Unsere Farbpalette ist von den reichen, lebendigen Farben Indiens
+        inspiriert, aber in einem modernen, klaren Kontext verankert.
+      </p>
+                     
+      <h4>Primärpalette</h4>
+             
+      <table>
+                   
+        <thead>
+                         
+          <tr>
+                               
+            <th>Farbe</th>
+                               
+            <th>Hex</th>
+                               
+            <th>RGB</th>
+                               
+            <th>HSL</th>
+                               
+            <th>Verwendung</th>
+                           
+          </tr>
+                     
+        </thead>
+                   
+        <tbody>
+                         
+          <tr>
+                               
+            <td>
+              <span
+                class="color-swatch"
+                style="background-color: #f4a261"
+              ></span
+              ><strong>Saffron</strong> (Primary)
+            </td>
+                               
+            <td>#F4A261</td>
+                               
+            <td>244, 162, 97</td>
+                               
+            <td>27°, 89%, 67%</td>
+                               
+            <td>CTAs, Links, aktive Filter, Icons</td>
+                           
+          </tr>
+                         
+          <tr>
+                               
+            <td>
+              <span
+                class="color-swatch"
+                style="background-color: #264653"
+              ></span
+              ><strong>Charcoal</strong> (Text)
+            </td>
+                               
+            <td>#264653</td>
+                               
+            <td>38, 70, 83</td>
+                               
+            <td>197°, 39%, 24%</td>
+                               
+            <td>Haupttext, Überschriften</td>
+                           
+          </tr>
+                         
+          <tr>
+                               
+            <td>
+              <span
+                class="color-swatch"
+                style="background-color: #2a9d8f"
+              ></span
+              ><strong>Spruce</strong> (Background)
+            </td>
+                               
+            <td>#2A9D8F</td>
+                               
+            <td>42, 157, 143</td>
+                               
+            <td>173°, 58%, 39%</td>
+                               
+            <td>Header, Footers, Akzentflächen</td>
+                           
+          </tr>
+                         
+          <tr>
+                               
+            <td>
+              <span
+                class="color-swatch"
+                style="background-color: #e9c46a"
+              ></span
+              ><strong>Sky</strong> (Subtle BG)
+            </td>
+                               
+            <td>#E9C46A</td>
+                               
+            <td>233, 196, 106</td>
+                               
+            <td>43°, 74%, 66%</td>
+                               
+            <td>Hintergründe für Abschnitte, Karten</td>
+                           
+          </tr>
+                         
+          <tr>
+                               
+            <td>
+              <span
+                class="color-swatch"
+                style="background-color: #f8f9fa"
+              ></span
+              ><strong>Snow</strong> (Light BG)
+            </td>
+                               
+            <td>#F8F9FA</td>
+                               
+            <td>248, 249, 250</td>
+                               
+            <td>210°, 17%, 98%</td>
+                               
+            <td>Haupt-Seitenhintergrund</td>
+                           
+          </tr>
+                         
+          <tr>
+                               
+            <td>
+              <span
+                class="color-swatch"
+                style="background-color: #dee2e6"
+              ></span
+              ><strong>Smoke</strong> (Borders)
+            </td>
+                               
+            <td>#DEE2E6</td>
+                               
+            <td>222, 226, 230</td>
+                               
+            <td>210°, 16%, 88%</td>
+                               
+            <td>Trennlinien, Ränder von Eingabefeldern</td>
+                           
+          </tr>
+                     
+        </tbody>
+               
+      </table>
+
+             
+      <h4>Semantische Farben</h4>
+             
+      <table>
+                   
+        <thead>
+                         
+          <tr>
+                               
+            <th>Farbe</th>
+                               
+            <th>Hex</th>
+                               
+            <th>Verwendung</th>
+                           
+          </tr>
+                     
+        </thead>
+                   
+        <tbody>
+                         
+          <tr>
+                               
+            <td>
+              <span
+                class="color-swatch"
+                style="background-color: #2a9d8f"
+              ></span
+              ><strong>Success</strong>
+            </td>
+                               
+            <td>#2A9D8F</td>
+                               
+            <td>Bestätigungen, erfolgreiche Aktionen</td>
+                           
+          </tr>
+                         
+          <tr>
+                               
+            <td>
+              <span
+                class="color-swatch"
+                style="background-color: #e9c46a"
+              ></span
+              ><strong>Warning</strong>
+            </td>
+                               
+            <td>#E9C46A</td>
+                               
+            <td>Wichtige Hinweise, Fast-Ablauf-Deals</td>
+                           
+          </tr>
+                         
+          <tr>
+                               
+            <td>
+              <span
+                class="color-swatch"
+                style="background-color: #e76f51"
+              ></span
+              ><strong>Error</strong>
+            </td>
+                               
+            <td>#E76F51</td>
+                               
+            <td>Fehlermeldungen, ungültige Eingaben</td>
+                           
+          </tr>
+                         
+          <tr>
+                               
+            <td>
+              <span
+                class="color-swatch"
+                style="background-color: #58a6ff"
+              ></span
+              ><strong>Info</strong>
+            </td>
+                               
+            <td>#58A6FF</td>
+                               
+            <td>Informative Hinweise</td>
+                           
+          </tr>
+                     
+        </tbody>
+               
+      </table>
+
+             
+      <h3>Typografie</h3>
+             
+      <p>
+        Wir verwenden <strong>Inter</strong> als alleinige Schriftfamilie. Sie
+        ist eine hochgradig lesbare und vielseitige serifenlose Schrift, die für
+        digitale Oberflächen optimiert ist.
+      </p>
+                     
+      <h4>Schriftskala</h4>
+             
+      <table>
+                   
+        <thead>
+                         
+          <tr>
+                               
+            <th>Stil</th>
+                               
+            <th>Größe (Desktop)</th>
+                               
+            <th>Größe (Mobile)</th>
+                               
+            <th>Zeilenhöhe</th>
+                               
+            <th>Zeichenabstand</th>
+                           
+          </tr>
+                     
+        </thead>
+                   
+        <tbody>
+                         
+          <tr>
+            <td>Display</td>
+            <td>64px</td>
+            <td>48px</td>
+            <td>1.2</td>
+            <td>-1.5px</td>
+          </tr>
+                         
+          <tr>
+            <td>Headline</td>
+            <td>40px</td>
+            <td>32px</td>
+            <td>1.25</td>
+            <td>-0.5px</td>
+          </tr>
+                         
+          <tr>
+            <td>Title</td>
+            <td>24px</td>
+            <td>20px</td>
+            <td>1.4</td>
+            <td>0px</td>
+          </tr>
+                         
+          <tr>
+            <td><strong>Body (Basis)</strong></td>
+            <td><strong>16px</strong></td>
+            <td><strong>16px</strong></td>
+            <td><strong>1.6</strong></td>
+            <td><strong>0.2px</strong></td>
+          </tr>
+                         
+          <tr>
+            <td>Callout</td>
+            <td>18px</td>
+            <td>18px</td>
+            <td>1.5</td>
+            <td>0.2px</td>
+          </tr>
+                         
+          <tr>
+            <td>Subheadline</td>
+            <td>14px</td>
+            <td>14px</td>
+            <td>1.5</td>
+            <td>0.3px</td>
+          </tr>
+                         
+          <tr>
+            <td>Footnote</td>
+            <td>12px</td>
+            <td>12px</td>
+            <td>1.5</td>
+            <td>0.4px</td>
+          </tr>
+                         
+          <tr>
+            <td>Caption</td>
+            <td>10px</td>
+            <td>10px</td>
+            <td>1.5</td>
+            <td>0.5px</td>
+          </tr>
+                     
+        </tbody>
+               
+      </table>
+                     
+      <h3>Layout & Raster</h3>
+             
+      <p>
+        Ein responsives 12-Spalten-Raster sorgt für eine geordnete und flexible
+        Anordnung.
+      </p>
+             
+      <ul>
+                   
+        <li>
+          <strong>Desktop (1440px):</strong> 1140px max. Breite, 80px Spalten,
+          24px Abstand (Gutter)
+        </li>
+                   
+        <li>
+          <strong>Tablet (768px):</strong> 720px max. Breite, 44px Spalten, 20px
+          Abstand
+        </li>
+                   
+        <li>
+          <strong>Mobile (375px):</strong> 343px max. Breite, 20px Spalten, 16px
+          Abstand
+        </li>
+               
+      </ul>
+
+             
+      <h3>Abstandssystem (Spacing)</h3>
+             
+      <p>Ein 8px-Basissystem schafft visuellen Rhythmus und Konsistenz.</p>
+             
+      <ul>
+                   
+        <li>
+          <strong>4px (xxs):</strong> Für kleine Abstände innerhalb von
+          Komponenten.
+        </li>
+                   
+        <li>
+          <strong>8px (xs):</strong> Für Abstände zwischen eng verwandten
+          Elementen.
+        </li>
+                   
+        <li><strong>16px (s):</strong> Standardabstand zwischen Elementen.</li>
+                   
+        <li><strong>24px (m):</strong> Abstand zwischen UI-Gruppen.</li>
+                   
+        <li>
+          <strong>32px (l):</strong> Vertikaler Abstand zwischen Sektionen.
+        </li>
+               
+      </ul>
+
+             
+      <h2>2. Komponenten (Components)</h2>
+             
+      <p>
+        Hier ist ein Beispiel für eine detailliert ausgearbeitete Komponente.
+      </p>
+             
+      <h4>Button</h4>
+             
+      <p>
+        Buttons sind das wichtigste Element für Aktionen. Spezifikationen:
+        <code>border-radius: 8px</code>, <code>font-weight: 600</code>.
+      </p>
+             
+      <table>
+                   
+        <thead>
+                         
+          <tr>
+                               
+            <th>Variante</th>
+                               
+            <th>Hintergrund (Default)</th>
+                               
+            <th>Textfarbe (Default)</th>
+                               
+            <th>Rahmen</th>
+                               
+            <th>Verwendung</th>
+                           
+          </tr>
+                     
+        </thead>
+                   
+        <tbody>
+                         
+          <tr>
+                               
+            <td><strong>Primary</strong></td>
+                               
+            <td>Saffron (#F4A261)</td>
+                               
+            <td>Charcoal (#264653)</td>
+                               
+            <td>Keiner</td>
+                               
+            <td>Wichtigste Aktion auf der Seite.</td>
+                           
+          </tr>
+                         
+          <tr>
+                               
+            <td><strong>Secondary</strong></td>
+                               
+            <td>Spruce (#2A9D8F)</td>
+                               
+            <td>Snow (#F8F9FA)</td>
+                               
+            <td>Keiner</td>
+                               
+            <td>Zweitwichtigste Aktion.</td>
+                           
+          </tr>
+                         
+          <tr>
+                               
+            <td><strong>Tertiary</strong></td>
+                               
+            <td>Transparent</td>
+                               
+            <td>Charcoal (#264653)</td>
+                               
+            <td>1px solid Smoke</td>
+                               
+            <td>Weniger wichtige Aktionen.</td>
+                           
+          </tr>
+                     
+        </tbody>
+               
+      </table>
+             
+      <p>
+        <strong>Zustände (States):</strong> Hover (Helligkeit +10%), Active
+        (Helligkeit +20%), Disabled (Opazität 50%), Loading (Spinner).
+      </p>
+
+             
+      <h2>3. Muster (Patterns)</h2>
+             
+      <p>Muster sind wiederverwendbare Lösungen für häufige Designprobleme.</p>
+             
+      <h4>Ablauf: Angebotsfilterung</h4>
+             
+      <p>
+        Dieser Ablauf zeigt, wie ein Nutzer auf der Listings-Seite nach
+        Angeboten sucht und diese filtert.
+      </p>
+             
+      <div class="mermaid">
+                graph TD             A[Start: Listings-Seite] --> B{Nutzer
+        interagiert mit Filtern};             B --> C[Kategorie auswählen];    
+                B --> D[Shop auswählen];             B --> E[Preisbereich
+        anpassen];             C --> F[Filter-Tag wird angezeigt];             D
+        --> F;             E --> F;             F --> G{Angebotsliste wird neu
+        geladen};             G --> H[Angebote entsprechen den Filtern];        
+            G --> I[Leerer Zustand mit Hinweis, falls keine Ergebnisse];        
+            H --> J[Nutzer klickt auf Angebot];             F --> K[Nutzer
+        entfernt Filter-Tag];             K --> G;        
+      </div>
+
+             
+      <h2>4. Design Tokens</h2>
+             
+      <p>
+        Design Tokens sind die kleinste Einheit des Designsystems und werden
+        direkt an die Entwickler übergeben.
+      </p>
+             
+      <pre><code class="language-json">{
+  "color": {
+    "primary": {
+      "saffron": { "value": "#F4A261" },
+      "charcoal": { "value": "#264653" },
+      "spruce": { "value": "#2A9D8F" }
+    },
+    "semantic": {
+      "success": { "value": "#2A9D8F" },
+      "warning": { "value": "#E9C46A" },
+      "error": { "value": "#E76F51" }
+    },
+    "text": {
+      "default": { "value": "{color.primary.charcoal.value}" },
+      "on-primary": { "value": "{color.primary.snow.value}" }
+    },
+    "background": {
+      "default": { "value": "#F8F9FA" },
+      "dark": { "value": "#121212" }
+    }
+  }
+}</code></pre>
+
+             
+      <h2>5. Dokumentation</h2>
+             
+      <h3>Design-Prinzipien</h3>
+             
+      <ol>
+                   
+        <li>
+          <strong>Klarheit vor Schönheit:</strong> Die Oberfläche muss sofort
+          verständlich sein.
+        </li>
+                   
+        <li>
+          <strong>Vertrauen durch Konsistenz:</strong> Jede Interaktion muss
+          vorhersehbar und zuverlässig sein.
+        </li>
+                   
+        <li>
+          <strong>Kulturell relevant:</strong> Das Design spricht die Sprache
+          unserer Nutzer.
+        </li>
+               
+      </ol>
+
+             
+      <h3>Do's and Don'ts</h3>
+             
+      <ul>
+                   
+        <li>
+          <strong>DO:</strong> Nutze den <code>Primary Button</code> für die
+          wichtigste Aktion.
+        </li>
+                   
+        <li>
+          <strong>DON'T:</strong> Platziere nicht zwei
+          <code>Primary Buttons</code> nebeneinander.
+        </li>
+                   
+        <li>
+          <strong>DO:</strong> Verwende <code>Cards</code> mit klaren Bildern
+          und Preisen.
+        </li>
+                   
+        <li>
+          <strong>DON'T:</strong> Überlade Karten nicht mit zu vielen
+          Informationen.
+        </li>
+               
+      </ul>
+         
+    </div>
+
+       
+    <script src="https://cdn.jsdelivr.net/npm/mermaid@10/dist/mermaid.min.js"></script>
+       
+    <script>
+      mermaid.initialize({ startOnLoad: true });
+    </script>
+  </body>
+</html>
