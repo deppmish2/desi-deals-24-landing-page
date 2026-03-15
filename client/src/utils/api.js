@@ -209,7 +209,9 @@ export async function loginWithOAuthCode(provider, code, postcode) {
     const res = await fetch(attempt.url, attempt.init);
     if (res.ok) {
       // eslint-disable-next-line no-await-in-loop
-      return persistAuthPayload(await res.json());
+      const payload = await res.json();
+      if (payload?.pending_email_confirmation) return payload;
+      return persistAuthPayload(payload);
     }
     if (res.status === 404 || res.status === 405) {
       lastError = new Error(`API error ${res.status}`);

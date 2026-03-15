@@ -46,7 +46,14 @@ export default function OAuthCallbackPage() {
     }
 
     loginWithOAuthCode(safeProvider, code, postcode)
-      .then(() => {
+      .then((result) => {
+        if (result?.pending_email_confirmation) {
+          if (result.masked_email) {
+            sessionStorage.setItem("dd24_pending_confirm_email", result.masked_email);
+          }
+          navigate("/waitlist?confirm_email=1", { replace: true });
+          return;
+        }
         const redirectTo =
           sessionStorage.getItem(POST_AUTH_REDIRECT_STORAGE_KEY) || "/waitlist";
         sessionStorage.removeItem(POST_AUTH_REDIRECT_STORAGE_KEY);

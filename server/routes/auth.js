@@ -305,7 +305,7 @@ async function insertGoogleUser({ profile, postcode }) {
       (id, email, name, first_name, password_hash, google_id, postcode, city, dietary_prefs, preferred_stores, blocked_stores,
        preferred_brands, delivery_speed_pref, email_verified_at, created_at, last_login_at)
      VALUES
-      (?, ?, ?, ?, NULL, ?, ?, NULL, ?, ?, ?, ?, 'cheapest', ?, ?, ?)`,
+      (?, ?, ?, ?, NULL, ?, ?, NULL, ?, ?, ?, ?, 'cheapest', NULL, ?, ?)`,
   ).run(
     id,
     profile.email,
@@ -319,10 +319,42 @@ async function insertGoogleUser({ profile, postcode }) {
     JSON.stringify({}),
     now,
     now,
-    now,
   );
 
   return await db.prepare("SELECT * FROM users WHERE id = ? LIMIT 1").get(id);
+}
+
+async function sendGoogleSignupConfirmation(user, req) {
+  const rawToken = createRawEmailAuthToken();
+  const tokenHash = hashToken(rawToken);
+  const expiresAt = emailAuthTokenExpiry();
+  const now = new Date().toISOString();
+
+  await db.prepare(
+    `INSERT INTO email_auth_tokens
+      (id, email, token_hash, purpose, referral_code, requested_ip, requested_user_agent, expires_at)
+     VALUES (?, ?, ?, ?, ?, ?, ?, ?)`,
+  ).run(
+    crypto.randomUUID(),
+    user.email,
+    tokenHash,
+    "signup",
+    null,
+    String(req.ip || "").trim() || null,
+    String(req.get("user-agent") || "").trim() || null,
+    expiresAt,
+  );
+
+  const linkUrl = buildWaitlistUrl(clientAppOrigin(req), {
+    email_auth_token: rawToken,
+  });
+
+  await sendEmailAuthLink({
+    email: user.email,
+    purpose: "signup",
+    linkUrl,
+    expiresMinutes: EMAIL_AUTH_TTL_MINUTES,
+  });
 }
 
 async function upsertGoogleUser(profile, postcodeInput) {
@@ -1052,11 +1084,43 @@ router.post("/google", async (req, res) => {
       ? await verifyGoogleIdToken(idToken)
       : await exchangeGoogleCodeForProfile(code);
     const user = await upsertGoogleUser(profile, postcode);
-    const eventName =
-      user.created_at === user.last_login_at
-        ? "auth.google_register"
-        : "auth.google_login";
-    trackEvent(db, eventName, {
+
+    // New user — send email confirmation before issuing tokens
+    if (!user.email_verified_at) {
+      try {
+        await sendGoogleSignupConfirmation(user, req);
+      } catch (emailError) {
+        if (emailError?.code === "EMAIL_AUTH_NOT_CONFIGURED") {
+          // SMTP not set up — verify inline and issue tokens
+          await db.prepare(
+            "UPDATE users SET email_verified_at = ? WHERE id = ?",
+          ).run(new Date().toISOString(), user.id);
+          const verifiedUser = await syncCachedUserById(db, user.id, { strict: true });
+          trackEvent(db, "auth.google_register", {
+            userId: verifiedUser.id,
+            route: req.originalUrl,
+            entityType: "user",
+            entityId: verifiedUser.id,
+            payload: { email: verifiedUser.email },
+          });
+          return res.json(await buildAuthResponse(verifiedUser));
+        }
+        throw emailError;
+      }
+      trackEvent(db, "auth.google_register", {
+        userId: user.id,
+        route: req.originalUrl,
+        entityType: "user",
+        entityId: user.id,
+        payload: { email: user.email, pending_confirmation: true },
+      });
+      return res.json({
+        pending_email_confirmation: true,
+        masked_email: maskEmail(user.email),
+      });
+    }
+
+    trackEvent(db, "auth.google_login", {
       userId: user.id,
       route: req.originalUrl,
       entityType: "user",
@@ -1100,11 +1164,41 @@ router.get("/google/callback", async (req, res) => {
   try {
     const profile = await exchangeGoogleCodeForProfile(code);
     const user = await upsertGoogleUser(profile, postcode);
-    const eventName =
-      user.created_at === user.last_login_at
-        ? "auth.google_register"
-        : "auth.google_login";
-    trackEvent(db, eventName, {
+
+    if (!user.email_verified_at) {
+      try {
+        await sendGoogleSignupConfirmation(user, req);
+      } catch (emailError) {
+        if (emailError?.code === "EMAIL_AUTH_NOT_CONFIGURED") {
+          await db.prepare(
+            "UPDATE users SET email_verified_at = ? WHERE id = ?",
+          ).run(new Date().toISOString(), user.id);
+          const verifiedUser = await syncCachedUserById(db, user.id, { strict: true });
+          trackEvent(db, "auth.google_register", {
+            userId: verifiedUser.id,
+            route: req.originalUrl,
+            entityType: "user",
+            entityId: verifiedUser.id,
+            payload: { email: verifiedUser.email },
+          });
+          return res.json(await buildAuthResponse(verifiedUser));
+        }
+        throw emailError;
+      }
+      trackEvent(db, "auth.google_register", {
+        userId: user.id,
+        route: req.originalUrl,
+        entityType: "user",
+        entityId: user.id,
+        payload: { email: user.email, pending_confirmation: true },
+      });
+      return res.json({
+        pending_email_confirmation: true,
+        masked_email: maskEmail(user.email),
+      });
+    }
+
+    trackEvent(db, "auth.google_login", {
       userId: user.id,
       route: req.originalUrl,
       entityType: "user",

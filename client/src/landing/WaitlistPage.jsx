@@ -10,7 +10,7 @@ import {
   getAuthSession,
   logoutUser,
 } from "../utils/api";
-import { getCurrentPoolDateSeed } from "./dealsRefreshSchedule";
+import { getCurrentPoolDateSeed, computeNextRefreshUtcMs, formatRefreshCountdown } from "./dealsRefreshSchedule";
 
 // ─── Design Tokens ────────────────────────────────────────────────────────────
 const T = {
@@ -160,11 +160,16 @@ function normalizeWaitlistDeals(deals, limit = 24) {
           ? ((originalPrice - salePrice) / originalPrice) * 100
           : null;
 
+    const productUrl = deal?.product_url || deal?.productUrl || null;
+    const storeUrl = deal?.store?.url || deal?.store_url || deal?.storeUrl || null;
+
     return {
       id: deal?.id || `${store}:${product}:${index}`,
       store,
       product,
       imageUrl,
+      productUrl,
+      storeUrl,
       now:
         typeof salePrice === "number" && Number.isFinite(salePrice)
           ? formatPrice(salePrice, currency)
@@ -1426,10 +1431,89 @@ function InviteDashboard({ identity, status, onLogout, logoutLoading = false }) 
 }
 
 // ─── DEALS UNLOCKED SCREEN ────────────────────────────────────────────────────
+function useCountdown() {
+  const [countdown, setCountdown] = useState(() =>
+    formatRefreshCountdown(computeNextRefreshUtcMs() - Date.now()),
+  );
+  useEffect(() => {
+    const id = setInterval(() => {
+      setCountdown(formatRefreshCountdown(computeNextRefreshUtcMs() - Date.now()));
+    }, 1000);
+    return () => clearInterval(id);
+  }, []);
+  return countdown;
+}
+
+function FeedbackModal({ onClose }) {
+  const [name, setName] = useState("");
+  const [email, setEmail] = useState("");
+  const [message, setMessage] = useState("");
+  const [submitting, setSubmitting] = useState(false);
+  const [done, setDone] = useState(false);
+  const [error, setError] = useState("");
+
+  async function handleSubmit(e) {
+    e.preventDefault();
+    setSubmitting(true);
+    setError("");
+    try {
+      const res = await fetch("/api/v1/contact", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ name, email, subject: "Deals page feedback", message }),
+      });
+      if (!res.ok) {
+        const data = await res.json().catch(() => ({}));
+        throw new Error(data?.error || "Failed to send feedback");
+      }
+      setDone(true);
+    } catch (err) {
+      setError(err.message || "Something went wrong");
+    } finally {
+      setSubmitting(false);
+    }
+  }
+
+  return (
+    <div style={{ position:"fixed", inset:0, background:"rgba(0,0,0,0.45)", zIndex:1000, display:"flex", alignItems:"center", justifyContent:"center", padding:16 }} onClick={onClose}>
+      <div style={{ background:"#fff", borderRadius:20, padding:"28px 28px 24px", width:"100%", maxWidth:420, boxShadow:"0 20px 60px rgba(0,0,0,0.18)" }} onClick={e => e.stopPropagation()}>
+        {done ? (
+          <>
+            <div style={{ fontSize:36, marginBottom:12 }}>🙏</div>
+            <div style={{ fontFamily:"'Fraunces',Georgia,serif", fontSize:20, fontWeight:900, marginBottom:8, color:T.textPrimary }}>Thanks for your feedback!</div>
+            <p style={{ fontSize:14, color:T.textSecondary, marginBottom:20 }}>We read every message and use it to improve DesiDeals24.</p>
+            <button type="button" onClick={onClose} style={{ width:"100%", background:T.brand, color:"#fff", border:"none", borderRadius:12, padding:"12px 16px", fontWeight:700, fontSize:14, cursor:"pointer" }}>Close</button>
+          </>
+        ) : (
+          <>
+            <div style={{ display:"flex", alignItems:"center", justifyContent:"space-between", marginBottom:18 }}>
+              <div style={{ fontFamily:"'Fraunces',Georgia,serif", fontSize:20, fontWeight:900, color:T.textPrimary }}>Share feedback</div>
+              <button type="button" onClick={onClose} style={{ background:"none", border:"none", fontSize:20, cursor:"pointer", color:T.textMuted, lineHeight:1 }}>×</button>
+            </div>
+            <form onSubmit={handleSubmit}>
+              <div style={{ display:"flex", flexDirection:"column", gap:10, marginBottom:14 }}>
+                <input required value={name} onChange={e => setName(e.target.value)} placeholder="Your name" style={{ border:`1px solid ${T.border}`, borderRadius:10, padding:"10px 12px", fontSize:14, outline:"none" }} />
+                <input required type="email" value={email} onChange={e => setEmail(e.target.value)} placeholder="Your email" style={{ border:`1px solid ${T.border}`, borderRadius:10, padding:"10px 12px", fontSize:14, outline:"none" }} />
+                <textarea required value={message} onChange={e => setMessage(e.target.value)} placeholder="What's on your mind? Missing stores, deals, features…" rows={4} style={{ border:`1px solid ${T.border}`, borderRadius:10, padding:"10px 12px", fontSize:14, resize:"vertical", outline:"none", fontFamily:"inherit" }} />
+              </div>
+              {error ? <div style={{ fontSize:13, color:"#dc2626", marginBottom:10 }}>{error}</div> : null}
+              <button type="submit" disabled={submitting} style={{ width:"100%", background:T.brand, color:"#fff", border:"none", borderRadius:12, padding:"12px 16px", fontWeight:700, fontSize:14, cursor:submitting ? "not-allowed" : "pointer", opacity:submitting ? 0.7 : 1 }}>
+                {submitting ? "Sending…" : "Send feedback"}
+              </button>
+            </form>
+          </>
+        )}
+      </div>
+    </div>
+  );
+}
+
 function DealsUnlocked({ identity, status }) {
   const displayName = buildDisplayName(identity);
   const [celebrated, setCelebrated] = useState(true);
+  const [feedbackOpen, setFeedbackOpen] = useState(false);
   const { deals: liveDeals, loading, error } = useDailyLiveDeals(24);
+  const countdown = useCountdown();
 
   useEffect(() => {
     const t = setTimeout(() => setCelebrated(false), 3500);
@@ -1462,12 +1546,19 @@ function DealsUnlocked({ identity, status }) {
 
       <nav className="dd24-waitlist-nav" style={{ padding:"18px 40px", display:"flex", alignItems:"center", justifyContent:"space-between", maxWidth:1060, margin:"0 auto", borderBottom:`1px solid ${T.border}` }}>
         <Logo />
-        <div style={{ display:"flex", alignItems:"center", gap:10 }}>
+        <div style={{ display:"flex", alignItems:"center", gap:10, flexWrap:"wrap" }}>
+          <div style={{ display:"flex", alignItems:"center", gap:6, padding:"5px 12px", borderRadius:99, background:"#f1f5f1", border:`1px solid ${T.border}`, fontSize:12, color:T.textSecondary, fontWeight:600 }}>
+            <span>⏱</span>
+            <span>New deals in <span style={{ fontVariantNumeric:"tabular-nums", color:T.textPrimary }}>{countdown}</span></span>
+          </div>
+          <button type="button" onClick={() => setFeedbackOpen(true)} style={{ padding:"5px 14px", borderRadius:99, background:"#fff", border:`1px solid ${T.border}`, fontSize:12, color:T.textSecondary, fontWeight:600, cursor:"pointer" }}>
+            💬 Feedback
+          </button>
           <div style={{ width:7, height:7, borderRadius:"50%", background:T.brand, boxShadow:`0 0 6px ${T.brand}` }} />
-          <span style={{ fontSize:13, color:T.textSecondary, fontWeight:500 }}>Deals access · unlocked</span>
           <div style={{ padding:"4px 12px", borderRadius:99, background:T.brandLight, border:`1px solid ${T.brandMid}`, fontSize:12, color:T.brandDark, fontWeight:700 }}>✓ Full access</div>
         </div>
       </nav>
+      {feedbackOpen && <FeedbackModal onClose={() => setFeedbackOpen(false)} />}
 
       {celebrated && (
         <div style={{ background:`linear-gradient(135deg,${T.brand},${T.brandDark})`, padding:"18px 40px", display:"flex", alignItems:"center", justifyContent:"center", gap:16, animation:"slideDown 0.5s ease" }}>
@@ -1543,50 +1634,46 @@ function DealsUnlocked({ identity, status }) {
         ) : null}
 
         <div className="dd24-waitlist-deals-grid" style={{ display:"grid", gridTemplateColumns:"repeat(auto-fill,minmax(220px,1fr))", gap:14, marginBottom:32 }}>
-          {normalizedDeals.map((deal, index) => (
-            <div key={deal.id} style={{ background:T.bgCard, border:`1px solid ${T.border}`, borderRadius:18, padding:"18px 20px", boxShadow:T.shadowSm, transition:"box-shadow 0.15s,transform 0.15s", animation:`fadeIn 0.4s ease ${index*0.05}s both` }}
-              onMouseEnter={e=>{e.currentTarget.style.boxShadow=T.shadowMd;e.currentTarget.style.transform="translateY(-2px)";}}
-              onMouseLeave={e=>{e.currentTarget.style.boxShadow=T.shadowSm;e.currentTarget.style.transform="none";}}>
-              <div
-                style={{
-                  height: 150,
-                  borderRadius: 16,
-                  border: `1px solid ${T.border}`,
-                  background: "#F8FAFC",
-                  marginBottom: 14,
-                  overflow: "hidden",
-                  display: "flex",
-                  alignItems: "center",
-                  justifyContent: "center",
-                }}
-              >
-                {deal.imageUrl ? (
-                  <img
-                    src={`/api/v1/admin/proxy/image?url=${encodeURIComponent(deal.imageUrl)}`}
-                    alt={deal.product}
-                    loading="lazy"
-                    style={{ width: "100%", height: "100%", objectFit: "contain", padding: 14 }}
-                  />
-                ) : (
-                  <span style={{ fontSize: 34, opacity: 0.55 }}>🛒</span>
-                )}
+          {normalizedDeals.map((deal, index) => {
+            const href = deal.productUrl || deal.storeUrl || null;
+            const cardStyle = { display:"block", background:T.bgCard, border:`1px solid ${T.border}`, borderRadius:18, padding:"18px 20px", boxShadow:T.shadowSm, transition:"box-shadow 0.15s,transform 0.15s", animation:`fadeIn 0.4s ease ${index*0.05}s both`, textDecoration:"none", color:"inherit" };
+            const cardContent = (
+              <>
+                <div style={{ height:150, borderRadius:16, border:`1px solid ${T.border}`, background:"#F8FAFC", marginBottom:14, overflow:"hidden", display:"flex", alignItems:"center", justifyContent:"center" }}>
+                  {deal.imageUrl ? (
+                    <img src={`/api/v1/admin/proxy/image?url=${encodeURIComponent(deal.imageUrl)}`} alt={deal.product} loading="lazy" style={{ width:"100%", height:"100%", objectFit:"contain", padding:14 }} />
+                  ) : (
+                    <span style={{ fontSize:34, opacity:0.55 }}>🛒</span>
+                  )}
+                </div>
+                <div style={{ fontSize:11, color:T.textMuted, marginBottom:4, fontWeight:500, letterSpacing:0.3 }}>{deal.store}</div>
+                <div style={{ fontSize:14, fontWeight:700, color:T.textPrimary, marginBottom:10, lineHeight:1.3, minHeight:38 }}>{deal.product}</div>
+                <div style={{ display:"flex", alignItems:"baseline", gap:8, marginBottom:4, flexWrap:"wrap" }}>
+                  <span style={{ fontFamily:"'Fraunces',Georgia,serif", fontSize:26, fontWeight:900, color:T.brand, letterSpacing:-1 }}>{deal.now}</span>
+                  {deal.was ? <span style={{ fontSize:12, color:T.textMuted, textDecoration:"line-through" }}>{deal.was}</span> : null}
+                  {deal.off ? <span style={{ fontSize:10, fontWeight:700, color:T.textOnBrand, background:T.brand, padding:"3px 8px", borderRadius:99 }}>-{deal.off}</span> : null}
+                </div>
+                {href ? <div style={{ fontSize:11, color:T.brand, fontWeight:600, marginTop:6 }}>View at store →</div> : null}
+              </>
+            );
+            return href ? (
+              <a key={deal.id} href={href} target="_blank" rel="noopener noreferrer" style={cardStyle}
+                onMouseEnter={e=>{e.currentTarget.style.boxShadow=T.shadowMd;e.currentTarget.style.transform="translateY(-2px)";}}
+                onMouseLeave={e=>{e.currentTarget.style.boxShadow=T.shadowSm;e.currentTarget.style.transform="none";}}>
+                {cardContent}
+              </a>
+            ) : (
+              <div key={deal.id} style={cardStyle}
+                onMouseEnter={e=>{e.currentTarget.style.boxShadow=T.shadowMd;e.currentTarget.style.transform="translateY(-2px)";}}
+                onMouseLeave={e=>{e.currentTarget.style.boxShadow=T.shadowSm;e.currentTarget.style.transform="none";}}>
+                {cardContent}
               </div>
-              <div style={{ fontSize:14, fontWeight:700, color:T.textPrimary, marginBottom:10, lineHeight:1.3, minHeight: 38 }}>{deal.product}</div>
-              <div style={{ display:"flex", alignItems:"baseline", gap:8, marginBottom:4, flexWrap:"wrap" }}>
-                <span style={{ fontFamily:"'Fraunces',Georgia,serif", fontSize:26, fontWeight:900, color:T.brand, letterSpacing:-1 }}>{deal.now}</span>
-                {deal.was ? (
-                  <span style={{ fontSize:12, color:T.textMuted, textDecoration:"line-through" }}>{deal.was}</span>
-                ) : null}
-                {deal.off ? (
-                  <span style={{ fontSize:10, fontWeight:700, color:T.textOnBrand, background:T.brand, padding:"3px 8px", borderRadius:99 }}>-{deal.off}</span>
-                ) : null}
-              </div>
-            </div>
-          ))}
+            );
+          })}
         </div>
 
         {shareUrl ? (
-          <div style={{ borderRadius:20, padding:"24px 28px", background:`linear-gradient(135deg,${T.brandLight},${T.brandMid}30)`, border:`1px solid ${T.brandMid}`, display:"flex", alignItems:"center", justifyContent:"space-between", gap:20, flexWrap:"wrap" }}>
+          <div style={{ borderRadius:20, padding:"24px 28px", background:`linear-gradient(135deg,${T.brandLight},${T.brandMid}30)`, border:`1px solid ${T.brandMid}`, display:"flex", alignItems:"center", justifyContent:"space-between", gap:20, flexWrap:"wrap", marginBottom:16 }}>
             <div style={{ display:"flex", alignItems:"center", gap:14 }}>
               <span style={{ fontSize:36 }}>💌</span>
               <div>
@@ -1597,6 +1684,16 @@ function DealsUnlocked({ identity, status }) {
             <CopyButton text={shareUrl} />
           </div>
         ) : null}
+
+        <div style={{ borderRadius:20, padding:"20px 28px", background:T.bgCard, border:`1px solid ${T.border}`, display:"flex", alignItems:"center", justifyContent:"space-between", gap:16, flexWrap:"wrap" }}>
+          <div>
+            <div style={{ fontFamily:"'Fraunces',Georgia,serif", fontSize:15, fontWeight:800, color:T.textPrimary, marginBottom:2 }}>Got feedback?</div>
+            <div style={{ fontSize:13, color:T.textSecondary }}>Missing a store, a deal, or a feature? Tell us.</div>
+          </div>
+          <button type="button" onClick={() => setFeedbackOpen(true)} style={{ padding:"10px 20px", borderRadius:12, background:T.brand, color:"#fff", border:"none", fontWeight:700, fontSize:13, cursor:"pointer", whiteSpace:"nowrap" }}>
+            Share feedback
+          </button>
+        </div>
       </div>
     </div>
   );
@@ -1609,6 +1706,7 @@ export default function WaitlistPage() {
   const emailAuthToken = String(
     searchParams.get("email_auth_token") || "",
   ).trim();
+  const confirmEmailPending = searchParams.get("confirm_email") === "1" && !emailAuthToken;
   const [authSession, setAuthSession] = useState(() => getAuthSession());
   const [status, setStatus] = useState(null);
   const [authLoading, setAuthLoading] = useState(false);
@@ -1834,6 +1932,25 @@ export default function WaitlistPage() {
         centerPanel(
           "Confirming your email",
           "We’re verifying your email link and preparing your waitlist access.",
+        )
+      ) : confirmEmailPending ? (
+        centerPanel(
+          "Check your email",
+          (() => {
+            const maskedEmail = typeof window !== "undefined"
+              ? sessionStorage.getItem("dd24_pending_confirm_email")
+              : null;
+            return maskedEmail
+              ? `We sent a confirmation link to ${maskedEmail}. Click it to complete your signup.`
+              : "We sent a confirmation link to your email. Click it to complete your signup.";
+          })(),
+          <button
+            type="button"
+            onClick={() => navigate("/waitlist", { replace: true })}
+            style={{ marginTop: 8, fontSize: 13, color: T.textMuted, background: "none", border: "none", cursor: "pointer", textDecoration: "underline" }}
+          >
+            Back
+          </button>,
         )
       ) : !authSession?.accessToken ? (
         <>
