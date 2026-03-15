@@ -59,7 +59,7 @@ async function ensureReferralCode(userId) {
   for (let attempt = 0; attempt < 8; attempt += 1) {
     const candidate = buildReferralCodeCandidate(userId, attempt);
     try {
-      db.prepare(
+      await db.prepare(
         `UPDATE users
          SET waitlist_referral_code = ?
          WHERE id = ?
@@ -100,15 +100,15 @@ async function getConfirmedInvitees(userId) {
   return findWaitlistInviteesByReferrerOrCache(db, userId);
 }
 
-function countConfirmedReferrals(userId) {
+async function countConfirmedReferrals(userId) {
   return Number(
-    db
+    (await db
       .prepare(
         `SELECT COUNT(*) AS n
          FROM waitlist_referrals
          WHERE inviter_user_id = ?`,
       )
-      .get(userId)?.n || 0,
+      .get(userId))?.n || 0,
   );
 }
 
@@ -116,13 +116,13 @@ async function syncUnlockState(userId, confirmedCountInput = null) {
   const confirmedCount =
     Number.isFinite(confirmedCountInput) && confirmedCountInput >= 0
       ? confirmedCountInput
-      : countConfirmedReferrals(userId);
+      : await countConfirmedReferrals(userId);
 
   if (confirmedCount < INVITES_NEEDED) {
     return confirmedCount;
   }
 
-  db.prepare(
+  await db.prepare(
     `UPDATE users
      SET waitlist_unlocked_at = COALESCE(waitlist_unlocked_at, ?),
          user_type = CASE
@@ -223,46 +223,54 @@ router.post("/claim-referral", async (req, res) => {
     });
   }
 
-  const applyReferralClaim = db.transaction((payload) => {
-    const existingReferral = db
-      .prepare(
-        `SELECT inviter_user_id
-         FROM waitlist_referrals
-         WHERE invited_user_id = ?
-         LIMIT 1`,
-      )
-      .get(payload.invited_user_id);
-    if (existingReferral?.inviter_user_id) {
-      return { applied: false, reason: "already_claimed" };
-    }
-
-    db.prepare(
-      `UPDATE users
-       SET waitlist_referrer_user_id = COALESCE(waitlist_referrer_user_id, ?)
-       WHERE id = ?`,
-    ).run(payload.inviter_user_id, payload.invited_user_id);
-
-    const updatedInvitee = db
-      .prepare("SELECT * FROM users WHERE id = ? LIMIT 1")
-      .get(payload.invited_user_id);
-    if (!updatedInvitee) {
-      throw new Error("Invitee user not found after referral claim");
-    }
-    if (updatedInvitee.waitlist_referrer_user_id !== payload.inviter_user_id) {
-      return { applied: false, reason: "already_claimed" };
-    }
-
-    upsertWaitlistReferralRow(db, payload);
-    return { applied: true, reason: null };
-  });
-
-  const claimResult = applyReferralClaim({
+  const payload = {
     inviter_user_id: inviter.id,
     invited_user_id: currentUser.id,
     referral_code: inviter.waitlist_referral_code || referralCode,
     invited_email_snapshot: currentUser.email || null,
     claimed_at: new Date().toISOString(),
-  });
+  };
+
+  const existingReferral = await db
+    .prepare(
+      `SELECT inviter_user_id
+       FROM waitlist_referrals
+       WHERE invited_user_id = ?
+       LIMIT 1`,
+    )
+    .get(payload.invited_user_id);
+  if (existingReferral?.inviter_user_id) {
+    return res.json({
+      ok: true,
+      applied: false,
+      reason: "already_claimed",
+      data: await serializeWaitlistStatus(req.user.id),
+    });
+  }
+
+  await db.prepare(
+    `UPDATE users
+     SET waitlist_referrer_user_id = COALESCE(waitlist_referrer_user_id, ?)
+     WHERE id = ?`,
+  ).run(payload.inviter_user_id, payload.invited_user_id);
+
+  const updatedInvitee = await db
+    .prepare("SELECT * FROM users WHERE id = ? LIMIT 1")
+    .get(payload.invited_user_id);
+  if (!updatedInvitee) {
+    throw new Error("Invitee user not found after referral claim");
+  }
+  if (updatedInvitee.waitlist_referrer_user_id !== payload.inviter_user_id) {
+    return res.json({
+      ok: true,
+      applied: false,
+      reason: "already_claimed",
+      data: await serializeWaitlistStatus(req.user.id),
+    });
+  }
+
+  await upsertWaitlistReferralRow(db, payload);
+  const claimResult = { applied: true, reason: null };
 
   const updatedUser = await syncCachedUserById(db, req.user.id, {
     strict: true,

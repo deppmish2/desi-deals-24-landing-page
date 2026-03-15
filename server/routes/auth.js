@@ -282,25 +282,25 @@ async function resolveUserByEmail(email) {
   return findUserByEmailOrCache(db, email);
 }
 
-function findUserByGoogleId(googleId) {
-  return db
+async function findUserByGoogleId(googleId) {
+  return await db
     .prepare("SELECT * FROM users WHERE google_id = ? LIMIT 1")
     .get(googleId);
 }
 
-function findUserByFacebookId(facebookId) {
-  return db
+async function findUserByFacebookId(facebookId) {
+  return await db
     .prepare("SELECT * FROM users WHERE facebook_id = ? LIMIT 1")
     .get(facebookId);
 }
 
-function insertGoogleUser({ profile, postcode }) {
+async function insertGoogleUser({ profile, postcode }) {
   const now = new Date().toISOString();
   const id = crypto.randomUUID();
   const fullName = normalizeProfileName(profile.name);
   const firstName = extractFirstName(profile.name, profile.email);
 
-  db.prepare(
+  await db.prepare(
     `INSERT INTO users
       (id, email, name, first_name, password_hash, google_id, postcode, city, dietary_prefs, preferred_stores, blocked_stores,
        preferred_brands, delivery_speed_pref, email_verified_at, created_at, last_login_at)
@@ -322,18 +322,18 @@ function insertGoogleUser({ profile, postcode }) {
     now,
   );
 
-  return db.prepare("SELECT * FROM users WHERE id = ? LIMIT 1").get(id);
+  return await db.prepare("SELECT * FROM users WHERE id = ? LIMIT 1").get(id);
 }
 
 async function upsertGoogleUser(profile, postcodeInput) {
   const now = new Date().toISOString();
-  let user = findUserByGoogleId(profile.google_id);
+  let user = await findUserByGoogleId(profile.google_id);
   const postcode = asPostcode(postcodeInput);
   const fullName = normalizeProfileName(profile.name);
   const firstName = extractFirstName(profile.name, profile.email);
 
   if (user) {
-    db.prepare(
+    await db.prepare(
       `UPDATE users
        SET email = ?,
            name = COALESCE(?, name),
@@ -342,12 +342,12 @@ async function upsertGoogleUser(profile, postcodeInput) {
            last_login_at = ?
        WHERE id = ?`,
     ).run(profile.email, fullName, firstName, now, now, user.id);
-    return syncCachedUserById(db, user.id);
+    return await syncCachedUserById(db, user.id);
   }
 
   let byEmail = await resolveUserByEmail(profile.email);
   if (!byEmail) {
-    return insertGoogleUser({ profile, postcode });
+    return await insertGoogleUser({ profile, postcode });
   }
 
   if (byEmail.google_id && byEmail.google_id !== profile.google_id) {
@@ -360,7 +360,7 @@ async function upsertGoogleUser(profile, postcodeInput) {
   }
 
   const effectivePostcode = byEmail.postcode || postcode || "";
-  db.prepare(
+  await db.prepare(
     `UPDATE users
      SET google_id = ?,
          postcode = ?,
@@ -379,16 +379,16 @@ async function upsertGoogleUser(profile, postcodeInput) {
     byEmail.id,
   );
 
-  return syncCachedUserById(db, byEmail.id);
+  return await syncCachedUserById(db, byEmail.id);
 }
 
-function insertFacebookUser({ profile, postcode }) {
+async function insertFacebookUser({ profile, postcode }) {
   const now = new Date().toISOString();
   const id = crypto.randomUUID();
   const fullName = normalizeProfileName(profile.name);
   const firstName = extractFirstName(profile.name, profile.email);
 
-  db.prepare(
+  await db.prepare(
     `INSERT INTO users
       (id, email, name, first_name, password_hash, facebook_id, postcode, city, dietary_prefs, preferred_stores, blocked_stores,
        preferred_brands, delivery_speed_pref, email_verified_at, created_at, last_login_at)
@@ -410,18 +410,18 @@ function insertFacebookUser({ profile, postcode }) {
     now,
   );
 
-  return db.prepare("SELECT * FROM users WHERE id = ? LIMIT 1").get(id);
+  return await db.prepare("SELECT * FROM users WHERE id = ? LIMIT 1").get(id);
 }
 
 async function upsertFacebookUser(profile, postcodeInput) {
   const now = new Date().toISOString();
-  let user = findUserByFacebookId(profile.facebook_id);
+  let user = await findUserByFacebookId(profile.facebook_id);
   const postcode = asPostcode(postcodeInput);
   const fullName = normalizeProfileName(profile.name);
   const firstName = extractFirstName(profile.name, profile.email);
 
   if (user) {
-    db.prepare(
+    await db.prepare(
       `UPDATE users
        SET email = ?,
            name = COALESCE(?, name),
@@ -430,12 +430,12 @@ async function upsertFacebookUser(profile, postcodeInput) {
            last_login_at = ?
        WHERE id = ?`,
     ).run(profile.email, fullName, firstName, now, now, user.id);
-    return syncCachedUserById(db, user.id);
+    return await syncCachedUserById(db, user.id);
   }
 
   let byEmail = await resolveUserByEmail(profile.email);
   if (!byEmail) {
-    return insertFacebookUser({ profile, postcode });
+    return await insertFacebookUser({ profile, postcode });
   }
 
   if (byEmail.facebook_id && byEmail.facebook_id !== profile.facebook_id) {
@@ -448,7 +448,7 @@ async function upsertFacebookUser(profile, postcodeInput) {
   }
 
   const effectivePostcode = byEmail.postcode || postcode || "";
-  db.prepare(
+  await db.prepare(
     `UPDATE users
      SET facebook_id = ?,
          postcode = ?,
@@ -467,7 +467,7 @@ async function upsertFacebookUser(profile, postcodeInput) {
     byEmail.id,
   );
 
-  return syncCachedUserById(db, byEmail.id);
+  return await syncCachedUserById(db, byEmail.id);
 }
 
 function emailAuthTokenExpiry() {
@@ -478,8 +478,8 @@ function createRawEmailAuthToken() {
   return `${crypto.randomUUID()}${crypto.randomBytes(24).toString("hex")}`;
 }
 
-function consumeEmailAuthToken(tokenHash, consumedAt) {
-  const row = db
+async function consumeEmailAuthToken(tokenHash, consumedAt) {
+  const row = await db
     .prepare(
       `SELECT *
        FROM email_auth_tokens
@@ -494,7 +494,7 @@ function consumeEmailAuthToken(tokenHash, consumedAt) {
     return { ...row, expired: true };
   }
 
-  db.prepare(
+  await db.prepare(
     `UPDATE email_auth_tokens
      SET consumed_at = ?
      WHERE token_hash = ?
@@ -504,8 +504,8 @@ function consumeEmailAuthToken(tokenHash, consumedAt) {
   return { ...row, expired: false, consumed_at: consumedAt };
 }
 
-function latestEmailAuthRequest(email) {
-  return db
+async function latestEmailAuthRequest(email) {
+  return await db
     .prepare(
       `SELECT created_at
        FROM email_auth_tokens
@@ -518,18 +518,18 @@ function latestEmailAuthRequest(email) {
 
 async function syncUnlockStateIfEligible(userId) {
   const confirmedCount = Number(
-    db
+    (await db
       .prepare(
         `SELECT COUNT(*) AS n
          FROM waitlist_referrals
          WHERE inviter_user_id = ?`,
       )
-      .get(userId)?.n || 0,
+      .get(userId))?.n || 0,
   );
 
   if (confirmedCount < 2) return confirmedCount;
 
-  db.prepare(
+  await db.prepare(
     `UPDATE users
      SET waitlist_unlocked_at = COALESCE(waitlist_unlocked_at, ?),
          user_type = CASE
@@ -566,46 +566,48 @@ async function applyReferralCodeToUser(userId, referralCode, claimedAt) {
     return { applied: false, reason: "self_referral_not_allowed" };
   }
 
-  const applyReferralClaim = db.transaction((payload) => {
-    const alreadyLinked = db
-      .prepare(
-        `SELECT inviter_user_id
-         FROM waitlist_referrals
-         WHERE invited_user_id = ?
-         LIMIT 1`,
-      )
-      .get(payload.invited_user_id);
-    if (alreadyLinked?.inviter_user_id) {
-      return { applied: false, reason: "already_claimed" };
-    }
-
-    db.prepare(
-      `UPDATE users
-       SET waitlist_referrer_user_id = COALESCE(waitlist_referrer_user_id, ?)
-       WHERE id = ?`,
-    ).run(payload.inviter_user_id, payload.invited_user_id);
-
-    const updatedInvitee = db
-      .prepare("SELECT * FROM users WHERE id = ? LIMIT 1")
-      .get(payload.invited_user_id);
-    if (!updatedInvitee) {
-      throw new Error("Invitee user not found after referral claim");
-    }
-    if (updatedInvitee.waitlist_referrer_user_id !== payload.inviter_user_id) {
-      return { applied: false, reason: "already_claimed" };
-    }
-
-    upsertWaitlistReferralRow(db, payload);
-    return { applied: true, reason: null, inviter_user_id: payload.inviter_user_id };
-  });
-
-  const outcome = applyReferralClaim({
+  const payload = {
     inviter_user_id: inviter.id,
     invited_user_id: currentUser.id,
     referral_code: inviter.waitlist_referral_code || normalizedCode,
     invited_email_snapshot: currentUser.email || null,
     claimed_at: claimedAt || new Date().toISOString(),
-  });
+  };
+
+  const alreadyLinked = await db
+    .prepare(
+      `SELECT inviter_user_id
+       FROM waitlist_referrals
+       WHERE invited_user_id = ?
+       LIMIT 1`,
+    )
+    .get(payload.invited_user_id);
+  if (alreadyLinked?.inviter_user_id) {
+    return { applied: false, reason: "already_claimed" };
+  }
+
+  await db.prepare(
+    `UPDATE users
+     SET waitlist_referrer_user_id = COALESCE(waitlist_referrer_user_id, ?)
+     WHERE id = ?`,
+  ).run(payload.inviter_user_id, payload.invited_user_id);
+
+  const updatedInvitee = await db
+    .prepare("SELECT * FROM users WHERE id = ? LIMIT 1")
+    .get(payload.invited_user_id);
+  if (!updatedInvitee) {
+    throw new Error("Invitee user not found after referral claim");
+  }
+  if (updatedInvitee.waitlist_referrer_user_id !== payload.inviter_user_id) {
+    return { applied: false, reason: "already_claimed" };
+  }
+
+  await upsertWaitlistReferralRow(db, payload);
+  const outcome = {
+    applied: true,
+    reason: null,
+    inviter_user_id: payload.inviter_user_id,
+  };
 
   await syncCachedUserById(db, currentUser.id, { strict: true });
   await syncCachedUserById(db, inviter.id, { strict: true });
@@ -614,11 +616,11 @@ async function applyReferralCodeToUser(userId, referralCode, claimedAt) {
   return outcome;
 }
 
-function insertEmailLinkUser(email, verifiedAt) {
+async function insertEmailLinkUser(email, verifiedAt) {
   const id = crypto.randomUUID();
   const now = verifiedAt || new Date().toISOString();
 
-  db.prepare(
+  await db.prepare(
     `INSERT INTO users
       (id, email, password_hash, postcode, city, dietary_prefs, preferred_stores, blocked_stores,
        preferred_brands, delivery_speed_pref, email_verified_at, created_at, last_login_at)
@@ -636,7 +638,7 @@ function insertEmailLinkUser(email, verifiedAt) {
     now,
   );
 
-  return db.prepare("SELECT * FROM users WHERE id = ? LIMIT 1").get(id);
+  return await db.prepare("SELECT * FROM users WHERE id = ? LIMIT 1").get(id);
 }
 
 async function handleEmailStatus(req, res) {
@@ -687,7 +689,7 @@ router.post("/email-link/start", async (req, res) => {
   }
 
   if (EMAIL_AUTH_RATE_LIMIT_SECONDS > 0) {
-    const latest = latestEmailAuthRequest(email);
+    const latest = await latestEmailAuthRequest(email);
     if (
       latest?.created_at &&
       Date.parse(latest.created_at) > Date.now() - EMAIL_AUTH_RATE_LIMIT_SECONDS * 1000
@@ -705,36 +707,34 @@ router.post("/email-link/start", async (req, res) => {
   const expiresAt = emailAuthTokenExpiry();
   const requestedAt = new Date().toISOString();
 
-  db.transaction(() => {
-    db.prepare(
-      `UPDATE email_auth_tokens
-       SET consumed_at = COALESCE(consumed_at, ?)
-       WHERE email = ?
-         AND consumed_at IS NULL`,
-    ).run(requestedAt, email);
+  await db.prepare(
+    `UPDATE email_auth_tokens
+     SET consumed_at = COALESCE(consumed_at, ?)
+     WHERE email = ?
+       AND consumed_at IS NULL`,
+  ).run(requestedAt, email);
 
-    db.prepare(
-      `INSERT INTO email_auth_tokens (
-        id,
-        email,
-        token_hash,
-        purpose,
-        referral_code,
-        requested_ip,
-        requested_user_agent,
-        expires_at
-      ) VALUES (?, ?, ?, ?, ?, ?, ?, ?)`,
-    ).run(
-      crypto.randomUUID(),
+  await db.prepare(
+    `INSERT INTO email_auth_tokens (
+      id,
       email,
-      tokenHash,
+      token_hash,
       purpose,
-      referralCode || null,
-      String(req.ip || "").trim() || null,
-      String(req.get("user-agent") || "").trim() || null,
-      expiresAt,
-    );
-  })();
+      referral_code,
+      requested_ip,
+      requested_user_agent,
+      expires_at
+    ) VALUES (?, ?, ?, ?, ?, ?, ?, ?)`,
+  ).run(
+    crypto.randomUUID(),
+    email,
+    tokenHash,
+    purpose,
+    referralCode || null,
+    String(req.ip || "").trim() || null,
+    String(req.get("user-agent") || "").trim() || null,
+    expiresAt,
+  );
 
   const linkUrl = buildWaitlistUrl(clientAppOrigin(req), {
     email_auth_token: rawToken,
@@ -797,7 +797,7 @@ router.post("/email-link/complete", async (req, res) => {
 
   const now = new Date().toISOString();
   const tokenHash = hashToken(rawToken);
-  const tokenRow = consumeEmailAuthToken(tokenHash, now);
+  const tokenRow = await consumeEmailAuthToken(tokenHash, now);
 
   if (!tokenRow) {
     return res.status(400).json({ error: "This email link is invalid or already used." });
@@ -808,9 +808,9 @@ router.post("/email-link/complete", async (req, res) => {
 
   let user = await resolveUserByEmail(tokenRow.email);
   if (!user) {
-    user = insertEmailLinkUser(tokenRow.email, now);
+    user = await insertEmailLinkUser(tokenRow.email, now);
   } else {
-    db.prepare(
+    await db.prepare(
       `UPDATE users
        SET email_verified_at = COALESCE(email_verified_at, ?),
            last_login_at = ?
@@ -878,7 +878,7 @@ router.post("/register", async (req, res) => {
     last_login_at: now,
   };
 
-  db.prepare(
+  await db.prepare(
     `INSERT INTO users
       (id, email, password_hash, postcode, city, dietary_prefs, preferred_stores, blocked_stores,
        preferred_brands, delivery_speed_pref, created_at, last_login_at)
@@ -887,7 +887,9 @@ router.post("/register", async (req, res) => {
        @preferred_brands, @delivery_speed_pref, @created_at, @last_login_at)`,
   ).run(user);
 
-  const stored = db.prepare("SELECT * FROM users WHERE id = ?").get(user.id);
+  const stored = await db.prepare("SELECT * FROM users WHERE id = ?").get(
+    user.id,
+  );
   trackEvent(db, "auth.register", {
     userId: stored.id,
     route: req.originalUrl,
@@ -920,11 +922,13 @@ router.post("/login", async (req, res) => {
   }
 
   const now = new Date().toISOString();
-  db.prepare("UPDATE users SET last_login_at = ? WHERE id = ?").run(
+  await db.prepare("UPDATE users SET last_login_at = ? WHERE id = ?").run(
     now,
     user.id,
   );
-  const updated = db.prepare("SELECT * FROM users WHERE id = ?").get(user.id);
+  const updated = await db.prepare("SELECT * FROM users WHERE id = ?").get(
+    user.id,
+  );
   trackEvent(db, "auth.login", {
     userId: updated.id,
     route: req.originalUrl,

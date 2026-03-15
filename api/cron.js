@@ -49,7 +49,7 @@ module.exports = async (req, res) => {
     const berlinHour = getBerlinHour(now);
     const actions = {};
 
-    if (berlinHour >= 6) {
+    if (berlinHour === 6) {
       const completedCrawl = await latestCompletedCrawlForDate(berlinDate);
       if (completedCrawl) {
         actions.crawl = {
@@ -63,11 +63,11 @@ module.exports = async (req, res) => {
     } else {
       actions.crawl = {
         skipped: true,
-        reason: "before_06_berlin",
+        reason: "outside_06_berlin_window",
       };
     }
 
-    if (berlinHour >= 7) {
+    if (berlinHour === 7) {
       const poolExists = await hasPoolForDate(berlinDate);
       if (poolExists) {
         actions.daily_pool = {
@@ -97,7 +97,7 @@ module.exports = async (req, res) => {
     } else {
       actions.daily_pool = {
         skipped: true,
-        reason: "before_07_berlin",
+        reason: "outside_07_berlin_window",
         pool_date: berlinDate,
       };
     }

@@ -49,10 +49,6 @@ async function revokeAllUserSessions(db, userId) {
   ).run(new Date().toISOString(), userId);
 }
 
-function redisEnabled() {
-  return false;
-}
-
 async function cacheUser() {
   return false;
 }
@@ -99,7 +95,6 @@ module.exports = {
   getRefreshSession,
   revokeRefreshSession,
   revokeAllUserSessions,
-  redisEnabled,
   cacheUser,
   getCachedUser,
   getCachedUserByEmail,
