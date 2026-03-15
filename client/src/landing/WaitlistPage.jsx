@@ -1341,9 +1341,39 @@ function InviteDashboard({ identity, status, onLogout, logoutLoading = false }) 
       : status?.invite_url || "/waitlist";
   const shareCopy = `Join DesiDeals24 with my invite link and help unlock the deals section: ${inviteLink}`;
 
+  const [copiedMsg, setCopiedMsg] = useState(false);
+
   const openShare = (url) => {
     if (typeof window === "undefined") return;
     window.open(url, "_blank", "noopener,noreferrer");
+  };
+
+  const copyToClipboard = (text) => {
+    if (navigator.clipboard && window.isSecureContext) {
+      navigator.clipboard.writeText(text).then(() => {
+        setCopiedMsg(true);
+        setTimeout(() => setCopiedMsg(false), 2000);
+      }).catch(() => {
+        fallbackCopy(text);
+      });
+    } else {
+      fallbackCopy(text);
+    }
+  };
+
+  const fallbackCopy = (text) => {
+    const ta = document.createElement("textarea");
+    ta.value = text;
+    ta.style.cssText = "position:fixed;top:-9999px;left:-9999px;opacity:0";
+    document.body.appendChild(ta);
+    ta.focus();
+    ta.select();
+    try {
+      document.execCommand("copy");
+      setCopiedMsg(true);
+      setTimeout(() => setCopiedMsg(false), 2000);
+    } catch { /* ignore */ }
+    document.body.removeChild(ta);
   };
 
   return (
@@ -1473,12 +1503,10 @@ function InviteDashboard({ identity, status, onLogout, logoutLoading = false }) 
               </button>
               <button
                 type="button"
-                onClick={() => {
-                  navigator.clipboard.writeText(shareCopy).catch(() => {});
-                }}
-                style={{ flex:1, padding:"10px", borderRadius:10, border:`1px solid ${T.border}`, background:T.bgMuted, color:T.textSecondary, fontSize:12, fontWeight:600, cursor:"pointer", display:"flex", alignItems:"center", justifyContent:"center", gap:6 }}
+                onClick={() => copyToClipboard(shareCopy)}
+                style={{ flex:1, padding:"10px", borderRadius:10, border:`1px solid ${copiedMsg ? T.brandBorder : T.border}`, background:copiedMsg ? T.brandLight : T.bgMuted, color:copiedMsg ? T.brandDark : T.textSecondary, fontSize:12, fontWeight:600, cursor:"pointer", display:"flex", alignItems:"center", justifyContent:"center", gap:6, transition:"all 0.2s" }}
               >
-                🔗 Copy message
+                {copiedMsg ? "✓ Copied!" : "🔗 Copy message"}
               </button>
             </div>
           </div>
