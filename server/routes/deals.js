@@ -196,15 +196,15 @@ router.get("/", async (req, res) => {
   // If the DB is empty, block this request briefly to restore from snapshot,
   // ensuring the first page load returns real data instead of an empty list.
   if (
-    db.prepare("SELECT COUNT(*) as n FROM deals WHERE is_active = 1").get()
+    (await db.prepare("SELECT COUNT(*) as n FROM deals WHERE is_active = 1").get())
       .n === 0
   ) {
     await restoreFromSnapshot(db).catch(() => {});
     if (
-      db.prepare("SELECT COUNT(*) as n FROM deals WHERE is_active = 1").get()
+      (await db.prepare("SELECT COUNT(*) as n FROM deals WHERE is_active = 1").get())
         .n === 0
     ) {
-      restoreDealsFromSeed(db);
+      await restoreDealsFromSeed(db);
     }
   }
 
@@ -245,22 +245,22 @@ router.get("/", async (req, res) => {
       limit: limitNum,
     });
 
-    const lastCrawl = db
+    const lastCrawl = await db
       .prepare(
         `SELECT finished_at FROM crawl_runs WHERE status = 'completed' ORDER BY finished_at DESC LIMIT 1`,
       )
       .get();
 
-    const activeStores = db
+    const activeStores = (await db
       .prepare(`SELECT COUNT(*) as cnt FROM stores WHERE crawl_status = 'active'`)
-      .get().cnt;
+      .get()).cnt;
 
     const localCrawling =
-      db
+      (await db
         .prepare(
           `SELECT COUNT(*) as cnt FROM crawl_runs WHERE status = 'running'`,
         )
-        .get().cnt > 0;
+        .get()).cnt > 0;
     const globalCrawling = await isCrawlLocked().catch(() => false);
     const crawling = localCrawling || globalCrawling;
 
@@ -455,9 +455,9 @@ router.get("/", async (req, res) => {
     WHERE ${where}
   `;
 
-  let total = db.prepare(`SELECT COUNT(*) as cnt ${base}`).get(...params).cnt;
+  let total = (await db.prepare(`SELECT COUNT(*) as cnt ${base}`).get(...params)).cnt;
 
-  let rows = db
+  let rows = await db
     .prepare(
       `
     SELECT d.*, s.name AS store_name, s.url AS store_url
@@ -469,7 +469,7 @@ router.get("/", async (req, res) => {
     .all(...params, limitNum, offset);
 
   if (curatedPopularCsvOnly) {
-    const candidateRows = db
+    const candidateRows = await db
       .prepare(
         `
         SELECT d.*, s.name AS store_name, s.url AS store_url
@@ -556,10 +556,10 @@ router.get("/", async (req, res) => {
       `;
       const catParams = [inferredCategory];
 
-      total = db
+      total = (await db
         .prepare(`SELECT COUNT(*) as cnt ${catBase}`)
-        .get(...catParams).cnt;
-      rows = db
+        .get(...catParams)).cnt;
+      rows = await db
         .prepare(
           `SELECT d.*, s.name AS store_name, s.url AS store_url
            ${catBase}

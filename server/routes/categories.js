@@ -4,8 +4,8 @@ const router = express.Router();
 const db = require("../db");
 
 // GET /api/v1/categories
-router.get("/", (req, res) => {
-  const rows = db
+router.get("/", async (req, res) => {
+  const rows = await db
     .prepare(
       `
     SELECT product_category AS category, COUNT(*) AS count

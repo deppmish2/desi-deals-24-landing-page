@@ -4,8 +4,8 @@ const router = express.Router();
 const db = require("../db");
 
 // GET /api/v1/stores
-router.get("/", (req, res) => {
-  const rows = db
+router.get("/", async (req, res) => {
+  const rows = await db
     .prepare(
       `
     SELECT s.*, COUNT(d.id) AS active_deals_count
@@ -20,8 +20,8 @@ router.get("/", (req, res) => {
 });
 
 // GET /api/v1/stores/:id
-router.get("/:id", (req, res) => {
-  const store = db
+router.get("/:id", async (req, res) => {
+  const store = await db
     .prepare(`SELECT * FROM stores WHERE id = ?`)
     .get(req.params.id);
   if (!store) return res.status(404).json({ error: "Store not found" });

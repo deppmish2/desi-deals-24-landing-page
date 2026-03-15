@@ -92,15 +92,15 @@ async function deleteCachedSession(tokenHash) {
   await redisCmd(["DEL", redisKey(tokenHash)]);
 }
 
-function upsertSession(db, { id, userId, tokenHash, expiresAt }) {
-  db.prepare(
+async function upsertSession(db, { id, userId, tokenHash, expiresAt }) {
+  await db.prepare(
     `INSERT INTO refresh_tokens (id, user_id, token_hash, expires_at)
      VALUES (?, ?, ?, ?)`,
   ).run(id, userId, tokenHash, expiresAt);
 }
 
-function lookupSessionFromDb(db, tokenHash) {
-  return db
+async function lookupSessionFromDb(db, tokenHash) {
+  return await db
     .prepare(
       `SELECT id, user_id, token_hash, expires_at, revoked_at
      FROM refresh_tokens
@@ -114,7 +114,7 @@ async function createRefreshSession(
   db,
   { id, userId, tokenHash, expiresAt, ttlSeconds },
 ) {
-  upsertSession(db, { id, userId, tokenHash, expiresAt });
+  await upsertSession(db, { id, userId, tokenHash, expiresAt });
   await cacheSession(tokenHash, userId, ttlSeconds);
 }
 
@@ -124,7 +124,7 @@ async function getRefreshSession(db, tokenHash) {
     return { user_id: cached.result, token_hash: tokenHash, source: "redis" };
   }
 
-  const session = lookupSessionFromDb(db, tokenHash);
+  const session = await lookupSessionFromDb(db, tokenHash);
   if (!session || session.revoked_at) return null;
 
   if (Date.parse(session.expires_at) <= Date.now()) {
@@ -142,7 +142,7 @@ async function getRefreshSession(db, tokenHash) {
 }
 
 async function revokeRefreshSession(db, tokenHash) {
-  db.prepare(
+  await db.prepare(
     `UPDATE refresh_tokens
      SET revoked_at = ?
      WHERE token_hash = ? AND revoked_at IS NULL`,
@@ -152,14 +152,14 @@ async function revokeRefreshSession(db, tokenHash) {
 }
 
 async function revokeAllUserSessions(db, userId) {
-  const rows = db
+  const rows = await db
     .prepare(
       `SELECT token_hash FROM refresh_tokens
      WHERE user_id = ? AND revoked_at IS NULL`,
     )
     .all(userId);
 
-  db.prepare(
+  await db.prepare(
     `UPDATE refresh_tokens
      SET revoked_at = ?
      WHERE user_id = ? AND revoked_at IS NULL`,

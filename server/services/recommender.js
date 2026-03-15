@@ -627,8 +627,8 @@ function durationHours(option) {
   return Number.POSITIVE_INFINITY;
 }
 
-function getShippingCost(db, storeId, basketTotal) {
-  const tier = db
+async function getShippingCost(db, storeId, basketTotal) {
+  const tier = await db
     .prepare(
       `SELECT cost
      FROM shipping_tiers
@@ -644,7 +644,7 @@ function getShippingCost(db, storeId, basketTotal) {
     return tier.cost;
   }
 
-  const store = db
+  const store = await db
     .prepare("SELECT free_shipping_min FROM stores WHERE id = ? LIMIT 1")
     .get(storeId);
   if (
@@ -658,8 +658,8 @@ function getShippingCost(db, storeId, basketTotal) {
   return 0;
 }
 
-function getEligibleDeliveryOptions(db, storeId, postcode, now, basketTotal) {
-  const rows = db
+async function getEligibleDeliveryOptions(db, storeId, postcode, now, basketTotal) {
+  const rows = await db
     .prepare(
       `SELECT *
      FROM delivery_options
@@ -790,8 +790,8 @@ function pickPreferredDealByIntent(candidates, intent) {
   return compatible[0].candidate;
 }
 
-function loadListItems(db, listId) {
-  return db
+async function loadListItems(db, listId) {
+  return await db
     .prepare(
       `SELECT li.id,
             li.canonical_id,
@@ -847,11 +847,11 @@ function isDealOversized(deal, intentSize) {
  * - If the deal has a canonical_id, fetches all deals sharing it.
  * - Otherwise, falls back to matching the first 2-3 significant product-name tokens.
  */
-function findPackSizeVariantsAtStore(db, storeId, deal) {
+async function findPackSizeVariantsAtStore(db, storeId, deal) {
   if (!deal) return [];
 
   if (deal.canonical_id) {
-    return db
+    return await db
       .prepare(
         `SELECT id, product_name, sale_price, weight_value, weight_unit,
                 product_url, image_url, currency, canonical_id
@@ -889,7 +889,7 @@ function findPackSizeVariantsAtStore(db, storeId, deal) {
   const whereClause = coreTokens
     .map(() => "lower(product_name) LIKE ?")
     .join(" AND ");
-  return db
+  return await db
     .prepare(
       `SELECT id, product_name, sale_price, weight_value, weight_unit,
               product_url, image_url, currency, canonical_id
@@ -1321,8 +1321,8 @@ function findStrictExactCandidatesAtStore({
   };
 }
 
-function loadStores(db) {
-  return db
+async function loadStores(db) {
+  return await db
     .prepare(
       `SELECT id, name, url, platform, logo_url
      FROM stores
@@ -1332,12 +1332,12 @@ function loadStores(db) {
     .all();
 }
 
-function findBestDealForItemAtStore(db, storeId, item, intent, options = {}) {
+async function findBestDealForItemAtStore(db, storeId, item, intent, options = {}) {
   const skipCanonical = options.skipCanonical === true;
   const includeAliases = options.includeAliases !== false;
 
   if (item.canonical_id && !skipCanonical) {
-    const canonicalMatches = db
+    const canonicalMatches = await db
       .prepare(
         `SELECT id, product_name, product_category, product_url, sale_price, currency,
                 weight_value, weight_unit, price_per_kg, image_url
@@ -1438,7 +1438,7 @@ function findBestDealForItemAtStore(db, storeId, item, intent, options = {}) {
   }
 
   if (tokens.length > 0) {
-    const attemptTokenMatch = (searchTokens) => {
+    const attemptTokenMatch = async (searchTokens) => {
       if (!Array.isArray(searchTokens) || searchTokens.length === 0)
         return null;
       const strictWhere = searchTokens
@@ -1448,7 +1448,7 @@ function findBestDealForItemAtStore(db, storeId, item, intent, options = {}) {
         storeId,
         ...searchTokens.map((token) => `%${token}%`),
       ];
-      const strict = db
+      const strict = await db
         .prepare(
           `SELECT id, product_name, product_category, product_url, sale_price, currency,
                   weight_value, weight_unit, price_per_kg, image_url
@@ -1484,7 +1484,7 @@ function findBestDealForItemAtStore(db, storeId, item, intent, options = {}) {
         storeId,
         ...patternTokens.map((token) => `%${token}%`),
       ];
-      const relaxed = db
+      const relaxed = await db
         .prepare(
           `SELECT id, product_name, product_category, product_url, sale_price, currency,
                   weight_value, weight_unit, price_per_kg, image_url
@@ -1508,7 +1508,7 @@ function findBestDealForItemAtStore(db, storeId, item, intent, options = {}) {
       return null;
     };
 
-    const primaryByTokens = attemptTokenMatch(tokens);
+    const primaryByTokens = await attemptTokenMatch(tokens);
     if (primaryByTokens) return primaryByTokens;
 
     const requestedBrandTokens = new Set(
@@ -1525,7 +1525,7 @@ function findBestDealForItemAtStore(db, storeId, item, intent, options = {}) {
       .sort((a, b) => b.length - a.length)
       .slice(0, 2);
     if (fallbackTokens.length > 0 && fallbackTokens.length < tokens.length) {
-      const fallbackByTokens = attemptTokenMatch(fallbackTokens);
+      const fallbackByTokens = await attemptTokenMatch(fallbackTokens);
       if (fallbackByTokens) return fallbackByTokens;
     }
   }
@@ -1548,7 +1548,7 @@ async function recommendForList(
   db,
   { user, listId, postcode, deliveryPreference },
 ) {
-  const items = loadListItems(db, listId);
+  const items = await loadListItems(db, listId);
   if (items.length === 0) {
     return {
       preference_applied: deliveryPreference,
@@ -1560,7 +1560,7 @@ async function recommendForList(
     };
   }
 
-  const stores = loadStores(db);
+  const stores = await loadStores(db);
   const now = new Date();
   const ranked = [];
   const partialRanked = [];
@@ -1572,7 +1572,7 @@ async function recommendForList(
   for (const store of stores) {
     const matchedItems = [];
     const missingItems = [];
-    const storeDeals = db
+    const storeDeals = (await db
       .prepare(
         `SELECT id, product_name, product_category, product_url, sale_price, currency,
                 weight_value, weight_unit, price_per_kg, image_url, canonical_id
@@ -1583,7 +1583,7 @@ async function recommendForList(
          ORDER BY sale_price ASC
          LIMIT 1500`,
       )
-      .all(store.id)
+      .all(store.id))
       .map((deal) => resolveDealWeightFallback(deal));
 
     for (const item of items) {
@@ -1776,7 +1776,7 @@ async function recommendForList(
         continue;
       }
 
-      const primaryDeal = findBestDealForItemAtStore(
+      const primaryDeal = await findBestDealForItemAtStore(
         db,
         store.id,
         item,
@@ -1789,7 +1789,7 @@ async function recommendForList(
 
       if (!evaluation?.ok) {
         // Canonical mappings can be over-specific/noisy; retry with raw-text-only search.
-        const fallbackDeal = findBestDealForItemAtStore(db, store.id, item, intent, {
+        const fallbackDeal = await findBestDealForItemAtStore(db, store.id, item, intent, {
           skipCanonical: true,
           includeAliases: false,
         });
@@ -1819,7 +1819,7 @@ async function recommendForList(
           item.quantity,
           item.quantity_unit,
         );
-        const baseFallbackDeal = findBestDealForItemAtStore(
+        const baseFallbackDeal = await findBestDealForItemAtStore(
           db,
           store.id,
           baseFallbackItem,
@@ -1876,7 +1876,7 @@ async function recommendForList(
           continue;
         }
 
-        const variants = findPackSizeVariantsAtStore(db, store.id, resolvedDeal);
+        const variants = await findPackSizeVariantsAtStore(db, store.id, resolvedDeal);
         const packOptions = buildPackOptions(variants, targetBase.type);
         const combo = findCheapestExactCombination(packOptions, targetBase.qty);
         if (!combo) {
@@ -1965,8 +1965,8 @@ async function recommendForList(
       (sum, row) => sum + Number(row.effective_price ?? row.sale_price ?? 0),
       0,
     );
-    const shippingCost = getShippingCost(db, store.id, subtotal);
-    const deliveryOptions = getEligibleDeliveryOptions(
+    const shippingCost = await getShippingCost(db, store.id, subtotal);
+    const deliveryOptions = await getEligibleDeliveryOptions(
       db,
       store.id,
       postcode,
