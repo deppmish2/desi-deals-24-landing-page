@@ -102,7 +102,7 @@ export default function FeedbackWidget() {
                   onChange={(e) => setMessage(e.target.value)}
                   placeholder="Tell us what to improve…"
                   rows={5}
-                  className="mt-2 w-full rounded-[12px] border border-slate-200 px-4 py-3 text-[14px] outline-none focus:border-[#16a34a] resize-none"
+                  className="mt-2 w-full rounded-[12px] border border-slate-200 px-4 py-3 text-[16px] outline-none focus:border-[#16a34a] resize-none"
                   autoFocus
                 />
 
