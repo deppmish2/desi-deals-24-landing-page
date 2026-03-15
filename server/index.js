@@ -21,8 +21,9 @@ const app = express();
 const PORT = parseInt(process.env.PORT || "3000");
 
 if (productionLikeRuntime() && !smtpConfigured()) {
-  throw new Error(
-    "SMTP credentials are required in production for double opt-in email auth. Configure SMTP_HOST, SMTP_PORT, SMTP_SECURE, SMTP_USER, and SMTP_PASS in the deployment environment.",
+  console.warn(
+    "[warn] SMTP credentials are not configured. Email link auth will be unavailable. " +
+    "Set SMTP_HOST, SMTP_PORT, SMTP_SECURE, SMTP_USER, and SMTP_PASS to enable it.",
   );
 }
 
@@ -30,6 +31,14 @@ if (productionLikeRuntime() && !smtpConfigured()) {
 app.use(cors());
 app.use(morgan("dev"));
 app.use(express.json());
+app.use("/api", async (req, res, next) => {
+  try {
+    await db.ready;
+    next();
+  } catch (error) {
+    next(error);
+  }
+});
 
 // ── API Routes ────────────────────────────────────────────────────────────────
 app.use("/api/v1/deals", dealsRouter);

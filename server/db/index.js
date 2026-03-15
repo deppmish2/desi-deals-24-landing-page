@@ -1,5 +1,6 @@
 "use strict";
 require("dotenv").config();
+const fs = require("fs");
 const path = require("path");
 
 const { createClient } = require("@libsql/client");
@@ -127,14 +128,24 @@ const db = {
 };
 
 // ── Schema bootstrap ──────────────────────────────────────────────────────────
-const fs = require("fs");
-const schema = fs.readFileSync(path.join(__dirname, "schema.sql"), "utf8");
+function loadSchemaSql() {
+  try {
+    return fs.readFileSync(path.join(__dirname, "schema.sql"), "utf8");
+  } catch (error) {
+    console.warn("[db] schema load warning:", error.message);
+    return "";
+  }
+}
+
+const schema = loadSchemaSql();
 
 // We can't await at module level in CJS, so we fire-and-forget.
 // This keeps local SQLite files and remote Turso schemas aligned.
-(async () => {
+const ready = (async () => {
   try {
-    await db.exec(schema);
+    if (schema) {
+      await db.exec(schema);
+    }
   } catch (e) {
     console.warn("[db] schema exec warning:", e.message);
   }
@@ -223,5 +234,7 @@ const schema = fs.readFileSync(path.join(__dirname, "schema.sql"), "utf8");
     } catch (_) {}
   }
 })();
+
+db.ready = ready;
 
 module.exports = db;

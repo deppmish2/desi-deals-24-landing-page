@@ -44,6 +44,7 @@ module.exports = async (req, res) => {
   }
 
   try {
+    await db.ready;
     const now = new Date();
     const berlinDate = formatBerlinDateKey(now);
     const berlinHour = getBerlinHour(now);

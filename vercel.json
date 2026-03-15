@@ -10,8 +10,11 @@
   "functions": {
     "api/server.js": {
       "maxDuration": 300,
-      "includeFiles": "server/deals-seed.json"
+      "includeFiles": "server/**/*"
     },
-    "api/cron.js": { "maxDuration": 300 }
+    "api/cron.js": {
+      "maxDuration": 300,
+      "includeFiles": "server/db/schema.sql"
+    }
   }
 }
