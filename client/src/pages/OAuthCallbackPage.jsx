@@ -19,11 +19,10 @@ export default function OAuthCallbackPage() {
     const code = searchParams.get("code");
     const state = searchParams.get("state");
     const postcode = searchParams.get("postcode");
-    const safeProvider =
-      provider === "google" || provider === "facebook" ? provider : null;
+    const safeProvider = provider === "google" ? provider : null;
 
     if (!safeProvider) {
-      setError("Unsupported OAuth provider.");
+      setError("Unsupported sign-in provider.");
       return;
     }
     if (oauthError) {
@@ -67,10 +66,10 @@ export default function OAuthCallbackPage() {
         {!error ? (
           <>
             <h1 className="text-xl font-bold text-[#0f172a] mb-2">
-              Finishing sign in...
+              Finishing Google sign in...
             </h1>
             <p className="text-sm text-[#64748b]">
-              Please wait while we complete your OAuth login.
+              Please wait while we complete your Google login.
             </p>
             {warning ? (
               <p className="text-xs text-amber-600 mt-2">{warning}</p>
@@ -79,7 +78,7 @@ export default function OAuthCallbackPage() {
         ) : (
           <>
             <h1 className="text-xl font-bold text-[#0f172a] mb-2">
-              OAuth Login Failed
+              Google Login Failed
             </h1>
             <p className="text-sm text-red-600 mb-4">{error}</p>
             <button

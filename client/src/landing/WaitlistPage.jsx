@@ -5,12 +5,10 @@ import { formatPrice } from "../utils/formatters";
 import {
   claimWaitlistReferral,
   completeEmailAuth,
-  fetchMe,
   fetchOAuthAuthUrl,
   fetchWaitlistMe,
   getAuthSession,
   logoutUser,
-  updateAuthSessionUser,
 } from "../utils/api";
 import { getCurrentPoolDateSeed } from "./dealsRefreshSchedule";
 
@@ -1668,32 +1666,6 @@ export default function WaitlistPage() {
     window.addEventListener("dd24-auth-changed", syncAuth);
     return () => window.removeEventListener("dd24-auth-changed", syncAuth);
   }, []);
-
-  useEffect(() => {
-    let cancelled = false;
-
-    async function refreshProfileName() {
-      if (!authSession?.accessToken) return;
-      if (authSession?.user?.first_name || authSession?.user?.name) return;
-
-      try {
-        const payload = await fetchMe();
-        const user = payload?.data || null;
-        if (!user || cancelled) return;
-        if (user.first_name || user.name) {
-          updateAuthSessionUser(user);
-          setAuthSession(getAuthSession());
-        }
-      } catch {
-        // Keep the existing fallback display if the profile refresh fails.
-      }
-    }
-
-    refreshProfileName();
-    return () => {
-      cancelled = true;
-    };
-  }, [authSession?.accessToken, authSession?.user?.first_name, authSession?.user?.name]);
 
   useEffect(() => {
     if (!emailAuthToken) return undefined;

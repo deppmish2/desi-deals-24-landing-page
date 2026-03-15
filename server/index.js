@@ -9,15 +9,7 @@ const path = require("path");
 
 const db = require("./db");
 const dealsRouter = require("./routes/deals");
-const storesRouter = require("./routes/stores");
-const categoriesRouter = require("./routes/categories");
 const authRouter = require("./routes/auth");
-const profileRouter = require("./routes/profile");
-const listsRouter = require("./routes/lists");
-const recommendRouter = require("./routes/recommend");
-const canonicalRouter = require("./routes/canonical");
-const searchRouter = require("./routes/search");
-const inboundRouter = require("./routes/inbound");
 const adminRouter = require("./routes/admin");
 const contactRouter = require("./routes/contact");
 const waitlistRouter = require("./routes/waitlist");
@@ -41,16 +33,8 @@ app.use(express.json());
 
 // ── API Routes ────────────────────────────────────────────────────────────────
 app.use("/api/v1/deals", dealsRouter);
-app.use("/api/v1/stores", storesRouter);
-app.use("/api/v1/categories", categoriesRouter);
-app.use("/api/v1/canonical", canonicalRouter);
-app.use("/api/v1/search", searchRouter);
 app.use("/api/v1/auth", authRouter);
 app.use("/api/auth", authRouter); // compatibility for older frontend builds
-app.use("/api/v1/me", profileRouter);
-app.use("/api/v1/lists", listsRouter);
-app.use("/api/v1/lists", recommendRouter);
-app.use("/api/v1/inbound", inboundRouter);
 app.use("/api/v1/admin", adminRouter);
 app.use("/api/v1/contact", contactRouter);
 app.use("/api/v1/waitlist", waitlistRouter);
@@ -71,7 +55,7 @@ function sendClientApp(res) {
   return res.status(200).json({
     message: "DesiDeals24 API is running.",
     hint: "Build the client with: npm run build:client",
-    api: "/api/v1/deals | /api/v1/stores | /api/v1/categories",
+    api: "/api/v1/deals?curated=daily_live_pool",
   });
 }
 
