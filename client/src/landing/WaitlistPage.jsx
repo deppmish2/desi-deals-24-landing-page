@@ -2214,39 +2214,12 @@ export default function WaitlistPage() {
           </button>,
         )
       ) : !authSession?.accessToken ? (
-        <>
-          <LandingPage
-            onAuthChoice={handleGoogleAuth}
-            onLoginClick={() => {
-              setAuthError("");
-              setAuthNotice("");
-              setAuthPreviewUrl("");
-              setLoginModalOpen(true);
-            }}
-            authError={authError}
-            authLoading={authLoading}
-          />
-          <LoginModal
-            open={loginModalOpen}
-            onClose={() => {
-              if (!authLoading) {
-                setLoginModalOpen(false);
-                setAuthError("");
-                setAuthNotice("");
-                setAuthPreviewUrl("");
-              }
-            }}
-            onGoogleClick={() => {
-              setLoginModalOpen(false);
-              handleGoogleAuth();
-            }}
-            onEmailContinue={handleLoginEmailContinue}
-            authLoading={authLoading}
-            authError={authError}
-            authNotice={authNotice}
-            previewUrl={authPreviewUrl}
-          />
-        </>
+        <LandingPage
+          onAuthChoice={handleGoogleAuth}
+          onLoginClick={handleGoogleAuth}
+          authError={authError}
+          authLoading={authLoading}
+        />
       ) : statusLoading ? (
         centerPanel(
           "Checking your unlock",
