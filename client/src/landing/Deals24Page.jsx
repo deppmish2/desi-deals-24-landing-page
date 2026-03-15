@@ -232,13 +232,13 @@ function pickDealsUniqueStores(deals, count) {
   return picked;
 }
 
-function Deals24Card({ deal, number }) {
+function Deals24Card({ deal, number, showBestBefore = true }) {
   const [imgError, setImgError] = useState(false);
   const proxyImg = proxyImageUrl(deal?.image_url);
   const discountPct = deal?.discount_percent
     ? Math.round(deal.discount_percent)
     : null;
-  const bestBeforeText = deal?.best_before
+  const bestBeforeText = showBestBefore && deal?.best_before
     ? formatBestBefore(deal.best_before)
     : null;
 
@@ -652,13 +652,21 @@ export default function Deals24Page() {
             <p className="text-slate-600">No deals found.</p>
           ) : (
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
-              {shownDeals.map((deal, idx) => (
-                <Deals24Card
-                  key={deal.id || deal.product_url}
-                  deal={deal}
-                  number={idx + 1}
-                />
-              ))}
+              {(() => {
+                let bestBeforeShown = 0;
+                return shownDeals.map((deal, idx) => {
+                  const canShow = deal?.best_before && bestBeforeShown < 4;
+                  if (canShow) bestBeforeShown += 1;
+                  return (
+                    <Deals24Card
+                      key={deal.id || deal.product_url}
+                      deal={deal}
+                      number={idx + 1}
+                      showBestBefore={canShow}
+                    />
+                  );
+                });
+              })()}
             </div>
           )}
         </div>
