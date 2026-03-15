@@ -1438,7 +1438,7 @@ function InviteDashboard({ identity, status, onLogout, logoutLoading = false }) 
             </div>
           </div>
 
-          <div style={{ position:"relative", borderRadius:16, overflow:"hidden", flexShrink:0, width:260 }}>
+          <div className="dd24-waitlist-deals-preview" style={{ position:"relative", borderRadius:16, overflow:"hidden", flexShrink:0, width:260 }}>
             <div style={{ display:"flex", gap:8, padding:"14px 16px", background:T.bgMuted, borderRadius:16, filter:"blur(3px)" }}>
               {ALL_DEALS.slice(0,3).map((d,i)=>(
                 <div key={i} style={{ background:T.bgCard, borderRadius:12, padding:"10px 12px", minWidth:72, fontSize:11 }}>
@@ -2193,12 +2193,16 @@ export default function WaitlistPage() {
           .dd24-waitlist-dashboard-grid{grid-template-columns:1fr !important}
           .dd24-waitlist-stats-grid{grid-template-columns:1fr 1fr !important}
           .dd24-waitlist-deals-grid{grid-template-columns:1fr !important}
-          .dd24-waitlist-progress-card{padding:22px !important}
+          .dd24-waitlist-progress-card{padding:20px !important;gap:20px !important}
+          .dd24-waitlist-deals-preview{display:none !important}
           .dd24-deals-section{padding:48px 24px !important}
           .dd24-deals-grid{grid-template-columns:repeat(2,1fr) !important;gap:20px !important}
         }
         @media (max-width: 640px){
+          .dd24-waitlist-nav{padding:14px 16px !important}
+          .dd24-waitlist-shell{padding:20px 16px 48px !important}
           .dd24-waitlist-stats-grid{grid-template-columns:1fr !important}
+          .dd24-waitlist-progress-card{flex-direction:column !important;align-items:flex-start !important;padding:18px !important;gap:16px !important}
           .dd24-deals-section{padding:32px 0 32px 16px !important}
           .dd24-deals-heading{margin-bottom:24px !important;padding-right:16px}
           .dd24-deals-heading h2{font-size:22px !important;line-height:28px !important}
