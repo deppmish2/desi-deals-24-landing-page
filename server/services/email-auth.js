@@ -43,18 +43,44 @@ function escapeHtml(value) {
     .replace(/'/g, "&#39;");
 }
 
-function buildEmailCopy({ purpose, linkUrl, expiresMinutes }) {
+function buildEmailCopy({ purpose, name, linkUrl, expiresMinutes }) {
   const subject =
     purpose === "login"
       ? "Your DesiDeals24 sign-in link"
       : "Confirm your DesiDeals24 signup";
 
-  const heading =
-    purpose === "login" ? "Finish signing in" : "Confirm your email";
-  const intro =
-    purpose === "login"
-      ? "Use this secure link to sign in to DesiDeals24."
-      : "Click the secure link below to confirm your email and finish joining DesiDeals24.";
+  if (purpose !== "login") {
+    const greeting = name ? `Hey ${name},` : "Hey,";
+    const intro = "Tap below to confirm your email. Once confirmed, you'll get access to the daily deals section. We'll also send you super grocery deals from time to time, straight to your inbox.";
+    const footer = "DesiDeals24 · desideals24.com\nIf that wasn't you, ignore this email.";
+
+    const text = [
+      greeting,
+      "",
+      intro,
+      "",
+      linkUrl,
+      "",
+      footer,
+    ].join("\n");
+
+    const html = `
+      <div style="font-family:Arial,sans-serif;background:#f7faf7;padding:32px;color:#0f172a">
+        <div style="max-width:560px;margin:0 auto;background:#ffffff;border:1px solid #dce8dc;border-radius:20px;padding:32px">
+          <p style="margin:0 0 20px;font-size:16px;line-height:1.6;color:#0f172a;font-weight:600">${escapeHtml(greeting)}</p>
+          <p style="margin:0 0 28px;font-size:16px;line-height:1.7;color:#475569">${escapeHtml(intro)}</p>
+          <a href="${escapeHtml(linkUrl)}" style="display:inline-block;background:#16a34a;color:#ffffff;text-decoration:none;font-weight:700;padding:14px 28px;border-radius:12px;font-size:16px">Confirm my email</a>
+          <hr style="border:none;border-top:1px solid #e2e8f0;margin:28px 0" />
+          <p style="margin:0;font-size:13px;line-height:1.7;color:#94a3b8">DesiDeals24 · desideals24.com<br/>If that wasn't you, ignore this email.</p>
+        </div>
+      </div>
+    `;
+
+    return { subject, text, html };
+  }
+
+  const heading = "Finish signing in";
+  const intro = "Use this secure link to sign in to DesiDeals24.";
 
   const text = [
     heading,
@@ -82,8 +108,8 @@ function buildEmailCopy({ purpose, linkUrl, expiresMinutes }) {
   return { subject, text, html };
 }
 
-async function sendEmailAuthLink({ email, purpose, linkUrl, expiresMinutes }) {
-  const copy = buildEmailCopy({ purpose, linkUrl, expiresMinutes });
+async function sendEmailAuthLink({ email, name, purpose, linkUrl, expiresMinutes }) {
+  const copy = buildEmailCopy({ purpose, name, linkUrl, expiresMinutes });
 
   if (!smtpConfigured()) {
     if (productionLikeRuntime()) {

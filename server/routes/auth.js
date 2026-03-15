@@ -351,6 +351,7 @@ async function sendGoogleSignupConfirmation(user, req) {
 
   await sendEmailAuthLink({
     email: user.email,
+    name: user.first_name || user.full_name || null,
     purpose: "signup",
     linkUrl,
     expiresMinutes: EMAIL_AUTH_TTL_MINUTES,
