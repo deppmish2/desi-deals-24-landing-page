@@ -50,17 +50,6 @@ const OAUTH_STATE_STORAGE_PREFIX = "dd24_oauth_state:";
 const POST_AUTH_REDIRECT_STORAGE_KEY = "dd24_post_auth_redirect";
 const AUTH_ERROR_STORAGE_KEY = "dd24_auth_error";
 
-const ALL_DEALS = [
-  { store:"Jamoona",       product:"Aashirvaad Atta 5kg",     was:"13.49€", now:"9.99€",  off:"26%", emoji:"🌾", tag:"Best price" },
-  { store:"Dookan",        product:"Taj Mahal Tea 500g",      was:"7.99€",  now:"5.49€",  off:"31%", emoji:"🍵", tag:"Flash deal" },
-  { store:"Grocera ⚡",    product:"Amul Ghee 500ml",         was:"9.49€",  now:"6.99€",  off:"26%", emoji:"🧈", tag:"Same-day" },
-  { store:"Namma Markt",   product:"Haldiram Bhujia 400g",   was:"4.49€",  now:"3.29€",  off:"27%", emoji:"🥨", tag:null },
-  { store:"Spice Village", product:"MDH Garam Masala 100g",  was:"3.99€",  now:"2.49€",  off:"38%", emoji:"🌶️", tag:"Best price" },
-  { store:"Jamoona",       product:"Sona Masoori Rice 10kg", was:"24.99€", now:"18.99€", off:"24%", emoji:"🍚", tag:null },
-  { store:"Dookan",        product:"Tata Salt 1kg",          was:"2.49€",  now:"1.49€",  off:"40%", emoji:"🧂", tag:"Flash deal" },
-  { store:"Grocera ⚡",    product:"Parachute Coconut Oil",  was:"8.99€",  now:"6.49€",  off:"28%", emoji:"🥥", tag:"Same-day" },
-];
-
 function normalizeReferralCode(value) {
   return String(value || "")
     .trim()
@@ -111,6 +100,89 @@ function hasDealsAccess(status) {
     .trim()
     .toLowerCase();
   return Boolean(status?.unlocked) && (userType === "basic" || userType === "premium");
+}
+
+function useDailyLiveDeals(limit = 24) {
+  const [seedClock, setSeedClock] = useState(() => Date.now());
+
+  useEffect(() => {
+    const id = window.setInterval(() => setSeedClock(Date.now()), 60_000);
+    return () => window.clearInterval(id);
+  }, []);
+
+  const dailySeed = useMemo(
+    () => getCurrentPoolDateSeed(seedClock),
+    [seedClock],
+  );
+
+  const dealsState = useDeals({
+    limit,
+    curated: "daily_live_pool",
+    seed: dailySeed,
+  });
+
+  return {
+    ...dealsState,
+    dailySeed,
+  };
+}
+
+function normalizeWaitlistDeals(deals, limit = 24) {
+  const source = Array.isArray(deals) ? deals.filter(Boolean) : [];
+
+  return source.slice(0, limit).map((deal, index) => {
+    const store =
+      deal?.store?.name || deal?.store_name || deal?.store || "Store";
+    const product = deal?.product_name || deal?.product || deal?.name || "Deal";
+    const imageUrl = deal?.image_url || deal?.imageUrl || null;
+    const currency = deal?.currency || "EUR";
+    const salePrice =
+      deal?.sale_price != null
+        ? Number(deal.sale_price)
+        : deal?.now != null
+          ? Number(String(deal.now).replace(/[^\d.,-]/g, "").replace(",", "."))
+          : null;
+    const originalPrice =
+      deal?.original_price != null
+        ? Number(deal.original_price)
+        : deal?.was != null
+          ? Number(String(deal.was).replace(/[^\d.,-]/g, "").replace(",", "."))
+          : null;
+    const rawDiscount = Number(deal?.discount_percent);
+    const computedDiscount =
+      Number.isFinite(rawDiscount)
+        ? rawDiscount
+        : typeof originalPrice === "number" &&
+            Number.isFinite(originalPrice) &&
+            typeof salePrice === "number" &&
+            Number.isFinite(salePrice) &&
+            originalPrice > 0
+          ? ((originalPrice - salePrice) / originalPrice) * 100
+          : null;
+
+    return {
+      id: deal?.id || `${store}:${product}:${index}`,
+      store,
+      product,
+      imageUrl,
+      now:
+        typeof salePrice === "number" && Number.isFinite(salePrice)
+          ? formatPrice(salePrice, currency)
+          : String(deal?.now || "—"),
+      was:
+        typeof originalPrice === "number" && Number.isFinite(originalPrice)
+          ? formatPrice(originalPrice, currency)
+          : deal?.was
+            ? String(deal.was)
+            : null,
+      off:
+        Number.isFinite(computedDiscount) && computedDiscount > 0
+          ? `${Math.round(computedDiscount)}%`
+          : deal?.off
+            ? String(deal.off).replace(/^-/, "")
+            : null,
+    };
+  });
 }
 
 // ─── Shared Primitives ────────────────────────────────────────────────────────
@@ -570,27 +642,15 @@ function AuthCard({
 
 // ─── DEALS STRIP (Landing teaser) ────────────────────────────────────────────
 function DealsStrip({ onCtaClick, onDealClick }) {
-  const [seedClock, setSeedClock] = useState(() => Date.now());
-  useEffect(() => {
-    const id = window.setInterval(() => setSeedClock(Date.now()), 60_000);
-    return () => window.clearInterval(id);
-  }, []);
-  const dailySeed = useMemo(() => getCurrentPoolDateSeed(seedClock), [seedClock]);
-  const { deals: liveDeals, loading, error } = useDeals({
-    limit: 24,
-    curated: "daily_live_pool",
-    seed: dailySeed,
-  });
+  const { deals: liveDeals, loading, error } = useDailyLiveDeals(24);
   const stripRef = useRef(null);
   const [scrollProgress, setScrollProgress] = useState(0);
 
   const sampledDeals = useMemo(() => {
-    const source = Array.isArray(liveDeals) ? liveDeals.filter(Boolean) : [];
-    return source.length > 0 ? source.slice(0, 5) : null;
+    return normalizeWaitlistDeals(liveDeals, 5);
   }, [liveDeals]);
 
-  const cards = sampledDeals && sampledDeals.length ? sampledDeals : null;
-  const displayed = cards;
+  const displayed = sampledDeals;
 
   useEffect(() => {
     const el = stripRef.current;
@@ -651,7 +711,7 @@ function DealsStrip({ onCtaClick, onDealClick }) {
               Deals unavailable right now.
             </div>
           )}
-          {!loading && !error && !displayed?.length && (
+          {!loading && !error && !displayed.length && (
             <div style={{ fontSize:13, color:T.textMuted, padding:"12px 2px" }}>
               No eligible deals found.
             </div>
@@ -668,65 +728,19 @@ function DealsStrip({ onCtaClick, onDealClick }) {
               WebkitOverflowScrolling: "touch",
             }}
           >
-            {(displayed || []).slice(0, 5).map((d, i) => {
-              const store =
-                d?.store?.name || d?.store_name || d?.store || "Store";
-              const product =
-                d?.product_name || d?.product || d?.name || "Deal";
-              const imageUrl = d?.image_url || d?.imageUrl || null;
-
-              const currency = d?.currency || "EUR";
-              const salePrice =
-                d?.sale_price != null
-                  ? Number(d.sale_price)
-                  : d?.now != null
-                    ? d.now
-                    : null;
-              const originalPrice =
-                d?.original_price != null
-                  ? Number(d.original_price)
-                  : d?.was != null
-                    ? d.was
-                    : null;
-
-              const now =
-                typeof salePrice === "number" && Number.isFinite(salePrice)
-                  ? formatPrice(salePrice, currency)
-                  : String(d?.now || "—");
-              const was =
-                typeof originalPrice === "number" &&
-                Number.isFinite(originalPrice)
-                  ? formatPrice(originalPrice, currency)
-                  : d?.was
-                    ? String(d.was)
-                    : null;
-
-              const rawDiscount = Number(d?.discount_percent);
-              const discountPercent = Number.isFinite(rawDiscount)
-                ? rawDiscount
-                : typeof originalPrice === "number" &&
-                    typeof salePrice === "number" &&
-                    originalPrice > 0
-                  ? ((originalPrice - salePrice) / originalPrice) * 100
-                  : null;
-              const off = Number.isFinite(discountPercent)
-                ? `${Math.round(discountPercent)}%`
-                : d?.off
-                  ? String(d.off).replace(/^-/, "")
-                  : null;
-
+            {displayed.map((d, i) => {
               const mode = i === 3 ? "locked" : i >= 4 ? "blurred" : "normal";
 
               return (
-                <div key={`${store}:${product}:${i}`} style={{ scrollSnapAlign: "start" }}>
+                <div key={d.id} style={{ scrollSnapAlign: "start" }}>
                   <DealsStripCard
                     index={i}
-                    store={store}
-                    product={product}
-                    now={now}
-                    was={was}
-                    off={off}
-                    imageUrl={imageUrl}
+                    store={d.store}
+                    product={d.product}
+                    now={d.now}
+                    was={d.was}
+                    off={d.off}
+                    imageUrl={d.imageUrl}
                     mode={mode}
                     onClick={onDealClick}
                   />
@@ -1193,6 +1207,11 @@ function GoogleFlow({ onComplete }) {
 function InviteDashboard({ identity, status, onLogout, logoutLoading = false }) {
   const displayName = buildDisplayName(identity);
   const confirmedCount = Number(status?.confirmed_count || 0);
+  const {
+    deals: liveDeals,
+    loading: previewLoading,
+    error: previewError,
+  } = useDailyLiveDeals(24);
   const remaining = Math.max(
     0,
     Number(status?.remaining_count ?? INVITES_NEEDED - confirmedCount),
@@ -1203,6 +1222,10 @@ function InviteDashboard({ identity, status, onLogout, logoutLoading = false }) 
       ? `${window.location.origin}${status?.invite_url || "/waitlist"}`
       : status?.invite_url || "/waitlist";
   const shareCopy = `Join DesiDeals24 with my invite link and help unlock the deals section: ${inviteLink}`;
+  const previewDeals = useMemo(
+    () => normalizeWaitlistDeals(liveDeals, 3),
+    [liveDeals],
+  );
 
   const openShare = (url) => {
     if (typeof window === "undefined") return;
@@ -1273,14 +1296,22 @@ function InviteDashboard({ identity, status, onLogout, logoutLoading = false }) 
           </div>
 
           <div style={{ position:"relative", borderRadius:16, overflow:"hidden", flexShrink:0, width:260 }}>
-            <div style={{ display:"flex", gap:8, padding:"14px 16px", background:T.bgMuted, borderRadius:16, filter:"blur(3px)" }}>
-              {ALL_DEALS.slice(0,3).map((d,i)=>(
-                <div key={i} style={{ background:T.bgCard, borderRadius:12, padding:"10px 12px", minWidth:72, fontSize:11 }}>
-                  <div style={{ fontSize:16, marginBottom:3 }}>{d.emoji}</div>
-                  <div style={{ fontWeight:800, color:T.brand, fontSize:13 }}>{d.now}</div>
-                  <div style={{ color:T.textMuted, textDecoration:"line-through", fontSize:10 }}>{d.was}</div>
+            <div style={{ display:"flex", gap:8, padding:"14px 16px", background:T.bgMuted, borderRadius:16, filter:"blur(3px)", minHeight:88 }}>
+              {previewDeals.length > 0 ? previewDeals.map((deal) => (
+                <div key={deal.id} style={{ background:T.bgCard, borderRadius:12, padding:"10px 12px", minWidth:72, fontSize:11 }}>
+                  <div style={{ fontSize:10, color:T.textMuted, marginBottom:4, whiteSpace:"nowrap", overflow:"hidden", textOverflow:"ellipsis" }}>{deal.store}</div>
+                  <div style={{ fontWeight:800, color:T.brand, fontSize:13 }}>{deal.now}</div>
+                  <div style={{ color:T.textMuted, textDecoration:"line-through", fontSize:10 }}>{deal.was || " "}</div>
                 </div>
-              ))}
+              )) : (
+                <div style={{ display:"flex", alignItems:"center", justifyContent:"center", width:"100%", fontSize:11, color:T.textMuted, textAlign:"center", padding:"0 8px" }}>
+                  {previewLoading
+                    ? "Loading today’s live pool…"
+                    : previewError
+                      ? "Today’s live pool is unavailable right now."
+                      : "Today’s live pool will appear here once deals are active."}
+                </div>
+              )}
             </div>
             <div style={{ position:"absolute", inset:0, display:"flex", flexDirection:"column", alignItems:"center", justifyContent:"center", background:"rgba(248,250,248,0.6)", backdropFilter:"blur(1px)", borderRadius:16 }}>
               <div style={{ fontSize:28, marginBottom:6 }}>🔒</div>
@@ -1398,17 +1429,7 @@ function InviteDashboard({ identity, status, onLogout, logoutLoading = false }) 
 function DealsUnlocked({ identity, status }) {
   const displayName = buildDisplayName(identity);
   const [celebrated, setCelebrated] = useState(true);
-  const [seedClock, setSeedClock] = useState(() => Date.now());
-  useEffect(() => {
-    const id = window.setInterval(() => setSeedClock(Date.now()), 60_000);
-    return () => window.clearInterval(id);
-  }, []);
-  const dailySeed = useMemo(() => getCurrentPoolDateSeed(seedClock), [seedClock]);
-  const { deals: liveDeals, loading, error } = useDeals({
-    limit: 24,
-    curated: "daily_live_pool",
-    seed: dailySeed,
-  });
+  const { deals: liveDeals, loading, error } = useDailyLiveDeals(24);
 
   useEffect(() => {
     const t = setTimeout(() => setCelebrated(false), 3500);
@@ -1416,66 +1437,7 @@ function DealsUnlocked({ identity, status }) {
   }, []);
 
   const normalizedDeals = useMemo(() => {
-    const source =
-      Array.isArray(liveDeals) && liveDeals.length > 0 ? liveDeals : ALL_DEALS;
-
-    return source.slice(0, 24).map((deal, index) => {
-      const store =
-        deal?.store?.name || deal?.store_name || deal?.store || "Store";
-      const product = deal?.product_name || deal?.product || deal?.name || "Deal";
-      const imageUrl = deal?.image_url || deal?.imageUrl || null;
-      const currency = deal?.currency || "EUR";
-      const salePrice =
-        deal?.sale_price != null
-          ? Number(deal.sale_price)
-          : deal?.now != null
-            ? Number(String(deal.now).replace(/[^\d.,-]/g, "").replace(",", "."))
-            : null;
-      const originalPrice =
-        deal?.original_price != null
-          ? Number(deal.original_price)
-          : deal?.was != null
-            ? Number(String(deal.was).replace(/[^\d.,-]/g, "").replace(",", "."))
-            : null;
-
-      const now =
-        typeof salePrice === "number" && Number.isFinite(salePrice)
-          ? formatPrice(salePrice, currency)
-          : String(deal?.now || "—");
-      const was =
-        typeof originalPrice === "number" && Number.isFinite(originalPrice)
-          ? formatPrice(originalPrice, currency)
-          : deal?.was
-            ? String(deal.was)
-            : null;
-
-      const rawDiscount = Number(deal?.discount_percent);
-      const computedDiscount =
-        Number.isFinite(rawDiscount)
-          ? rawDiscount
-          : typeof originalPrice === "number" &&
-              Number.isFinite(originalPrice) &&
-              typeof salePrice === "number" &&
-              Number.isFinite(salePrice) &&
-              originalPrice > 0
-            ? ((originalPrice - salePrice) / originalPrice) * 100
-            : null;
-
-      return {
-        id: deal?.id || `${store}:${product}:${index}`,
-        store,
-        product,
-        imageUrl,
-        now,
-        was,
-        off:
-          Number.isFinite(computedDiscount) && computedDiscount > 0
-            ? `${Math.round(computedDiscount)}%`
-            : deal?.off
-              ? String(deal.off).replace(/^-/, "")
-              : null,
-      };
-    });
+    return normalizeWaitlistDeals(liveDeals, 24);
   }, [liveDeals]);
 
   const uniqueStores = useMemo(
@@ -1571,7 +1533,12 @@ function DealsUnlocked({ identity, status }) {
         ) : null}
         {!loading && error ? (
           <div style={{ background:T.bgCard, border:`1px solid ${T.border}`, borderRadius:20, padding:"26px 24px", color:T.textSecondary, boxShadow:T.shadowSm, marginBottom:24 }}>
-            Live deals are unavailable right now, so the unlocked view is showing fallback examples.
+            Live deals are unavailable right now.
+          </div>
+        ) : null}
+        {!loading && !error && normalizedDeals.length === 0 ? (
+          <div style={{ background:T.bgCard, border:`1px solid ${T.border}`, borderRadius:20, padding:"26px 24px", color:T.textSecondary, boxShadow:T.shadowSm, marginBottom:24 }}>
+            No live daily-pool deals are active right now.
           </div>
         ) : null}
 

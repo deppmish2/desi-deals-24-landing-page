@@ -121,107 +121,101 @@ const db = {
 };
 
 // ── Schema bootstrap ──────────────────────────────────────────────────────────
-// Only run schema + seeds when using a local file (Turso remote is pre-seeded).
-if (!process.env.TURSO_DATABASE_URL) {
-  const fs = require("fs");
-  const schema = fs.readFileSync(path.join(__dirname, "schema.sql"), "utf8");
+const fs = require("fs");
+const schema = fs.readFileSync(path.join(__dirname, "schema.sql"), "utf8");
 
-  // We can't await at module level in CJS, so we fire-and-forget.
-  // The Express server won't receive requests until the event loop is free,
-  // so in practice schema runs before any request is handled.
-  (async () => {
+// We can't await at module level in CJS, so we fire-and-forget.
+// This keeps local SQLite files and remote Turso schemas aligned.
+(async () => {
+  try {
+    await db.exec(schema);
+  } catch (e) {
+    console.warn("[db] schema exec warning:", e.message);
+  }
+
+  const migrations = [
+    "ALTER TABLE deals ADD COLUMN best_before TEXT",
+    "ALTER TABLE deals ADD COLUMN canonical_id TEXT",
+    "ALTER TABLE stores ADD COLUMN free_shipping_min REAL",
+    "ALTER TABLE stores ADD COLUMN address TEXT",
+    "ALTER TABLE stores ADD COLUMN contact_phone TEXT",
+    "ALTER TABLE stores ADD COLUMN contact_email TEXT",
+    "ALTER TABLE stores ADD COLUMN webhook_secret TEXT",
+    "ALTER TABLE stores ADD COLUMN platform TEXT DEFAULT 'unknown'",
+    "ALTER TABLE users ADD COLUMN google_id TEXT",
+    "ALTER TABLE users ADD COLUMN facebook_id TEXT",
+    "ALTER TABLE users ADD COLUMN name TEXT",
+    "ALTER TABLE users ADD COLUMN first_name TEXT",
+    "ALTER TABLE users ADD COLUMN postcode TEXT NOT NULL DEFAULT ''",
+    "ALTER TABLE users ADD COLUMN city TEXT",
+    "ALTER TABLE users ADD COLUMN dietary_prefs TEXT",
+    "ALTER TABLE users ADD COLUMN preferred_stores TEXT",
+    "ALTER TABLE users ADD COLUMN blocked_stores TEXT",
+    "ALTER TABLE users ADD COLUMN preferred_brands TEXT",
+    "ALTER TABLE users ADD COLUMN delivery_speed_pref TEXT DEFAULT 'cheapest'",
+    "ALTER TABLE users ADD COLUMN email_verified_at DATETIME",
+    "ALTER TABLE users ADD COLUMN user_type TEXT CHECK (user_type IN ('basic', 'premium'))",
+    "ALTER TABLE users ADD COLUMN last_login_at DATETIME",
+    "ALTER TABLE users ADD COLUMN waitlist_referral_code TEXT",
+    "ALTER TABLE users ADD COLUMN waitlist_referrer_user_id TEXT",
+    "ALTER TABLE users ADD COLUMN waitlist_unlocked_at DATETIME",
+    "ALTER TABLE shopping_lists ADD COLUMN raw_input TEXT",
+    "ALTER TABLE shopping_lists ADD COLUMN input_method TEXT",
+    "ALTER TABLE shopping_lists ADD COLUMN last_used_at DATETIME",
+    "ALTER TABLE shopping_lists ADD COLUMN reorder_reminder_days INTEGER",
+    "ALTER TABLE list_items ADD COLUMN item_count INTEGER NOT NULL DEFAULT 1",
+    "ALTER TABLE list_items ADD COLUMN resolved INTEGER DEFAULT 0",
+    "ALTER TABLE list_items ADD COLUMN unresolvable INTEGER DEFAULT 0",
+    "ALTER TABLE price_alerts ADD COLUMN canonical_id TEXT",
+    "ALTER TABLE price_alerts ADD COLUMN product_query TEXT",
+    "ALTER TABLE price_alerts ADD COLUMN min_discount_pct REAL",
+    "ALTER TABLE price_alerts ADD COLUMN target_store_id TEXT",
+    "ALTER TABLE price_alerts ADD COLUMN triggered INTEGER DEFAULT 0",
+    "ALTER TABLE price_alerts ADD COLUMN last_triggered_at DATETIME",
+    "ALTER TABLE price_alerts ADD COLUMN is_active INTEGER DEFAULT 1",
+  ];
+
+  for (const sql of migrations) {
     try {
-      await db.exec(schema);
-    } catch (e) {
-      console.warn("[db] schema exec warning:", e.message);
+      await db.execute(sql);
+    } catch (_) {
+      // column already exists — ignore
     }
+  }
 
-    // Additive column migrations (all idempotent)
-    const migrations = [
-      "ALTER TABLE deals ADD COLUMN best_before TEXT",
-      "ALTER TABLE deals ADD COLUMN canonical_id TEXT",
-      "ALTER TABLE stores ADD COLUMN free_shipping_min REAL",
-      "ALTER TABLE stores ADD COLUMN address TEXT",
-      "ALTER TABLE stores ADD COLUMN contact_phone TEXT",
-      "ALTER TABLE stores ADD COLUMN contact_email TEXT",
-      "ALTER TABLE stores ADD COLUMN webhook_secret TEXT",
-      "ALTER TABLE stores ADD COLUMN platform TEXT DEFAULT 'unknown'",
-      "ALTER TABLE users ADD COLUMN google_id TEXT",
-      "ALTER TABLE users ADD COLUMN facebook_id TEXT",
-      "ALTER TABLE users ADD COLUMN name TEXT",
-      "ALTER TABLE users ADD COLUMN first_name TEXT",
-      "ALTER TABLE users ADD COLUMN postcode TEXT NOT NULL DEFAULT ''",
-      "ALTER TABLE users ADD COLUMN city TEXT",
-      "ALTER TABLE users ADD COLUMN dietary_prefs TEXT",
-      "ALTER TABLE users ADD COLUMN preferred_stores TEXT",
-      "ALTER TABLE users ADD COLUMN blocked_stores TEXT",
-      "ALTER TABLE users ADD COLUMN preferred_brands TEXT",
-      "ALTER TABLE users ADD COLUMN delivery_speed_pref TEXT DEFAULT 'cheapest'",
-      "ALTER TABLE users ADD COLUMN email_verified_at DATETIME",
-      "ALTER TABLE users ADD COLUMN user_type TEXT CHECK (user_type IN ('basic', 'premium'))",
-      "ALTER TABLE users ADD COLUMN last_login_at DATETIME",
-      "ALTER TABLE users ADD COLUMN waitlist_referral_code TEXT",
-      "ALTER TABLE users ADD COLUMN waitlist_referrer_user_id TEXT",
-      "ALTER TABLE users ADD COLUMN waitlist_unlocked_at DATETIME",
-      "ALTER TABLE shopping_lists ADD COLUMN raw_input TEXT",
-      "ALTER TABLE shopping_lists ADD COLUMN input_method TEXT",
-      "ALTER TABLE shopping_lists ADD COLUMN last_used_at DATETIME",
-      "ALTER TABLE shopping_lists ADD COLUMN reorder_reminder_days INTEGER",
-      "ALTER TABLE list_items ADD COLUMN item_count INTEGER NOT NULL DEFAULT 1",
-      "ALTER TABLE list_items ADD COLUMN resolved INTEGER DEFAULT 0",
-      "ALTER TABLE list_items ADD COLUMN unresolvable INTEGER DEFAULT 0",
-      "ALTER TABLE price_alerts ADD COLUMN canonical_id TEXT",
-      "ALTER TABLE price_alerts ADD COLUMN product_query TEXT",
-      "ALTER TABLE price_alerts ADD COLUMN min_discount_pct REAL",
-      "ALTER TABLE price_alerts ADD COLUMN target_store_id TEXT",
-      "ALTER TABLE price_alerts ADD COLUMN triggered INTEGER DEFAULT 0",
-      "ALTER TABLE price_alerts ADD COLUMN last_triggered_at DATETIME",
-      "ALTER TABLE price_alerts ADD COLUMN is_active INTEGER DEFAULT 1",
-    ];
+  const stores = [
+    ["jamoona", "Jamoona", "https://www.jamoona.com"],
+    ["dookan", "Dookan", "https://eu.dookan.com"],
+    ["grocera", "Grocera", "https://www.grocera.de"],
+    ["little-india", "Little India", "https://www.littleindia.de"],
+    ["namma-markt", "Namma Markt", "https://www.nammamarkt.com"],
+    ["globalfoodhub", "Global Food Hub", "https://globalfoodhub.com"],
+    ["desigros", "Desigros", "https://www.desigros.com"],
+    ["zora-supermarkt", "Zora Supermarkt", "https://www.zorastore.eu"],
+    ["md-store", "MD Store", "https://www.md-store.de"],
+    ["indiansupermarkt", "Indian Supermarkt", "https://www.indiansupermarkt.de"],
+    ["indianstorestuttgart", "Indian Store Stuttgart", "https://www.indianstorestuttgart.com"],
+    ["anuhita-groceries", "AnuHita Groceries", "https://www.anuhitagroceries.de"],
+    ["sairas", "SAIRAS", "https://www.sairas.de"],
+    ["indische-lebensmittel-online", "Indische-Lebensmittel-Online", "https://www.indische-lebensmittel-online.de"],
+    ["indianfoodstore", "Indian Food Store", "https://www.indianfoodstore.de"],
+    ["swadesh", "Swadesh", "https://www.swadesh.eu"],
+    ["spicelands", "Spicelands", "https://www.spicelands.de"],
+    ["annachi", "Annachi Europe", "https://www.annachi.fr"],
+    ["namastedeutschland", "Namaste Deutschland", "https://www.namastedeutschland.de"],
+    ["india-store", "India Store", "https://www.india-store.de"],
+    ["india-express-food", "India Express Food", "https://www.india-express-food.de"],
+  ];
 
-    for (const sql of migrations) {
-      try {
-        await db.execute(sql);
-      } catch (_) {
-        // column already exists — ignore
-      }
-    }
-
-    // Seed stores
-    const stores = [
-      ["jamoona", "Jamoona", "https://www.jamoona.com"],
-      ["dookan", "Dookan", "https://eu.dookan.com"],
-      ["grocera", "Grocera", "https://www.grocera.de"],
-      ["little-india", "Little India", "https://www.littleindia.de"],
-      ["namma-markt", "Namma Markt", "https://www.nammamarkt.com"],
-      ["globalfoodhub", "Global Food Hub", "https://globalfoodhub.com"],
-      ["desigros", "Desigros", "https://www.desigros.com"],
-      ["zora-supermarkt", "Zora Supermarkt", "https://www.zorastore.eu"],
-      ["md-store", "MD Store", "https://www.md-store.de"],
-      ["indiansupermarkt", "Indian Supermarkt", "https://www.indiansupermarkt.de"],
-      ["indianstorestuttgart", "Indian Store Stuttgart", "https://www.indianstorestuttgart.com"],
-      ["anuhita-groceries", "AnuHita Groceries", "https://www.anuhitagroceries.de"],
-      ["sairas", "SAIRAS", "https://www.sairas.de"],
-      ["indische-lebensmittel-online", "Indische-Lebensmittel-Online", "https://www.indische-lebensmittel-online.de"],
-      ["indianfoodstore", "Indian Food Store", "https://www.indianfoodstore.de"],
-      ["swadesh", "Swadesh", "https://www.swadesh.eu"],
-      ["spicelands", "Spicelands", "https://www.spicelands.de"],
-      ["annachi", "Annachi Europe", "https://www.annachi.fr"],
-      ["namastedeutschland", "Namaste Deutschland", "https://www.namastedeutschland.de"],
-      ["india-store", "India Store", "https://www.india-store.de"],
-      ["india-express-food", "India Express Food", "https://www.india-express-food.de"],
-    ];
-
-    for (const [id, name, url] of stores) {
-      const logoUrl = `${url.replace(/\/+$/, "")}/favicon.ico`;
-      try {
-        await db.execute(
-          `INSERT OR IGNORE INTO stores (id, name, url, logo_url) VALUES (?, ?, ?, ?)`,
-          [id, name, url, logoUrl]
-        );
-      } catch (_) {}
-    }
-  })();
-}
+  for (const [id, name, url] of stores) {
+    const logoUrl = `${url.replace(/\/+$/, "")}/favicon.ico`;
+    try {
+      await db.execute(
+        `INSERT OR IGNORE INTO stores (id, name, url, logo_url) VALUES (?, ?, ?, ?)`,
+        [id, name, url, logoUrl],
+      );
+    } catch (_) {}
+  }
+})();
 
 module.exports = db;

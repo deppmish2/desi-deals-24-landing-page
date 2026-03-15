@@ -14,8 +14,7 @@
     "test:er-accuracy": "node scripts/entity-resolution-accuracy.js",
     "perf:smoke": "node scripts/perf-smoke.js",
     "test:integration": "node --test tests/integration/*.test.js",
-    "test:e2e": "node --test tests/e2e/*.test.js",
-    "push-snapshot": "node scripts/push-snapshot.js"
+    "test:e2e": "node --test tests/e2e/*.test.js"
   },
   "dependencies": {
     "@libsql/client": "^0.17.0",

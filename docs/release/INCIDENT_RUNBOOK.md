@@ -25,8 +25,8 @@ Operational playbook for common failures in crawl, API, alerts, and data freshne
 1. Trigger manual crawl:
    - `POST /api/v1/admin/crawl/trigger`
 2. If repeated store failures, isolate failing adapters from crawl logs and disable problematic stores by setting `stores.crawl_status = 'error'` until fixed.
-3. Validate snapshot restore path if cold start is empty:
-   - confirm Upstash Redis env vars and snapshot writes.
+3. Validate the active data path:
+   - confirm Turso connectivity and that the latest completed crawl wrote active deals and the daily pool.
 
 ## 2) Canonical Queue Growth / ER Backlog
 

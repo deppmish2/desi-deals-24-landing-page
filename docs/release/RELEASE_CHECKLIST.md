@@ -39,7 +39,7 @@
 - [x] User-auth endpoints use JWT access + refresh-session persistence.
 - [x] Alert and webhook actions are audited.
 - [ ] Production secrets rotation and environment audit.
-- [ ] Final deployment smoke with real SMTP/Redis/API keys.
+- [ ] Final deployment smoke with real SMTP/Turso/API keys.
 
 ## Go/No-Go Summary
 

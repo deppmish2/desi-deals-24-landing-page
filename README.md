@@ -30,15 +30,11 @@ Edit `.env` if needed (defaults work for local development):
 | ----------------------------- | ------------------------ | ------------------------------------------------------------ |
 | `PORT`                        | `3000`                   | Express server port                                          |
 | `DB_PATH`                     | `./data/desiDeals24.db`  | SQLite database file                                         |
+| `TURSO_DATABASE_URL`          | —                        | Remote Turso/libsql database URL                             |
+| `TURSO_AUTH_TOKEN`            | —                        | Turso auth token                                             |
 | `ADMIN_SECRET`                | `changeme-in-production` | Bearer token for admin endpoints                             |
 | `CRAWL_ON_STARTUP`            | `false`                  | Set `true` to crawl immediately on server start              |
-| `CRAWL_INTERVAL_HOURS`        | `24`                     | How often the scheduler crawls (cron: 6am daily)             |
-| `UPSTASH_REDIS_REST_URL`      | —                        | Upstash Redis REST base URL (must be absolute `https://...`) |
-| `UPSTASH_REDIS_REST_TOKEN`    | —                        | Upstash Redis REST token                                     |
-| `STARTUP_CRAWL_DELAY_MS`      | `8000`                   | Delay before startup crawl (non-serverless runtime only)     |
-| `INITIAL_DATA_RETRY_MS`       | `30000`                  | Retry interval when app has no deals yet                     |
-| `INITIAL_DATA_MAX_ATTEMPTS`   | `40`                     | Max first-load bootstrap retries                             |
-| `CRAWL_SNAPSHOT_EVERY_STORES` | `3`                      | Save Redis snapshot every N crawled stores (checkpointing)   |
+| `CRAWL_LOCK_TTL_MINUTES`      | `180`                    | Shared crawl lock expiry for Turso-backed crawl runs         |
 
 ### 3. Run the crawler (fetch deals)
 
@@ -96,34 +92,27 @@ This builds the React app into `client/dist/`. The Express server automatically 
 
 ---
 
-## Crawl + Redis Data Lifecycle
+## Daily Crawl Lifecycle
 
 ### How availability is maintained
 
-1. On cold start, app checks local SQLite for active deals.
-2. If empty, it tries Redis snapshot restore (`desiDeals24:snapshot`).
-3. If still empty, it falls back to bundled `server/deals-seed.json`.
-4. If still empty (true first run), it starts/retries crawl bootstrap until data exists.
+1. At 06:00 Europe/Berlin, the full crawl writes directly into SQLite or Turso.
+2. The crawler updates only changed products, inserts new products, and deactivates removed ones.
+3. At 07:00 Europe/Berlin, the app fixes the daily 24-deal pool for that Berlin date.
+4. The landing page and unlocked deals page read directly from that daily pool.
+5. Products are excluded from the pool if they appeared in the prior rolling 7-day window.
 
-### When Redis snapshot is written
+### Daily pool rules
 
-- End of crawl run (final snapshot write).
-- During crawl checkpoints every `CRAWL_SNAPSHOT_EVERY_STORES` stores.
-
-This reduces risk of ending with no snapshot if a long crawl is interrupted.
+- The pool is fixed for the day once generated.
+- No intra-day re-curation happens after the pool is fixed.
+- Only currently active, in-stock deals are materialized for viewing.
 
 ### Serverless note (Vercel)
 
-- Timer-based background startup crawl is skipped on Vercel/serverless.
-- Prefer explicit crawl invocations (`/api/cron` or admin trigger) for long runs.
+- Vercel cron runs hourly and the handler gates execution in code using Europe/Berlin time.
+- That keeps the 06:00 crawl and 07:00 pool generation aligned across DST changes.
 - Ensure function `maxDuration` is high enough for your store count.
-
-### Required Redis env format
-
-- `UPSTASH_REDIS_REST_URL` must be a full absolute URL, e.g. `https://<your-id>.upstash.io`
-- `UPSTASH_REDIS_REST_TOKEN` must be present in the same environment where crawl runs.
-
-If Redis writes fail, check logs for `[snapshot] Save failed (...)` which now includes HTTP status/body when available.
 
 ---
 

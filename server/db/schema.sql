@@ -53,6 +53,13 @@ CREATE TABLE IF NOT EXISTS crawl_runs (
   errors            TEXT
 );
 
+CREATE TABLE IF NOT EXISTS crawl_locks (
+  lock_key          TEXT PRIMARY KEY,
+  owner_id          TEXT NOT NULL,
+  acquired_at       DATETIME NOT NULL,
+  expires_at        DATETIME NOT NULL
+);
+
 -- End users and profile preferences
 CREATE TABLE IF NOT EXISTS users (
   id                  TEXT PRIMARY KEY,
@@ -267,6 +274,7 @@ CREATE INDEX IF NOT EXISTS idx_deals_sale_price ON deals(sale_price);
 CREATE INDEX IF NOT EXISTS idx_deals_discount   ON deals(discount_percent);
 CREATE INDEX IF NOT EXISTS idx_deals_crawl_run  ON deals(crawl_run_id);
 CREATE INDEX IF NOT EXISTS idx_deals_canonical  ON deals(canonical_id);
+CREATE INDEX IF NOT EXISTS idx_crawl_locks_expires ON crawl_locks(expires_at);
 CREATE INDEX IF NOT EXISTS idx_users_email      ON users(email);
 CREATE INDEX IF NOT EXISTS idx_users_google_id  ON users(google_id);
 CREATE INDEX IF NOT EXISTS idx_email_auth_tokens_email ON email_auth_tokens(email);

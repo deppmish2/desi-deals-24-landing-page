@@ -5,78 +5,22 @@ const {
   normalizeCatalogText,
   resolveBaseProduct,
 } = require("./base-product-catalog");
-const { cacheJsonValue, getCachedJsonValue } = require("./session-store");
+const {
+  BERLIN_TIME_ZONE,
+  formatBerlinDateKey,
+  getZonedParts,
+  zonedTimeToUtcMs,
+} = require("./berlin-time");
 
 const DAILY_POOL_LIMIT = 24;
 const DAILY_POOL_MIN_STORES = 10;
-const DAILY_POOL_REPEAT_WINDOW_DAYS = 10;
-const DAILY_POOL_CACHE_TTL_SECONDS = 21 * 24 * 60 * 60;
+const DAILY_POOL_REPEAT_WINDOW_DAYS = 7;
 const DAILY_POOL_CATEGORY_RATIO = 0.5;
-const REFRESH_TIME_ZONE = "Europe/Berlin";
+const REFRESH_TIME_ZONE = BERLIN_TIME_ZONE;
 const REFRESH_HOUR = 7;
 
 function pad2(value) {
   return String(value).padStart(2, "0");
-}
-
-function getZonedParts(date, timeZone = REFRESH_TIME_ZONE) {
-  const formatter = new Intl.DateTimeFormat("en-CA", {
-    timeZone,
-    year: "numeric",
-    month: "2-digit",
-    day: "2-digit",
-    hour: "2-digit",
-    minute: "2-digit",
-    second: "2-digit",
-    hour12: false,
-  });
-  const parts = formatter.formatToParts(date);
-  const map = Object.fromEntries(
-    parts
-      .filter((part) => part.type !== "literal")
-      .map((part) => [part.type, part.value]),
-  );
-  return {
-    year: Number(map.year),
-    month: Number(map.month),
-    day: Number(map.day),
-    hour: Number(map.hour),
-    minute: Number(map.minute),
-    second: Number(map.second),
-  };
-}
-
-function getOffsetMinutesAtUtc(utcMs, timeZone = REFRESH_TIME_ZONE) {
-  const formatter = new Intl.DateTimeFormat("en-US", {
-    timeZone,
-    timeZoneName: "shortOffset",
-    hour: "2-digit",
-    minute: "2-digit",
-    hour12: false,
-  });
-  const parts = formatter.formatToParts(new Date(utcMs));
-  const tzName = parts.find((part) => part.type === "timeZoneName")?.value || "GMT";
-  const match = tzName.match(/GMT([+-])(\d{1,2})(?::(\d{2}))?/);
-  if (!match) return 0;
-  const sign = match[1] === "-" ? -1 : 1;
-  const hours = Number(match[2] || 0);
-  const minutes = Number(match[3] || 0);
-  return sign * (hours * 60 + minutes);
-}
-
-function zonedTimeToUtcMs(parts, timeZone = REFRESH_TIME_ZONE) {
-  const localAsUtc = Date.UTC(
-    parts.year,
-    parts.month - 1,
-    parts.day,
-    parts.hour,
-    parts.minute,
-    parts.second || 0,
-  );
-  const offset1 = getOffsetMinutesAtUtc(localAsUtc, timeZone);
-  const utcGuess1 = localAsUtc - offset1 * 60_000;
-  const offset2 = getOffsetMinutesAtUtc(utcGuess1, timeZone);
-  return localAsUtc - offset2 * 60_000;
 }
 
 function shiftZonedDate(parts, deltaDays, timeZone = REFRESH_TIME_ZONE) {
@@ -180,10 +124,6 @@ function buildStoreProductKey(storeId, productSignature) {
   return `${String(storeId || "").trim()}::${String(productSignature || "").trim()}`;
 }
 
-function buildDailyPoolCacheKey(poolDate) {
-  return `desiDeals24:dailyDealsPool:${normalizePoolDate(poolDate)}`;
-}
-
 async function readPoolEntriesFromDb(db, poolDate) {
   return await db
     .prepare(
@@ -211,57 +151,24 @@ async function persistPoolEntries(db, poolDate, entries) {
     ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)`,
   );
 
-  await db.transaction(async (rows) => {
-    await db.prepare(`DELETE FROM daily_deal_pool_entries WHERE pool_date = ?`).run(
-      normalizedDate,
-    );
-    for (const row of rows) {
-      await insert.run(
-        normalizedDate,
-        row.slot_index,
-        row.deal_id || null,
-        row.store_id,
-        row.base_key || null,
-        row.product_signature,
-        row.category || null,
-        row.product_name_snapshot || null,
-        row.created_at || new Date().toISOString(),
-      );
-    }
-  })(entries);
-}
+  await db.prepare(
+    `DELETE FROM daily_deal_pool_entries
+     WHERE pool_date = ?`,
+  ).run(normalizedDate);
 
-async function restorePoolEntriesFromCache(db, poolDate) {
-  const normalizedDate = normalizePoolDate(poolDate);
-  const existing = await readPoolEntriesFromDb(db, normalizedDate);
-  if (existing.length > 0) return existing;
-
-  const cached = await getCachedJsonValue(buildDailyPoolCacheKey(normalizedDate));
-  if (!Array.isArray(cached) || cached.length === 0) {
-    return [];
-  }
-
-  await persistPoolEntries(db, normalizedDate, cached);
-  return readPoolEntriesFromDb(db, normalizedDate);
-}
-
-async function persistPoolEntriesWithCache(db, poolDate, entries) {
-  await persistPoolEntries(db, poolDate, entries);
-  await cacheJsonValue(
-    buildDailyPoolCacheKey(poolDate),
-    entries,
-    DAILY_POOL_CACHE_TTL_SECONDS,
-  );
-}
-
-async function restoreRecentHistoryFromCache(db, poolDate) {
-  for (
-    let dayOffset = DAILY_POOL_REPEAT_WINDOW_DAYS - 1;
-    dayOffset >= 0;
-    dayOffset -= 1
-  ) {
+  for (const row of entries) {
     // eslint-disable-next-line no-await-in-loop
-    await restorePoolEntriesFromCache(db, addDays(poolDate, -dayOffset));
+    await insert.run(
+      normalizedDate,
+      row.slot_index,
+      row.deal_id || null,
+      row.store_id,
+      row.base_key || null,
+      row.product_signature,
+      row.category || null,
+      row.product_name_snapshot || null,
+      row.created_at || new Date().toISOString(),
+    );
   }
 }
 
@@ -363,7 +270,10 @@ function selectDailyPoolCandidates(candidates, previousProducts, limit) {
   const filtered = candidates.filter(
     (candidate) => !previousProducts.has(candidate.product_signature),
   );
-  const targetLimit = Math.max(1, Math.min(DAILY_POOL_LIMIT, Number(limit) || DAILY_POOL_LIMIT));
+  const targetLimit = Math.max(
+    1,
+    Math.min(DAILY_POOL_LIMIT, Number(limit) || DAILY_POOL_LIMIT),
+  );
   const categoryTarget = Math.max(
     2,
     Math.ceil(getCatalogCategories().length * DAILY_POOL_CATEGORY_RATIO),
@@ -381,6 +291,7 @@ function selectDailyPoolCandidates(candidates, previousProducts, limit) {
       bestByCategory.set(candidate.resolved_category, candidate);
     }
   }
+
   for (const candidate of bestByCategory.values()) {
     if (selectionState.selected.length >= targetLimit) break;
     addSelectionCandidate(selectionState, candidate);
@@ -403,13 +314,6 @@ function selectDailyPoolCandidates(candidates, previousProducts, limit) {
     addSelectionCandidate(selectionState, candidate);
   }
 
-  if (selectionState.selected.length < targetLimit) {
-    for (const candidate of candidates) {
-      if (selectionState.selected.length >= targetLimit) break;
-      addSelectionCandidate(selectionState, candidate);
-    }
-  }
-
   return {
     rows: selectionState.selected.slice(0, targetLimit),
     meta: {
@@ -424,35 +328,13 @@ function selectDailyPoolCandidates(candidates, previousProducts, limit) {
 
 function materializePoolRows(entries, currentCandidates) {
   const byDealId = new Map();
-  const byStoreProduct = new Map();
-  const byProduct = new Map();
 
   for (const candidate of currentCandidates) {
     byDealId.set(String(candidate.id || ""), candidate);
-
-    const storeProductKey = buildStoreProductKey(
-      candidate.store_id,
-      candidate.product_signature,
-    );
-    if (!byStoreProduct.has(storeProductKey)) {
-      byStoreProduct.set(storeProductKey, candidate);
-    }
-    if (!byProduct.has(candidate.product_signature)) {
-      byProduct.set(candidate.product_signature, candidate);
-    }
   }
 
   return entries
-    .map((entry) => {
-      const productSignature = String(entry?.product_signature || "").trim();
-      const storeId = String(entry?.store_id || "").trim();
-      return (
-        byDealId.get(String(entry?.deal_id || "")) ||
-        byStoreProduct.get(buildStoreProductKey(storeId, productSignature)) ||
-        byProduct.get(productSignature) ||
-        null
-      );
-    })
+    .map((entry) => byDealId.get(String(entry?.deal_id || "")) || null)
     .filter(Boolean);
 }
 
@@ -478,29 +360,122 @@ function buildPoolSummary(entries) {
   };
 }
 
-async function getDailyDealsPool(db, options = {}) {
+async function isCrawlRunning(db) {
+  return (
+    Number(
+      (await db
+        .prepare(
+          `SELECT COUNT(*) AS cnt
+           FROM crawl_runs
+           WHERE status = 'running'`,
+        )
+        .get())?.cnt || 0,
+    ) > 0
+  );
+}
+
+async function findLatestPoolDateBefore(db, poolDate) {
+  const row = await db
+    .prepare(
+      `SELECT pool_date
+       FROM daily_deal_pool_entries
+       WHERE pool_date < ?
+       GROUP BY pool_date
+       ORDER BY pool_date DESC
+       LIMIT 1`,
+    )
+    .get(normalizePoolDate(poolDate));
+
+  return row?.pool_date || null;
+}
+
+async function ensureDailyDealsPool(db, options = {}) {
   const poolDate = normalizePoolDate(options.poolDate || options.seed);
+  const allowGenerate = options.allowGenerate !== false;
+  let entries = await readPoolEntriesFromDb(db, poolDate);
+
+  if (entries.length > 0) {
+    return { entries, poolDate, requestedPoolDate: poolDate };
+  }
+
+  const crawling = await isCrawlRunning(db);
+  if (crawling) {
+    const previousPoolDate = await findLatestPoolDateBefore(db, poolDate);
+    if (previousPoolDate) {
+      entries = await readPoolEntriesFromDb(db, previousPoolDate);
+      return {
+        entries,
+        poolDate: previousPoolDate,
+        requestedPoolDate: poolDate,
+        staleWhileCrawl: true,
+      };
+    }
+
+    return {
+      entries: [],
+      poolDate,
+      requestedPoolDate: poolDate,
+      staleWhileCrawl: true,
+    };
+  }
+
+  if (!allowGenerate) {
+    const previousPoolDate = await findLatestPoolDateBefore(db, poolDate);
+    if (previousPoolDate) {
+      entries = await readPoolEntriesFromDb(db, previousPoolDate);
+      return {
+        entries,
+        poolDate: previousPoolDate,
+        requestedPoolDate: poolDate,
+        staleWhileMissingPool: true,
+      };
+    }
+
+    return {
+      entries: [],
+      poolDate,
+      requestedPoolDate: poolDate,
+      staleWhileMissingPool: true,
+    };
+  }
+
+  const currentCandidates = buildEligibleCandidates(
+    await fetchActiveDealRows(db),
+    poolDate,
+  );
+  const previousProducts = await getRecentProductSignatures(db, poolDate);
+  const selection = selectDailyPoolCandidates(
+    currentCandidates,
+    previousProducts,
+    DAILY_POOL_LIMIT,
+  );
+  entries = buildPoolEntriesFromSelection(selection.rows);
+  await persistPoolEntries(db, poolDate, entries);
+
+  return {
+    entries,
+    poolDate,
+    requestedPoolDate: poolDate,
+  };
+}
+
+async function getDailyDealsPool(db, options = {}) {
+  const requestedPoolDate = normalizePoolDate(options.poolDate || options.seed);
   const limit = Math.max(
     1,
     Math.min(DAILY_POOL_LIMIT, Number(options.limit) || DAILY_POOL_LIMIT),
   );
 
-  await restoreRecentHistoryFromCache(db, poolDate);
-
-  let entries = await readPoolEntriesFromDb(db, poolDate);
-  if (entries.length === 0) {
-    const currentCandidates = buildEligibleCandidates(await fetchActiveDealRows(db), poolDate);
-    const previousProducts = await getRecentProductSignatures(db, poolDate);
-    const selection = selectDailyPoolCandidates(
-      currentCandidates,
-      previousProducts,
-      DAILY_POOL_LIMIT,
-    );
-    entries = buildPoolEntriesFromSelection(selection.rows);
-    await persistPoolEntriesWithCache(db, poolDate, entries);
-  }
-
-  const currentCandidates = buildEligibleCandidates(await fetchActiveDealRows(db), poolDate);
+  const ensured = await ensureDailyDealsPool(db, {
+    poolDate: requestedPoolDate,
+    allowGenerate: options.allowGenerate,
+  });
+  const poolDate = ensured.poolDate;
+  const entries = ensured.entries;
+  const currentCandidates = buildEligibleCandidates(
+    await fetchActiveDealRows(db),
+    poolDate,
+  );
   const rows = materializePoolRows(entries, currentCandidates).slice(0, limit);
   const summary = buildPoolSummary(entries);
 
@@ -509,7 +484,11 @@ async function getDailyDealsPool(db, options = {}) {
     entries,
     meta: {
       pool_date: poolDate,
+      requested_pool_date: requestedPoolDate,
       fixed_for_day: true,
+      stale_while_crawl: Boolean(ensured.staleWhileCrawl),
+      served_from_existing_pool: poolDate !== requestedPoolDate,
+      stale_while_missing_pool: Boolean(ensured.staleWhileMissingPool),
       ...summary,
     },
   };
@@ -519,6 +498,7 @@ module.exports = {
   DAILY_POOL_LIMIT,
   DAILY_POOL_MIN_STORES,
   DAILY_POOL_REPEAT_WINDOW_DAYS,
+  ensureDailyDealsPool,
   getCurrentPoolDate,
   getDailyDealsPool,
 };

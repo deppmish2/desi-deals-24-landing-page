@@ -5,10 +5,7 @@ const fetch = require("node-fetch");
 const requireAuth = require("../middleware/auth");
 const db = require("../db");
 const { runCrawl } = require("../../crawler");
-const {
-  restoreFromSnapshot,
-  isCrawlLocked,
-} = require("../../crawler/utils/snapshot");
+const { isCrawlLocked } = require("../../crawler/utils/snapshot");
 const { restoreDealsFromSeed } = require("../services/deals-seed-loader");
 const { trackEvent } = require("../services/event-tracker");
 
@@ -96,61 +93,62 @@ function hoursSince(isoTs) {
   return (Date.now() - ts) / (60 * 60 * 1000);
 }
 
+function seedFallbackAllowed() {
+  return !String(process.env.TURSO_DATABASE_URL || "").trim();
+}
+
 // GET /api/v1/admin/crawl/warmup (public — safe: idempotent, will not double-crawl)
 // Called by the frontend on page load to ensure deals are available.
 router.get("/crawl/warmup", async (req, res) => {
-  const dealCount = db
-    .prepare(`SELECT COUNT(*) as cnt FROM deals WHERE is_active = 1`)
-    .get().cnt;
+  const dealCount = Number(
+    (await db
+      .prepare(`SELECT COUNT(*) as cnt FROM deals WHERE is_active = 1`)
+      .get())?.cnt || 0,
+  );
 
   // Deals already available — just report crawl status and return.
   if (dealCount > 0) {
-    const globalCrawling = await isCrawlLocked().catch(() => false);
-    const localCrawling =
-      db
+    const globalCrawling = await isCrawlLocked(db).catch(() => false);
+    const localCrawling = Number(
+      (await db
         .prepare(
           `SELECT COUNT(*) as cnt FROM crawl_runs WHERE status = 'running'`,
         )
-        .get().cnt > 0;
+        .get())?.cnt || 0,
+    ) > 0;
     return res.json({
       deal_count: dealCount,
       crawling: globalCrawling || localCrawling,
     });
   }
 
-  // No deals — check global Redis lock first to avoid double-crawling across containers.
-  const globalCrawling = await isCrawlLocked().catch(() => false);
+  // No deals — check the shared crawl lock first to avoid duplicate runs.
+  const globalCrawling = await isCrawlLocked(db).catch(() => false);
   if (globalCrawling) {
     return res.json({ deal_count: 0, crawling: true });
   }
 
-  // No global lock — try snapshot restore first (fast, ~1s).
-  const restored = await restoreFromSnapshot(db).catch(() => false);
-  if (restored) {
-    const newCount = db
-      .prepare(`SELECT COUNT(*) as cnt FROM deals WHERE is_active = 1`)
-      .get().cnt;
-    return res.json({ deal_count: newCount, crawling: false });
+  if (seedFallbackAllowed()) {
+    const seeded = await restoreDealsFromSeed(db);
+    if (seeded.ok) {
+      const newCount = Number(
+        (await db
+          .prepare(`SELECT COUNT(*) as cnt FROM deals WHERE is_active = 1`)
+          .get())?.cnt || 0,
+      );
+      return res.json({ deal_count: newCount, crawling: false });
+    }
   }
 
-  // If Redis snapshot is unavailable, fall back to build-time seed bundled
-  // with the deployment so serverless cold starts still have usable data.
-  const seeded = restoreDealsFromSeed(db);
-  if (seeded.ok) {
-    const newCount = db
-      .prepare(`SELECT COUNT(*) as cnt FROM deals WHERE is_active = 1`)
-      .get().cnt;
-    return res.json({ deal_count: newCount, crawling: false });
-  }
-
-  // No snapshot in Redis and no deals locally — do NOT auto-crawl.
-  // Crawls only run on the 6am UTC cron schedule.
-  const localCrawling =
-    db
+  // No data is available yet — do NOT auto-crawl here.
+  // Crawls are scheduled centrally and materialize into Turso.
+  const localCrawling = Number(
+    (await db
       .prepare(
         `SELECT COUNT(*) as cnt FROM crawl_runs WHERE status = 'running'`,
       )
-      .get().cnt > 0;
+      .get())?.cnt || 0,
+  ) > 0;
 
   res.json({ deal_count: 0, crawling: localCrawling });
 });
@@ -167,8 +165,8 @@ router.post("/crawl/trigger", requireAuth, async (req, res) => {
 });
 
 // GET /api/v1/admin/crawl/status
-router.get("/crawl/status", (req, res) => {
-  const run = db
+router.get("/crawl/status", async (req, res) => {
+  const run = await db
     .prepare(`SELECT * FROM crawl_runs ORDER BY started_at DESC LIMIT 1`)
     .get();
   if (!run) return res.json({ status: "never_run" });

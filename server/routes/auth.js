@@ -12,8 +12,6 @@ const {
   getRefreshSession,
   revokeRefreshSession,
   revokeAllUserSessions,
-  redisEnabled,
-  cacheUser,
 } = require("../services/session-store");
 const { trackEvent } = require("../services/event-tracker");
 const {
@@ -270,14 +268,12 @@ async function issueRefreshToken(userId) {
 async function buildAuthResponse(user) {
   const accessToken = issueAccessToken(user);
   const refreshToken = await issueRefreshToken(user.id);
-  // Persist user to Redis so it survives Vercel cold starts
-  await cacheUser(user, { strict: true });
   return {
     accessToken,
     refreshToken,
     tokenType: "Bearer",
     expiresIn: ACCESS_TTL_SECONDS,
-    sessionStore: redisEnabled() ? "redis+sqlite" : "sqlite",
+    sessionStore: "sqlite",
     user: serializeUser(user),
   };
 }

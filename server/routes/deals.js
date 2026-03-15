@@ -3,10 +3,7 @@
 const express = require("express");
 
 const db = require("../db");
-const {
-  isCrawlLocked,
-  restoreFromSnapshot,
-} = require("../../crawler/utils/snapshot");
+const { isCrawlLocked } = require("../../crawler/utils/snapshot");
 const { restoreDealsFromSeed } = require("../services/deals-seed-loader");
 const { trackEvent } = require("../services/event-tracker");
 const {
@@ -16,6 +13,17 @@ const {
 } = require("../services/daily-deals-pool");
 
 const router = express.Router();
+
+function seedFallbackAllowed() {
+  return !String(process.env.TURSO_DATABASE_URL || "").trim();
+}
+
+function fixedPoolReadOnlyRuntime() {
+  return Boolean(
+    String(process.env.VERCEL || "").trim() ||
+      String(process.env.TURSO_DATABASE_URL || "").trim(),
+  );
+}
 
 function serializeDeal(row) {
   return {
@@ -52,16 +60,7 @@ async function ensureDealsAvailable() {
       .get())?.cnt || 0,
   );
   if (activeCount > 0) return;
-
-  await restoreFromSnapshot(db).catch(() => false);
-
-  const restoredCount = Number(
-    (await db
-      .prepare("SELECT COUNT(*) AS cnt FROM deals WHERE is_active = 1")
-      .get())?.cnt || 0,
-  );
-  if (restoredCount > 0) return;
-
+  if (!seedFallbackAllowed()) return;
   await restoreDealsFromSeed(db);
 }
 
@@ -87,7 +86,7 @@ async function buildMeta(curatedSeed, curatedMeta) {
       .prepare(`SELECT COUNT(*) AS cnt FROM crawl_runs WHERE status = 'running'`)
       .get())?.cnt || 0,
   ) > 0;
-  const globalCrawling = await isCrawlLocked().catch(() => false);
+  const globalCrawling = await isCrawlLocked(db).catch(() => false);
 
   return {
     last_crawl: lastCrawl?.finished_at || null,
@@ -118,6 +117,7 @@ router.get("/", async (req, res, next) => {
     const pool = await getDailyDealsPool(db, {
       poolDate: curatedSeed,
       limit: DAILY_POOL_LIMIT,
+      allowGenerate: !fixedPoolReadOnlyRuntime(),
     });
     const pageRows = pool.rows.slice(offset, offset + limitNum);
     const data = pageRows.map(serializeDeal);
