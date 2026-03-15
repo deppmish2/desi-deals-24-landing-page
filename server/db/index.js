@@ -6,10 +6,16 @@ const { createClient } = require("@libsql/client");
 
 // Local: file: URL pointing at the existing SQLite file
 // Vercel / any env with TURSO_DATABASE_URL: remote Turso DB
-const client = process.env.TURSO_DATABASE_URL
+const tursoUrl =
+  process.env.TURSO_DATABASE_URL ||
+  process.env.DESI_DEALS_DB_TURSO_DATABASE_URL;
+const tursoAuthToken =
+  process.env.TURSO_AUTH_TOKEN ||
+  process.env.DESI_DEALS_DB_TURSO_AUTH_TOKEN;
+const client = tursoUrl
   ? createClient({
-      url: process.env.TURSO_DATABASE_URL,
-      authToken: process.env.TURSO_AUTH_TOKEN,
+      url: tursoUrl,
+      authToken: tursoAuthToken,
     })
   : createClient({
       url: `file:${path.resolve("./data/desiDeals24.db")}`,
