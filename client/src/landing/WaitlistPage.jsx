@@ -217,6 +217,10 @@ function DealsStripCard({ index, store, product, now, was, off, imageUrl, onClic
 
       {/* Text content */}
       <div style={{ flex: 1, display: "flex", flexDirection: "column", padding: "0 8px 24px" }}>
+        {/* Store name — blurred */}
+        <div style={{ filter:"blur(4px)", fontSize:10, fontWeight:700, letterSpacing:1, textTransform:"uppercase", color:"#94a3b8", marginBottom:4, userSelect:"none" }}>
+          {store || "Desi Store Germany"}
+        </div>
         {/* Product name */}
         <div style={{
           fontSize: 18, fontWeight: 800, color: "#0f172a", lineHeight: "22.5px",
@@ -1835,6 +1839,7 @@ function DealsUnlocked({ identity, status }) {
                     <span style={{ fontSize:34, opacity:0.55 }}>🛒</span>
                   )}
                 </div>
+                {deal.store ? <div style={{ filter:"blur(4px)", fontSize:10, fontWeight:700, letterSpacing:1, textTransform:"uppercase", color:T.textMuted, marginBottom:4, userSelect:"none" }}>{deal.store}</div> : null}
                 <div style={{ fontSize:14, fontWeight:700, color:T.textPrimary, marginBottom:10, lineHeight:1.3, minHeight:38 }}>{deal.product}</div>
                 <div style={{ display:"flex", alignItems:"baseline", gap:8, marginBottom:4, flexWrap:"wrap" }}>
                   <span style={{ fontFamily:"'Fraunces',Georgia,serif", fontSize:26, fontWeight:900, color:T.brand, letterSpacing:-1 }}>{deal.now}</span>
