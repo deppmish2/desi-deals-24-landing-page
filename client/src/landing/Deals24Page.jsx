@@ -626,12 +626,6 @@ export default function Deals24Page() {
             >
               Today&apos;s 24 Deals
             </h2>
-            <p className="text-[#64748b] text-[15px] leading-7 max-w-[720px]">
-              Fixed for {formatPoolDate(curatedMeta?.pool_date || dailySeed)} and
-              refreshed daily at 07:00 Berlin time. Live products only, spanning at
-              least {curatedMeta?.store_target || 10} shops and{" "}
-              {curatedMeta?.category_target || 4} core grocery categories.
-            </p>
           </div>
           <div className="w-full lg:w-auto flex justify-end">
             <RefreshCountdown countdownLabel={nextRefreshLabel} />
