@@ -15,6 +15,7 @@ const {
 
 const DAILY_POOL_LIMIT = 24;
 const DAILY_POOL_MIN_STORES = 10;
+const DAILY_POOL_MAX_PER_STORE = 3;
 const DAILY_POOL_REPEAT_WINDOW_DAYS = 10;
 const DAILY_POOL_CATEGORY_RATIO = 0.8;
 const REFRESH_TIME_ZONE = BERLIN_TIME_ZONE;
@@ -267,10 +268,15 @@ function addSelectionCandidate(selectionState, candidate) {
   if (selectionState.usedProducts.has(candidate.product_signature)) {
     return false;
   }
+  const storeId = String(candidate.store_id || "").trim();
+  if ((selectionState.storeCount.get(storeId) || 0) >= DAILY_POOL_MAX_PER_STORE) {
+    return false;
+  }
 
   selectionState.selected.push(candidate);
   selectionState.usedProducts.add(candidate.product_signature);
-  selectionState.usedStores.add(String(candidate.store_id || "").trim());
+  selectionState.usedStores.add(storeId);
+  selectionState.storeCount.set(storeId, (selectionState.storeCount.get(storeId) || 0) + 1);
   selectionState.usedCategories.add(
     String(candidate.resolved_category || "").trim() || "Other",
   );
@@ -294,6 +300,7 @@ function selectDailyPoolCandidates(candidates, previousProducts, limit) {
     usedProducts: new Set(),
     usedStores: new Set(),
     usedCategories: new Set(),
+    storeCount: new Map(),
   };
 
   const bestByCategory = new Map();
