@@ -365,15 +365,16 @@ async function upsertGoogleUser(profile, postcodeInput) {
   const firstName = extractFirstName(profile.name, profile.email);
 
   if (user) {
+    // Do NOT touch email_verified_at here — if it is still NULL the caller
+    // will detect it and re-send the confirmation email.
     await db.prepare(
       `UPDATE users
        SET email = ?,
            name = COALESCE(?, name),
            first_name = COALESCE(?, first_name),
-           email_verified_at = COALESCE(email_verified_at, ?),
            last_login_at = ?
        WHERE id = ?`,
-    ).run(profile.email, fullName, firstName, now, now, user.id);
+    ).run(profile.email, fullName, firstName, now, user.id);
     return await syncCachedUserById(db, user.id);
   }
 
@@ -1091,19 +1092,9 @@ router.post("/google", async (req, res) => {
         await sendGoogleSignupConfirmation(user, req);
       } catch (emailError) {
         if (emailError?.code === "EMAIL_AUTH_NOT_CONFIGURED") {
-          // SMTP not set up — verify inline and issue tokens
-          await db.prepare(
-            "UPDATE users SET email_verified_at = ? WHERE id = ?",
-          ).run(new Date().toISOString(), user.id);
-          const verifiedUser = await syncCachedUserById(db, user.id, { strict: true });
-          trackEvent(db, "auth.google_register", {
-            userId: verifiedUser.id,
-            route: req.originalUrl,
-            entityType: "user",
-            entityId: verifiedUser.id,
-            payload: { email: verifiedUser.email },
+          return res.status(503).json({
+            error: "Email confirmation is required to complete signup, but email sending is not configured on this deployment. Please contact support.",
           });
-          return res.json(await buildAuthResponse(verifiedUser));
         }
         throw emailError;
       }
