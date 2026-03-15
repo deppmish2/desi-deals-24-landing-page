@@ -223,6 +223,22 @@ router.post("/claim-referral", async (req, res) => {
     });
   }
 
+  // Do not count referrals from users who were already on the platform.
+  // A genuine new signup has created_at within the last 48 hours.
+  const PREEXISTING_THRESHOLD_MS = 48 * 60 * 60 * 1000;
+  const inviteeCreatedAt = Date.parse(currentUser.created_at || "");
+  if (
+    Number.isFinite(inviteeCreatedAt) &&
+    Date.now() - inviteeCreatedAt > PREEXISTING_THRESHOLD_MS
+  ) {
+    return res.json({
+      ok: true,
+      applied: false,
+      reason: "invitee_already_registered",
+      data: await serializeWaitlistStatus(req.user.id),
+    });
+  }
+
   const payload = {
     inviter_user_id: inviter.id,
     invited_user_id: currentUser.id,

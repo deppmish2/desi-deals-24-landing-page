@@ -2236,7 +2236,7 @@ export default function WaitlistPage() {
           </button>,
         )
       ) : hasDealsAccess(status) ? (
-        <DealsUnlocked identity={identity} status={status || {}} />
+        (() => { window.location.replace("https://desideals24.com/24deals"); return centerPanel("Deals unlocked!", "Redirecting you to your 24 deals…"); })()
       ) : (
         <InviteDashboard
           identity={identity}
