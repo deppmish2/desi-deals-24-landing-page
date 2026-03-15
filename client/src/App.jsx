@@ -3,6 +3,7 @@ import { BrowserRouter, Navigate, Route, Routes } from "react-router-dom";
 import OAuthCallbackPage from "./pages/OAuthCallbackPage";
 import WaitlistPage from "./landing/WaitlistPage";
 import Deals24Page from "./landing/Deals24Page";
+import FeedbackWidget from "./components/FeedbackWidget";
 
 export default function App() {
   return (
@@ -17,6 +18,7 @@ export default function App() {
         />
         <Route path="*" element={<Navigate to="/waitlist" replace />} />
       </Routes>
+      <FeedbackWidget />
     </BrowserRouter>
   );
 }

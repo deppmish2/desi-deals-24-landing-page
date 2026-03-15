@@ -247,3 +247,23 @@ export function claimWaitlistReferral(referralCode) {
     body: JSON.stringify({ referral_code: referralCode }),
   });
 }
+
+export function fetchMe() {
+  return authRequest("/auth/me");
+}
+
+export function updateAuthSessionUser(user) {
+  const session = readAuthSession();
+  if (!session) return;
+  writeAuthSession({ ...session, user: { ...(session.user || {}), ...user } });
+}
+
+export async function startEmailAuth({ email, referral_code } = {}) {
+  const res = await fetch(buildUrl("/auth/email-link/start"), {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ email, referral_code }),
+  });
+  if (!res.ok) throw new Error(await parseError(res));
+  return res.json();
+}
