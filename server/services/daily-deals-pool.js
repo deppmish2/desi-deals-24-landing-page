@@ -184,8 +184,8 @@ function buildDailyPoolCacheKey(poolDate) {
   return `desiDeals24:dailyDealsPool:${normalizePoolDate(poolDate)}`;
 }
 
-function readPoolEntriesFromDb(db, poolDate) {
-  return db
+async function readPoolEntriesFromDb(db, poolDate) {
+  return await db
     .prepare(
       `SELECT *
        FROM daily_deal_pool_entries
@@ -195,7 +195,7 @@ function readPoolEntriesFromDb(db, poolDate) {
     .all(normalizePoolDate(poolDate));
 }
 
-function persistPoolEntries(db, poolDate, entries) {
+async function persistPoolEntries(db, poolDate, entries) {
   const normalizedDate = normalizePoolDate(poolDate);
   const insert = db.prepare(
     `INSERT INTO daily_deal_pool_entries (
@@ -211,12 +211,12 @@ function persistPoolEntries(db, poolDate, entries) {
     ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)`,
   );
 
-  db.transaction((rows) => {
-    db.prepare(`DELETE FROM daily_deal_pool_entries WHERE pool_date = ?`).run(
+  await db.transaction(async (rows) => {
+    await db.prepare(`DELETE FROM daily_deal_pool_entries WHERE pool_date = ?`).run(
       normalizedDate,
     );
     for (const row of rows) {
-      insert.run(
+      await insert.run(
         normalizedDate,
         row.slot_index,
         row.deal_id || null,
@@ -233,7 +233,7 @@ function persistPoolEntries(db, poolDate, entries) {
 
 async function restorePoolEntriesFromCache(db, poolDate) {
   const normalizedDate = normalizePoolDate(poolDate);
-  const existing = readPoolEntriesFromDb(db, normalizedDate);
+  const existing = await readPoolEntriesFromDb(db, normalizedDate);
   if (existing.length > 0) return existing;
 
   const cached = await getCachedJsonValue(buildDailyPoolCacheKey(normalizedDate));
@@ -241,12 +241,12 @@ async function restorePoolEntriesFromCache(db, poolDate) {
     return [];
   }
 
-  persistPoolEntries(db, normalizedDate, cached);
+  await persistPoolEntries(db, normalizedDate, cached);
   return readPoolEntriesFromDb(db, normalizedDate);
 }
 
 async function persistPoolEntriesWithCache(db, poolDate, entries) {
-  persistPoolEntries(db, poolDate, entries);
+  await persistPoolEntries(db, poolDate, entries);
   await cacheJsonValue(
     buildDailyPoolCacheKey(poolDate),
     entries,
@@ -265,8 +265,8 @@ async function restoreRecentHistoryFromCache(db, poolDate) {
   }
 }
 
-function fetchActiveDealRows(db) {
-  return db
+async function fetchActiveDealRows(db) {
+  return await db
     .prepare(
       `SELECT d.*, s.name AS store_name, s.url AS store_url
        FROM deals d
@@ -310,21 +310,21 @@ function buildEligibleCandidates(rows, poolDate) {
   return Array.from(bestByStoreProduct.values()).sort(compareCandidateRank);
 }
 
-function getRecentProductSignatures(db, poolDate) {
+async function getRecentProductSignatures(db, poolDate) {
   const normalizedDate = normalizePoolDate(poolDate);
   const startDate = addDays(
     normalizedDate,
     -(DAILY_POOL_REPEAT_WINDOW_DAYS - 1),
   );
   return new Set(
-    db
+    (await db
       .prepare(
         `SELECT DISTINCT product_signature
          FROM daily_deal_pool_entries
          WHERE pool_date >= ?
            AND pool_date < ?`,
       )
-      .all(startDate, normalizedDate)
+      .all(startDate, normalizedDate))
       .map((row) => String(row?.product_signature || "").trim())
       .filter(Boolean),
   );
@@ -487,10 +487,10 @@ async function getDailyDealsPool(db, options = {}) {
 
   await restoreRecentHistoryFromCache(db, poolDate);
 
-  let entries = readPoolEntriesFromDb(db, poolDate);
+  let entries = await readPoolEntriesFromDb(db, poolDate);
   if (entries.length === 0) {
-    const currentCandidates = buildEligibleCandidates(fetchActiveDealRows(db), poolDate);
-    const previousProducts = getRecentProductSignatures(db, poolDate);
+    const currentCandidates = buildEligibleCandidates(await fetchActiveDealRows(db), poolDate);
+    const previousProducts = await getRecentProductSignatures(db, poolDate);
     const selection = selectDailyPoolCandidates(
       currentCandidates,
       previousProducts,
@@ -500,7 +500,7 @@ async function getDailyDealsPool(db, options = {}) {
     await persistPoolEntriesWithCache(db, poolDate, entries);
   }
 
-  const currentCandidates = buildEligibleCandidates(fetchActiveDealRows(db), poolDate);
+  const currentCandidates = buildEligibleCandidates(await fetchActiveDealRows(db), poolDate);
   const rows = materializePoolRows(entries, currentCandidates).slice(0, limit);
   const summary = buildPoolSummary(entries);
 

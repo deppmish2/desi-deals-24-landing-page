@@ -15,7 +15,7 @@ function readDealsSeed(seedPath = DEFAULT_SEED_PATH) {
   }
 }
 
-function restoreDealsFromSeed(db, options = {}) {
+async function restoreDealsFromSeed(db, options = {}) {
   const seedPath = options.seedPath || DEFAULT_SEED_PATH;
   const deals = readDealsSeed(seedPath);
   if (!Array.isArray(deals) || deals.length === 0) {
@@ -35,20 +35,22 @@ function restoreDealsFromSeed(db, options = {}) {
        @currency, @availability, @bulk_pricing, @best_before, @is_active, @created_at)
   `);
 
-  const writeRows = (items) => {
+  const writeRows = async (items) => {
     for (const row of items) {
-      insert.run(row);
+      await insert.run(row);
     }
   };
 
   if (typeof db.transaction === "function") {
-    db.transaction(writeRows)(deals);
+    await db.transaction(async (items) => {
+      await writeRows(items);
+    })(deals);
   } else {
-    writeRows(deals);
+    await writeRows(deals);
   }
 
   const activeDeals =
-    db.prepare("SELECT COUNT(*) AS n FROM deals WHERE is_active = 1").get()
+    (await db.prepare("SELECT COUNT(*) AS n FROM deals WHERE is_active = 1").get())
       ?.n || 0;
 
   return {

@@ -25,7 +25,7 @@ function shouldSkipDueCooldown(alert) {
   return Date.now() - last < cooldownMs();
 }
 
-function queryMatchesForAlert(db, alert) {
+async function queryMatchesForAlert(db, alert) {
   let sql = `
     SELECT d.*, s.name AS store_name
     FROM deals d
@@ -63,11 +63,11 @@ function queryMatchesForAlert(db, alert) {
   }
 
   sql += " ORDER BY d.sale_price ASC LIMIT 15";
-  return db.prepare(sql).all(...params);
+  return await db.prepare(sql).all(...params);
 }
 
 async function evaluateAlertsAfterCrawl(db, { runId }) {
-  const alerts = db
+  const alerts = await db
     .prepare(
       `SELECT a.*, u.id AS user_id, u.email
      FROM price_alerts a
@@ -87,7 +87,7 @@ async function evaluateAlertsAfterCrawl(db, { runId }) {
     if (alert.alert_type === "restock_store" && !alert.target_store_id)
       continue;
 
-    const matches = queryMatchesForAlert(db, alert);
+    const matches = await queryMatchesForAlert(db, alert);
     if (matches.length === 0) continue;
 
     await sendAlertNotification(db, {
@@ -97,7 +97,7 @@ async function evaluateAlertsAfterCrawl(db, { runId }) {
       context: `crawl_run:${runId}`,
     });
 
-    db.prepare(
+    await db.prepare(
       `UPDATE price_alerts
        SET triggered = 1, last_triggered_at = ?
        WHERE id = ?`,

@@ -10,7 +10,6 @@ import {
   fetchWaitlistMe,
   getAuthSession,
   logoutUser,
-  startEmailAuth,
   updateAuthSessionUser,
 } from "../utils/api";
 import { getCurrentPoolDateSeed } from "./dealsRefreshSchedule";
@@ -148,16 +147,6 @@ function Logo({ light=false }) {
           · Beta
         </span>
       </div>
-    </div>
-  );
-}
-
-function Divider({ label }) {
-  return (
-    <div style={{ display:"flex", alignItems:"center", gap:12, margin:"4px 0" }}>
-      <div style={{ flex:1, height:1, background:T.border }} />
-      {label && <span style={{ fontSize:12, color:T.textMuted, fontWeight:500 }}>{label}</span>}
-      <div style={{ flex:1, height:1, background:T.border }} />
     </div>
   );
 }
@@ -479,7 +468,6 @@ function InviteRow({ invite, index }) {
 // ─── AUTH CARD (Landing) ──────────────────────────────────────────────────────
 function AuthCard({
   onAuthChoice,
-  onLoginClick,
   glass = false,
   pulseGoogle = false,
   onDealsClick,
@@ -547,7 +535,7 @@ function AuthCard({
       </button>
       <button
         type="button"
-        onClick={() => onLoginClick?.()}
+        onClick={() => onAuthChoice?.("google")}
         disabled={authLoading}
         style={{
           marginTop: 10,
@@ -578,250 +566,6 @@ function AuthCard({
           {authError}
         </div>
       ) : null}
-    </div>
-  );
-}
-
-function LoginModal({
-  open = false,
-  onClose,
-  onGoogleClick,
-  onEmailContinue,
-  authLoading = false,
-  authError = "",
-  authNotice = "",
-  previewUrl = "",
-}) {
-  const [email, setEmail] = useState("");
-  const [emailError, setEmailError] = useState("");
-  const [submitting, setSubmitting] = useState(false);
-
-  useEffect(() => {
-    if (!open) return undefined;
-    const handleEscape = (event) => {
-      if (event.key === "Escape") {
-        onClose?.();
-      }
-    };
-    window.addEventListener("keydown", handleEscape);
-    return () => window.removeEventListener("keydown", handleEscape);
-  }, [open, onClose]);
-
-  useEffect(() => {
-    if (!open) return;
-    setEmailError("");
-    setSubmitting(false);
-  }, [open]);
-
-  if (!open) return null;
-
-  async function handleSubmit(event) {
-    event.preventDefault();
-    setEmailError("");
-    setSubmitting(true);
-    try {
-      await onEmailContinue?.(email);
-      setSubmitting(false);
-    } catch (error) {
-      setEmailError(error?.message || "Unable to continue with this email.");
-      setSubmitting(false);
-    }
-  }
-
-  return (
-    <div
-      style={{
-        position: "fixed",
-        inset: 0,
-        zIndex: 1000,
-        display: "flex",
-        alignItems: "center",
-        justifyContent: "center",
-        padding: 24,
-        background: "rgba(15,23,42,0.42)",
-        backdropFilter: "blur(10px)",
-      }}
-    >
-      <div
-        role="button"
-        tabIndex={-1}
-        aria-label="Close login dialog"
-        onClick={() => onClose?.()}
-        style={{ position: "absolute", inset: 0, cursor: "pointer" }}
-      />
-
-      <div
-        style={{
-          position: "relative",
-          width: "100%",
-          maxWidth: 960,
-          background: "#fff",
-          borderRadius: 28,
-          border: "1px solid #dbe5f0",
-          boxShadow: "0 28px 90px rgba(15,23,42,0.20)",
-          padding: "68px 82px 56px",
-        }}
-      >
-        <button
-          type="button"
-          onClick={() => onClose?.()}
-          aria-label="Close login dialog"
-          style={{
-            position: "absolute",
-            top: 20,
-            right: 20,
-            border: "none",
-            background: "transparent",
-            color: "#64748B",
-            fontSize: 22,
-            fontWeight: 700,
-            cursor: "pointer",
-            lineHeight: 1,
-          }}
-        >
-          ×
-        </button>
-
-        <div style={{ textAlign: "center", marginBottom: 34 }}>
-          <h2
-            style={{
-              fontFamily: "'Plus Jakarta Sans',sans-serif",
-              fontSize: "clamp(34px,4vw,62px)",
-              fontWeight: 800,
-              lineHeight: 1.05,
-              letterSpacing: -1.8,
-              color: "#0F172A",
-            }}
-          >
-            Welcome back
-          </h2>
-        </div>
-
-        <div style={{ maxWidth: 760, margin: "0 auto" }}>
-          <button
-            type="button"
-            onClick={() => onGoogleClick?.()}
-            disabled={authLoading}
-            style={{
-              width: "100%",
-              minHeight: 100,
-              display: "flex",
-              alignItems: "center",
-              justifyContent: "center",
-              gap: 18,
-              borderRadius: 18,
-              background: "#fff",
-              border: "1px solid #d8e1ee",
-              fontSize: 20,
-              fontWeight: 600,
-              color: "#334155",
-              cursor: authLoading ? "wait" : "pointer",
-              boxShadow: "0 1px 2px rgba(15,23,42,0.03)",
-            }}
-          >
-            <GoogleIcon />
-            <span>{authLoading ? "Redirecting to Google..." : "Continue with Google"}</span>
-          </button>
-
-          <Divider label="OR" />
-
-          <form onSubmit={handleSubmit} style={{ marginTop: 24 }}>
-            <label
-              htmlFor="waitlist-login-email"
-              style={{
-                display: "block",
-                fontSize: 15,
-                fontWeight: 700,
-                color: "#0F172A",
-                marginBottom: 14,
-              }}
-            >
-              Email address
-            </label>
-            <input
-              id="waitlist-login-email"
-              type="email"
-              value={email}
-              onChange={(event) => setEmail(event.target.value)}
-              placeholder="name@company.com"
-              autoFocus
-              required
-              style={{
-                width: "100%",
-                minHeight: 92,
-                borderRadius: 18,
-                border: `2px solid ${emailError ? "#DC2626" : T.brand}`,
-                padding: "0 32px",
-                fontSize: 18,
-                color: "#0F172A",
-                outline: "none",
-                marginBottom: 28,
-              }}
-            />
-
-            <button
-              type="submit"
-              disabled={submitting}
-              style={{
-                width: "100%",
-                minHeight: 100,
-                borderRadius: 18,
-                border: "none",
-                background: T.brand,
-                color: "#fff",
-                fontSize: 22,
-                fontWeight: 700,
-                cursor: submitting ? "wait" : "pointer",
-                boxShadow: "0 12px 32px rgba(22,163,74,0.22)",
-              }}
-            >
-              {submitting ? "Sending secure link..." : "Continue"}
-            </button>
-          </form>
-
-          {emailError ? (
-            <div style={{ marginTop: 14, fontSize: 13, color: "#B91C1C", textAlign: "center" }}>
-              {emailError}
-            </div>
-          ) : null}
-          {authError ? (
-            <div style={{ marginTop: 14, fontSize: 13, color: "#B91C1C", textAlign: "center" }}>
-              {authError}
-            </div>
-          ) : null}
-          {authNotice ? (
-            <div
-              style={{
-                marginTop: 14,
-                padding: "14px 16px",
-                borderRadius: 14,
-                background: "#ECFDF3",
-                border: "1px solid #BBF7D0",
-                fontSize: 13,
-                color: "#166534",
-                textAlign: "center",
-                lineHeight: 1.6,
-              }}
-            >
-              {authNotice}
-              {previewUrl ? (
-                <div style={{ marginTop: 8 }}>
-                  <a
-                    href={previewUrl}
-                    style={{ color: T.brandDark, fontWeight: 700, textDecoration: "underline" }}
-                  >
-                    Open the dev preview link
-                  </a>
-                </div>
-              ) : null}
-            </div>
-          ) : null}
-
-          <p style={{ marginTop: 40, textAlign: "center", fontSize: 16, color: "#64748B" }}>
-            We&apos;ll email a secure confirmation link and only activate access after you click it.
-          </p>
-        </div>
-      </div>
     </div>
   );
 }
@@ -1031,7 +775,6 @@ function DealsStrip({ onCtaClick, onDealClick }) {
 // ─── LANDING PAGE ─────────────────────────────────────────────────────────────
 function LandingPage({
   onAuthChoice,
-  onLoginClick,
   authError = "",
   authLoading = false,
 }) {
@@ -1116,11 +859,11 @@ function LandingPage({
               role="button"
               tabIndex={0}
               onClick={() => {
-                if (!authLoading) onLoginClick?.();
+                if (!authLoading) onAuthChoice?.("google");
               }}
               onKeyDown={(e) => {
                 if (authLoading) return;
-                if (e.key === "Enter" || e.key === " ") onLoginClick?.();
+                if (e.key === "Enter" || e.key === " ") onAuthChoice?.("google");
               }}
               aria-label="Login"
               style={{
@@ -1198,7 +941,7 @@ function LandingPage({
 
           {/* Auth card */}
           <div ref={startSavingRef} style={{ paddingBottom:20, scrollMarginTop: 24 }}>
-            <AuthCard onAuthChoice={onAuthChoice} onLoginClick={onLoginClick} glass pulseGoogle={pulseGoogle} onDealsClick={focusDealsSection} authError={authError} authLoading={authLoading} />
+            <AuthCard onAuthChoice={onAuthChoice} glass pulseGoogle={pulseGoogle} onDealsClick={focusDealsSection} authError={authError} authLoading={authLoading} />
           </div>
         </div>
       </div>
@@ -1905,9 +1648,6 @@ export default function WaitlistPage() {
   const [status, setStatus] = useState(null);
   const [authLoading, setAuthLoading] = useState(false);
   const [authError, setAuthError] = useState("");
-  const [authNotice, setAuthNotice] = useState("");
-  const [authPreviewUrl, setAuthPreviewUrl] = useState("");
-  const [loginModalOpen, setLoginModalOpen] = useState(false);
   const [statusLoading, setStatusLoading] = useState(
     () => Boolean(getAuthSession()?.accessToken),
   );
@@ -1962,21 +1702,17 @@ export default function WaitlistPage() {
     async function finishEmailAuth() {
       setAuthLoading(true);
       setAuthError("");
-      setAuthNotice("");
-      setAuthPreviewUrl("");
 
       try {
         await completeEmailAuth(emailAuthToken);
         if (cancelled) return;
         setAuthSession(getAuthSession());
-        setLoginModalOpen(false);
         navigate("/waitlist", { replace: true });
       } catch (error) {
         if (cancelled) return;
         setAuthError(
           error?.message || "Unable to verify this email link right now.",
         );
-        setLoginModalOpen(true);
         navigate("/waitlist", { replace: true });
       } finally {
         if (!cancelled) {
@@ -2068,17 +1804,10 @@ export default function WaitlistPage() {
     sessionStorage.removeItem(AUTH_ERROR_STORAGE_KEY);
     setAuthLoading(false);
     setAuthError(storedError);
-    setAuthNotice("");
-    setAuthPreviewUrl("");
-    if (!getAuthSession()?.accessToken) {
-      setLoginModalOpen(true);
-    }
   }, []);
 
   const handleGoogleAuth = async () => {
     setAuthError("");
-    setAuthNotice("");
-    setAuthPreviewUrl("");
     setAuthLoading(true);
 
     try {
@@ -2102,47 +1831,16 @@ export default function WaitlistPage() {
   const handleLogout = async () => {
     setAuthLoading(true);
     setAuthError("");
-    setAuthNotice("");
-    setAuthPreviewUrl("");
 
     try {
       await logoutUser();
       setAuthSession(getAuthSession());
       setStatus(null);
       setStatusError("");
-      setLoginModalOpen(false);
       navigate("/waitlist", { replace: true });
     } finally {
       setAuthLoading(false);
     }
-  };
-
-  const handleLoginEmailContinue = async (email) => {
-    const normalizedEmail = String(email || "")
-      .trim()
-      .toLowerCase();
-    if (!normalizedEmail) {
-      throw new Error("Email address is required.");
-    }
-
-    const storedReferral =
-      typeof window !== "undefined"
-        ? normalizeReferralCode(
-            window.localStorage.getItem(WAITLIST_REF_STORAGE_KEY),
-          )
-        : "";
-
-    const payload = await startEmailAuth({
-      email: normalizedEmail,
-      referral_code: storedReferral || undefined,
-    });
-
-    setAuthError("");
-    setAuthNotice(
-      payload?.message ||
-        `Check ${payload?.masked_email || normalizedEmail} for your secure confirmation link.`,
-    );
-    setAuthPreviewUrl(String(payload?.preview_url || "").trim());
   };
 
   const identity = authSession?.user || authSession?.user?.email || authSession?.user?.id || "friend";
@@ -2202,34 +1900,8 @@ export default function WaitlistPage() {
         <>
           <LandingPage
             onAuthChoice={handleGoogleAuth}
-            onLoginClick={() => {
-              setAuthError("");
-              setAuthNotice("");
-              setAuthPreviewUrl("");
-              setLoginModalOpen(true);
-            }}
             authError={authError}
             authLoading={authLoading}
-          />
-          <LoginModal
-            open={loginModalOpen}
-            onClose={() => {
-              if (!authLoading) {
-                setLoginModalOpen(false);
-                setAuthError("");
-                setAuthNotice("");
-                setAuthPreviewUrl("");
-              }
-            }}
-            onGoogleClick={() => {
-              setLoginModalOpen(false);
-              handleGoogleAuth();
-            }}
-            onEmailContinue={handleLoginEmailContinue}
-            authLoading={authLoading}
-            authError={authError}
-            authNotice={authNotice}
-            previewUrl={authPreviewUrl}
           />
         </>
       ) : statusLoading ? (

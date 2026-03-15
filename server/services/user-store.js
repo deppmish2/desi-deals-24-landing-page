@@ -19,12 +19,12 @@ function normalizeUserType(value) {
     : null;
 }
 
-function upsertWaitlistReferralRow(db, referral) {
+async function upsertWaitlistReferralRow(db, referral) {
   const inviterUserId = normalizeText(referral?.inviter_user_id);
   const invitedUserId = normalizeText(referral?.invited_user_id);
   if (!inviterUserId || !invitedUserId) return null;
 
-  db.prepare(
+  await db.prepare(
     `INSERT INTO waitlist_referrals (
       inviter_user_id,
       invited_user_id,
@@ -45,7 +45,7 @@ function upsertWaitlistReferralRow(db, referral) {
     referral?.claimed_at || new Date().toISOString(),
   );
 
-  return db
+  return await db
     .prepare(
       `SELECT *
        FROM waitlist_referrals
@@ -55,10 +55,10 @@ function upsertWaitlistReferralRow(db, referral) {
     .get(invitedUserId);
 }
 
-function restoreCachedUserToSqlite(db, cached) {
+async function restoreCachedUserToSqlite(db, cached) {
   if (!cached?.id || !cached?.email) return null;
 
-  db.prepare(
+  await db.prepare(
     `INSERT INTO users (
       id,
       email,
@@ -135,14 +135,14 @@ function restoreCachedUserToSqlite(db, cached) {
     cached.last_login_at || null,
   );
 
-  return db.prepare("SELECT * FROM users WHERE id = ? LIMIT 1").get(cached.id);
+  return await db.prepare("SELECT * FROM users WHERE id = ? LIMIT 1").get(cached.id);
 }
 
 async function findUserByIdOrCache(db, userId) {
   const id = normalizeText(userId);
   if (!id) return null;
 
-  let user = db.prepare("SELECT * FROM users WHERE id = ? LIMIT 1").get(id);
+  let user = await db.prepare("SELECT * FROM users WHERE id = ? LIMIT 1").get(id);
   if (user) return user;
 
   const cached = await getCachedUser(id);
@@ -154,7 +154,7 @@ async function findUserByEmailOrCache(db, email) {
   const normalizedEmail = normalizeText(email).toLowerCase();
   if (!normalizedEmail) return null;
 
-  let user = db
+  let user = await db
     .prepare("SELECT * FROM users WHERE email = ? LIMIT 1")
     .get(normalizedEmail);
   if (user) return user;
@@ -168,7 +168,7 @@ async function findUserByReferralCodeOrCache(db, referralCode) {
   const normalizedCode = normalizeText(referralCode).toUpperCase();
   if (!normalizedCode) return null;
 
-  let user = db
+  let user = await db
     .prepare(
       `SELECT *
        FROM users
@@ -195,7 +195,7 @@ async function hydrateWaitlistInviteesFromCache(db, inviterUserId) {
       db,
       invitee.waitlist_referrer_user_id,
     );
-    upsertWaitlistReferralRow(db, {
+    await upsertWaitlistReferralRow(db, {
       inviter_user_id: invitee.waitlist_referrer_user_id,
       invited_user_id: invitee.id,
       referral_code: inviter?.waitlist_referral_code || null,
@@ -208,7 +208,7 @@ async function hydrateWaitlistInviteesFromCache(db, inviterUserId) {
 
 async function findWaitlistInviteesByReferrerOrCache(db, inviterUserId) {
   await hydrateWaitlistInviteesFromCache(db, inviterUserId);
-  return db
+  return await db
     .prepare(
       `SELECT
          u.id,
@@ -229,7 +229,7 @@ async function findWaitlistReferralByInviteeOrCache(db, invitedUserId) {
   const normalizedInviteeId = normalizeText(invitedUserId);
   if (!normalizedInviteeId) return null;
 
-  let row = db
+  let row = await db
     .prepare(
       `SELECT *
        FROM waitlist_referrals
@@ -256,7 +256,7 @@ async function findWaitlistReferralByInviteeOrCache(db, invitedUserId) {
 }
 
 async function syncCachedUserById(db, userId, options = {}) {
-  const user = db.prepare("SELECT * FROM users WHERE id = ? LIMIT 1").get(userId);
+  const user = await db.prepare("SELECT * FROM users WHERE id = ? LIMIT 1").get(userId);
   if (!user) return null;
   await cacheUser(user, options);
   return user;

@@ -21,8 +21,8 @@ function parseJson(value, fallback) {
   }
 }
 
-function loadCanonicalRows(db) {
-  return db
+async function loadCanonicalRows(db) {
+  return await db
     .prepare(
       `SELECT id, canonical_name, category, common_aliases, image_url
      FROM canonical_products`,
@@ -30,8 +30,8 @@ function loadCanonicalRows(db) {
     .all();
 }
 
-function addAliasToCanonical(db, canonicalId, rawName) {
-  const row = db
+async function addAliasToCanonical(db, canonicalId, rawName) {
+  const row = await db
     .prepare(
       `SELECT common_aliases
      FROM canonical_products
@@ -43,18 +43,18 @@ function addAliasToCanonical(db, canonicalId, rawName) {
   const aliases = parseJson(row?.common_aliases, []);
   if (!aliases.includes(rawName)) aliases.push(rawName);
 
-  db.prepare(
+  await db.prepare(
     `UPDATE canonical_products
      SET common_aliases = ?
      WHERE id = ?`,
   ).run(JSON.stringify(aliases), canonicalId);
 }
 
-function ensureUniqueCanonicalId(db, baseId) {
+async function ensureUniqueCanonicalId(db, baseId) {
   let id = baseId;
   let suffix = 2;
   while (
-    db.prepare("SELECT 1 FROM canonical_products WHERE id = ? LIMIT 1").get(id)
+    await db.prepare("SELECT 1 FROM canonical_products WHERE id = ? LIMIT 1").get(id)
   ) {
     id = `${baseId}-${suffix}`;
     suffix += 1;
@@ -62,11 +62,11 @@ function ensureUniqueCanonicalId(db, baseId) {
   return id;
 }
 
-function createCanonical(db, { canonicalName, category, imageUrl, rawName }) {
+async function createCanonical(db, { canonicalName, category, imageUrl, rawName }) {
   const baseId = slugify(canonicalName || rawName);
-  const canonicalId = ensureUniqueCanonicalId(db, baseId);
+  const canonicalId = await ensureUniqueCanonicalId(db, baseId);
 
-  db.prepare(
+  await db.prepare(
     `INSERT INTO canonical_products
       (id, canonical_name, category, common_aliases, image_url, verified)
      VALUES (?, ?, ?, ?, ?, 0)`,
@@ -78,13 +78,13 @@ function createCanonical(db, { canonicalName, category, imageUrl, rawName }) {
     imageUrl || null,
   );
 
-  return db
+  return await db
     .prepare("SELECT * FROM canonical_products WHERE id = ? LIMIT 1")
     .get(canonicalId);
 }
 
-function upsertDealMapping(db, { dealId, canonicalId, method, confidence }) {
-  db.prepare(
+async function upsertDealMapping(db, { dealId, canonicalId, method, confidence }) {
+  await db.prepare(
     `INSERT INTO deal_mappings
       (deal_id, canonical_id, match_method, match_confidence, verified_at)
      VALUES (?, ?, ?, ?, ?)
@@ -95,20 +95,20 @@ function upsertDealMapping(db, { dealId, canonicalId, method, confidence }) {
        verified_at = excluded.verified_at`,
   ).run(dealId, canonicalId, method, confidence, new Date().toISOString());
 
-  db.prepare("UPDATE deals SET canonical_id = ? WHERE id = ?").run(
+  await db.prepare("UPDATE deals SET canonical_id = ? WHERE id = ?").run(
     canonicalId,
     dealId,
   );
 }
 
-function enqueueManualReview(
+async function enqueueManualReview(
   db,
   deal,
   suggestedCanonicalId,
   confidence,
   normalisedName,
 ) {
-  const pending = db
+  const pending = await db
     .prepare(
       `SELECT id
      FROM entity_resolution_queue
@@ -119,7 +119,7 @@ function enqueueManualReview(
 
   if (pending) return;
 
-  db.prepare(
+  await db.prepare(
     `INSERT INTO entity_resolution_queue
       (deal_id, suggested_canonical_id, confidence, raw_name, normalised_name, status)
      VALUES (?, ?, ?, ?, ?, 'pending')`,
@@ -139,7 +139,7 @@ async function resolveQueryToCanonicalId(
   options = {},
 ) {
   const createIfMissing = options.createIfMissing !== false;
-  const canonicalRows = loadCanonicalRows(db);
+  const canonicalRows = await loadCanonicalRows(db);
   const canonicalNames = canonicalRows.map((row) => row.canonical_name);
   const resolved = await resolveName(query, canonicalNames);
 
@@ -177,7 +177,7 @@ async function resolveQueryToCanonicalId(
     };
   }
 
-  const created = createCanonical(db, {
+  const created = await createCanonical(db, {
     canonicalName: query,
     category: categoryHint || "Other",
     imageUrl: null,
@@ -201,7 +201,7 @@ async function canonicalizeDeals(db, { runId } = {}) {
     params.push(runId);
   }
 
-  const deals = db
+  const deals = await db
     .prepare(
       `SELECT d.id, d.product_name, d.product_category, d.image_url
      FROM deals d
@@ -209,7 +209,7 @@ async function canonicalizeDeals(db, { runId } = {}) {
     )
     .all(...params);
 
-  const canonicalRows = loadCanonicalRows(db);
+  const canonicalRows = await loadCanonicalRows(db);
   const canonicalByName = new Map(
     canonicalRows.map((row) => [row.canonical_name, row]),
   );
@@ -231,7 +231,7 @@ async function canonicalizeDeals(db, { runId } = {}) {
     }
 
     if (!canonicalRow) {
-      canonicalRow = createCanonical(db, {
+      canonicalRow = await createCanonical(db, {
         canonicalName: deal.product_name,
         category: deal.product_category,
         imageUrl: deal.image_url,
@@ -241,8 +241,8 @@ async function canonicalizeDeals(db, { runId } = {}) {
       stats.created += 1;
     }
 
-    addAliasToCanonical(db, canonicalRow.id, deal.product_name);
-    upsertDealMapping(db, {
+    await addAliasToCanonical(db, canonicalRow.id, deal.product_name);
+    await upsertDealMapping(db, {
       dealId: deal.id,
       canonicalId: canonicalRow.id,
       method: resolved.method || "new",
@@ -251,7 +251,7 @@ async function canonicalizeDeals(db, { runId } = {}) {
     });
 
     if (resolved.method === "manual_review") {
-      enqueueManualReview(
+      await enqueueManualReview(
         db,
         deal,
         canonicalRow.id,

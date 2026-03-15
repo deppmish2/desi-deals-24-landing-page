@@ -51,11 +51,11 @@ function buildBody({ alert, matches, context }) {
   return lines.join("\n");
 }
 
-function insertAudit(
+async function insertAudit(
   db,
   { alertId, userId, status, sentTo, context, message },
 ) {
-  db.prepare(
+  await db.prepare(
     `INSERT INTO alert_notifications
       (alert_id, user_id, trigger_context, sent_to, sent_status, provider_message)
      VALUES (?, ?, ?, ?, ?, ?)`,
@@ -79,7 +79,7 @@ async function sendAlertNotification(db, { alert, user, matches, context }) {
     console.log(
       `[alerts] SMTP not configured, log-only notification for ${user.email}\n${text}`,
     );
-    insertAudit(db, {
+    await insertAudit(db, {
       alertId: alert.id,
       userId: user.id,
       status: "logged",
@@ -106,7 +106,7 @@ async function sendAlertNotification(db, { alert, user, matches, context }) {
       html: `<pre style="font-family:ui-monospace, SFMono-Regular, Menlo, monospace; white-space:pre-wrap">${text.replace(/</g, "&lt;")}</pre>`,
     });
 
-    insertAudit(db, {
+    await insertAudit(db, {
       alertId: alert.id,
       userId: user.id,
       status: "sent",
@@ -116,7 +116,7 @@ async function sendAlertNotification(db, { alert, user, matches, context }) {
     });
   } catch (error) {
     console.error("[alerts] Email send failed:", error.message);
-    insertAudit(db, {
+    await insertAudit(db, {
       alertId: alert.id,
       userId: user.id,
       status: "failed",

@@ -9,7 +9,7 @@ function safeStringify(value) {
   }
 }
 
-function trackEvent(db, eventName, options = {}) {
+async function trackEvent(db, eventName, options = {}) {
   const name = String(eventName || "").trim();
   if (!name) return false;
 
@@ -28,7 +28,7 @@ function trackEvent(db, eventName, options = {}) {
     options.userId == null ? null : String(options.userId).trim() || null;
 
   try {
-    db.prepare(
+    await db.prepare(
       `INSERT INTO events
         (event_name, user_id, source, route, entity_type, entity_id, payload)
        VALUES (?, ?, ?, ?, ?, ?, ?)`,
