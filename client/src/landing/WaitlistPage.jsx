@@ -2047,7 +2047,16 @@ export default function WaitlistPage() {
         setStatus(nextStatus);
       } catch (error) {
         if (cancelled) return;
-        setStatusError(error?.message || "Unable to load your waitlist status.");
+        const msg = String(error?.message || "");
+        const isGone = /not found|no longer exists|deleted|unauthorized|401|403/i.test(msg)
+          || error?.status === 401 || error?.status === 403 || error?.status === 404;
+        if (isGone) {
+          await logoutUser().catch(() => {});
+          setAuthSession(getAuthSession());
+          setStatus(null);
+          return;
+        }
+        setStatusError(msg || "Unable to load your waitlist status.");
       } finally {
         if (!cancelled) {
           setStatusLoading(false);
