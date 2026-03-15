@@ -258,7 +258,8 @@ function Deals24Card({ deal, number, showBestBefore = true }) {
     const name = deal?.name || deal?.title || "this product";
     const price = priceText || "";
     const orig = originalPriceText ? ` (was ${originalPriceText})` : "";
-    return `how is ${name} only ${price}??${orig}\nfound it on DesiDeals24 \u{1F447}\nhttps://desideals24.com/24deals`;
+    const pointDown = "\uD83D\uDC47";
+    return `how is ${name} only ${price}??${orig}\nfound it on DesiDeals24 ${pointDown}\nhttps://desideals24.com/24deals`;
   }
 
   function shareOnWhatsApp(event) {
