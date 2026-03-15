@@ -1,6 +1,7 @@
 Access to the 24 Deals page is gated behind Basic member status
 A user reaches Basic member status by inviting 2 friends who successfully register
 The 24 Deals page must feature products from a minimum of 10 shops
+Not more than 3 deals from one shop.
 Products must span multiple categories, with at least 80% coverage across main product categories as listed in /Users/depppmish/Desktop/desi-deals-deepak-fork/desi-deals-24/data/Most Popular Indian Groceries - indian_grocery_1000_items.csv
 The 24 deals are fixed for the day (no intra-day changes)
 In the 24 deals showpage, do not use more than 4 "Best before xxDATEXX" 
