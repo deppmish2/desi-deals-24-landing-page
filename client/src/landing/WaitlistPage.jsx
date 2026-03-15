@@ -260,7 +260,7 @@ function LockedStackCard({ onCtaClick }) {
     { label: "All 24 deals unlock", active: false },
   ];
   return (
-    <div style={{
+    <div className="dd24-deals-locked" style={{
       flex: "1 1 0", minWidth: 0, borderRadius: 24, overflow: "hidden",
       position: "relative", minHeight: 552,
       background: "linear-gradient(145deg, #e8f5e9 0%, #f0fdf4 25%, #dcfce7 55%, #a7f3d0 100%)",
@@ -828,11 +828,11 @@ function DealsStrip({ onCtaClick, onDealClick }) {
   };
 
   return (
-    <div style={{ background: T.bg, padding: "64px 32px" }}>
+    <div className="dd24-deals-section" style={{ background: T.bg, padding: "64px 32px" }}>
       <div style={{ maxWidth: 1200, margin: "0 auto" }}>
 
         {/* Section heading */}
-        <div style={{ marginBottom: 40 }}>
+        <div className="dd24-deals-heading" style={{ marginBottom: 40 }}>
           <h2 style={{
             fontFamily: "'Plus Jakarta Sans', 'DM Sans', sans-serif",
             fontSize: 30, fontWeight: 800, color: "#0f172a",
@@ -842,11 +842,11 @@ function DealsStrip({ onCtaClick, onDealClick }) {
           </h2>
         </div>
 
-        {/* 4-column grid */}
+        {/* 4-column grid → 2-col tablet → scroll strip mobile */}
         {loading ? (
           <div style={{ fontSize: 13, color: T.textMuted }}>Loading deals…</div>
         ) : (
-          <div style={{ display: "grid", gridTemplateColumns: "repeat(4, 1fr)", gap: 32 }}>
+          <div className="dd24-deals-grid" style={{ display: "grid", gridTemplateColumns: "repeat(4, 1fr)", gap: 32 }}>
             {displayed.map((d, i) => {
               const { product, store, imageUrl, now, was, off } = resolveCard(d, i);
               return (
@@ -935,7 +935,6 @@ function LandingPage({
       <div style={{ position:"relative", width:"100%", minHeight:"90vh", display:"flex", flexDirection:"column", overflow:"hidden" }}>
         {!imgError && (
           <picture>
-            <source media="(max-width: 640px)" srcSet={HERO_IMAGE_MOBILE_URL} />
             <source srcSet={HERO_IMAGE_WEBP_URL} type="image/webp" />
             <img
               src={HERO_IMAGE_URL}
@@ -2173,9 +2172,17 @@ export default function WaitlistPage() {
           .dd24-waitlist-stats-grid{grid-template-columns:1fr 1fr !important}
           .dd24-waitlist-deals-grid{grid-template-columns:1fr !important}
           .dd24-waitlist-progress-card{padding:22px !important}
+          .dd24-deals-section{padding:48px 24px !important}
+          .dd24-deals-grid{grid-template-columns:repeat(2,1fr) !important;gap:20px !important}
         }
         @media (max-width: 640px){
           .dd24-waitlist-stats-grid{grid-template-columns:1fr !important}
+          .dd24-deals-section{padding:32px 0 32px 16px !important}
+          .dd24-deals-heading{margin-bottom:24px !important;padding-right:16px}
+          .dd24-deals-heading h2{font-size:22px !important;line-height:28px !important}
+          .dd24-deals-grid{display:flex !important;overflow-x:auto !important;gap:12px !important;scroll-snap-type:x mandatory !important;-webkit-overflow-scrolling:touch !important;padding-bottom:8px !important;padding-right:16px !important}
+          .dd24-deals-grid > *{flex:0 0 220px !important;scroll-snap-align:start !important}
+          .dd24-deals-locked{min-height:400px !important;flex:0 0 260px !important}
         }
       `}</style>
 
