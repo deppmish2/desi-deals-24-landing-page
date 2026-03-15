@@ -1338,7 +1338,7 @@ function InviteDashboard({ identity, status, onLogout, logoutLoading = false }) 
     typeof window !== "undefined"
       ? `${window.location.origin}${status?.invite_url || "/waitlist"}`
       : status?.invite_url || "/waitlist";
-  const shareCopy = `just give this a try, thank me later\ndesi grocery deals across 24 stores in germany, updated every morning https://desideals24.com/waitlist?ref=${status?.referral_code || ""}`;
+  const shareCopy = `just give this a try, thank me later\ndesi grocery deals across 24 stores in germany, updated every morning\nRegister to access deals: https://desideals24.com/waitlist?ref=${status?.referral_code || ""}`;
 
   const [copiedMsg, setCopiedMsg] = useState(false);
 
@@ -1481,7 +1481,7 @@ function InviteDashboard({ identity, status, onLogout, logoutLoading = false }) 
 
             <button
               type="button"
-              onClick={() => copyToClipboard(inviteLink)}
+              onClick={() => copyToClipboard(shareCopy)}
               style={{ width:"100%", marginBottom:16, padding:"12px 14px", borderRadius:12, background:copiedMsg ? T.brandLight : T.bgMuted, border:`1px solid ${copiedMsg ? T.brandBorder : T.border}`, textAlign:"left", cursor:"pointer", transition:"all 0.2s" }}
             >
               <div style={{ fontSize:11, color:copiedMsg ? T.brandDark : T.textMuted, fontWeight:700, letterSpacing:0.6, textTransform:"uppercase", marginBottom:6 }}>
@@ -1501,7 +1501,7 @@ function InviteDashboard({ identity, status, onLogout, logoutLoading = false }) 
             <div style={{ display:"flex", gap:8 }}>
               <button
                 type="button"
-                onClick={() => openShare(`https://t.me/share/url?url=${encodeURIComponent(inviteLink)}&text=${encodeURIComponent("Join DesiDeals24 with my invite link.")}`)}
+                onClick={() => openShare(`https://t.me/share/url?url=${encodeURIComponent("https://desideals24.com/waitlist?ref=" + (status?.referral_code || ""))}&text=${encodeURIComponent(shareCopy)}`)}
                 style={{ flex:1, padding:"10px", borderRadius:10, border:"1px solid rgba(37,99,235,0.22)", background:"rgba(37,99,235,0.07)", color:"#1D4ED8", fontSize:12, fontWeight:600, cursor:"pointer", display:"flex", alignItems:"center", justifyContent:"center", gap:6 }}
               >
                 ✈️ Telegram
