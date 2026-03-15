@@ -1479,10 +1479,16 @@ function InviteDashboard({ identity, status, onLogout, logoutLoading = false }) 
               </div>
             </div>
 
-            <div style={{ marginBottom:16, padding:"12px 14px", borderRadius:12, background:T.bgMuted, border:`1px solid ${T.border}` }}>
-              <div style={{ fontSize:11, color:T.textMuted, fontWeight:700, letterSpacing:0.6, textTransform:"uppercase", marginBottom:6 }}>Your referral code</div>
+            <button
+              type="button"
+              onClick={() => copyToClipboard(inviteLink)}
+              style={{ width:"100%", marginBottom:16, padding:"12px 14px", borderRadius:12, background:copiedMsg ? T.brandLight : T.bgMuted, border:`1px solid ${copiedMsg ? T.brandBorder : T.border}`, textAlign:"left", cursor:"pointer", transition:"all 0.2s" }}
+            >
+              <div style={{ fontSize:11, color:copiedMsg ? T.brandDark : T.textMuted, fontWeight:700, letterSpacing:0.6, textTransform:"uppercase", marginBottom:6 }}>
+                {copiedMsg ? "✓ Copied!" : "Your referral code · tap to copy link"}
+              </div>
               <div style={{ fontFamily:"'Fraunces',Georgia,serif", fontSize:24, fontWeight:900, letterSpacing:-0.8, color:T.textPrimary }}>{status?.referral_code || "—"}</div>
-            </div>
+            </button>
 
             <button
               type="button"
