@@ -191,6 +191,8 @@ const ready = (async () => {
     "ALTER TABLE price_alerts ADD COLUMN last_triggered_at DATETIME",
     "ALTER TABLE price_alerts ADD COLUMN is_active INTEGER DEFAULT 1",
     "ALTER TABLE deals ADD COLUMN last_pool_used_at DATETIME",
+    "ALTER TABLE waitlist_referrals DROP COLUMN invited_user_id_user_id",
+    "ALTER TABLE waitlist_referrals DROP COLUMN inviter_user_id_user_id",
   ];
 
   for (const sql of migrations) {
