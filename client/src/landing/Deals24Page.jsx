@@ -645,9 +645,17 @@ export default function Deals24Page() {
           ) : (
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
               {(() => {
+                const isBestBeforeValid = (yyyyMm) => {
+                  if (!yyyyMm) return false;
+                  const [y, m] = yyyyMm.split("-").map(Number);
+                  if (!y || !m) return false;
+                  const now = new Date();
+                  // Expired if year-month is before current year-month
+                  return y > now.getFullYear() || (y === now.getFullYear() && m >= now.getMonth() + 1);
+                };
                 let bestBeforeShown = 0;
                 return shownDeals.map((deal, idx) => {
-                  const canShow = deal?.best_before && bestBeforeShown < 4;
+                  const canShow = isBestBeforeValid(deal?.best_before) && bestBeforeShown < 4;
                   if (canShow) bestBeforeShown += 1;
                   return (
                     <Deals24Card
