@@ -5,10 +5,13 @@ import { formatPrice } from "../utils/formatters";
 import {
   claimWaitlistReferral,
   completeEmailAuth,
+  fetchMe,
   fetchOAuthAuthUrl,
   fetchWaitlistMe,
   getAuthSession,
   logoutUser,
+  startEmailAuth,
+  updateAuthSessionUser,
 } from "../utils/api";
 import { getCurrentPoolDateSeed, computeNextRefreshUtcMs, formatRefreshCountdown } from "./dealsRefreshSchedule";
 
@@ -49,6 +52,17 @@ const WAITLIST_REF_STORAGE_KEY = "dd24_waitlist_referral_code";
 const OAUTH_STATE_STORAGE_PREFIX = "dd24_oauth_state:";
 const POST_AUTH_REDIRECT_STORAGE_KEY = "dd24_post_auth_redirect";
 const AUTH_ERROR_STORAGE_KEY = "dd24_auth_error";
+
+const ALL_DEALS = [
+  { store:"Jamoona",       product:"Aashirvaad Atta 5kg",     was:"13.49€", now:"9.99€",  off:"26%", emoji:"🌾", tag:"Best price" },
+  { store:"Dookan",        product:"Taj Mahal Tea 500g",      was:"7.99€",  now:"5.49€",  off:"31%", emoji:"🍵", tag:"Flash deal" },
+  { store:"Grocera ⚡",    product:"Amul Ghee 500ml",         was:"9.49€",  now:"6.99€",  off:"26%", emoji:"🧈", tag:"Same-day" },
+  { store:"Namma Markt",   product:"Haldiram Bhujia 400g",   was:"4.49€",  now:"3.29€",  off:"27%", emoji:"🥨", tag:null },
+  { store:"Spice Village", product:"MDH Garam Masala 100g",  was:"3.99€",  now:"2.49€",  off:"38%", emoji:"🌶️", tag:"Best price" },
+  { store:"Jamoona",       product:"Sona Masoori Rice 10kg", was:"24.99€", now:"18.99€", off:"24%", emoji:"🍚", tag:null },
+  { store:"Dookan",        product:"Tata Salt 1kg",          was:"2.49€",  now:"1.49€",  off:"40%", emoji:"🧂", tag:"Flash deal" },
+  { store:"Grocera ⚡",    product:"Parachute Coconut Oil",  was:"8.99€",  now:"6.49€",  off:"28%", emoji:"🥥", tag:"Same-day" },
+];
 
 function normalizeReferralCode(value) {
   return String(value || "")
@@ -102,94 +116,6 @@ function hasDealsAccess(status) {
   return Boolean(status?.unlocked) && (userType === "basic" || userType === "premium");
 }
 
-function useDailyLiveDeals(limit = 24) {
-  const [seedClock, setSeedClock] = useState(() => Date.now());
-
-  useEffect(() => {
-    const id = window.setInterval(() => setSeedClock(Date.now()), 60_000);
-    return () => window.clearInterval(id);
-  }, []);
-
-  const dailySeed = useMemo(
-    () => getCurrentPoolDateSeed(seedClock),
-    [seedClock],
-  );
-
-  const dealsState = useDeals({
-    limit,
-    curated: "daily_live_pool",
-    seed: dailySeed,
-  });
-
-  return {
-    ...dealsState,
-    dailySeed,
-  };
-}
-
-function normalizeWaitlistDeals(deals, limit = 24) {
-  const source = Array.isArray(deals) ? deals.filter(Boolean) : [];
-
-  return source.slice(0, limit).map((deal, index) => {
-    const store =
-      deal?.store?.name || deal?.store_name || deal?.store || "Store";
-    const product = deal?.product_name || deal?.product || deal?.name || "Deal";
-    const imageUrl = deal?.image_url || deal?.imageUrl || null;
-    const currency = deal?.currency || "EUR";
-    const salePrice =
-      deal?.sale_price != null
-        ? Number(deal.sale_price)
-        : deal?.now != null
-          ? Number(String(deal.now).replace(/[^\d.,-]/g, "").replace(",", "."))
-          : null;
-    const originalPrice =
-      deal?.original_price != null
-        ? Number(deal.original_price)
-        : deal?.was != null
-          ? Number(String(deal.was).replace(/[^\d.,-]/g, "").replace(",", "."))
-          : null;
-    const rawDiscount = Number(deal?.discount_percent);
-    const computedDiscount =
-      Number.isFinite(rawDiscount)
-        ? rawDiscount
-        : typeof originalPrice === "number" &&
-            Number.isFinite(originalPrice) &&
-            typeof salePrice === "number" &&
-            Number.isFinite(salePrice) &&
-            originalPrice > 0
-          ? ((originalPrice - salePrice) / originalPrice) * 100
-          : null;
-
-    const productUrl = deal?.product_url || deal?.productUrl || null;
-    const storeUrl = deal?.store?.url || deal?.store_url || deal?.storeUrl || null;
-
-    return {
-      id: deal?.id || `${store}:${product}:${index}`,
-      store,
-      product,
-      imageUrl,
-      productUrl,
-      storeUrl,
-      now:
-        typeof salePrice === "number" && Number.isFinite(salePrice)
-          ? formatPrice(salePrice, currency)
-          : String(deal?.now || "—"),
-      was:
-        typeof originalPrice === "number" && Number.isFinite(originalPrice)
-          ? formatPrice(originalPrice, currency)
-          : deal?.was
-            ? String(deal.was)
-            : null,
-      off:
-        Number.isFinite(computedDiscount) && computedDiscount > 0
-          ? `${Math.round(computedDiscount)}%`
-          : deal?.off
-            ? String(deal.off).replace(/^-/, "")
-            : null,
-    };
-  });
-}
-
 // ─── Shared Primitives ────────────────────────────────────────────────────────
 function Logo({ light=false }) {
   return (
@@ -226,232 +152,192 @@ function Logo({ light=false }) {
   );
 }
 
-function DealsStripCard({
-  index,
-  store,
-  product,
-  now,
-  was,
-  off,
-  imageUrl,
-  mode = "normal", // normal | blurred | locked
-  onClick,
-}) {
+function Divider({ label }) {
+  return (
+    <div style={{ display:"flex", alignItems:"center", gap:12, margin:"4px 0" }}>
+      <div style={{ flex:1, height:1, background:T.border }} />
+      {label && <span style={{ fontSize:12, color:T.textMuted, fontWeight:500 }}>{label}</span>}
+      <div style={{ flex:1, height:1, background:T.border }} />
+    </div>
+  );
+}
+
+function DealsStripCard({ index, store, product, now, was, off, imageUrl, onClick }) {
   const [imgError, setImgError] = useState(false);
   const proxyImg = imageUrl
     ? `/api/v1/admin/proxy/image?url=${encodeURIComponent(imageUrl)}`
     : null;
 
-  const isBlurred = mode === "blurred";
-  const isLocked = mode === "locked";
+  return (
+    <div
+      style={{
+        background: "#fff",
+        border: "1px solid #f1f5f9",
+        borderRadius: 32,
+        padding: 17,
+        flex: "1 1 0",
+        minWidth: 0,
+        display: "flex",
+        flexDirection: "column",
+        position: "relative",
+        boxShadow: "0 10px 30px -5px rgba(0,0,0,0.05)",
+        animation: `fadeIn 0.4s ease ${index * 0.07}s both`,
+        transition: "transform 0.15s ease, box-shadow 0.15s ease",
+      }}
+    >
+      {/* Discount badge — red per Figma */}
+      {off && (
+        <div style={{
+          position: "absolute", top: 24, right: 24,
+          background: "#fee2e2", borderRadius: 6,
+          padding: "4px 8px", fontSize: 12, fontWeight: 700, color: "#dc2626",
+        }}>
+          -{off}
+        </div>
+      )}
 
-  const cardBase = {
-    background: T.bgCard,
-    border: `1px solid ${T.border}`,
-    borderRadius: 24,
-    padding: 18,
-    boxShadow: T.shadowSm,
-    position: "relative",
-    overflow: "hidden",
-    minHeight: 340,
-    width: 300,
-    flex: "0 0 300px",
-    transition: "transform 0.15s ease, box-shadow 0.15s ease",
-    opacity: isBlurred ? 0.35 : 1,
-    filter: isBlurred ? "blur(1.2px)" : "none",
-    cursor: onClick ? "pointer" : "default",
-  };
-
-  const inner = (
-    <>
-      <div
-        style={{
-          position: "relative",
-          height: 176,
-          borderRadius: 18,
-          background: "#F8FAFC",
-          border: `1px solid ${T.border}`,
-          overflow: "hidden",
-          display: "flex",
-          alignItems: "center",
-          justifyContent: "center",
-          marginBottom: 14,
-        }}
-      >
+      {/* Product image */}
+      <div style={{
+        background: "#f1f5f9", borderRadius: 16, overflow: "hidden",
+        height: 246, display: "flex", alignItems: "center", justifyContent: "center",
+        marginBottom: 24, flexShrink: 0,
+      }}>
         {proxyImg && !imgError ? (
           <img
             src={proxyImg}
             alt={product}
             loading="lazy"
             onError={() => setImgError(true)}
-            style={{
-              width: "100%",
-              height: "100%",
-              objectFit: "contain",
-              padding: 16,
-            }}
+            style={{ width: "100%", height: "100%", objectFit: "cover" }}
           />
         ) : (
-          <div style={{ fontSize: 34, color: "#94A3B8", fontWeight: 800 }}>
-            🛒
-          </div>
+          <div style={{ fontSize: 52, color: "#94A3B8" }}>🛒</div>
         )}
-
-        {off ? (
-          <div
-            style={{
-              position: "absolute",
-              top: 12,
-              right: 12,
-              padding: "6px 10px",
-              borderRadius: 999,
-              background: T.brand,
-              color: "#fff",
-              fontSize: 12,
-              fontWeight: 800,
-              boxShadow: "0 10px 26px rgba(22,163,74,0.28)",
-            }}
-          >
-            -{off}
-          </div>
-        ) : null}
       </div>
 
-      <div
-        style={{
-          fontFamily: "'Fraunces',Georgia,serif",
-          fontSize: 14,
-          fontWeight: 900,
-          color: T.textPrimary,
-          lineHeight: 1.3,
-          marginBottom: 18,
-          display: "-webkit-box",
-          WebkitBoxOrient: "vertical",
-          WebkitLineClamp: 2,
-          overflow: "hidden",
-          minHeight: 36,
-        }}
-      >
-        {product}
+      {/* Text content */}
+      <div style={{ flex: 1, display: "flex", flexDirection: "column", padding: "0 8px 24px" }}>
+        {/* Store name — blurred to tease locked info */}
+        <div style={{
+          filter: "blur(1px)", fontSize: 10, fontWeight: 700, letterSpacing: 1,
+          textTransform: "uppercase", color: "#94a3b8", marginBottom: 4,
+          userSelect: "none",
+        }}>
+          {store || "Desi Store Germany"}
+        </div>
+        {/* Product name */}
+        <div style={{
+          fontSize: 18, fontWeight: 800, color: "#0f172a", lineHeight: "22.5px",
+          minHeight: 48, marginBottom: 4, overflow: "hidden",
+          display: "-webkit-box", WebkitBoxOrient: "vertical", WebkitLineClamp: 2,
+        }}>
+          {product}
+        </div>
+        {/* Price row */}
+        <div style={{ display: "flex", alignItems: "baseline", gap: 8, paddingTop: 12 }}>
+          <span style={{ fontSize: 24, fontWeight: 800, color: "#0f172a", lineHeight: "32px" }}>{now}</span>
+          {was && <span style={{ fontSize: 14, color: "#94a3b8", textDecoration: "line-through" }}>{was}</span>}
+        </div>
       </div>
 
-      <div style={{ display: "flex", alignItems: "baseline", gap: 12 }}>
-        <span
+      {/* CTA */}
+      <div style={{ padding: "0 8px 8px" }}>
+        <button
+          type="button"
+          onClick={onClick}
+          onMouseEnter={(e) => { e.currentTarget.style.background = T.brandDark; }}
+          onMouseLeave={(e) => { e.currentTarget.style.background = T.brand; }}
           style={{
-            fontFamily: "'Fraunces',Georgia,serif",
-            fontSize: 36,
-            fontWeight: 900,
-            color: T.brand,
-            letterSpacing: -0.8,
-            lineHeight: 1,
+            width: "100%", background: T.brand, color: "#fff", border: "none",
+            borderRadius: 16, padding: "14px 0", fontSize: 16, fontWeight: 700,
+            cursor: "pointer", letterSpacing: 0.5, transition: "background 0.15s",
+            boxShadow: "0 10px 15px -3px #dcfce7, 0 4px 6px -4px #dcfce7",
           }}
         >
-          {now}
-        </span>
-        {was ? (
-          <span
-            style={{
-              fontSize: 14,
-              color: "#94A3B8",
-              textDecoration: "line-through",
-              fontWeight: 600,
-            }}
-          >
-            {was}
-          </span>
-        ) : null}
+          SNATCH DEAL
+        </button>
       </div>
-    </>
+    </div>
   );
+}
 
+function LockedStackCard({ onCtaClick }) {
+  const steps = [
+    { label: "Sign up for free", active: true },
+    { label: "Invite 2 friends", active: false },
+    { label: "All 24 deals unlock", active: false },
+  ];
   return (
-    <div
-      style={{
-        ...(isLocked
-          ? {
-              ...cardBase,
-              border: `1px dashed ${T.borderStrong}`,
-              boxShadow: "0 18px 36px rgba(15,23,42,0.10)",
-            }
-          : cardBase),
-        animation: `fadeIn 0.4s ease ${index * 0.07}s both`,
-        transform: "translateY(0px)",
-      }}
-      role={onClick ? "button" : undefined}
-      tabIndex={onClick ? 0 : undefined}
-      onKeyDown={(e) => {
-        if (!onClick) return;
-        if (e.key === "Enter" || e.key === " ") onClick();
-      }}
-      onClick={onClick}
-      onMouseEnter={(e) => {
-        if (mode !== "normal") return;
-        e.currentTarget.style.boxShadow = T.shadowMd;
-        e.currentTarget.style.transform = "translateY(-2px)";
-      }}
-      onMouseLeave={(e) => {
-        e.currentTarget.style.boxShadow = T.shadowSm;
-        e.currentTarget.style.transform = "translateY(0px)";
-      }}
-    >
-      {isLocked ? (
-        <>
-          <div style={{ opacity: 0.22, filter: "blur(2.8px)" }}>{inner}</div>
-          <div
-            style={{
-              position: "absolute",
-              inset: 0,
-              display: "flex",
-              alignItems: "center",
-              justifyContent: "center",
-              padding: 20,
-            }}
-          >
-            <div
-              style={{
-                width: "100%",
-                maxWidth: 220,
-                background: "rgba(255,255,255,0.90)",
-                border: `1px solid ${T.border}`,
-                boxShadow: "0 22px 50px rgba(15,23,42,0.12)",
-                borderRadius: 18,
-                padding: "18px 16px",
-                textAlign: "center",
-                backdropFilter: "blur(10px)",
-              }}
-            >
-              <div style={{ fontSize: 30, marginBottom: 8 }}>🔒</div>
-              <div style={{ fontSize: 14, fontWeight: 800, color: T.textPrimary, marginBottom: 4 }}>
-                Invite 2 friends
-              </div>
-              <div style={{ fontSize: 12, color: T.textMuted, marginBottom: 14 }}>
-                to unlock all deals
-              </div>
-              <button
-                type="button"
-                onClick={(e) => {
-                  e.stopPropagation();
-                  onClick?.();
-                }}
-                style={{
-                  width: "100%",
-                  border: "none",
-                  borderRadius: 12,
-                  padding: "10px 12px",
-                  fontWeight: 800,
-                  cursor: "pointer",
-                  background: T.brand,
-                  color: "#fff",
-                }}
-              >
-                Reveal Deals
-              </button>
+    <div style={{
+      flex: "1 1 0", minWidth: 0, borderRadius: 24, overflow: "hidden",
+      position: "relative", minHeight: 552,
+      background: "linear-gradient(145deg, #e8f5e9 0%, #f0fdf4 25%, #dcfce7 55%, #a7f3d0 100%)",
+    }}>
+      {/* Subtle radial accents */}
+      <div style={{
+        position: "absolute", inset: 0, pointerEvents: "none",
+        backgroundImage: "radial-gradient(circle at 15% 15%, rgba(22,163,74,0.10) 0%, transparent 55%), radial-gradient(circle at 85% 85%, rgba(22,163,74,0.08) 0%, transparent 55%)",
+      }} />
+      {/* Content */}
+      <div style={{
+        position: "absolute", inset: 0,
+        display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center",
+        padding: "0 32px",
+      }}>
+        {/* Lock icon */}
+        <div style={{
+          width: 56, height: 56, background: "#f0fdf4", borderRadius: 16,
+          display: "flex", alignItems: "center", justifyContent: "center", marginBottom: 16,
+          boxShadow: "0 4px 12px rgba(22,163,74,0.15)",
+        }}>
+          <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke={T.brand} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+            <rect x="3" y="11" width="18" height="11" rx="2"/>
+            <path d="M7 11V7a5 5 0 0 1 10 0v4"/>
+          </svg>
+        </div>
+        <div style={{ fontSize: 30, fontWeight: 800, color: "#0f172a", lineHeight: "36px", marginBottom: 8, textAlign: "center" }}>
+          +21 deals
+        </div>
+        <div style={{ fontSize: 14, color: "#64748b", textAlign: "center", lineHeight: "20px", marginBottom: 32 }}>
+          locked · invite 2 friends<br />to unlock all 24
+        </div>
+        {/* Steps */}
+        <div style={{ width: "100%", display: "flex", flexDirection: "column", gap: 12, marginBottom: 32 }}>
+          {steps.map((step, i) => (
+            <div key={i} style={{
+              background: "rgba(255,255,255,0.6)", border: "1px solid rgba(255,255,255,0.9)",
+              borderRadius: 12, padding: 13,
+              display: "flex", alignItems: "center", gap: 12,
+            }}>
+              <div style={{
+                width: 24, height: 24, borderRadius: "50%", flexShrink: 0,
+                background: step.active ? T.brand : "#e2e8f0",
+                display: "flex", alignItems: "center", justifyContent: "center",
+                fontSize: 10, fontWeight: 700,
+                color: step.active ? "#fff" : "#64748b",
+              }}>{i + 1}</div>
+              <span style={{ fontSize: 12, fontWeight: 700, color: step.active ? "#334155" : "#94a3b8" }}>
+                {step.label}
+              </span>
             </div>
-          </div>
-        </>
-      ) : (
-        inner
-      )}
+          ))}
+        </div>
+        {/* CTA */}
+        <button
+          type="button"
+          onClick={onCtaClick}
+          onMouseEnter={(e) => { e.currentTarget.style.background = T.brandDark; }}
+          onMouseLeave={(e) => { e.currentTarget.style.background = T.brand; }}
+          style={{
+            width: "100%", background: T.brand, color: "#fff", border: "none",
+            borderRadius: 16, padding: "16px 0", fontSize: 16, fontWeight: 700,
+            cursor: "pointer", fontFamily: "inherit", transition: "background 0.15s",
+            boxShadow: "0 20px 25px -5px #bbf7d0, 0 8px 10px -6px #bbf7d0",
+          }}
+        >
+          Invite &amp; unlock
+        </button>
+      </div>
     </div>
   );
 }
@@ -543,6 +429,7 @@ function InviteRow({ invite, index }) {
 // ─── AUTH CARD (Landing) ──────────────────────────────────────────────────────
 function AuthCard({
   onAuthChoice,
+  onLoginClick,
   glass = false,
   pulseGoogle = false,
   onDealsClick,
@@ -598,7 +485,10 @@ function AuthCard({
         >
           <div style={{ display:"flex", alignItems:"center", gap:8 }}>
             <span style={{ fontSize:16 }}>🔓</span>
-            <span style={{ fontSize:13, fontWeight:700, color:"#fff" }}>Deals section unlocks</span>
+            <div style={{ display:"flex", flexDirection:"column", lineHeight:1.15 }}>
+              <span style={{ fontSize:13, fontWeight:700, color:"#fff" }}>Unlock Today’s 24 Deals</span>
+              <span style={{ fontSize:11, fontWeight:600, color:"rgba(255,255,255,0.85)" }}>Updated every morning at 08:00 hrs.</span>
+            </div>
           </div>
         </div>
       </div>
@@ -610,7 +500,7 @@ function AuthCard({
       </button>
       <button
         type="button"
-        onClick={() => onAuthChoice?.("google")}
+        onClick={() => onLoginClick?.()}
         disabled={authLoading}
         style={{
           marginTop: 10,
@@ -645,144 +535,371 @@ function AuthCard({
   );
 }
 
-// ─── DEALS STRIP (Landing teaser) ────────────────────────────────────────────
-function DealsStrip({ onCtaClick, onDealClick }) {
-  const { deals: liveDeals, loading, error } = useDailyLiveDeals(24);
-  const stripRef = useRef(null);
-  const [scrollProgress, setScrollProgress] = useState(0);
-
-  const sampledDeals = useMemo(() => {
-    return normalizeWaitlistDeals(liveDeals, 5);
-  }, [liveDeals]);
-
-  const displayed = sampledDeals;
+function LoginModal({
+  open = false,
+  onClose,
+  onGoogleClick,
+  onEmailContinue,
+  authLoading = false,
+  authError = "",
+  authNotice = "",
+  previewUrl = "",
+}) {
+  const [email, setEmail] = useState("");
+  const [emailError, setEmailError] = useState("");
+  const [submitting, setSubmitting] = useState(false);
 
   useEffect(() => {
-    const el = stripRef.current;
-    if (!el) return undefined;
-
-    const update = () => {
-      const max = el.scrollWidth - el.clientWidth;
-      if (max <= 0) {
-        setScrollProgress(0);
-        return;
+    if (!open) return undefined;
+    const handleEscape = (event) => {
+      if (event.key === "Escape") {
+        onClose?.();
       }
-      setScrollProgress(Math.min(1, Math.max(0, el.scrollLeft / max)));
     };
+    window.addEventListener("keydown", handleEscape);
+    return () => window.removeEventListener("keydown", handleEscape);
+  }, [open, onClose]);
 
-    update();
-    el.addEventListener("scroll", update, { passive: true });
-    window.addEventListener("resize", update);
-    return () => {
-      el.removeEventListener("scroll", update);
-      window.removeEventListener("resize", update);
-    };
-  }, [displayed?.length]);
+  useEffect(() => {
+    if (!open) return;
+    setEmailError("");
+    setSubmitting(false);
+  }, [open]);
+
+  if (!open) return null;
+
+  async function handleSubmit(event) {
+    event.preventDefault();
+    setEmailError("");
+    setSubmitting(true);
+    try {
+      await onEmailContinue?.(email);
+      setSubmitting(false);
+    } catch (error) {
+      setEmailError(error?.message || "Unable to continue with this email.");
+      setSubmitting(false);
+    }
+  }
 
   return (
-    <div style={{ background:T.bg, padding:"28px 0 44px" }}>
-      <div style={{ maxWidth:1200, margin:"0 auto", padding:"0 48px" }}>
-        <div style={{ height:1, background:T.border, margin:"6px 0 20px" }} />
+    <div
+      style={{
+        position: "fixed",
+        inset: 0,
+        zIndex: 1000,
+        display: "flex",
+        alignItems: "center",
+        justifyContent: "center",
+        padding: 24,
+        background: "rgba(15,23,42,0.42)",
+        backdropFilter: "blur(10px)",
+      }}
+    >
+      <div
+        role="button"
+        tabIndex={-1}
+        aria-label="Close login dialog"
+        onClick={() => onClose?.()}
+        style={{ position: "absolute", inset: 0, cursor: "pointer" }}
+      />
 
-        <div className="dd24-waitlist-strip-header" style={{ display:"flex", alignItems:"center", justifyContent:"space-between", marginBottom:26 }}>
-          <div style={{ display:"flex", alignItems:"center", gap:12 }}>
-            <div style={{ width:10, height:10, borderRadius:"50%", background:T.brand, boxShadow:`0 0 10px rgba(22,163,74,0.35)` }} />
-            <span style={{ fontSize:13, color:"#64748B", fontWeight:800, letterSpacing:1.6, textTransform:"uppercase" }}>
-              Today&apos;s fixed 24 live deals · refreshed daily
-            </span>
-          </div>
-          <span
-            role="button"
-            tabIndex={0}
-            onKeyDown={(e) => {
-              if (e.key === "Enter" || e.key === " ") onCtaClick?.();
+      <div
+        style={{
+          position: "relative",
+          width: "100%",
+          maxWidth: 960,
+          background: "#fff",
+          borderRadius: 28,
+          border: "1px solid #dbe5f0",
+          boxShadow: "0 28px 90px rgba(15,23,42,0.20)",
+          padding: "68px 82px 56px",
+        }}
+      >
+        <button
+          type="button"
+          onClick={() => onClose?.()}
+          aria-label="Close login dialog"
+          style={{
+            position: "absolute",
+            top: 20,
+            right: 20,
+            border: "none",
+            background: "transparent",
+            color: "#64748B",
+            fontSize: 22,
+            fontWeight: 700,
+            cursor: "pointer",
+            lineHeight: 1,
+          }}
+        >
+          ×
+        </button>
+
+        <div style={{ textAlign: "center", marginBottom: 34 }}>
+          <h2
+            style={{
+              fontFamily: "'Plus Jakarta Sans',sans-serif",
+              fontSize: "clamp(34px,4vw,62px)",
+              fontWeight: 800,
+              lineHeight: 1.05,
+              letterSpacing: -1.8,
+              color: "#0F172A",
             }}
-            onClick={() => onCtaClick?.()}
-            style={{ fontSize:16, color:T.brand, fontWeight:800, display:"flex", alignItems:"center", gap:10, cursor:"pointer" }}
           >
-            Daily 24 live deals unlock after 2 invites
-            <span style={{ fontSize:22, lineHeight:1 }}>›</span>
-          </span>
+            Welcome back
+          </h2>
         </div>
 
-        <div style={{ position:"relative" }}>
-          {loading && (
-            <div style={{ fontSize:13, color:T.textMuted, padding:"12px 2px" }}>
-              Loading deals…
-            </div>
-          )}
-          {!loading && error && (
-            <div style={{ fontSize:13, color:T.textMuted, padding:"12px 2px" }}>
-              Deals unavailable right now.
-            </div>
-          )}
-          {!loading && !error && !displayed.length && (
-            <div style={{ fontSize:13, color:T.textMuted, padding:"12px 2px" }}>
-              No eligible deals found.
-            </div>
-          )}
-
-          <div
-            ref={stripRef}
+        <div style={{ maxWidth: 760, margin: "0 auto" }}>
+          <button
+            type="button"
+            onClick={() => onGoogleClick?.()}
+            disabled={authLoading}
             style={{
+              width: "100%",
+              minHeight: 100,
               display: "flex",
-              gap: 24,
-              overflowX: "auto",
-              paddingBottom: 18,
-              scrollSnapType: "x mandatory",
-              WebkitOverflowScrolling: "touch",
+              alignItems: "center",
+              justifyContent: "center",
+              gap: 18,
+              borderRadius: 18,
+              background: "#fff",
+              border: "1px solid #d8e1ee",
+              fontSize: 20,
+              fontWeight: 600,
+              color: "#334155",
+              cursor: authLoading ? "wait" : "pointer",
+              boxShadow: "0 1px 2px rgba(15,23,42,0.03)",
             }}
           >
-            {displayed.map((d, i) => {
-              const mode = i === 3 ? "locked" : i >= 4 ? "blurred" : "normal";
+            <GoogleIcon />
+            <span>{authLoading ? "Redirecting to Google..." : "Continue with Google"}</span>
+          </button>
 
-              return (
-                <div key={d.id} style={{ scrollSnapAlign: "start" }}>
-                  <DealsStripCard
-                    index={i}
-                    store={d.store}
-                    product={d.product}
-                    now={d.now}
-                    was={d.was}
-                    off={d.off}
-                    imageUrl={d.imageUrl}
-                    mode={mode}
-                    onClick={onDealClick}
-                  />
-                </div>
-              );
-            })}
-          </div>
+          <Divider label="OR" />
 
-          <div
-            style={{
-              position: "absolute",
-              right: 0,
-              top: 0,
-              bottom: 18,
-              width: 128,
-              pointerEvents: "none",
-              background:
-                "linear-gradient(90deg, rgba(248,250,248,0) 0%, rgba(248,250,248,0.9) 70%, #F8FAF8 100%)",
-            }}
-          />
-        </div>
-
-        <div style={{ marginTop: 22, maxWidth: 420, marginInline: "auto" }}>
-          <div style={{ height: 4, borderRadius: 999, background: "#E5E7EB", overflow: "hidden" }}>
-            <div
+          <form onSubmit={handleSubmit} style={{ marginTop: 24 }}>
+            <label
+              htmlFor="waitlist-login-email"
               style={{
-                height: "100%",
-                width: `${Math.max(10, Math.round(scrollProgress * 100))}%`,
-                background: T.brand,
-                borderRadius: 999,
-                transition: "width 120ms linear",
+                display: "block",
+                fontSize: 15,
+                fontWeight: 700,
+                color: "#0F172A",
+                marginBottom: 14,
+              }}
+            >
+              Email address
+            </label>
+            <input
+              id="waitlist-login-email"
+              type="email"
+              value={email}
+              onChange={(event) => setEmail(event.target.value)}
+              placeholder="name@company.com"
+              autoFocus
+              required
+              style={{
+                width: "100%",
+                minHeight: 92,
+                borderRadius: 18,
+                border: `2px solid ${emailError ? "#DC2626" : T.brand}`,
+                padding: "0 32px",
+                fontSize: 18,
+                color: "#0F172A",
+                outline: "none",
+                marginBottom: 28,
               }}
             />
+
+            <button
+              type="submit"
+              disabled={submitting}
+              style={{
+                width: "100%",
+                minHeight: 100,
+                borderRadius: 18,
+                border: "none",
+                background: T.brand,
+                color: "#fff",
+                fontSize: 22,
+                fontWeight: 700,
+                cursor: submitting ? "wait" : "pointer",
+                boxShadow: "0 12px 32px rgba(22,163,74,0.22)",
+              }}
+            >
+              {submitting ? "Sending secure link..." : "Continue"}
+            </button>
+          </form>
+
+          {emailError ? (
+            <div style={{ marginTop: 14, fontSize: 13, color: "#B91C1C", textAlign: "center" }}>
+              {emailError}
+            </div>
+          ) : null}
+          {authError ? (
+            <div style={{ marginTop: 14, fontSize: 13, color: "#B91C1C", textAlign: "center" }}>
+              {authError}
+            </div>
+          ) : null}
+          {authNotice ? (
+            <div
+              style={{
+                marginTop: 14,
+                padding: "14px 16px",
+                borderRadius: 14,
+                background: "#ECFDF3",
+                border: "1px solid #BBF7D0",
+                fontSize: 13,
+                color: "#166534",
+                textAlign: "center",
+                lineHeight: 1.6,
+              }}
+            >
+              {authNotice}
+              {previewUrl ? (
+                <div style={{ marginTop: 8 }}>
+                  <a
+                    href={previewUrl}
+                    style={{ color: T.brandDark, fontWeight: 700, textDecoration: "underline" }}
+                  >
+                    Open the dev preview link
+                  </a>
+                </div>
+              ) : null}
+            </div>
+          ) : null}
+
+          <p style={{ marginTop: 40, textAlign: "center", fontSize: 16, color: "#64748B" }}>
+            We&apos;ll email a secure confirmation link and only activate access after you click it.
+          </p>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+// ─── DEALS STRIP (Landing teaser) ────────────────────────────────────────────
+function DealsStrip({ onCtaClick, onDealClick }) {
+  const [seedClock, setSeedClock] = useState(() => Date.now());
+  useEffect(() => {
+    const id = window.setInterval(() => setSeedClock(Date.now()), 60_000);
+    return () => window.clearInterval(id);
+  }, []);
+  const dailySeed = useMemo(() => getCurrentPoolDateSeed(seedClock), [seedClock]);
+  const { deals: liveDeals, loading, error } = useDeals({
+    limit: 24,
+    curated: "daily_live_pool",
+    seed: dailySeed,
+  });
+
+  const [toastVisible, setToastVisible] = useState(false);
+  const toastTimerRef = useRef(null);
+
+  const handleDealClick = () => {
+    setToastVisible(true);
+    clearTimeout(toastTimerRef.current);
+    toastTimerRef.current = window.setTimeout(() => setToastVisible(false), 3200);
+    onDealClick?.();
+  };
+
+  const displayed = useMemo(() => {
+    const source = Array.isArray(liveDeals)
+      ? liveDeals.filter((d) => Boolean(d) && !d.best_before)
+      : [];
+    return source.length >= 3 ? source.slice(0, 3) : ALL_DEALS.slice(0, 3);
+  }, [liveDeals]);
+
+  const resolveCard = (d, i) => {
+    const product = d?.product_name || d?.product || d?.name || "Deal";
+    const store = d?.store?.name || d?.store_name || d?.store || "Desi Store Germany";
+    const imageUrl = d?.image_url || d?.imageUrl || null;
+    const currency = d?.currency || "EUR";
+    const salePrice = d?.sale_price != null ? Number(d.sale_price) : d?.now != null ? d.now : null;
+    const originalPrice = d?.original_price != null ? Number(d.original_price) : d?.was != null ? d.was : null;
+    const now = typeof salePrice === "number" && Number.isFinite(salePrice)
+      ? formatPrice(salePrice, currency)
+      : String(d?.now || "—");
+    const was = typeof originalPrice === "number" && Number.isFinite(originalPrice)
+      ? formatPrice(originalPrice, currency)
+      : d?.was ? String(d.was) : null;
+    const rawDiscount = Number(d?.discount_percent);
+    const discountPercent = Number.isFinite(rawDiscount)
+      ? rawDiscount
+      : typeof originalPrice === "number" && typeof salePrice === "number" && originalPrice > 0
+        ? ((originalPrice - salePrice) / originalPrice) * 100
+        : null;
+    const off = Number.isFinite(discountPercent)
+      ? `${Math.round(discountPercent)}%`
+      : d?.off ? String(d.off).replace(/^-/, "") : null;
+    return { product, store, imageUrl, now, was, off };
+  };
+
+  return (
+    <div style={{ background: T.bg, padding: "64px 32px" }}>
+      <div style={{ maxWidth: 1200, margin: "0 auto" }}>
+
+        {/* Section heading */}
+        <div style={{ marginBottom: 40 }}>
+          <h2 style={{
+            fontFamily: "'Plus Jakarta Sans', 'DM Sans', sans-serif",
+            fontSize: 30, fontWeight: 800, color: "#0f172a",
+            letterSpacing: -0.75, lineHeight: "36px", margin: 0,
+          }}>
+            Today&apos;s Curated 24 Deals
+          </h2>
+        </div>
+
+        {/* 4-column grid */}
+        {loading ? (
+          <div style={{ fontSize: 13, color: T.textMuted }}>Loading deals…</div>
+        ) : (
+          <div style={{ display: "grid", gridTemplateColumns: "repeat(4, 1fr)", gap: 32 }}>
+            {displayed.map((d, i) => {
+              const { product, store, imageUrl, now, was, off } = resolveCard(d, i);
+              return (
+                <DealsStripCard
+                  key={`${product}:${i}`}
+                  index={i}
+                  store={store}
+                  product={product}
+                  imageUrl={imageUrl}
+                  now={now}
+                  was={was}
+                  off={off}
+                  onClick={handleDealClick}
+                />
+              );
+            })}
+            <LockedStackCard onCtaClick={onCtaClick} />
           </div>
-          <div style={{ marginTop: 8, textAlign: "center", fontSize: 10, fontWeight: 700, letterSpacing: 1.4, color: "#6B7280" }}>
-            SCROLL TO SEE MORE DEALS
+        )}
+
+        {/* Counter strip */}
+        <div style={{ display: "flex", alignItems: "center", justifyContent: "center", gap: 10, marginTop: 22, fontSize: 12.5, color: "#777", fontWeight: 500 }}>
+          <span>Showing 3 of 24</span>
+          <div style={{ display: "flex", gap: 5, alignItems: "center" }}>
+            <div style={{ width: 22, height: 7, borderRadius: 4, background: T.brand }} />
+            <div style={{ width: 7, height: 7, borderRadius: "50%", background: "#c9ccc0" }} />
+            <div style={{ width: 7, height: 7, borderRadius: "50%", background: "#c9ccc0" }} />
+            <div style={{ width: 7, height: 7, borderRadius: "50%", background: "#ddd", border: "1.5px dashed #bbb" }} />
+            <div style={{ width: 7, height: 7, borderRadius: "50%", background: "#ddd", border: "1.5px dashed #bbb" }} />
+            <div style={{ width: 7, height: 7, borderRadius: "50%", background: "#ddd", border: "1.5px dashed #bbb" }} />
           </div>
+          <span>21 more after invite</span>
+        </div>
+
+        {/* Click-to-remind toast */}
+        <div style={{
+          position: "fixed", bottom: 28, left: "50%", transform: `translateX(-50%) translateY(${toastVisible ? 0 : 16}px)`,
+          background: T.textPrimary, color: "#fff", borderRadius: 12, padding: "12px 20px",
+          fontSize: 13, fontWeight: 600, boxShadow: "0 8px 28px rgba(0,0,0,0.18)",
+          opacity: toastVisible ? 1 : 0, transition: "opacity 0.25s ease, transform 0.25s ease",
+          pointerEvents: "none", zIndex: 9999, whiteSpace: "nowrap",
+          display: "flex", alignItems: "center", gap: 10,
+        }}>
+          <span style={{ fontSize: 16 }}>🔒</span>
+          Register &amp; invite 2 friends to unlock full deal details
         </div>
       </div>
     </div>
@@ -792,6 +909,7 @@ function DealsStrip({ onCtaClick, onDealClick }) {
 // ─── LANDING PAGE ─────────────────────────────────────────────────────────────
 function LandingPage({
   onAuthChoice,
+  onLoginClick,
   authError = "",
   authLoading = false,
 }) {
@@ -876,11 +994,11 @@ function LandingPage({
               role="button"
               tabIndex={0}
               onClick={() => {
-                if (!authLoading) onAuthChoice?.("google");
+                if (!authLoading) onLoginClick?.();
               }}
               onKeyDown={(e) => {
                 if (authLoading) return;
-                if (e.key === "Enter" || e.key === " ") onAuthChoice?.("google");
+                if (e.key === "Enter" || e.key === " ") onLoginClick?.();
               }}
               aria-label="Login"
               style={{
@@ -917,7 +1035,7 @@ function LandingPage({
                 }}
                 style={{ fontSize:12, color:"#fff", fontWeight:600, letterSpacing:0.4, cursor:"pointer" }}
               >
-                Desi groceries · 24 stores · All of Germany
+                New deals drop every morning.
               </span>
             </div>
 
@@ -929,7 +1047,7 @@ function LandingPage({
 
             <div style={{ display:"inline-block", background:"rgba(255,255,255,0.12)", backdropFilter:"blur(10px)", border:"1px solid rgba(255,255,255,0.2)", borderRadius:14, padding:"14px 20px", marginBottom:28, maxWidth:480 }}>
               <p style={{ fontSize:15, color:"rgba(255,255,255,0.92)", lineHeight:1.75, margin:0 }}>
-                Stop checking 10 different websites. We monitor every Desi store in Europe to find the lowest prices on Atta, Rice, Spices and more.
+                Discover the 24 best desi grocery deals across Germany — updated every day. We monitor desi grocery stores and surface the 24 best deals of the day.
               </p>
             </div>
 
@@ -958,7 +1076,7 @@ function LandingPage({
 
           {/* Auth card */}
           <div ref={startSavingRef} style={{ paddingBottom:20, scrollMarginTop: 24 }}>
-            <AuthCard onAuthChoice={onAuthChoice} glass pulseGoogle={pulseGoogle} onDealsClick={focusDealsSection} authError={authError} authLoading={authLoading} />
+            <AuthCard onAuthChoice={onAuthChoice} onLoginClick={onLoginClick} glass pulseGoogle={pulseGoogle} onDealsClick={focusDealsSection} authError={authError} authLoading={authLoading} />
           </div>
         </div>
       </div>
@@ -1212,11 +1330,6 @@ function GoogleFlow({ onComplete }) {
 function InviteDashboard({ identity, status, onLogout, logoutLoading = false }) {
   const displayName = buildDisplayName(identity);
   const confirmedCount = Number(status?.confirmed_count || 0);
-  const {
-    deals: liveDeals,
-    loading: previewLoading,
-    error: previewError,
-  } = useDailyLiveDeals(24);
   const remaining = Math.max(
     0,
     Number(status?.remaining_count ?? INVITES_NEEDED - confirmedCount),
@@ -1227,10 +1340,6 @@ function InviteDashboard({ identity, status, onLogout, logoutLoading = false }) 
       ? `${window.location.origin}${status?.invite_url || "/waitlist"}`
       : status?.invite_url || "/waitlist";
   const shareCopy = `Join DesiDeals24 with my invite link and help unlock the deals section: ${inviteLink}`;
-  const previewDeals = useMemo(
-    () => normalizeWaitlistDeals(liveDeals, 3),
-    [liveDeals],
-  );
 
   const openShare = (url) => {
     if (typeof window === "undefined") return;
@@ -1301,22 +1410,14 @@ function InviteDashboard({ identity, status, onLogout, logoutLoading = false }) 
           </div>
 
           <div style={{ position:"relative", borderRadius:16, overflow:"hidden", flexShrink:0, width:260 }}>
-            <div style={{ display:"flex", gap:8, padding:"14px 16px", background:T.bgMuted, borderRadius:16, filter:"blur(3px)", minHeight:88 }}>
-              {previewDeals.length > 0 ? previewDeals.map((deal) => (
-                <div key={deal.id} style={{ background:T.bgCard, borderRadius:12, padding:"10px 12px", minWidth:72, fontSize:11 }}>
-                  <div style={{ fontSize:10, color:T.textMuted, marginBottom:4, whiteSpace:"nowrap", overflow:"hidden", textOverflow:"ellipsis" }}>{deal.store}</div>
-                  <div style={{ fontWeight:800, color:T.brand, fontSize:13 }}>{deal.now}</div>
-                  <div style={{ color:T.textMuted, textDecoration:"line-through", fontSize:10 }}>{deal.was || " "}</div>
+            <div style={{ display:"flex", gap:8, padding:"14px 16px", background:T.bgMuted, borderRadius:16, filter:"blur(3px)" }}>
+              {ALL_DEALS.slice(0,3).map((d,i)=>(
+                <div key={i} style={{ background:T.bgCard, borderRadius:12, padding:"10px 12px", minWidth:72, fontSize:11 }}>
+                  <div style={{ fontSize:16, marginBottom:3 }}>{d.emoji}</div>
+                  <div style={{ fontWeight:800, color:T.brand, fontSize:13 }}>{d.now}</div>
+                  <div style={{ color:T.textMuted, textDecoration:"line-through", fontSize:10 }}>{d.was}</div>
                 </div>
-              )) : (
-                <div style={{ display:"flex", alignItems:"center", justifyContent:"center", width:"100%", fontSize:11, color:T.textMuted, textAlign:"center", padding:"0 8px" }}>
-                  {previewLoading
-                    ? "Loading today’s live pool…"
-                    : previewError
-                      ? "Today’s live pool is unavailable right now."
-                      : "Today’s live pool will appear here once deals are active."}
-                </div>
-              )}
+              ))}
             </div>
             <div style={{ position:"absolute", inset:0, display:"flex", flexDirection:"column", alignItems:"center", justifyContent:"center", background:"rgba(248,250,248,0.6)", backdropFilter:"blur(1px)", borderRadius:16 }}>
               <div style={{ fontSize:28, marginBottom:6 }}>🔒</div>
@@ -1494,7 +1595,7 @@ function FeedbackModal({ onClose }) {
               <div style={{ display:"flex", flexDirection:"column", gap:10, marginBottom:14 }}>
                 <input required value={name} onChange={e => setName(e.target.value)} placeholder="Your name" style={{ border:`1px solid ${T.border}`, borderRadius:10, padding:"10px 12px", fontSize:14, outline:"none" }} />
                 <input required type="email" value={email} onChange={e => setEmail(e.target.value)} placeholder="Your email" style={{ border:`1px solid ${T.border}`, borderRadius:10, padding:"10px 12px", fontSize:14, outline:"none" }} />
-                <textarea required value={message} onChange={e => setMessage(e.target.value)} placeholder="What's on your mind? Missing stores, deals, features…" rows={4} style={{ border:`1px solid ${T.border}`, borderRadius:10, padding:"10px 12px", fontSize:14, resize:"vertical", outline:"none", fontFamily:"inherit" }} />
+                <textarea required value={message} onChange={e => setMessage(e.target.value)} placeholder="Missing stores, deals, features…" rows={4} style={{ border:`1px solid ${T.border}`, borderRadius:10, padding:"10px 12px", fontSize:14, resize:"vertical", outline:"none", fontFamily:"inherit" }} />
               </div>
               {error ? <div style={{ fontSize:13, color:"#dc2626", marginBottom:10 }}>{error}</div> : null}
               <button type="submit" disabled={submitting} style={{ width:"100%", background:T.brand, color:"#fff", border:"none", borderRadius:12, padding:"12px 16px", fontWeight:700, fontSize:14, cursor:submitting ? "not-allowed" : "pointer", opacity:submitting ? 0.7 : 1 }}>
@@ -1512,8 +1613,18 @@ function DealsUnlocked({ identity, status }) {
   const displayName = buildDisplayName(identity);
   const [celebrated, setCelebrated] = useState(true);
   const [feedbackOpen, setFeedbackOpen] = useState(false);
-  const { deals: liveDeals, loading, error } = useDailyLiveDeals(24);
   const countdown = useCountdown();
+  const [seedClock, setSeedClock] = useState(() => Date.now());
+  useEffect(() => {
+    const id = window.setInterval(() => setSeedClock(Date.now()), 60_000);
+    return () => window.clearInterval(id);
+  }, []);
+  const dailySeed = useMemo(() => getCurrentPoolDateSeed(seedClock), [seedClock]);
+  const { deals: liveDeals, loading, error } = useDeals({
+    limit: 24,
+    curated: "daily_live_pool",
+    seed: dailySeed,
+  });
 
   useEffect(() => {
     const t = setTimeout(() => setCelebrated(false), 3500);
@@ -1521,7 +1632,71 @@ function DealsUnlocked({ identity, status }) {
   }, []);
 
   const normalizedDeals = useMemo(() => {
-    return normalizeWaitlistDeals(liveDeals, 24);
+    const source =
+      Array.isArray(liveDeals) && liveDeals.length > 0 ? liveDeals : ALL_DEALS;
+
+    return source.slice(0, 24).map((deal, index) => {
+      const store =
+        deal?.store?.name || deal?.store_name || deal?.store || "Store";
+      const product = deal?.product_name || deal?.product || deal?.name || "Deal";
+      const imageUrl = deal?.image_url || deal?.imageUrl || null;
+      const currency = deal?.currency || "EUR";
+      const salePrice =
+        deal?.sale_price != null
+          ? Number(deal.sale_price)
+          : deal?.now != null
+            ? Number(String(deal.now).replace(/[^\d.,-]/g, "").replace(",", "."))
+            : null;
+      const originalPrice =
+        deal?.original_price != null
+          ? Number(deal.original_price)
+          : deal?.was != null
+            ? Number(String(deal.was).replace(/[^\d.,-]/g, "").replace(",", "."))
+            : null;
+
+      const now =
+        typeof salePrice === "number" && Number.isFinite(salePrice)
+          ? formatPrice(salePrice, currency)
+          : String(deal?.now || "—");
+      const was =
+        typeof originalPrice === "number" && Number.isFinite(originalPrice)
+          ? formatPrice(originalPrice, currency)
+          : deal?.was
+            ? String(deal.was)
+            : null;
+
+      const rawDiscount = Number(deal?.discount_percent);
+      const computedDiscount =
+        Number.isFinite(rawDiscount)
+          ? rawDiscount
+          : typeof originalPrice === "number" &&
+              Number.isFinite(originalPrice) &&
+              typeof salePrice === "number" &&
+              Number.isFinite(salePrice) &&
+              originalPrice > 0
+            ? ((originalPrice - salePrice) / originalPrice) * 100
+            : null;
+
+      const productUrl = deal?.product_url || deal?.productUrl || null;
+      const storeUrl = deal?.store?.url || deal?.store_url || deal?.storeUrl || null;
+
+      return {
+        id: deal?.id || `${store}:${product}:${index}`,
+        store,
+        product,
+        imageUrl,
+        productUrl,
+        storeUrl,
+        now,
+        was,
+        off:
+          Number.isFinite(computedDiscount) && computedDiscount > 0
+            ? `${Math.round(computedDiscount)}%`
+            : deal?.off
+              ? String(deal.off).replace(/^-/, "")
+              : null,
+      };
+    });
   }, [liveDeals]);
 
   const uniqueStores = useMemo(
@@ -1624,12 +1799,7 @@ function DealsUnlocked({ identity, status }) {
         ) : null}
         {!loading && error ? (
           <div style={{ background:T.bgCard, border:`1px solid ${T.border}`, borderRadius:20, padding:"26px 24px", color:T.textSecondary, boxShadow:T.shadowSm, marginBottom:24 }}>
-            Live deals are unavailable right now.
-          </div>
-        ) : null}
-        {!loading && !error && normalizedDeals.length === 0 ? (
-          <div style={{ background:T.bgCard, border:`1px solid ${T.border}`, borderRadius:20, padding:"26px 24px", color:T.textSecondary, boxShadow:T.shadowSm, marginBottom:24 }}>
-            No live daily-pool deals are active right now.
+            Live deals are unavailable right now, so the unlocked view is showing fallback examples.
           </div>
         ) : null}
 
@@ -1673,7 +1843,7 @@ function DealsUnlocked({ identity, status }) {
         </div>
 
         {shareUrl ? (
-          <div style={{ borderRadius:20, padding:"24px 28px", background:`linear-gradient(135deg,${T.brandLight},${T.brandMid}30)`, border:`1px solid ${T.brandMid}`, display:"flex", alignItems:"center", justifyContent:"space-between", gap:20, flexWrap:"wrap", marginBottom:16 }}>
+          <div style={{ borderRadius:20, padding:"24px 28px", background:`linear-gradient(135deg,${T.brandLight},${T.brandMid}30)`, border:`1px solid ${T.brandMid}`, display:"flex", alignItems:"center", justifyContent:"space-between", gap:20, flexWrap:"wrap" }}>
             <div style={{ display:"flex", alignItems:"center", gap:14 }}>
               <span style={{ fontSize:36 }}>💌</span>
               <div>
@@ -1684,16 +1854,6 @@ function DealsUnlocked({ identity, status }) {
             <CopyButton text={shareUrl} />
           </div>
         ) : null}
-
-        <div style={{ borderRadius:20, padding:"20px 28px", background:T.bgCard, border:`1px solid ${T.border}`, display:"flex", alignItems:"center", justifyContent:"space-between", gap:16, flexWrap:"wrap" }}>
-          <div>
-            <div style={{ fontFamily:"'Fraunces',Georgia,serif", fontSize:15, fontWeight:800, color:T.textPrimary, marginBottom:2 }}>Got feedback?</div>
-            <div style={{ fontSize:13, color:T.textSecondary }}>Missing a store, a deal, or a feature? Tell us.</div>
-          </div>
-          <button type="button" onClick={() => setFeedbackOpen(true)} style={{ padding:"10px 20px", borderRadius:12, background:T.brand, color:"#fff", border:"none", fontWeight:700, fontSize:13, cursor:"pointer", whiteSpace:"nowrap" }}>
-            Share feedback
-          </button>
-        </div>
       </div>
     </div>
   );
@@ -1706,11 +1866,15 @@ export default function WaitlistPage() {
   const emailAuthToken = String(
     searchParams.get("email_auth_token") || "",
   ).trim();
-  const confirmEmailPending = searchParams.get("confirm_email") === "1" && !emailAuthToken;
+  const confirmEmailPending =
+    searchParams.get("confirm_email") === "1" && !emailAuthToken;
   const [authSession, setAuthSession] = useState(() => getAuthSession());
   const [status, setStatus] = useState(null);
   const [authLoading, setAuthLoading] = useState(false);
   const [authError, setAuthError] = useState("");
+  const [authNotice, setAuthNotice] = useState("");
+  const [authPreviewUrl, setAuthPreviewUrl] = useState("");
+  const [loginModalOpen, setLoginModalOpen] = useState(false);
   const [statusLoading, setStatusLoading] = useState(
     () => Boolean(getAuthSession()?.accessToken),
   );
@@ -1733,23 +1897,53 @@ export default function WaitlistPage() {
   }, []);
 
   useEffect(() => {
+    let cancelled = false;
+
+    async function refreshProfileName() {
+      if (!authSession?.accessToken) return;
+      if (authSession?.user?.first_name || authSession?.user?.name) return;
+
+      try {
+        const payload = await fetchMe();
+        const user = payload?.data || null;
+        if (!user || cancelled) return;
+        if (user.first_name || user.name) {
+          updateAuthSessionUser(user);
+          setAuthSession(getAuthSession());
+        }
+      } catch {
+        // Keep the existing fallback display if the profile refresh fails.
+      }
+    }
+
+    refreshProfileName();
+    return () => {
+      cancelled = true;
+    };
+  }, [authSession?.accessToken, authSession?.user?.first_name, authSession?.user?.name]);
+
+  useEffect(() => {
     if (!emailAuthToken) return undefined;
     let cancelled = false;
 
     async function finishEmailAuth() {
       setAuthLoading(true);
       setAuthError("");
+      setAuthNotice("");
+      setAuthPreviewUrl("");
 
       try {
         await completeEmailAuth(emailAuthToken);
         if (cancelled) return;
         setAuthSession(getAuthSession());
+        setLoginModalOpen(false);
         navigate("/waitlist", { replace: true });
       } catch (error) {
         if (cancelled) return;
         setAuthError(
           error?.message || "Unable to verify this email link right now.",
         );
+        setLoginModalOpen(true);
         navigate("/waitlist", { replace: true });
       } finally {
         if (!cancelled) {
@@ -1841,10 +2035,17 @@ export default function WaitlistPage() {
     sessionStorage.removeItem(AUTH_ERROR_STORAGE_KEY);
     setAuthLoading(false);
     setAuthError(storedError);
+    setAuthNotice("");
+    setAuthPreviewUrl("");
+    if (!getAuthSession()?.accessToken) {
+      setLoginModalOpen(true);
+    }
   }, []);
 
   const handleGoogleAuth = async () => {
     setAuthError("");
+    setAuthNotice("");
+    setAuthPreviewUrl("");
     setAuthLoading(true);
 
     try {
@@ -1868,16 +2069,47 @@ export default function WaitlistPage() {
   const handleLogout = async () => {
     setAuthLoading(true);
     setAuthError("");
+    setAuthNotice("");
+    setAuthPreviewUrl("");
 
     try {
       await logoutUser();
       setAuthSession(getAuthSession());
       setStatus(null);
       setStatusError("");
+      setLoginModalOpen(false);
       navigate("/waitlist", { replace: true });
     } finally {
       setAuthLoading(false);
     }
+  };
+
+  const handleLoginEmailContinue = async (email) => {
+    const normalizedEmail = String(email || "")
+      .trim()
+      .toLowerCase();
+    if (!normalizedEmail) {
+      throw new Error("Email address is required.");
+    }
+
+    const storedReferral =
+      typeof window !== "undefined"
+        ? normalizeReferralCode(
+            window.localStorage.getItem(WAITLIST_REF_STORAGE_KEY),
+          )
+        : "";
+
+    const payload = await startEmailAuth({
+      email: normalizedEmail,
+      referral_code: storedReferral || undefined,
+    });
+
+    setAuthError("");
+    setAuthNotice(
+      payload?.message ||
+        `Check ${payload?.masked_email || normalizedEmail} for your secure confirmation link.`,
+    );
+    setAuthPreviewUrl(String(payload?.preview_url || "").trim());
   };
 
   const identity = authSession?.user || authSession?.user?.email || authSession?.user?.id || "friend";
@@ -1937,27 +2169,54 @@ export default function WaitlistPage() {
         centerPanel(
           "Check your email",
           (() => {
-            const maskedEmail = typeof window !== "undefined"
-              ? sessionStorage.getItem("dd24_pending_confirm_email")
-              : null;
+            const maskedEmail =
+              typeof window !== "undefined"
+                ? sessionStorage.getItem("dd24_pending_confirm_email")
+                : null;
             return maskedEmail
-              ? `We sent a confirmation link to ${maskedEmail}. Click it to complete your signup.`
-              : "We sent a confirmation link to your email. Click it to complete your signup.";
+              ? `We sent a confirmation link to ${maskedEmail}. Click the link in your email to complete sign-up.`
+              : "We sent a confirmation link to your email address. Click the link to complete sign-up.";
           })(),
           <button
             type="button"
             onClick={() => navigate("/waitlist", { replace: true })}
-            style={{ marginTop: 8, fontSize: 13, color: T.textMuted, background: "none", border: "none", cursor: "pointer", textDecoration: "underline" }}
+            style={{ width:"100%", border:"none", borderRadius:12, padding:"12px 14px", fontWeight:800, cursor:"pointer", background:T.brand, color:"#fff" }}
           >
-            Back
+            Back to sign-in
           </button>,
         )
       ) : !authSession?.accessToken ? (
         <>
           <LandingPage
             onAuthChoice={handleGoogleAuth}
+            onLoginClick={() => {
+              setAuthError("");
+              setAuthNotice("");
+              setAuthPreviewUrl("");
+              setLoginModalOpen(true);
+            }}
             authError={authError}
             authLoading={authLoading}
+          />
+          <LoginModal
+            open={loginModalOpen}
+            onClose={() => {
+              if (!authLoading) {
+                setLoginModalOpen(false);
+                setAuthError("");
+                setAuthNotice("");
+                setAuthPreviewUrl("");
+              }
+            }}
+            onGoogleClick={() => {
+              setLoginModalOpen(false);
+              handleGoogleAuth();
+            }}
+            onEmailContinue={handleLoginEmailContinue}
+            authLoading={authLoading}
+            authError={authError}
+            authNotice={authNotice}
+            previewUrl={authPreviewUrl}
           />
         </>
       ) : statusLoading ? (

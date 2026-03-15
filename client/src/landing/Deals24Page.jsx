@@ -1,4 +1,5 @@
 import React, { useEffect, useMemo, useRef, useState } from "react";
+import { useNavigate } from "react-router-dom";
 import useDeals from "../hooks/useDeals";
 import {
   formatBestBefore,
@@ -79,6 +80,39 @@ function ArrowSmallIcon({ className }) {
   );
 }
 
+function WhatsAppIcon({ className }) {
+  return (
+    <svg
+      viewBox="0 0 32 32"
+      width="18"
+      height="18"
+      fill="none"
+      xmlns="http://www.w3.org/2000/svg"
+      aria-hidden="true"
+      className={className}
+    >
+      <path
+        d="M16 3C9.383 3 4 8.383 4 15c0 2.285.643 4.496 1.86 6.424L4 29l7.737-1.812A11.9 11.9 0 0016 27c6.617 0 12-5.383 12-12S22.617 3 16 3z"
+        fill="currentColor"
+      />
+      <path
+        d="M12.35 9.65c-.26-.585-.534-.597-.782-.607l-.667-.012c-.233 0-.61.087-.93.427-.32.34-1.22 1.19-1.22 2.907 0 1.717 1.25 3.377 1.424 3.61.173.233 2.41 3.86 5.945 5.258 2.936 1.161 3.537.93 4.173.87.637-.058 2.054-.84 2.344-1.65.29-.81.29-1.505.203-1.65-.087-.145-.32-.233-.667-.407-.347-.173-2.054-1.015-2.373-1.131-.32-.116-.552-.174-.785.173-.233.347-.9 1.131-1.104 1.364-.203.233-.407.262-.753.088-.347-.174-1.463-.54-2.786-1.72-1.03-.918-1.724-2.052-1.928-2.398-.203-.347-.021-.534.153-.707.156-.156.347-.407.52-.61.174-.204.233-.347.35-.58.116-.233.058-.437-.03-.61-.086-.174-.774-1.916-1.062-2.558z"
+        fill="#fff"
+      />
+    </svg>
+  );
+}
+
+function inferShareHeadline(productName) {
+  const name = String(productName || "").trim().toLowerCase();
+  if (/\batta\b/.test(name)) return "Atta Deal";
+  if (/\brice\b|\bbasmati\b/.test(name)) return "Rice Deal";
+  if (/\bspice\b|\bspices\b|\bmasala\b|\bmirch\b|\bchili\b|\bchilli\b|\bhaldi\b|\bturmeric\b|\bjeera\b|\bcumin\b|\bdhaniya\b|\bcoriander\b/.test(name)) {
+    return "Spices Deal";
+  }
+  return "Deal";
+}
+
 function RefreshCountdown({ countdownLabel }) {
   const [hours = "00", minutes = "00", seconds = "00"] = String(
     countdownLabel || "00:00:00",
@@ -156,9 +190,46 @@ function HeroImage() {
   );
 }
 
+
 function proxyImageUrl(imageUrl) {
   if (!imageUrl) return null;
   return `/api/v1/admin/proxy/image?url=${encodeURIComponent(imageUrl)}`;
+}
+
+function storeKeyForDeal(deal) {
+  return String(deal?.store?.name || "")
+    .trim()
+    .toLowerCase();
+}
+
+function pickDealsUniqueStores(deals, count) {
+  const picked = [];
+  const remainder = [];
+  const seenStores = new Set();
+
+  for (const deal of deals) {
+    if (picked.length >= count) break;
+    const key = storeKeyForDeal(deal);
+    if (!key) {
+      remainder.push(deal);
+      continue;
+    }
+    if (seenStores.has(key)) {
+      remainder.push(deal);
+      continue;
+    }
+    seenStores.add(key);
+    picked.push(deal);
+  }
+
+  if (picked.length >= count) return picked;
+
+  for (const deal of remainder) {
+    if (picked.length >= count) break;
+    picked.push(deal);
+  }
+
+  return picked;
 }
 
 function Deals24Card({ deal, number }) {
@@ -182,6 +253,26 @@ function Deals24Card({ deal, number }) {
   ]
     .filter(Boolean)
     .join(" | ");
+
+  function buildShareMessage() {
+    return `just give this a try, thank me later\ndesi grocery deals across 24 stores in germany, updated every morning\nwww.DesiDeals24.com`;
+  }
+
+  function shareOnWhatsApp(event) {
+    event?.preventDefault?.();
+    event?.stopPropagation?.();
+    const text = buildShareMessage();
+    const url = `https://wa.me/?text=${encodeURIComponent(text)}`;
+    window.open(url, "_blank", "noopener,noreferrer");
+  }
+
+  function goToRedirect(event) {
+    event?.preventDefault?.();
+    const url = String(deal?.product_url || "").trim();
+    if (!url) return;
+    // Keep it a full navigation so store pages open reliably outside the SPA.
+    window.open(url, "_blank", "noopener,noreferrer");
+  }
 
   function discountBg(pct) {
     if (!Number.isFinite(pct)) return "#000000";
@@ -228,10 +319,10 @@ function Deals24Card({ deal, number }) {
 
           {discountPct > 0 ? (
             <div
-              className="absolute left-0 top-0 rounded-br-[8px] shadow-[0px_1px_2px_0px_rgba(0,0,0,0.05)] px-2 py-1"
+              className="absolute left-0 top-0 rounded-br-[8px] shadow-[0px_1px_2px_0px_rgba(0,0,0,0.05)] px-2 py-[2px]"
               style={{ backgroundColor: discountBg(discountPct) }}
             >
-              <span className="text-white font-extrabold text-[10px] leading-[15px]">
+              <span className="text-white font-extrabold text-[9px] leading-[12px]">
                 {discountPct}% OFF
               </span>
             </div>
@@ -287,18 +378,31 @@ function Deals24Card({ deal, number }) {
         </div>
 
         <div className="pt-4">
-          <div className="border-t border-[#f1f5f9] pt-4 sm:pt-[17px] flex items-center justify-stretch sm:justify-end">
+          <div className="border-t border-[#f1f5f9] pt-4 sm:pt-[17px] flex items-center justify-stretch sm:justify-end gap-3">
             <a
               href={deal.product_url}
               target="_blank"
               rel="noopener noreferrer"
-              className="w-full sm:w-auto justify-center bg-[#16a34a] hover:bg-[#15803d] transition-colors rounded-[12px] px-5 py-2.5 inline-flex items-center gap-2 text-white no-underline"
+              className="flex-1 sm:flex-none justify-center bg-[#16a34a] hover:bg-[#15803d] transition-colors rounded-[12px] px-5 py-2.5 inline-flex items-center gap-2 text-white no-underline"
+              onClick={(event) => event.stopPropagation()}
+              onKeyDown={(event) => event.stopPropagation()}
             >
               <span className="text-[12px] leading-[16px] font-extrabold">
                 Snatch deal
               </span>
               <ArrowSmallIcon className="text-white" />
             </a>
+            <button
+              type="button"
+              onClick={shareOnWhatsApp}
+              onKeyDown={(event) => event.stopPropagation()}
+              className="shrink-0 inline-flex items-center justify-center gap-1.5 h-[44px] px-3 rounded-[12px] border border-slate-200 bg-white hover:bg-slate-50 text-[#16a34a] transition-colors"
+              aria-label="Share deal on WhatsApp"
+              title="Share deal"
+            >
+              <WhatsAppIcon />
+              <span className="hidden sm:inline text-[13px] font-bold text-slate-600">Share</span>
+            </button>
           </div>
         </div>
       </div>
@@ -337,6 +441,12 @@ export default function Deals24Page() {
   }, []);
 
   useEffect(() => {
+    // Local dev bypass — skip auth check entirely when running via Vite dev server
+    if (import.meta.env.DEV) {
+      setAccessState("allowed");
+      return undefined;
+    }
+
     let cancelled = false;
     const session = getAuthSession();
 

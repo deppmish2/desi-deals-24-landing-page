@@ -190,9 +190,11 @@ function AuthCard({ onAuthChoice, glass=false }) {
         <div style={{ background:`linear-gradient(90deg, ${T.brand}, ${T.brandDark})`, padding:"12px 20px", display:"flex", alignItems:"center", justifyContent:"space-between" }}>
           <div style={{ display:"flex", alignItems:"center", gap:8 }}>
             <span style={{ fontSize:16 }}>🔓</span>
-            <span style={{ fontSize:13, fontWeight:700, color:"#fff" }}>Deals section unlocks</span>
+            <div style={{ display:"flex", flexDirection:"column", lineHeight:1.15 }}>
+              <span style={{ fontSize:13, fontWeight:700, color:"#fff" }}>Unlock Today’s 24 Deals</span>
+              <span style={{ fontSize:11, fontWeight:600, color:"rgba(255,255,255,0.85)" }}>Updated every morning at 08:00 hrs.</span>
+            </div>
           </div>
-          <span style={{ fontSize:11, color:T.brandMid, fontWeight:600 }}>instantly · no credit card</span>
         </div>
       </div>
 
@@ -290,7 +292,7 @@ function LandingPage({ onAuthChoice }) {
 
             <div style={{ display:"inline-block", background:"rgba(255,255,255,0.12)", backdropFilter:"blur(10px)", border:"1px solid rgba(255,255,255,0.2)", borderRadius:14, padding:"14px 20px", marginBottom:28, maxWidth:480 }}>
               <p style={{ fontSize:15, color:"rgba(255,255,255,0.92)", lineHeight:1.75, margin:0 }}>
-                Stop checking 10 different websites. We monitor every Indian store in Europe to find the lowest prices on Atta, Rice, Spices and more.
+                Discover the 24 best desi grocery deals across Germany — updated every day. We scan desi grocery stores across Europe and surface the 24 best deals of the day.
               </p>
             </div>
 
