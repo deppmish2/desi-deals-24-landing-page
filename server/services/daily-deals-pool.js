@@ -1,5 +1,6 @@
 "use strict";
 
+const fetch = require("node-fetch");
 const {
   getCatalogCategories,
   normalizeCatalogText,
@@ -362,6 +363,40 @@ function buildPoolSummary(entries) {
   };
 }
 
+const URL_CHECK_TIMEOUT_MS = 6000;
+const URL_CHECK_BATCH = 6;
+
+async function isUrlAlive(url) {
+  const trimmed = String(url || "").trim();
+  if (!trimmed) return true;
+  const controller = new AbortController();
+  const timer = setTimeout(() => controller.abort(), URL_CHECK_TIMEOUT_MS);
+  try {
+    const res = await fetch(trimmed, {
+      method: "HEAD",
+      headers: { "User-Agent": "Mozilla/5.0 (compatible; DesiDeals24/1.0)" },
+      redirect: "follow",
+      signal: controller.signal,
+    });
+    return res.status !== 404;
+  } catch {
+    return true; // timeout or network error — assume live to avoid false drops
+  } finally {
+    clearTimeout(timer);
+  }
+}
+
+async function filterDeadUrls(candidates) {
+  const live = [];
+  for (let i = 0; i < candidates.length; i += URL_CHECK_BATCH) {
+    const batch = candidates.slice(i, i + URL_CHECK_BATCH);
+    // eslint-disable-next-line no-await-in-loop
+    const checks = await Promise.all(batch.map((c) => isUrlAlive(c?.product_url)));
+    batch.forEach((c, j) => { if (checks[j]) live.push(c); });
+  }
+  return live;
+}
+
 async function isCrawlRunning(db) {
   return (
     Number(
@@ -451,7 +486,8 @@ async function ensureDailyDealsPool(db, options = {}) {
     previousProducts,
     DAILY_POOL_LIMIT,
   );
-  entries = buildPoolEntriesFromSelection(selection.rows);
+  const liveRows = await filterDeadUrls(selection.rows);
+  entries = buildPoolEntriesFromSelection(liveRows);
   await persistPoolEntries(db, poolDate, entries);
 
   return {
