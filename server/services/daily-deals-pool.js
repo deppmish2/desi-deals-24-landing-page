@@ -188,6 +188,8 @@ function buildEligibleCandidates(rows, poolDate) {
   const bestByStoreProduct = new Map();
 
   for (const row of rows) {
+    if (!row?.id) continue;
+
     const resolved = resolveBaseProduct(row?.product_name);
     if (!resolved?.base_key) continue;
 

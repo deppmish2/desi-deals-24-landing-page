@@ -127,8 +127,8 @@ router.get("/", async (req, res, next) => {
       pagination: {
         page: pageNum,
         limit: limitNum,
-        total: pool.entries.length,
-        total_pages: Math.max(1, Math.ceil(pool.entries.length / limitNum)),
+        total: pool.rows.length,
+        total_pages: Math.max(1, Math.ceil(pool.rows.length / limitNum)),
       },
       meta: await buildMeta(curatedSeed, pool.meta),
     });
