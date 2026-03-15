@@ -2256,7 +2256,7 @@ export default function WaitlistPage() {
           </button>,
         )
       ) : hasDealsAccess(status) ? (
-        (() => { window.location.replace("https://desideals24.com/24deals"); return centerPanel("Deals unlocked!", "Redirecting you to your 24 deals…", null, true); })()
+        (() => { window.location.replace("https://desideals24.com/24deals"); return centerPanel("Checking your access", "We're confirming that your 2 invites were tracked before we open today's 24 deals.", null, true); })()
       ) : (
         <InviteDashboard
           identity={identity}
