@@ -1376,10 +1376,10 @@ function InviteDashboard({ identity, status, onLogout, logoutLoading = false }) 
   };
 
   return (
-    <div style={{ minHeight:"100vh", background:T.bg }}>
+    <div style={{ minHeight:"100vh", background:T.bg, overflowX:"hidden", width:"100%" }}>
       <div style={{ height:3, background:`linear-gradient(90deg,${T.brand},${T.brandDark},${T.brand})` }} />
 
-      <nav className="dd24-waitlist-nav" style={{ padding:"18px 40px", display:"flex", alignItems:"center", justifyContent:"space-between", maxWidth:1060, margin:"0 auto", borderBottom:`1px solid ${T.border}` }}>
+      <nav className="dd24-waitlist-nav" style={{ padding:"18px 20px", display:"flex", alignItems:"center", justifyContent:"space-between", maxWidth:1060, margin:"0 auto", borderBottom:`1px solid ${T.border}` }}>
         <Logo />
         <div style={{ display:"flex", alignItems:"center", gap:10 }}>
           <button
@@ -1403,7 +1403,7 @@ function InviteDashboard({ identity, status, onLogout, logoutLoading = false }) 
         </div>
       </nav>
 
-      <div className="dd24-waitlist-shell" style={{ maxWidth:1060, margin:"0 auto", padding:"40px 40px 64px" }}>
+      <div className="dd24-waitlist-shell" style={{ maxWidth:1060, margin:"0 auto", padding:"32px 20px 64px", boxSizing:"border-box", width:"100%" }}>
         <div style={{ marginBottom:32 }}>
           <div style={{ display:"inline-flex", alignItems:"center", gap:8, padding:"5px 14px", borderRadius:99, background:T.amberLight, border:`1px solid ${T.amberBorder}`, fontSize:12, fontWeight:600, color:T.amber, marginBottom:14 }}>
             🔒 Deals locked · {remaining} registration{remaining === 1 ? "" : "s"} needed
@@ -1419,7 +1419,7 @@ function InviteDashboard({ identity, status, onLogout, logoutLoading = false }) 
         <div className="dd24-waitlist-progress-card" style={{ background:T.bgCard, border:`1.5px solid ${T.border}`, borderRadius:24, padding:28, marginBottom:24, boxShadow:T.shadowMd, display:"flex", alignItems:"center", gap:32, flexWrap:"wrap" }}>
           <ProgressRing confirmed={confirmedCount} needed={INVITES_NEEDED} />
 
-          <div style={{ flex:1, minWidth:220 }}>
+          <div style={{ flex:1, minWidth:0 }}>
             <div style={{ fontSize:13, color:T.textMuted, fontWeight:600, textTransform:"uppercase", letterSpacing:0.6, marginBottom:8 }}>Unlock progress</div>
             <div style={{ display:"flex", gap:10, marginBottom:14 }}>
               {Array.from({ length: INVITES_NEEDED }).map((_, i) => {
@@ -1462,7 +1462,7 @@ function InviteDashboard({ identity, status, onLogout, logoutLoading = false }) 
         </div>
 
         <div className="dd24-waitlist-dashboard-grid" style={{ display:"grid", gridTemplateColumns:"1fr 1fr", gap:16 }}>
-          <div style={{ background:T.bgCard, border:`1px solid ${T.border}`, borderRadius:20, padding:24, boxShadow:T.shadowSm }}>
+          <div style={{ background:T.bgCard, border:`1px solid ${T.border}`, borderRadius:20, padding:24, boxShadow:T.shadowSm, minWidth:0, overflow:"hidden" }}>
             <div style={{ display:"flex", alignItems:"center", gap:10, marginBottom:4 }}>
               <div style={{ width:36, height:36, borderRadius:10, background:T.brandLight, border:`1px solid ${T.brandMid}`, display:"flex", alignItems:"center", justifyContent:"center", fontSize:18 }}>🔗</div>
               <h2 style={{ fontFamily:"'Fraunces',Georgia,serif", fontSize:20, fontWeight:800, letterSpacing:-0.5, color:T.textPrimary, margin:0 }}>Invite {remaining} more friend{remaining === 1 ? "" : "s"}</h2>
@@ -1516,7 +1516,7 @@ function InviteDashboard({ identity, status, onLogout, logoutLoading = false }) 
             </div>
           </div>
 
-          <div style={{ background:T.bgCard, border:`1px solid ${T.border}`, borderRadius:20, padding:24, boxShadow:T.shadowSm, display:"flex", flexDirection:"column" }}>
+          <div style={{ background:T.bgCard, border:`1px solid ${T.border}`, borderRadius:20, padding:24, boxShadow:T.shadowSm, display:"flex", flexDirection:"column", minWidth:0, overflow:"hidden" }}>
             <div style={{ display:"flex", justifyContent:"space-between", alignItems:"center", marginBottom:4 }}>
               <h2 style={{ fontFamily:"'Fraunces',Georgia,serif", fontSize:20, fontWeight:800, letterSpacing:-0.5, margin:0, color:T.textPrimary }}>Invite activity</h2>
               <div style={{ padding:"4px 12px", borderRadius:99, background:T.bgMuted, border:`1px solid ${T.border}`, fontSize:12, color:T.textSecondary, fontWeight:600 }}>{invitees.length} registered</div>
@@ -2200,9 +2200,10 @@ export default function WaitlistPage() {
         }
         @media (max-width: 640px){
           .dd24-waitlist-nav{padding:14px 16px !important}
-          .dd24-waitlist-shell{padding:20px 16px 48px !important}
+          .dd24-waitlist-shell{padding:16px 16px 48px !important;width:100% !important;box-sizing:border-box !important}
           .dd24-waitlist-stats-grid{grid-template-columns:1fr !important}
-          .dd24-waitlist-progress-card{flex-direction:column !important;align-items:flex-start !important;padding:18px !important;gap:16px !important}
+          .dd24-waitlist-progress-card{flex-direction:column !important;align-items:flex-start !important;padding:16px !important;gap:14px !important}
+          .dd24-waitlist-dashboard-grid{gap:12px !important}
           .dd24-deals-section{padding:32px 0 32px 16px !important}
           .dd24-deals-heading{margin-bottom:24px !important;padding-right:16px}
           .dd24-deals-heading h2{font-size:22px !important;line-height:28px !important}
