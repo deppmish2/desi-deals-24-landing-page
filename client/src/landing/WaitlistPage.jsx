@@ -1647,12 +1647,7 @@ function DealsUnlocked({ identity, status }) {
   const [celebrated, setCelebrated] = useState(true);
   const [feedbackOpen, setFeedbackOpen] = useState(false);
   const countdown = useCountdown();
-  const [seedClock, setSeedClock] = useState(() => Date.now());
-  useEffect(() => {
-    const id = window.setInterval(() => setSeedClock(Date.now()), 60_000);
-    return () => window.clearInterval(id);
-  }, []);
-  const dailySeed = useMemo(() => getCurrentPoolDateSeed(seedClock), [seedClock]);
+  const dailySeed = useMemo(() => getCurrentPoolDateSeed(Date.now()), []);
   const { deals: liveDeals, loading, error } = useDeals({
     limit: 24,
     curated: "daily_live_pool",
