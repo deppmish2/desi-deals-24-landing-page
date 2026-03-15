@@ -269,11 +269,18 @@ function Deals24Card({ deal, number, showBestBefore = true }) {
     window.open(url, "_blank", "noopener,noreferrer");
   }
 
+  function resolveUrl(url) {
+    const raw = String(url || "").trim();
+    if (!raw) return "";
+    if (/^https?:\/\//i.test(raw)) return raw;
+    const storeBase = String(deal?.store?.url || "").replace(/\/+$/, "");
+    return storeBase ? `${storeBase}${raw.startsWith("/") ? "" : "/"}${raw}` : raw;
+  }
+
   function goToRedirect(event) {
     event?.preventDefault?.();
-    const url = String(deal?.product_url || "").trim();
+    const url = resolveUrl(deal?.product_url);
     if (!url) return;
-    // Keep it a full navigation so store pages open reliably outside the SPA.
     window.open(url, "_blank", "noopener,noreferrer");
   }
 
@@ -383,7 +390,7 @@ function Deals24Card({ deal, number, showBestBefore = true }) {
         <div className="pt-4">
           <div className="border-t border-[#f1f5f9] pt-4 sm:pt-[17px] flex items-center justify-stretch sm:justify-end gap-3">
             <a
-              href={deal.product_url}
+              href={resolveUrl(deal.product_url)}
               target="_blank"
               rel="noopener noreferrer"
               className="flex-1 sm:flex-none justify-center bg-[#16a34a] hover:bg-[#15803d] transition-colors rounded-[12px] px-5 py-2.5 inline-flex items-center gap-2 text-white no-underline"
