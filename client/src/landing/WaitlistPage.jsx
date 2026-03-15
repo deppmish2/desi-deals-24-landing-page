@@ -1330,7 +1330,7 @@ function InviteDashboard({ identity, status, onLogout, logoutLoading = false }) 
     typeof window !== "undefined"
       ? `${window.location.origin}${status?.invite_url || "/waitlist"}`
       : status?.invite_url || "/waitlist";
-  const shareCopy = `Join DesiDeals24 with my invite link and help unlock the deals section: ${inviteLink}`;
+  const shareCopy = `just give this a try, thank me later\ndesi grocery deals across 24 stores in germany, updated every morning https://desideals24.com/waitlist?ref=${status?.referral_code || ""}`;
 
   const [copiedMsg, setCopiedMsg] = useState(false);
 
