@@ -255,7 +255,10 @@ function Deals24Card({ deal, number, showBestBefore = true }) {
     .join(" | ");
 
   function buildShareMessage() {
-    return `just give this a try, thank me later\ndesi grocery deals across 24 stores in germany, updated every morning\nwww.DesiDeals24.com`;
+    const name = deal?.name || deal?.title || "this product";
+    const price = priceText || "";
+    const orig = originalPriceText ? ` (was ${originalPriceText})` : "";
+    return `how is ${name} only ${price}??${orig}\nfound it on DesiDeals24 👇\nhttps://desideals24.com/24deals`;
   }
 
   function shareOnWhatsApp(event) {
