@@ -38,6 +38,7 @@ CREATE TABLE IF NOT EXISTS deals (
   bulk_pricing      TEXT,
   best_before       TEXT,
   is_active         INTEGER DEFAULT 1,
+  last_pool_used_at DATETIME,
   created_at        DATETIME DEFAULT CURRENT_TIMESTAMP
 );
 

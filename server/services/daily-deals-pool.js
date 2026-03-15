@@ -157,6 +157,7 @@ async function persistPoolEntries(db, poolDate, entries) {
      WHERE pool_date = ?`,
   ).run(normalizedDate);
 
+  const now = new Date().toISOString();
   for (const row of entries) {
     // eslint-disable-next-line no-await-in-loop
     await insert.run(
@@ -168,8 +169,14 @@ async function persistPoolEntries(db, poolDate, entries) {
       row.product_signature,
       row.category || null,
       row.product_name_snapshot || null,
-      row.created_at || new Date().toISOString(),
+      row.created_at || now,
     );
+    if (row.deal_id) {
+      // eslint-disable-next-line no-await-in-loop
+      await db.prepare(
+        `UPDATE deals SET last_pool_used_at = ? WHERE id = ?`,
+      ).run(now, row.deal_id);
+    }
   }
 }
 

@@ -1,7 +1,7 @@
 import React from "react";
 import { Link } from "react-router-dom";
 
-export default function Deals24Header() {
+export default function Deals24Header({ onLogout }) {
   return (
     <header className="backdrop-blur-md bg-white/80 border-b border-slate-200">
       <div className="h-16 max-w-[1280px] mx-auto px-6 sm:px-10 flex items-center justify-between gap-6">
@@ -19,9 +19,13 @@ export default function Deals24Header() {
           </span>
         </Link>
 
-        <div className="rounded-full border border-[#dcfce7] bg-[#f0fdf4] px-4 py-2 text-[12px] font-bold uppercase tracking-[1.4px] text-[#166534]">
-          Daily 24 live deals
-        </div>
+        <button
+          type="button"
+          onClick={() => onLogout?.()}
+          className="rounded-full border border-slate-200 bg-white hover:bg-slate-50 px-4 py-2 text-[12px] font-bold uppercase tracking-[1.4px] text-slate-600 transition-colors cursor-pointer"
+        >
+          Logout
+        </button>
       </div>
     </header>
   );

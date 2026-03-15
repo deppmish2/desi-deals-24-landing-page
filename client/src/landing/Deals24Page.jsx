@@ -6,7 +6,7 @@ import {
   formatPrice,
   formatPricePerKg,
 } from "../utils/formatters";
-import { getAuthSession, postContact } from "../utils/api";
+import { getAuthSession, logoutUser, postContact } from "../utils/api";
 import { fetchWaitlistMe } from "../utils/api";
 import {
   computeNextRefreshUtcMs,
@@ -571,7 +571,7 @@ export default function Deals24Page() {
 
   return (
     <div className="min-h-screen bg-[#f8f6f6]">
-      <Deals24Header />
+      <Deals24Header onLogout={async () => { await logoutUser(); window.location.replace("/waitlist"); }} />
 
       <section className="relative overflow-hidden">
         <div className="absolute inset-0 overflow-hidden bg-black">
@@ -629,14 +629,6 @@ export default function Deals24Page() {
               least {curatedMeta?.store_target || 10} shops and{" "}
               {curatedMeta?.category_target || 4} core grocery categories.
             </p>
-          </div>
-          <div className="flex flex-wrap gap-3">
-            <div className="rounded-full border border-[#dcfce7] bg-[#f0fdf4] px-4 py-2 text-[13px] font-bold text-[#166534]">
-              {curatedMeta?.store_count || 0} shops in today&apos;s pool
-            </div>
-            <div className="rounded-full border border-[#dcfce7] bg-white px-4 py-2 text-[13px] font-bold text-[#166534]">
-              {curatedMeta?.category_count || 0} categories covered
-            </div>
           </div>
           <div className="w-full lg:w-auto flex justify-end">
             <RefreshCountdown countdownLabel={nextRefreshLabel} />
