@@ -2141,10 +2141,16 @@ export default function WaitlistPage() {
 
   const identity = authSession?.user || authSession?.user?.email || authSession?.user?.id || "friend";
 
-  const centerPanel = (title, body, actions = null) => (
+  const centerPanel = (title, body, actions = null, spinner = false) => (
     <div style={{ minHeight:"100vh", background:T.bg, display:"flex", alignItems:"center", justifyContent:"center", padding:24 }}>
       <div style={{ width:"100%", maxWidth:440, background:T.bgCard, border:`1px solid ${T.border}`, borderRadius:24, padding:"30px 28px", boxShadow:T.shadowLg }}>
-        <div style={{ display:"inline-flex", alignItems:"center", justifyContent:"center", width:52, height:52, borderRadius:16, background:T.brandLight, border:`1px solid ${T.brandMid}`, fontSize:26, marginBottom:16 }}>🛒</div>
+        {spinner ? (
+          <div style={{ width:52, height:52, marginBottom:16, display:"inline-flex", alignItems:"center", justifyContent:"center" }}>
+            <div style={{ width:36, height:36, borderRadius:"50%", border:`3px solid ${T.brandMid}`, borderTopColor:T.brand, animation:"dd24Spin 0.8s linear infinite" }} />
+          </div>
+        ) : (
+          <div style={{ display:"inline-flex", alignItems:"center", justifyContent:"center", width:52, height:52, borderRadius:16, background:T.brandLight, border:`1px solid ${T.brandMid}`, fontSize:26, marginBottom:16 }}>🛒</div>
+        )}
         <h1 style={{ fontFamily:"'Fraunces',Georgia,serif", fontSize:28, fontWeight:900, letterSpacing:-1, color:T.textPrimary, marginBottom:8 }}>{title}</h1>
         <p style={{ fontSize:14, color:T.textSecondary, lineHeight:1.75, marginBottom:actions ? 22 : 0 }}>{body}</p>
         {actions}
@@ -2169,6 +2175,7 @@ export default function WaitlistPage() {
         @keyframes float0   {from{transform:translateY(0px)}to{transform:translateY(-5px)}}
         @keyframes float1   {from{transform:translateY(0px)}to{transform:translateY(-7px)}}
         @keyframes float2   {from{transform:translateY(-3px)}to{transform:translateY(4px)}}
+        @keyframes dd24Spin {from{transform:rotate(0deg)}to{transform:rotate(360deg)}}
         @media (max-width: 900px){
           .dd24-waitlist-nav{padding:16px 20px !important;gap:12px;flex-wrap:wrap}
           .dd24-waitlist-hero-grid{grid-template-columns:1fr !important;gap:24px !important;padding:20px 20px 36px !important}
@@ -2199,6 +2206,8 @@ export default function WaitlistPage() {
         centerPanel(
           "Confirming your email",
           "We’re verifying your email link and preparing your waitlist access.",
+          undefined,
+          true,
         )
       ) : confirmEmailPending ? (
         centerPanel(
@@ -2231,6 +2240,8 @@ export default function WaitlistPage() {
         centerPanel(
           "Checking your unlock",
           "We're loading your waitlist status and confirming whether your deals section is already unlocked.",
+          undefined,
+          true,
         )
       ) : statusError ? (
         centerPanel(
@@ -2245,7 +2256,7 @@ export default function WaitlistPage() {
           </button>,
         )
       ) : hasDealsAccess(status) ? (
-        (() => { window.location.replace("https://desideals24.com/24deals"); return centerPanel("Deals unlocked!", "Redirecting you to your 24 deals…"); })()
+        (() => { window.location.replace("https://desideals24.com/24deals"); return centerPanel("Deals unlocked!", "Redirecting you to your 24 deals…", null, true); })()
       ) : (
         <InviteDashboard
           identity={identity}

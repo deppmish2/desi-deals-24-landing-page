@@ -69,9 +69,13 @@ export default function OAuthCallbackPage() {
 
   return (
     <div className="min-h-screen bg-[#f7f7f7] flex items-center justify-center px-4">
-      <div className="w-full max-w-md bg-white border border-[#e2e8f0] rounded-xl p-6 shadow-sm">
+      <style>{`@keyframes dd24Spin{from{transform:rotate(0deg)}to{transform:rotate(360deg)}}`}</style>
+      <div className="w-full max-w-md bg-white border border-[#e2e8f0] rounded-xl p-6 shadow-sm text-center">
         {!error ? (
           <>
+            <div style={{ display:"inline-flex", alignItems:"center", justifyContent:"center", marginBottom:16 }}>
+              <div style={{ width:36, height:36, borderRadius:"50%", border:"3px solid #86efac", borderTopColor:"#16a34a", animation:"dd24Spin 0.8s linear infinite" }} />
+            </div>
             <h1 className="text-xl font-bold text-[#0f172a] mb-2">
               Finishing Google sign in...
             </h1>
