@@ -120,38 +120,39 @@ function RefreshCountdown({ countdownLabel }) {
 
   return (
     <div
-      className="bg-white/90 backdrop-blur-md border border-slate-200 rounded-[22px] px-6 py-4 flex items-center gap-6"
+      className="bg-white/90 backdrop-blur-md border border-slate-200 rounded-[22px] px-4 sm:px-6 py-4 flex items-center gap-3 sm:gap-6 w-full sm:w-auto"
       style={{
         boxShadow:
           "0px 20px 40px rgba(15,23,42,0.10), 0px 1px 2px rgba(15,23,42,0.06)",
       }}
-      aria-label="Next refresh countdown"
+      aria-label="Deals expiry countdown"
     >
-      <div className="pl-0 pr-2">
-        <div className="text-slate-800 font-bold text-[18px] leading-[22px]">
-          New deals in
+      <div className="pr-1 sm:pr-2 shrink-0">
+        <div className="text-slate-800 font-bold text-[14px] sm:text-[18px] leading-snug">
+          Deals expire in
         </div>
       </div>
 
-      <div className="h-10 w-px bg-slate-200" aria-hidden="true" />
+      <div className="h-8 sm:h-10 w-px bg-slate-200 shrink-0" aria-hidden="true" />
 
-      <div className="flex items-center gap-6">
+      <div className="flex items-center gap-3 sm:gap-6 flex-1 justify-between sm:justify-start">
         {[
-          { label: "HOURS", value: hours },
-          { label: "MINUTES", value: minutes },
-          { label: "SECONDS", value: seconds },
+          { label: "HRS", fullLabel: "HOURS", value: hours },
+          { label: "MIN", fullLabel: "MINUTES", value: minutes },
+          { label: "SEC", fullLabel: "SECONDS", value: seconds },
         ].map((item, idx) => (
-          <div key={item.label} className="flex items-center gap-6">
+          <div key={item.label} className="flex items-center gap-3 sm:gap-6">
             <div className="text-center">
-              <div className="text-[#16a34a] font-extrabold text-[44px] leading-[44px] tracking-[-1px]">
+              <div className="text-[#16a34a] font-extrabold text-[32px] sm:text-[44px] leading-none tracking-[-1px]">
                 {item.value}
               </div>
-              <div className="text-slate-400 font-bold text-[12px] tracking-[2.2px] uppercase mt-2">
-                {item.label}
+              <div className="text-slate-400 font-bold text-[9px] sm:text-[12px] tracking-[1.5px] sm:tracking-[2.2px] uppercase mt-1 sm:mt-2">
+                <span className="sm:hidden">{item.label}</span>
+                <span className="hidden sm:inline">{item.fullLabel}</span>
               </div>
             </div>
             {idx < 2 ? (
-              <div className="text-slate-200 text-[28px] leading-[28px] font-bold -mt-4 select-none">
+              <div className="text-slate-200 text-[20px] sm:text-[28px] leading-none font-bold -mt-3 sm:-mt-4 select-none">
                 :
               </div>
             ) : null}
@@ -284,94 +285,82 @@ function Deals24Card({ deal, number, showBestBefore = true }) {
     window.open(url, "_blank", "noopener,noreferrer");
   }
 
-  function discountBg(pct) {
-    if (!Number.isFinite(pct)) return "#000000";
-    if (pct >= 80) return "#CF0000";
-    if (pct >= 50) return "#B25F00";
-    if (pct >= 20) return "#004CB0";
-    return "#000000";
-  }
-
   return (
     <div
-      className="border border-[#f1f5f9] rounded-[16px] p-4 sm:p-[21px] flex flex-col sm:flex-row gap-4 sm:gap-6 items-stretch sm:items-start sm:h-[218.8px]"
-      style={{
-        backgroundImage:
-          "linear-gradient(134.83388041398146deg, rgb(255, 255, 255) 0%, rgb(248, 250, 252) 100%)",
-        boxShadow: "0px 1px 2px 0px rgba(0,0,0,0.05)",
-        cursor: "pointer",
-      }}
-      role="link"
-      tabIndex={0}
-      onClick={goToRedirect}
-      onKeyDown={(event) => {
-        if (event.key === "Enter" || event.key === " ") {
-          goToRedirect(event);
-        }
-      }}
+      className="bg-white border border-[#f1f5f9] rounded-[20px] flex flex-col overflow-hidden"
+      style={{ boxShadow: "0px 2px 12px rgba(0,0,0,0.06)" }}
     >
-      <div
-        className="bg-white border border-[#f8fafc] rounded-[12px] relative shrink-0 w-full sm:w-[112px] h-[160px] sm:h-[112px]"
-        style={{ boxShadow: "0px 1px 2px 0px rgba(0,0,0,0.05)" }}
-      >
-        <div className="overflow-hidden rounded-[inherit] p-[13px] flex items-center justify-center relative size-full">
-          <img
-            src={
-              imgError || !proxyImg
-                ? 'data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" width="112" height="112" viewBox="0 0 112 112"><rect fill="%23ffffff" width="112" height="112"/><text fill="%2394a3b8" font-size="28" text-anchor="middle" dominant-baseline="middle" x="56" y="58">🛒</text></svg>'
-                : proxyImg
-            }
-            alt={deal.product_name}
-            loading="lazy"
-            className="w-full h-full object-contain"
-            onError={() => setImgError(true)}
-          />
+      {/* Image area */}
+      <div className="relative w-full h-[220px] bg-white flex items-center justify-center p-6">
+        <img
+          src={
+            imgError || !proxyImg
+              ? 'data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" width="112" height="112" viewBox="0 0 112 112"><rect fill="%23ffffff" width="112" height="112"/><text fill="%2394a3b8" font-size="28" text-anchor="middle" dominant-baseline="middle" x="56" y="58">🛒</text></svg>'
+              : proxyImg
+          }
+          alt={deal.product_name}
+          loading="lazy"
+          className="w-full h-full object-contain"
+          onError={() => setImgError(true)}
+        />
 
-          {discountPct > 0 ? (
-            <div
-              className="absolute left-0 top-0 rounded-br-[8px] shadow-[0px_1px_2px_0px_rgba(0,0,0,0.05)] px-2 py-[2px]"
-              style={{ backgroundColor: discountBg(discountPct) }}
+        {/* Discount badge — top right */}
+        {discountPct > 0 ? (
+          <div
+            className="absolute top-3 right-3 rounded-[8px] px-2.5 py-1"
+            style={{
+              backgroundColor:
+                discountPct > 50 ? "#ffe4e8" :
+                discountPct >= 30 ? "#fff3e0" :
+                discountPct >= 20 ? "#e8f0fe" :
+                "#f1f5f9",
+            }}
+          >
+            <span
+              className="font-bold text-[13px] leading-none"
+              style={{
+                color:
+                  discountPct > 50 ? "#e53e3e" :
+                  discountPct >= 30 ? "#c05200" :
+                  discountPct >= 20 ? "#1a56db" :
+                  "#1e293b",
+              }}
             >
-              <span className="text-white font-extrabold text-[9px] leading-[12px]">
-                {discountPct}% OFF
-              </span>
-            </div>
-          ) : null}
+              -{discountPct}%
+            </span>
+          </div>
+        ) : null}
 
-          <div className="absolute inset-0 pointer-events-none rounded-[inherit] shadow-[inset_0px_2px_4px_1px_rgba(0,0,0,0.05)]" />
-        </div>
+        {/* Deal number — top left */}
+        {Number.isFinite(number) ? (
+          <span
+            className="absolute top-3 left-3 rounded-full px-2 py-0.5 text-[10px] leading-[15px] font-extrabold tracking-[1px] text-slate-500 border border-slate-200 bg-white/80 backdrop-blur"
+            aria-label={`Deal number ${number}`}
+          >
+            #{number}
+          </span>
+        ) : null}
+
+        {/* Best before — bottom left */}
+        {bestBeforeText ? (
+          <span className="absolute bottom-3 left-3 bg-[#d5890f] text-white text-[10px] leading-[15px] font-medium rounded-full px-2 py-0.5">
+            {bestBeforeText}
+          </span>
+        ) : null}
       </div>
 
-      <div className="flex-1 min-w-0 flex flex-col justify-between">
-        <div className="flex flex-col gap-1">
-          <div className="flex items-center justify-between gap-3">
-            <div className="flex items-center gap-2 min-w-0">
-              {Number.isFinite(number) ? (
-                <span
-                  className="rounded-full px-2 py-0.5 text-[10px] leading-[15px] font-extrabold tracking-[1px] text-slate-500 border border-slate-200 bg-white/70 backdrop-blur shrink-0"
-                  aria-label={`Deal number ${number}`}
-                >
-                  #{number}
-                </span>
-              ) : null}
-              <p className="text-[#64748b] text-[10px] leading-[15px] tracking-[1px] uppercase font-extrabold truncate">
-                {deal.store?.name || "Store"}
-              </p>
-            </div>
-            {bestBeforeText ? (
-              <span className="bg-[#d5890f] text-white text-[10px] leading-[15px] font-medium rounded-full px-2 py-0.5 whitespace-nowrap">
-                {bestBeforeText}
-              </span>
-            ) : null}
-          </div>
-
-          <p className="text-[#1e293b] text-[16px] leading-[22px] font-extrabold line-clamp-2 h-[44.8px]">
+      {/* Card body */}
+      <div className="flex flex-col flex-1 px-5 pt-4 pb-5 gap-3">
+        <div className="flex flex-col gap-1.5">
+          <p className="text-[#94a3b8] text-[10px] leading-[15px] tracking-[1.5px] uppercase font-extrabold">
+            {deal.store?.name || "Store"}
+          </p>
+          <p className="text-[#1e293b] text-[15px] leading-[22px] font-bold line-clamp-2 min-h-[44px]">
             {deal.product_name}
           </p>
-
-          <div className="w-full flex flex-col sm:flex-row sm:items-center justify-between gap-2 sm:gap-4">
-            <div className="flex items-baseline gap-2 min-w-0">
-              <span className="text-[#16a34a] text-[24px] leading-[32px] font-extrabold">
+          <div className="flex items-baseline justify-between gap-2">
+            <div className="flex items-baseline gap-2">
+              <span className="text-[#1e293b] text-[22px] leading-[30px] font-extrabold">
                 {priceText}
               </span>
               {originalPriceText ? (
@@ -380,40 +369,39 @@ function Deals24Card({ deal, number, showBestBefore = true }) {
                 </span>
               ) : null}
             </div>
-
-            <div className="sm:text-right text-[#64748b] text-[10px] leading-[15px] font-medium whitespace-nowrap">
-              {weightText || " "}
-            </div>
+            {weightText ? (
+              <span className="text-[#94a3b8] text-[11px] leading-[16px] font-medium text-right shrink-0">
+                {weightText}
+              </span>
+            ) : null}
           </div>
         </div>
 
-        <div className="pt-4">
-          <div className="border-t border-[#f1f5f9] pt-4 sm:pt-[17px] flex items-center justify-stretch sm:justify-end gap-3">
-            <a
-              href={resolveUrl(deal.product_url)}
-              target="_blank"
-              rel="noopener noreferrer"
-              className="flex-1 sm:flex-none justify-center bg-[#16a34a] hover:bg-[#15803d] transition-colors rounded-[12px] px-5 py-2.5 inline-flex items-center gap-2 text-white no-underline"
-              onClick={(event) => event.stopPropagation()}
-              onKeyDown={(event) => event.stopPropagation()}
-            >
-              <span className="text-[12px] leading-[16px] font-extrabold">
-                Snatch deal
-              </span>
-              <ArrowSmallIcon className="text-white" />
-            </a>
-            <button
-              type="button"
-              onClick={shareOnWhatsApp}
-              onKeyDown={(event) => event.stopPropagation()}
-              className="shrink-0 inline-flex items-center justify-center gap-1.5 h-[44px] px-3 rounded-[12px] border border-slate-200 bg-white hover:bg-slate-50 text-[#16a34a] transition-colors"
-              aria-label="Share deal on WhatsApp"
-              title="Share deal"
-            >
-              <WhatsAppIcon />
-              <span className="hidden sm:inline text-[13px] font-bold text-slate-600">Share</span>
-            </button>
-          </div>
+        {/* Actions */}
+        <div className="mt-auto flex items-center gap-2 pt-2">
+          <a
+            href={resolveUrl(deal.product_url)}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="flex-1 justify-center bg-[#16a34a] hover:bg-[#15803d] transition-colors rounded-[14px] py-3 inline-flex items-center gap-2 text-white no-underline hover:no-underline"
+            onClick={(event) => event.stopPropagation()}
+            onKeyDown={(event) => event.stopPropagation()}
+          >
+            <span className="text-[13px] leading-[16px] font-extrabold tracking-wide uppercase">
+              Snatch Deal
+            </span>
+          </a>
+          <button
+            type="button"
+            onClick={shareOnWhatsApp}
+            onKeyDown={(event) => event.stopPropagation()}
+            className="shrink-0 inline-flex items-center justify-center gap-1.5 h-[46px] px-4 rounded-[14px] border border-slate-200 bg-white hover:bg-slate-50 text-[#16a34a] transition-colors"
+            aria-label="Share deal on WhatsApp"
+            title="Share on WhatsApp"
+          >
+            <WhatsAppIcon />
+            <span className="text-[13px] font-bold text-slate-600">Share</span>
+          </button>
         </div>
       </div>
     </div>
@@ -423,8 +411,10 @@ function Deals24Card({ deal, number, showBestBefore = true }) {
 export default function Deals24Page() {
   const navigate = useNavigate();
   const dealsRef = useRef(null);
+  const countdownRef = useRef(null);
   const [accessState, setAccessState] = useState("checking");
   const [accessError, setAccessError] = useState("");
+  const [waitlistStatus, setWaitlistStatus] = useState(null);
   const [feedbackMessage, setFeedbackMessage] = useState("");
   const [feedbackState, setFeedbackState] = useState("idle");
   const [feedbackError, setFeedbackError] = useState("");
@@ -439,7 +429,7 @@ export default function Deals24Page() {
     [clockMs],
   );
   const { deals, meta, loading, error } = useDeals({
-    enabled: accessState === "allowed",
+    enabled: accessState === "allowed" || accessState === "preview",
     limit: TODAY_COUNT,
     curated: "daily_live_pool",
     seed: dailySeed,
@@ -450,10 +440,12 @@ export default function Deals24Page() {
     return () => window.clearInterval(id);
   }, []);
 
+
   useEffect(() => {
-    // Local dev bypass — skip auth check entirely when running via Vite dev server
+    // Local dev bypass — show preview state to test the lock wall
     if (import.meta.env.DEV) {
-      setAccessState("allowed");
+      setAccessState("preview");
+      setWaitlistStatus({ confirmed_count: 1, remaining_count: 1 });
       return undefined;
     }
 
@@ -468,11 +460,13 @@ export default function Deals24Page() {
     fetchWaitlistMe()
       .then((payload) => {
         if (cancelled) return;
-        if (hasDealsMembership(payload?.data)) {
+        const status = payload?.data || null;
+        setWaitlistStatus(status);
+        if (hasDealsMembership(status)) {
           setAccessState("allowed");
-          return;
+        } else {
+          setAccessState("preview");
         }
-        navigate("/waitlist", { replace: true });
       })
       .catch((err) => {
         if (cancelled) return;
@@ -490,10 +484,19 @@ export default function Deals24Page() {
     };
   }, [navigate]);
 
+  const PREVIEW_LIMIT = 12;
+
   const shownDeals = useMemo(() => {
     const list = Array.isArray(deals) ? deals : [];
     return list.filter((deal) => deal && deal.product_url && deal.product_name);
   }, [deals]);
+
+  const visibleDeals = accessState === "preview"
+    ? shownDeals.slice(0, PREVIEW_LIMIT)
+    : shownDeals;
+  const peekDeals = accessState === "preview"
+    ? shownDeals.slice(PREVIEW_LIMIT, PREVIEW_LIMIT + 12)
+    : [];
   const curatedMeta = meta?.curated || null;
 
   async function handleFeedbackSubmit(event) {
@@ -583,6 +586,21 @@ export default function Deals24Page() {
     <div className="min-h-screen bg-[#f8f6f6]">
       <Deals24Header onLogout={async () => { await logoutUser(); window.location.replace("/waitlist"); }} />
 
+      {/* Sticky deals-refresh bar */}
+      <div className="sticky top-0 z-[9] bg-[#16a34a]">
+        <div className="max-w-[1280px] mx-auto px-6 sm:px-10 h-11 flex items-center justify-between gap-3">
+          <span className="text-white text-[12px] sm:text-[13px] font-bold leading-tight min-w-0">
+            <span className="hidden sm:inline">Today&apos;s deals expire tonight. </span>
+            24 new deals every morning.
+          </span>
+          <div className="shrink-0 flex items-center bg-white rounded-full px-3 py-1">
+            <span className="font-mono font-extrabold tabular-nums text-[13px] leading-none text-[#16a34a]">
+              {nextRefreshLabel}
+            </span>
+          </div>
+        </div>
+      </div>
+
       <section className="relative overflow-hidden">
         <div className="absolute inset-0 overflow-hidden bg-black">
           <HeroImage />
@@ -597,7 +615,7 @@ export default function Deals24Page() {
             >
               Germany is Expensive.
             </h1>
-            <p className="mt-6 text-white font-normal text-[32px] leading-[40px]">
+            <p className="mt-6 text-white font-normal text-[24px] leading-[32px] md:text-[32px] md:leading-[40px]">
               We help you save on desi groceries every day.
             </p>
             <div className="mt-10 flex justify-center">
@@ -634,7 +652,7 @@ export default function Deals24Page() {
               Today&apos;s 24 Deals
             </h2>
           </div>
-          <div className="w-full lg:w-auto flex justify-end">
+          <div ref={countdownRef} className="w-full lg:w-auto flex justify-end">
             <RefreshCountdown countdownLabel={nextRefreshLabel} />
           </div>
         </div>
@@ -647,31 +665,114 @@ export default function Deals24Page() {
           ) : shownDeals.length === 0 ? (
             <p className="text-slate-600">No deals found.</p>
           ) : (
-            <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
-              {(() => {
-                const isBestBeforeValid = (yyyyMm) => {
-                  if (!yyyyMm) return false;
-                  const [y, m] = yyyyMm.split("-").map(Number);
-                  if (!y || !m) return false;
-                  const now = new Date();
-                  // Expired if year-month is before current year-month
-                  return y > now.getFullYear() || (y === now.getFullYear() && m >= now.getMonth() + 1);
-                };
-                let bestBeforeShown = 0;
-                return shownDeals.map((deal, idx) => {
-                  const canShow = isBestBeforeValid(deal?.best_before) && bestBeforeShown < 4;
-                  if (canShow) bestBeforeShown += 1;
-                  return (
-                    <Deals24Card
-                      key={deal.id || deal.product_url}
-                      deal={deal}
-                      number={idx + 1}
-                      showBestBefore={canShow}
-                    />
-                  );
-                });
-              })()}
-            </div>
+            <>
+              {/* Visible deals */}
+              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
+                {(() => {
+                  const isBestBeforeValid = (yyyyMm) => {
+                    if (!yyyyMm) return false;
+                    const [y, m] = yyyyMm.split("-").map(Number);
+                    if (!y || !m) return false;
+                    const now = new Date();
+                    return y > now.getFullYear() || (y === now.getFullYear() && m >= now.getMonth() + 1);
+                  };
+                  let bestBeforeShown = 0;
+                  return visibleDeals.map((deal, idx) => {
+                    const canShow = isBestBeforeValid(deal?.best_before) && bestBeforeShown < 4;
+                    if (canShow) bestBeforeShown += 1;
+                    return (
+                      <Deals24Card
+                        key={deal.id || deal.product_url}
+                        deal={deal}
+                        number={idx + 1}
+                        showBestBefore={canShow}
+                      />
+                    );
+                  });
+                })()}
+              </div>
+
+              {/* Lock wall for preview users */}
+              {accessState === "preview" && (
+                <div className="relative mt-8">
+                  {/* Blurred peek at locked deals */}
+                  {peekDeals.length > 0 && (
+                    <div
+                      className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6"
+                      style={{ filter: "blur(5px)", pointerEvents: "none", userSelect: "none", opacity: 0.45 }}
+                      aria-hidden="true"
+                    >
+                      {peekDeals.map((deal, idx) => (
+                        <Deals24Card
+                          key={deal.id || deal.product_url}
+                          deal={deal}
+                          number={PREVIEW_LIMIT + idx + 1}
+                          showBestBefore={false}
+                        />
+                      ))}
+                    </div>
+                  )}
+
+                  {/* Gradient fade */}
+                  <div
+                    className="absolute inset-x-0 top-0 h-24 pointer-events-none"
+                    style={{ background: "linear-gradient(to bottom, #f8f6f6, transparent)" }}
+                  />
+
+                  {/* CTA card */}
+                  <div className="relative flex justify-center -mt-6">
+                    <div className="w-full max-w-lg bg-white border border-[#dcfce7] rounded-[28px] shadow-[0px_20px_60px_rgba(22,163,74,0.12),0px_2px_8px_rgba(0,0,0,0.06)] px-8 py-8 text-center">
+                      <div className="flex items-center justify-center w-14 h-14 rounded-full bg-[#f0fdf4] border border-[#dcfce7] mx-auto mb-4">
+                        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+                          <path d="M12 2C9.243 2 7 4.243 7 7v2H5a1 1 0 00-1 1v10a2 2 0 002 2h12a2 2 0 002-2V10a1 1 0 00-1-1h-2V7c0-2.757-2.243-5-5-5zm0 2a3 3 0 013 3v2H9V7a3 3 0 013-3zm0 9a2 2 0 110 4 2 2 0 010-4z" fill="#16a34a" />
+                        </svg>
+                      </div>
+
+                      <h3
+                        className="text-[#1e293b] font-black text-[24px] leading-[28px]"
+                        style={{ fontFamily: "Fraunces, serif" }}
+                      >
+                        {shownDeals.length - PREVIEW_LIMIT} more deals waiting
+                      </h3>
+                      <p className="mt-2 text-[#64748b] text-[15px] leading-6">
+                        Invite 2 friends to unlock all{" "}
+                        <span className="font-bold text-[#1e293b]">{shownDeals.length} deals</span>{" "}
+                        — free, every day.
+                      </p>
+
+                      {/* Invite progress */}
+                      {waitlistStatus && (
+                        <div className="mt-5 flex items-center justify-center gap-3">
+                          {[0, 1].map((i) => (
+                            <div
+                              key={i}
+                              className={`flex items-center gap-1.5 px-3 py-1.5 rounded-full text-[13px] font-bold border ${
+                                i < (waitlistStatus.confirmed_count || 0)
+                                  ? "bg-[#f0fdf4] border-[#86efac] text-[#16a34a]"
+                                  : "bg-slate-50 border-slate-200 text-slate-400"
+                              }`}
+                            >
+                              <span>{i < (waitlistStatus.confirmed_count || 0) ? "✓" : "○"}</span>
+                              <span>Friend {i + 1}</span>
+                            </div>
+                          ))}
+                        </div>
+                      )}
+
+                      <button
+                        type="button"
+                        onClick={() => navigate("/waitlist")}
+                        className="mt-6 w-full bg-[#16a34a] hover:bg-[#15803d] text-white font-extrabold rounded-[14px] px-6 py-4 text-[16px] leading-6 transition-colors flex items-center justify-center gap-2"
+                        style={{ boxShadow: "0px 8px 20px rgba(22,163,74,0.25)" }}
+                      >
+                        Go to my invite dashboard
+                        <ArrowSmallIcon className="text-white" />
+                      </button>
+                    </div>
+                  </div>
+                </div>
+              )}
+            </>
           )}
         </div>
 

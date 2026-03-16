@@ -55,7 +55,7 @@ export default function OAuthCallbackPage() {
           return;
         }
         const redirectTo =
-          sessionStorage.getItem(POST_AUTH_REDIRECT_STORAGE_KEY) || "/waitlist";
+          sessionStorage.getItem(POST_AUTH_REDIRECT_STORAGE_KEY) || "/24deals";
         sessionStorage.removeItem(POST_AUTH_REDIRECT_STORAGE_KEY);
         navigate(redirectTo, { replace: true });
       })

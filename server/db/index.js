@@ -193,6 +193,7 @@ const ready = (async () => {
     "ALTER TABLE deals ADD COLUMN last_pool_used_at DATETIME",
     "ALTER TABLE waitlist_referrals DROP COLUMN invited_user_id_user_id",
     "ALTER TABLE waitlist_referrals DROP COLUMN inviter_user_id_user_id",
+    "ALTER TABLE users ADD COLUMN is_admin INTEGER NOT NULL DEFAULT 0",
   ];
 
   for (const sql of migrations) {
@@ -233,6 +234,20 @@ const ready = (async () => {
       await db.execute(
         `INSERT OR IGNORE INTO stores (id, name, url, logo_url) VALUES (?, ?, ?, ?)`,
         [id, name, url, logoUrl],
+      );
+    } catch (_) {}
+  }
+
+  // Seed admin status for known admin accounts (configurable via ADMIN_EMAILS env var)
+  const adminEmails = (process.env.ADMIN_EMAILS || "itsjustrahul@gmail.com,deppmish2@googlemail.com")
+    .split(",")
+    .map((e) => e.trim().toLowerCase())
+    .filter(Boolean);
+  for (const email of adminEmails) {
+    try {
+      await db.execute(
+        `UPDATE users SET is_admin = 1 WHERE email = ?`,
+        [email],
       );
     } catch (_) {}
   }

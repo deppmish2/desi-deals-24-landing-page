@@ -82,6 +82,7 @@ CREATE TABLE IF NOT EXISTS users (
   waitlist_referral_code TEXT UNIQUE,
   waitlist_referrer_user_id TEXT REFERENCES users(id) ON DELETE SET NULL,
   waitlist_unlocked_at DATETIME,
+  is_admin            INTEGER NOT NULL DEFAULT 0,
   created_at          DATETIME DEFAULT CURRENT_TIMESTAMP,
   last_login_at       DATETIME
 );
