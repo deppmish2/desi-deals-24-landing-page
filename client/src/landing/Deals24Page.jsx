@@ -383,7 +383,7 @@ function Deals24Card({ deal, number, showBestBefore = true }) {
             href={resolveUrl(deal.product_url)}
             target="_blank"
             rel="noopener noreferrer"
-            className="flex-1 justify-center bg-[#16a34a] hover:bg-[#15803d] transition-colors rounded-[14px] py-3 inline-flex items-center gap-2 text-white no-underline"
+            className="flex-1 justify-center bg-[#16a34a] hover:bg-[#15803d] transition-colors rounded-[14px] py-3 inline-flex items-center gap-2 text-white no-underline hover:no-underline"
             onClick={(event) => event.stopPropagation()}
             onKeyDown={(event) => event.stopPropagation()}
           >
@@ -615,7 +615,7 @@ export default function Deals24Page() {
             >
               Germany is Expensive.
             </h1>
-            <p className="mt-6 text-white font-normal text-[32px] leading-[40px]">
+            <p className="mt-6 text-white font-normal text-[24px] leading-[32px] md:text-[32px] md:leading-[40px]">
               We help you save on desi groceries every day.
             </p>
             <div className="mt-10 flex justify-center">

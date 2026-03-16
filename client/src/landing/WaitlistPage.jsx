@@ -217,13 +217,18 @@ function DealsStripCard({ index, store, product, now, was, off, imageUrl, onClic
 
       {/* Text content */}
       <div style={{ flex: 1, display: "flex", flexDirection: "column", padding: "0 8px 24px" }}>
-        {/* Store name — blurred to tease locked info */}
+        {/* Store name — first 3 chars heavily blurred */}
         <div style={{
-          filter: "blur(1px)", fontSize: 10, fontWeight: 700, letterSpacing: 1,
+          fontSize: 10, fontWeight: 700, letterSpacing: 1,
           textTransform: "uppercase", color: "#94a3b8", marginBottom: 4,
-          userSelect: "none",
+          userSelect: "none", display: "flex",
         }}>
-          {store || "Desi Store Germany"}
+          <span style={{ filter: "blur(4px)" }}>
+            {(store || "Desi Store Germany").slice(0, 4)}
+          </span>
+          <span style={{ filter: "blur(1px)" }}>
+            {(store || "Desi Store Germany").slice(4)}
+          </span>
         </div>
         {/* Product name */}
         <div style={{
