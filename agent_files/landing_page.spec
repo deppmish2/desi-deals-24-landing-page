@@ -10,6 +10,7 @@ The 24 deals are fixed for the day (no intra-day changes)
 In the 24 deals showpage, do not use more than 4 "Best before xxDATEXX" 
 No product repeats across any rolling 7-day window
 Deals displayed on the landing page must be live and active at the time of viewing
+Do not ever use any deals without discount percentage.
 Landing page deals are sourced directly from the daily deals pool (no separate curation)
 
 Add a countdown timer to the next 07:00 refresh (e.g. "New deals in 04:32:10") .

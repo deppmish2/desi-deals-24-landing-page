@@ -189,7 +189,8 @@ async function fetchActiveDealRows(db) {
        JOIN stores s ON s.id = d.store_id
        WHERE d.is_active = 1
          AND lower(coalesce(d.availability, '')) = 'in_stock'
-         AND (d.best_before IS NULL OR d.best_before >= strftime('%Y-%m', 'now'))`,
+         AND (d.best_before IS NULL OR d.best_before >= strftime('%Y-%m', 'now'))
+         AND d.discount_percent IS NOT NULL AND d.discount_percent > 0`,
     )
     .all();
 }

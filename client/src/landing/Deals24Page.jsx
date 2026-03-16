@@ -497,6 +497,11 @@ export default function Deals24Page() {
   const peekDeals = accessState === "preview"
     ? shownDeals.slice(PREVIEW_LIMIT, PREVIEW_LIMIT + 12)
     : [];
+  // On mobile the lock wall appears after the first 2 blurred cards;
+  // the remaining blurred cards scroll below it.
+  const MOBILE_PEEK_ABOVE = 2;
+  const peekAbove = peekDeals.slice(0, MOBILE_PEEK_ABOVE);   // shown above lock wall on mobile
+  const peekBelow = peekDeals.slice(MOBILE_PEEK_ABOVE);      // shown below lock wall on mobile
   const curatedMeta = meta?.curated || null;
 
   async function handleFeedbackSubmit(event) {
@@ -549,8 +554,7 @@ export default function Deals24Page() {
             Checking your access
           </h1>
           <p className="mt-3 text-[#64748b] text-[15px] leading-7">
-            We&apos;re confirming that your 2 invites were tracked before we open
-            today&apos;s 24 deals.
+            Hang on — we&apos;re loading today&apos;s deals for you.
           </p>
         </div>
       </div>
@@ -695,22 +699,40 @@ export default function Deals24Page() {
               {/* Lock wall for preview users */}
               {accessState === "preview" && (
                 <div className="relative mt-8">
-                  {/* Blurred peek at locked deals */}
+                  {/* Blurred peek — desktop: all cards above lock wall; mobile: first 2 only */}
                   {peekDeals.length > 0 && (
-                    <div
-                      className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6"
-                      style={{ filter: "blur(5px)", pointerEvents: "none", userSelect: "none", opacity: 0.45 }}
-                      aria-hidden="true"
-                    >
-                      {peekDeals.map((deal, idx) => (
-                        <Deals24Card
-                          key={deal.id || deal.product_url}
-                          deal={deal}
-                          number={PREVIEW_LIMIT + idx + 1}
-                          showBestBefore={false}
-                        />
-                      ))}
-                    </div>
+                    <>
+                      {/* Mobile: only first 2 blurred cards above lock wall */}
+                      <div
+                        className="grid grid-cols-1 gap-6 sm:hidden"
+                        style={{ filter: "blur(5px)", pointerEvents: "none", userSelect: "none", opacity: 0.45 }}
+                        aria-hidden="true"
+                      >
+                        {peekAbove.map((deal, idx) => (
+                          <Deals24Card
+                            key={deal.id || deal.product_url}
+                            deal={deal}
+                            number={PREVIEW_LIMIT + idx + 1}
+                            showBestBefore={false}
+                          />
+                        ))}
+                      </div>
+                      {/* Desktop: all blurred cards above lock wall */}
+                      <div
+                        className="hidden sm:grid sm:grid-cols-2 lg:grid-cols-3 gap-6"
+                        style={{ filter: "blur(5px)", pointerEvents: "none", userSelect: "none", opacity: 0.45 }}
+                        aria-hidden="true"
+                      >
+                        {peekDeals.map((deal, idx) => (
+                          <Deals24Card
+                            key={deal.id || deal.product_url}
+                            deal={deal}
+                            number={PREVIEW_LIMIT + idx + 1}
+                            showBestBefore={false}
+                          />
+                        ))}
+                      </div>
+                    </>
                   )}
 
                   {/* Gradient fade */}
@@ -759,17 +781,60 @@ export default function Deals24Page() {
                         </div>
                       )}
 
-                      <button
-                        type="button"
-                        onClick={() => navigate("/waitlist")}
-                        className="mt-6 w-full bg-[#16a34a] hover:bg-[#15803d] text-white font-extrabold rounded-[14px] px-6 py-4 text-[16px] leading-6 transition-colors flex items-center justify-center gap-2"
-                        style={{ boxShadow: "0px 8px 20px rgba(22,163,74,0.25)" }}
-                      >
-                        Go to my invite dashboard
-                        <ArrowSmallIcon className="text-white" />
-                      </button>
+                      {waitlistStatus?.referral_code ? (
+                        <div className="mt-6 flex flex-col gap-3">
+                          <p className="text-[13px] text-[#64748b] font-medium">Your invite link:</p>
+                          <div className="flex items-center gap-2">
+                            <input
+                              readOnly
+                              value={`${window.location.origin}/waitlist?ref=${waitlistStatus.referral_code}`}
+                              className="flex-1 min-w-0 rounded-[10px] border border-slate-200 bg-slate-50 px-3 py-2 text-[13px] text-[#1e293b] font-mono truncate focus:outline-none"
+                              onFocus={(e) => e.target.select()}
+                            />
+                            <button
+                              type="button"
+                              onClick={() => {
+                                navigator.clipboard?.writeText(`${window.location.origin}/waitlist?ref=${waitlistStatus.referral_code}`);
+                              }}
+                              className="shrink-0 px-3 py-2 rounded-[10px] border border-slate-200 bg-white hover:bg-slate-50 text-[13px] font-bold text-slate-600 transition-colors"
+                            >
+                              Copy
+                            </button>
+                          </div>
+                          <a
+                            href={`https://wa.me/?text=${encodeURIComponent(`Join me on DesiDeals24 — save on desi groceries in Germany every day!\n${window.location.origin}/waitlist?ref=${waitlistStatus.referral_code}`)}`}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="w-full bg-[#16a34a] hover:bg-[#15803d] text-white font-extrabold rounded-[14px] px-6 py-4 text-[16px] leading-6 transition-colors flex items-center justify-center gap-2 no-underline hover:no-underline"
+                            style={{ boxShadow: "0px 8px 20px rgba(22,163,74,0.25)" }}
+                          >
+                            <WhatsAppIcon />
+                            Share invite on WhatsApp
+                          </a>
+                        </div>
+                      ) : (
+                        <p className="mt-6 text-[13px] text-[#64748b]">Invite 2 friends using your unique link to unlock all deals.</p>
+                      )}
                     </div>
                   </div>
+
+                  {/* Mobile only: remaining blurred deals below the lock wall */}
+                  {peekBelow.length > 0 && (
+                    <div
+                      className="grid grid-cols-1 gap-6 mt-6 sm:hidden"
+                      style={{ filter: "blur(5px)", pointerEvents: "none", userSelect: "none", opacity: 0.45 }}
+                      aria-hidden="true"
+                    >
+                      {peekBelow.map((deal, idx) => (
+                        <Deals24Card
+                          key={deal.id || deal.product_url}
+                          deal={deal}
+                          number={PREVIEW_LIMIT + MOBILE_PEEK_ABOVE + idx + 1}
+                          showBestBefore={false}
+                        />
+                      ))}
+                    </div>
+                  )}
                 </div>
               )}
             </>

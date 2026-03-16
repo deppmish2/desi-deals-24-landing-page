@@ -25,16 +25,13 @@ async function latestCompletedCrawlForDate(dateKey) {
     .get(getBerlinUtcIso(dateKey, 6, 0, 0));
 }
 
-async function hasPoolForDate(dateKey) {
+const DAILY_POOL_LIMIT = 24;
+
+async function getPoolCountForDate(dateKey) {
   const row = await db
-    .prepare(
-      `SELECT pool_date
-       FROM daily_deal_pool_entries
-       WHERE pool_date = ?
-       LIMIT 1`,
-    )
+    .prepare(`SELECT COUNT(*) AS cnt FROM daily_deal_pool_entries WHERE pool_date = ?`)
     .get(dateKey);
-  return Boolean(row?.pool_date);
+  return Number(row?.cnt || 0);
 }
 
 // Called by Vercel Cron — verified via CRON_SECRET (auto-set by Vercel)
@@ -69,31 +66,26 @@ module.exports = async (req, res) => {
     }
 
     if (berlinHour === 7) {
-      const poolExists = await hasPoolForDate(berlinDate);
-      if (poolExists) {
+      const crawling = await isCrawlLocked(db).catch(() => false);
+      if (crawling) {
         actions.daily_pool = {
           skipped: true,
-          reason: "already_generated_today",
+          reason: "crawl_running",
           pool_date: berlinDate,
         };
       } else {
-        const crawling = await isCrawlLocked(db).catch(() => false);
-        if (crawling) {
-          actions.daily_pool = {
-            skipped: true,
-            reason: "crawl_running",
-            pool_date: berlinDate,
-          };
-        } else {
-          const pool = await ensureDailyDealsPool(db, {
-            poolDate: berlinDate,
-          });
-          actions.daily_pool = {
-            pool_date: pool.poolDate,
-            entries: pool.entries.length,
-            requested_pool_date: pool.requestedPoolDate,
-          };
-        }
+        // Always clear and regenerate a fresh pool every day
+        await db.prepare(
+          `DELETE FROM daily_deal_pool_entries WHERE pool_date = ?`,
+        ).run(berlinDate);
+        const pool = await ensureDailyDealsPool(db, {
+          poolDate: berlinDate,
+        });
+        actions.daily_pool = {
+          pool_date: pool.poolDate,
+          entries: pool.entries.length,
+          requested_pool_date: pool.requestedPoolDate,
+        };
       }
     } else {
       actions.daily_pool = {

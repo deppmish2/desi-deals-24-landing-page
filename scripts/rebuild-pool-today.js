@@ -16,16 +16,20 @@ db.ready.then(async () => {
   const poolDate = getCurrentPoolDate();
   const now = new Date().toISOString();
 
-  // 1. Remove pool entries whose deal is inactive
+  // 1. Remove pool entries whose deal is inactive or has no discount
   const allEntries = await db.prepare(`
-    SELECT e.slot_index, e.deal_id, e.store_id, e.product_name_snapshot, d.is_active
+    SELECT e.slot_index, e.deal_id, e.store_id, e.product_name_snapshot,
+           d.is_active, d.discount_percent, d.original_price, d.sale_price
     FROM daily_deal_pool_entries e
     LEFT JOIN deals d ON d.id = e.deal_id
     WHERE e.pool_date = ?
   `).all(poolDate);
 
-  const deadSlots = allEntries.filter(e => !e.is_active || e.is_active === 0);
-  console.log("Removing dead slots:", deadSlots.length);
+  const deadSlots = allEntries.filter(e => {
+    if (!e.is_active || e.is_active === 0) return true;
+    return !(e.discount_percent > 0);
+  });
+  console.log("Removing dead/no-discount slots:", deadSlots.length);
   for (const e of deadSlots) {
     await db.prepare("DELETE FROM daily_deal_pool_entries WHERE pool_date = ? AND slot_index = ?").run(poolDate, e.slot_index);
     console.log(`  Removed slot ${e.slot_index}: ${e.product_name_snapshot}`);
@@ -55,6 +59,7 @@ db.ready.then(async () => {
     WHERE d.is_active = 1
       AND lower(coalesce(d.availability,'')) = 'in_stock'
       AND (d.best_before IS NULL OR d.best_before >= strftime('%Y-%m','now'))
+      AND d.discount_percent IS NOT NULL AND d.discount_percent > 0
       AND d.id NOT IN (SELECT deal_id FROM daily_deal_pool_entries WHERE pool_date = ? AND deal_id IS NOT NULL)
     ORDER BY d.last_pool_used_at ASC NULLS FIRST
     LIMIT 3000
