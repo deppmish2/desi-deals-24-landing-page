@@ -262,29 +262,21 @@ function DealsStripCard({ index, store, product, now, was, off, imageUrl, onClic
 }
 
 function LockedStackCard({ onCtaClick }) {
-  const steps = [
-    { label: "Sign up for free", active: true },
-    { label: "Invite 2 friends", active: false },
-    { label: "All 24 deals unlock", active: false },
-  ];
   return (
     <div className="dd24-deals-locked" style={{
       flex: "1 1 0", minWidth: 0, borderRadius: 24, overflow: "hidden",
       position: "relative", minHeight: 552,
       background: "linear-gradient(145deg, #e8f5e9 0%, #f0fdf4 25%, #dcfce7 55%, #a7f3d0 100%)",
     }}>
-      {/* Subtle radial accents */}
       <div style={{
         position: "absolute", inset: 0, pointerEvents: "none",
         backgroundImage: "radial-gradient(circle at 15% 15%, rgba(22,163,74,0.10) 0%, transparent 55%), radial-gradient(circle at 85% 85%, rgba(22,163,74,0.08) 0%, transparent 55%)",
       }} />
-      {/* Content */}
       <div style={{
         position: "absolute", inset: 0,
         display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center",
         padding: "0 32px",
       }}>
-        {/* Lock icon */}
         <div style={{
           width: 56, height: 56, background: "#f0fdf4", borderRadius: 16,
           display: "flex", alignItems: "center", justifyContent: "center", marginBottom: 16,
@@ -298,31 +290,6 @@ function LockedStackCard({ onCtaClick }) {
         <div style={{ fontSize: 30, fontWeight: 800, color: "#0f172a", lineHeight: "36px", marginBottom: 8, textAlign: "center" }}>
           +21 deals
         </div>
-        <div style={{ fontSize: 14, color: "#64748b", textAlign: "center", lineHeight: "20px", marginBottom: 32 }}>
-          locked · invite 2 friends<br />to unlock all 24
-        </div>
-        {/* Steps */}
-        <div style={{ width: "100%", display: "flex", flexDirection: "column", gap: 12, marginBottom: 32 }}>
-          {steps.map((step, i) => (
-            <div key={i} style={{
-              background: "rgba(255,255,255,0.6)", border: "1px solid rgba(255,255,255,0.9)",
-              borderRadius: 12, padding: 13,
-              display: "flex", alignItems: "center", gap: 12,
-            }}>
-              <div style={{
-                width: 24, height: 24, borderRadius: "50%", flexShrink: 0,
-                background: step.active ? T.brand : "#e2e8f0",
-                display: "flex", alignItems: "center", justifyContent: "center",
-                fontSize: 10, fontWeight: 700,
-                color: step.active ? "#fff" : "#64748b",
-              }}>{i + 1}</div>
-              <span style={{ fontSize: 12, fontWeight: 700, color: step.active ? "#334155" : "#94a3b8" }}>
-                {step.label}
-              </span>
-            </div>
-          ))}
-        </div>
-        {/* CTA */}
         <button
           type="button"
           onClick={onCtaClick}
@@ -335,7 +302,7 @@ function LockedStackCard({ onCtaClick }) {
             boxShadow: "0 20px 25px -5px #bbf7d0, 0 8px 10px -6px #bbf7d0",
           }}
         >
-          Invite &amp; unlock
+          Sign up to see deals
         </button>
       </div>
     </div>
@@ -446,50 +413,16 @@ function AuthCard({
         <div style={{ display:"inline-flex", alignItems:"center", justifyContent:"center", width:52, height:52, borderRadius:16, background:T.brandLight, border:`1px solid ${T.brandMid}`, fontSize:26, marginBottom:14 }}>🛒</div>
         <h2 style={{ fontFamily:"'Fraunces',Georgia,serif", fontSize:21, fontWeight:900, letterSpacing:-0.8, color:T.textPrimary, marginBottom:8 }}>Start saving today</h2>
         <p style={{ fontSize:13, color:T.textSecondary, lineHeight:1.72, maxWidth:260, margin:"0 auto" }}>
-          Sign up for free. Invite <strong style={{ color:T.textPrimary }}>2 friends</strong> who register and your deals section unlocks.
+          Sign up free and access today's deals from Indian grocery stores across Germany.
         </p>
       </div>
 
-      {/* Unlock mechanic — redesigned */}
-      <div style={{ marginBottom:24, borderRadius:16, overflow:"hidden", border:`1px solid ${T.brandBorder}`, background:`linear-gradient(160deg, ${T.brandLight} 0%, #fff 100%)` }}>
-        {/* Steps */}
-        <div style={{ padding:"16px 20px 0" }}>
-          {[
-            { n:1, label:"Sign up with Google", done:false },
-            { n:2, label:"Invite 2 friends",    done:false },
-            { n:3, label:"They register",       done:false },
-          ].map((s,i,arr)=>(
-            <div key={i} style={{ display:"flex", alignItems:"center", gap:12, paddingBottom: i<arr.length-1?0:16 }}>
-              <div style={{ display:"flex", flexDirection:"column", alignItems:"center", flexShrink:0 }}>
-                <div style={{ width:26, height:26, borderRadius:"50%", background:s.done?T.brand:T.bgCard, border:`2px solid ${s.done?T.brand:T.brandMid}`, display:"flex", alignItems:"center", justifyContent:"center", fontSize:11, fontWeight:800, color:s.done?T.textOnBrand:T.brandDark, zIndex:1 }}>
-                  {s.done ? "✓" : s.n}
-                </div>
-                {i<arr.length-1 && <div style={{ width:2, height:20, background:`linear-gradient(to bottom, ${T.brandMid}, ${T.brandLight})`, margin:"2px 0" }}/>}
-              </div>
-              <div style={{ paddingBottom: i<arr.length-1?20:0 }}>
-                <span style={{ fontSize:13, fontWeight:600, lineHeight:1.2, color:s.done?T.textMuted:T.textPrimary, textDecoration:s.done?"line-through":"none" }}>{s.label}</span>
-              </div>
-            </div>
-          ))}
-        </div>
-        {/* Unlock reward banner */}
-        <div
-          role={onDealsClick ? "button" : undefined}
-          tabIndex={onDealsClick ? 0 : undefined}
-          onClick={() => onDealsClick?.()}
-          onKeyDown={(e) => {
-            if (!onDealsClick) return;
-            if (e.key === "Enter" || e.key === " ") onDealsClick();
-          }}
-          style={{ background:`linear-gradient(90deg, ${T.brand}, ${T.brandDark})`, padding:"12px 20px", display:"flex", alignItems:"center", justifyContent:"space-between", cursor:onDealsClick?"pointer":"default" }}
-        >
-          <div style={{ display:"flex", alignItems:"center", gap:8 }}>
-            <span style={{ fontSize:16 }}>🔓</span>
-            <div style={{ display:"flex", flexDirection:"column", lineHeight:1.15 }}>
-              <span style={{ fontSize:13, fontWeight:700, color:"#fff" }}>Unlock Today’s 24 Deals</span>
-              <span style={{ fontSize:11, fontWeight:600, color:"rgba(255,255,255,0.85)" }}>Updated every morning at 08:00 hrs.</span>
-            </div>
-          </div>
+      {/* CTA banner */}
+      <div style={{ marginBottom:24, borderRadius:16, overflow:"hidden", border:`1px solid ${T.brandBorder}`, background:`linear-gradient(90deg, ${T.brand}, ${T.brandDark})`, padding:"14px 20px", display:"flex", alignItems:"center", gap:10 }}>
+        <span style={{ fontSize:20 }}>🛍️</span>
+        <div style={{ display:"flex", flexDirection:"column", lineHeight:1.2 }}>
+          <span style={{ fontSize:14, fontWeight:700, color:"#fff" }}>Register to go to the deals page</span>
+          <span style={{ fontSize:11, fontWeight:500, color:"rgba(255,255,255,0.82)" }}>Live deals, updated every morning</span>
         </div>
       </div>
 
@@ -877,7 +810,7 @@ function DealsStrip({ onCtaClick, onDealClick }) {
 
         {/* Counter strip */}
         <div style={{ display: "flex", alignItems: "center", justifyContent: "center", gap: 10, marginTop: 22, fontSize: 12.5, color: "#777", fontWeight: 500 }}>
-          <span>Showing 3 of 24</span>
+          <span>Showing 3 deals</span>
           <div style={{ display: "flex", gap: 5, alignItems: "center" }}>
             <div style={{ width: 22, height: 7, borderRadius: 4, background: T.brand }} />
             <div style={{ width: 7, height: 7, borderRadius: "50%", background: "#c9ccc0" }} />
@@ -886,7 +819,7 @@ function DealsStrip({ onCtaClick, onDealClick }) {
             <div style={{ width: 7, height: 7, borderRadius: "50%", background: "#ddd", border: "1.5px dashed #bbb" }} />
             <div style={{ width: 7, height: 7, borderRadius: "50%", background: "#ddd", border: "1.5px dashed #bbb" }} />
           </div>
-          <span>21 more after invite</span>
+          <span>21 more after sign up</span>
         </div>
 
         {/* Click-to-remind toast */}
@@ -899,7 +832,7 @@ function DealsStrip({ onCtaClick, onDealClick }) {
           display: "flex", alignItems: "center", gap: 10,
         }}>
           <span style={{ fontSize: 16 }}>🔒</span>
-          Register &amp; invite 2 friends to unlock full deal details
+          Register to access full deal details
         </div>
       </div>
     </div>
@@ -987,7 +920,7 @@ function LandingPage({
               style={{ padding:"6px 14px", borderRadius:99, background:"rgba(22,163,74,0.30)", backdropFilter:"blur(10px)", border:"1px solid rgba(187,247,208,0.55)", fontSize:12, fontWeight:800, color:"#fff", cursor:"pointer", boxShadow:"0 14px 42px rgba(22,163,74,0.22)", animation:"dd24NavPulse 1.6s ease-in-out infinite", display:"flex", alignItems:"center", gap:8 }}
             >
               <span aria-hidden="true" style={{ fontSize:14, lineHeight:1 }}>🔒</span>
-              <span>Today&apos;s 24 deals</span>
+              <span>Today&apos;s deals</span>
             </div>
             <div
               role="button"
@@ -1046,7 +979,7 @@ function LandingPage({
 
             <div style={{ display:"inline-block", background:"rgba(255,255,255,0.12)", backdropFilter:"blur(10px)", border:"1px solid rgba(255,255,255,0.2)", borderRadius:14, padding:"14px 20px", marginBottom:28, maxWidth:480 }}>
               <p style={{ fontSize:15, color:"rgba(255,255,255,0.92)", lineHeight:1.75, margin:0 }}>
-                Discover the 24 best desi grocery deals across Germany — updated every day. We monitor desi grocery stores and surface the 24 best deals of the day.
+                Discover the best desi grocery deals across Germany — updated every day. We monitor desi grocery stores and surface the best deals of the day.
               </p>
             </div>
 
@@ -1088,8 +1021,8 @@ function LandingPage({
               🏪
             </div>
             <div style={{ minWidth:0 }}>
-              <div style={{ fontSize:18, fontWeight:800, color:T.textPrimary, marginBottom:4 }}>Deals from 24 stores</div>
-              <div style={{ fontSize:15, color:"#64748B", lineHeight:1.4 }}>24 live deals, curated daily</div>
+              <div style={{ fontSize:18, fontWeight:800, color:T.textPrimary, marginBottom:4 }}>Deals from top stores</div>
+              <div style={{ fontSize:15, color:"#64748B", lineHeight:1.4 }}>Live deals, curated daily</div>
             </div>
           </div>
 
@@ -1100,8 +1033,8 @@ function LandingPage({
               🔒
             </div>
             <div style={{ minWidth:0 }}>
-              <div style={{ fontSize:18, fontWeight:800, color:T.textPrimary, marginBottom:4 }}>Unlock with 2 invites</div>
-              <div style={{ fontSize:15, color:"#64748B", lineHeight:1.4 }}>Invite 2 friends · deals section opens</div>
+              <div style={{ fontSize:18, fontWeight:800, color:T.textPrimary, marginBottom:4 }}>Register for free</div>
+              <div style={{ fontSize:15, color:"#64748B", lineHeight:1.4 }}>Sign up to access today's deals</div>
             </div>
           </div>
         </div>
@@ -1338,7 +1271,7 @@ function InviteDashboard({ identity, status, onLogout, logoutLoading = false }) 
     typeof window !== "undefined"
       ? `${window.location.origin}${status?.invite_url || "/waitlist"}`
       : status?.invite_url || "/waitlist";
-  const shareCopy = `just give this a try, thank me later\ndesi grocery deals across 24 stores in germany, updated every morning\nRegister to access deals: https://desideals24.com/waitlist?ref=${status?.referral_code || ""}`;
+  const shareCopy = `just give this a try, thank me later\ndesi grocery deals from Indian stores in germany, updated every morning\nRegister to access deals: https://desideals24.com/waitlist?ref=${status?.referral_code || ""}`;
 
   const [copiedMsg, setCopiedMsg] = useState(false);
 
@@ -2271,7 +2204,7 @@ export default function WaitlistPage() {
           </button>,
         )
       ) : hasDealsAccess(status) ? (
-        (() => { window.location.replace("https://desideals24.com/24deals"); return centerPanel("Checking your access", "We're confirming that your 2 invites were tracked before we open today's 24 deals.", null, true); })()
+        (() => { window.location.replace("https://desideals24.com/24deals"); return centerPanel("Checking your access", "We're confirming that your 2 invites were tracked before we open today's deals.", null, true); })()
       ) : (
         <InviteDashboard
           identity={identity}
