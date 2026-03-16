@@ -2208,7 +2208,8 @@ export default function WaitlistPage() {
             Try again
           </button>,
         )
-      ) : hasDealsAccess(status) ? (        (() => { navigate("/24deals", { replace: true }); return centerPanel("Checking your access", "Opening today's deals.", null, true); })()
+      ) : hasDealsAccess(status) ? (
+        (() => { navigate("/24deals", { replace: true }); return centerPanel("Checking your access", "Opening today's deals.", null, true); })()
       ) : (
         <InviteDashboard
           identity={identity}
