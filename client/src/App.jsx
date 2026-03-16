@@ -3,6 +3,7 @@ import { BrowserRouter, Navigate, Route, Routes } from "react-router-dom";
 import OAuthCallbackPage from "./pages/OAuthCallbackPage";
 import WaitlistPage from "./landing/WaitlistPage";
 import Deals24Page from "./landing/Deals24Page";
+import AdminPage from "./landing/AdminPage";
 import FeedbackWidget from "./components/FeedbackWidget";
 
 export default function App() {
@@ -12,6 +13,7 @@ export default function App() {
         <Route path="/" element={<Navigate to="/waitlist" replace />} />
         <Route path="/waitlist" element={<WaitlistPage />} />
         <Route path="/24deals" element={<Deals24Page />} />
+        <Route path="/admin" element={<AdminPage />} />
         <Route
           path="/oauth/:provider/callback"
           element={<OAuthCallbackPage />}

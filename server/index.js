@@ -11,6 +11,7 @@ const db = require("./db");
 const dealsRouter = require("./routes/deals");
 const authRouter = require("./routes/auth");
 const adminRouter = require("./routes/admin");
+const adminDashboardRouter = require("./routes/admin-dashboard");
 const contactRouter = require("./routes/contact");
 const waitlistRouter = require("./routes/waitlist");
 const { productionLikeRuntime, smtpConfigured } = require("./services/email-auth");
@@ -45,6 +46,7 @@ app.use("/api/v1/deals", dealsRouter);
 app.use("/api/v1/auth", authRouter);
 app.use("/api/auth", authRouter); // compatibility for older frontend builds
 app.use("/api/v1/admin", adminRouter);
+app.use("/api/v1/admin-dashboard", adminDashboardRouter);
 app.use("/api/v1/contact", contactRouter);
 app.use("/api/v1/waitlist", waitlistRouter);
 
@@ -70,7 +72,7 @@ function sendClientApp(res) {
 
 app.use(express.static(CLIENT_DIST, { index: false }));
 app.get("/", (req, res) => res.redirect(302, "/waitlist"));
-app.get(["/waitlist", "/24deals", "/oauth/:provider/callback"], (req, res) =>
+app.get(["/waitlist", "/24deals", "/admin", "/oauth/:provider/callback"], (req, res) =>
   sendClientApp(res),
 );
 app.get("*", (req, res) => res.redirect(302, "/waitlist"));

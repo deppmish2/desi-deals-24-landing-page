@@ -252,6 +252,10 @@ export function fetchMe() {
   return authRequest("/auth/me");
 }
 
+export function fetchAdminStats() {
+  return authRequest("/admin-dashboard/stats");
+}
+
 export function updateAuthSessionUser(user) {
   const session = readAuthSession();
   if (!session) return;
