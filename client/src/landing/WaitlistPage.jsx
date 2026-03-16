@@ -1965,7 +1965,7 @@ export default function WaitlistPage() {
         if (cancelled) return;
         setAuthSession(getAuthSession());
         setLoginModalOpen(false);
-        navigate("/waitlist", { replace: true });
+        navigate("/24deals", { replace: true });
       } catch (error) {
         if (cancelled) return;
         setAuthError(
@@ -2088,7 +2088,7 @@ export default function WaitlistPage() {
     try {
       const state = createOAuthState();
       sessionStorage.setItem(`${OAUTH_STATE_STORAGE_PREFIX}google`, state);
-      sessionStorage.setItem(POST_AUTH_REDIRECT_STORAGE_KEY, "/waitlist");
+      sessionStorage.setItem(POST_AUTH_REDIRECT_STORAGE_KEY, "/24deals");
 
       const payload = await fetchOAuthAuthUrl("google", state);
       const authUrl = payload?.authUrl || payload?.url;

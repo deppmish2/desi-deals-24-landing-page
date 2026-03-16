@@ -120,38 +120,39 @@ function RefreshCountdown({ countdownLabel }) {
 
   return (
     <div
-      className="bg-white/90 backdrop-blur-md border border-slate-200 rounded-[22px] px-6 py-4 flex items-center gap-6"
+      className="bg-white/90 backdrop-blur-md border border-slate-200 rounded-[22px] px-4 sm:px-6 py-4 flex items-center gap-3 sm:gap-6 w-full sm:w-auto"
       style={{
         boxShadow:
           "0px 20px 40px rgba(15,23,42,0.10), 0px 1px 2px rgba(15,23,42,0.06)",
       }}
-      aria-label="Next refresh countdown"
+      aria-label="Deals expiry countdown"
     >
-      <div className="pl-0 pr-2">
-        <div className="text-slate-800 font-bold text-[18px] leading-[22px]">
-          New deals in
+      <div className="pr-1 sm:pr-2 shrink-0">
+        <div className="text-slate-800 font-bold text-[14px] sm:text-[18px] leading-snug">
+          Deals expire in
         </div>
       </div>
 
-      <div className="h-10 w-px bg-slate-200" aria-hidden="true" />
+      <div className="h-8 sm:h-10 w-px bg-slate-200 shrink-0" aria-hidden="true" />
 
-      <div className="flex items-center gap-6">
+      <div className="flex items-center gap-3 sm:gap-6 flex-1 justify-between sm:justify-start">
         {[
-          { label: "HOURS", value: hours },
-          { label: "MINUTES", value: minutes },
-          { label: "SECONDS", value: seconds },
+          { label: "HRS", fullLabel: "HOURS", value: hours },
+          { label: "MIN", fullLabel: "MINUTES", value: minutes },
+          { label: "SEC", fullLabel: "SECONDS", value: seconds },
         ].map((item, idx) => (
-          <div key={item.label} className="flex items-center gap-6">
+          <div key={item.label} className="flex items-center gap-3 sm:gap-6">
             <div className="text-center">
-              <div className="text-[#16a34a] font-extrabold text-[44px] leading-[44px] tracking-[-1px]">
+              <div className="text-[#16a34a] font-extrabold text-[32px] sm:text-[44px] leading-none tracking-[-1px]">
                 {item.value}
               </div>
-              <div className="text-slate-400 font-bold text-[12px] tracking-[2.2px] uppercase mt-2">
-                {item.label}
+              <div className="text-slate-400 font-bold text-[9px] sm:text-[12px] tracking-[1.5px] sm:tracking-[2.2px] uppercase mt-1 sm:mt-2">
+                <span className="sm:hidden">{item.label}</span>
+                <span className="hidden sm:inline">{item.fullLabel}</span>
               </div>
             </div>
             {idx < 2 ? (
-              <div className="text-slate-200 text-[28px] leading-[28px] font-bold -mt-4 select-none">
+              <div className="text-slate-200 text-[20px] sm:text-[28px] leading-none font-bold -mt-3 sm:-mt-4 select-none">
                 :
               </div>
             ) : null}
@@ -423,8 +424,10 @@ function Deals24Card({ deal, number, showBestBefore = true }) {
 export default function Deals24Page() {
   const navigate = useNavigate();
   const dealsRef = useRef(null);
+  const countdownRef = useRef(null);
   const [accessState, setAccessState] = useState("checking");
   const [accessError, setAccessError] = useState("");
+  const [waitlistStatus, setWaitlistStatus] = useState(null);
   const [feedbackMessage, setFeedbackMessage] = useState("");
   const [feedbackState, setFeedbackState] = useState("idle");
   const [feedbackError, setFeedbackError] = useState("");
@@ -439,7 +442,7 @@ export default function Deals24Page() {
     [clockMs],
   );
   const { deals, meta, loading, error } = useDeals({
-    enabled: accessState === "allowed",
+    enabled: accessState === "allowed" || accessState === "preview",
     limit: TODAY_COUNT,
     curated: "daily_live_pool",
     seed: dailySeed,
@@ -450,10 +453,12 @@ export default function Deals24Page() {
     return () => window.clearInterval(id);
   }, []);
 
+
   useEffect(() => {
-    // Local dev bypass — skip auth check entirely when running via Vite dev server
+    // Local dev bypass — show preview state to test the lock wall
     if (import.meta.env.DEV) {
-      setAccessState("allowed");
+      setAccessState("preview");
+      setWaitlistStatus({ confirmed_count: 1, remaining_count: 1 });
       return undefined;
     }
 
@@ -468,11 +473,13 @@ export default function Deals24Page() {
     fetchWaitlistMe()
       .then((payload) => {
         if (cancelled) return;
-        if (hasDealsMembership(payload?.data)) {
+        const status = payload?.data || null;
+        setWaitlistStatus(status);
+        if (hasDealsMembership(status)) {
           setAccessState("allowed");
-          return;
+        } else {
+          setAccessState("preview");
         }
-        navigate("/waitlist", { replace: true });
       })
       .catch((err) => {
         if (cancelled) return;
@@ -490,10 +497,19 @@ export default function Deals24Page() {
     };
   }, [navigate]);
 
+  const PREVIEW_LIMIT = 10;
+
   const shownDeals = useMemo(() => {
     const list = Array.isArray(deals) ? deals : [];
     return list.filter((deal) => deal && deal.product_url && deal.product_name);
   }, [deals]);
+
+  const visibleDeals = accessState === "preview"
+    ? shownDeals.slice(0, PREVIEW_LIMIT)
+    : shownDeals;
+  const peekDeals = accessState === "preview"
+    ? shownDeals.slice(PREVIEW_LIMIT, PREVIEW_LIMIT + 4)
+    : [];
   const curatedMeta = meta?.curated || null;
 
   async function handleFeedbackSubmit(event) {
@@ -583,6 +599,21 @@ export default function Deals24Page() {
     <div className="min-h-screen bg-[#f8f6f6]">
       <Deals24Header onLogout={async () => { await logoutUser(); window.location.replace("/waitlist"); }} />
 
+      {/* Sticky deals-refresh bar */}
+      <div className="sticky top-0 z-[9] bg-[#16a34a]">
+        <div className="max-w-[1280px] mx-auto px-6 sm:px-10 h-11 flex items-center justify-between gap-3">
+          <span className="text-white text-[12px] sm:text-[13px] font-bold leading-tight min-w-0">
+            <span className="hidden sm:inline">Today&apos;s deals expire tonight. </span>
+            24 new deals every morning.
+          </span>
+          <div className="shrink-0 flex items-center bg-white rounded-full px-3 py-1">
+            <span className="font-mono font-extrabold tabular-nums text-[13px] leading-none text-[#16a34a]">
+              {nextRefreshLabel}
+            </span>
+          </div>
+        </div>
+      </div>
+
       <section className="relative overflow-hidden">
         <div className="absolute inset-0 overflow-hidden bg-black">
           <HeroImage />
@@ -634,7 +665,7 @@ export default function Deals24Page() {
               Today&apos;s 24 Deals
             </h2>
           </div>
-          <div className="w-full lg:w-auto flex justify-end">
+          <div ref={countdownRef} className="w-full lg:w-auto flex justify-end">
             <RefreshCountdown countdownLabel={nextRefreshLabel} />
           </div>
         </div>
@@ -647,31 +678,115 @@ export default function Deals24Page() {
           ) : shownDeals.length === 0 ? (
             <p className="text-slate-600">No deals found.</p>
           ) : (
-            <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
-              {(() => {
-                const isBestBeforeValid = (yyyyMm) => {
-                  if (!yyyyMm) return false;
-                  const [y, m] = yyyyMm.split("-").map(Number);
-                  if (!y || !m) return false;
-                  const now = new Date();
-                  // Expired if year-month is before current year-month
-                  return y > now.getFullYear() || (y === now.getFullYear() && m >= now.getMonth() + 1);
-                };
-                let bestBeforeShown = 0;
-                return shownDeals.map((deal, idx) => {
-                  const canShow = isBestBeforeValid(deal?.best_before) && bestBeforeShown < 4;
-                  if (canShow) bestBeforeShown += 1;
-                  return (
-                    <Deals24Card
-                      key={deal.id || deal.product_url}
-                      deal={deal}
-                      number={idx + 1}
-                      showBestBefore={canShow}
-                    />
-                  );
-                });
-              })()}
-            </div>
+            <>
+              {/* Visible deals */}
+              <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
+                {(() => {
+                  const isBestBeforeValid = (yyyyMm) => {
+                    if (!yyyyMm) return false;
+                    const [y, m] = yyyyMm.split("-").map(Number);
+                    if (!y || !m) return false;
+                    const now = new Date();
+                    return y > now.getFullYear() || (y === now.getFullYear() && m >= now.getMonth() + 1);
+                  };
+                  let bestBeforeShown = 0;
+                  return visibleDeals.map((deal, idx) => {
+                    const canShow = isBestBeforeValid(deal?.best_before) && bestBeforeShown < 4;
+                    if (canShow) bestBeforeShown += 1;
+                    return (
+                      <Deals24Card
+                        key={deal.id || deal.product_url}
+                        deal={deal}
+                        number={idx + 1}
+                        showBestBefore={canShow}
+                      />
+                    );
+                  });
+                })()}
+              </div>
+
+              {/* Lock wall for preview users */}
+              {accessState === "preview" && (
+                <div className="relative mt-8">
+                  {/* Blurred peek at locked deals */}
+                  {peekDeals.length > 0 && (
+                    <div
+                      className="grid grid-cols-1 lg:grid-cols-2 gap-8"
+                      style={{ filter: "blur(5px)", pointerEvents: "none", userSelect: "none", opacity: 0.45 }}
+                      aria-hidden="true"
+                    >
+                      {peekDeals.map((deal, idx) => (
+                        <div key={deal.id || deal.product_url} className={idx >= 2 ? "hidden lg:block" : ""}>
+                          <Deals24Card
+                            deal={deal}
+                            number={PREVIEW_LIMIT + idx + 1}
+                            showBestBefore={false}
+                          />
+                        </div>
+                      ))}
+                    </div>
+                  )}
+
+                  {/* Gradient fade */}
+                  <div
+                    className="absolute inset-x-0 top-0 h-24 pointer-events-none"
+                    style={{ background: "linear-gradient(to bottom, #f8f6f6, transparent)" }}
+                  />
+
+                  {/* CTA card */}
+                  <div className="relative flex justify-center -mt-6">
+                    <div className="w-full max-w-lg bg-white border border-[#dcfce7] rounded-[28px] shadow-[0px_20px_60px_rgba(22,163,74,0.12),0px_2px_8px_rgba(0,0,0,0.06)] px-8 py-8 text-center">
+                      <div className="flex items-center justify-center w-14 h-14 rounded-full bg-[#f0fdf4] border border-[#dcfce7] mx-auto mb-4">
+                        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+                          <path d="M12 2C9.243 2 7 4.243 7 7v2H5a1 1 0 00-1 1v10a2 2 0 002 2h12a2 2 0 002-2V10a1 1 0 00-1-1h-2V7c0-2.757-2.243-5-5-5zm0 2a3 3 0 013 3v2H9V7a3 3 0 013-3zm0 9a2 2 0 110 4 2 2 0 010-4z" fill="#16a34a" />
+                        </svg>
+                      </div>
+
+                      <h3
+                        className="text-[#1e293b] font-black text-[24px] leading-[28px]"
+                        style={{ fontFamily: "Fraunces, serif" }}
+                      >
+                        {shownDeals.length - PREVIEW_LIMIT} more deals waiting
+                      </h3>
+                      <p className="mt-2 text-[#64748b] text-[15px] leading-6">
+                        Invite 2 friends to unlock all{" "}
+                        <span className="font-bold text-[#1e293b]">{shownDeals.length} deals</span>{" "}
+                        — free, every day.
+                      </p>
+
+                      {/* Invite progress */}
+                      {waitlistStatus && (
+                        <div className="mt-5 flex items-center justify-center gap-3">
+                          {[0, 1].map((i) => (
+                            <div
+                              key={i}
+                              className={`flex items-center gap-1.5 px-3 py-1.5 rounded-full text-[13px] font-bold border ${
+                                i < (waitlistStatus.confirmed_count || 0)
+                                  ? "bg-[#f0fdf4] border-[#86efac] text-[#16a34a]"
+                                  : "bg-slate-50 border-slate-200 text-slate-400"
+                              }`}
+                            >
+                              <span>{i < (waitlistStatus.confirmed_count || 0) ? "✓" : "○"}</span>
+                              <span>Friend {i + 1}</span>
+                            </div>
+                          ))}
+                        </div>
+                      )}
+
+                      <button
+                        type="button"
+                        onClick={() => navigate("/waitlist")}
+                        className="mt-6 w-full bg-[#16a34a] hover:bg-[#15803d] text-white font-extrabold rounded-[14px] px-6 py-4 text-[16px] leading-6 transition-colors flex items-center justify-center gap-2"
+                        style={{ boxShadow: "0px 8px 20px rgba(22,163,74,0.25)" }}
+                      >
+                        Go to my invite dashboard
+                        <ArrowSmallIcon className="text-white" />
+                      </button>
+                    </div>
+                  </div>
+                </div>
+              )}
+            </>
           )}
         </div>
 

@@ -130,6 +130,25 @@ export default function AdminPage() {
     );
   }
 
+  if (!stats?.kpis) {
+    return (
+      <div className="min-h-screen bg-slate-50 flex items-center justify-center p-6">
+        <div className="text-center">
+          <div className="text-slate-900 font-extrabold text-xl mb-2">Unexpected response</div>
+          <div className="text-slate-500 text-sm mb-6">
+            The server returned an unexpected response. Make sure the backend is running and restart it.
+          </div>
+          <button
+            onClick={() => window.location.reload()}
+            className="px-5 py-2.5 rounded-xl bg-slate-900 text-white text-sm font-bold"
+          >
+            Retry
+          </button>
+        </div>
+      </div>
+    );
+  }
+
   const { kpis, signups_by_day, invites_by_day, top_inviters, recent_signups } = stats;
 
   return (
