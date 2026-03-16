@@ -18,6 +18,12 @@ function resolveAccessSecret() {
 }
 
 module.exports = async function requireAdminAuth(req, res, next) {
+  // Bypass auth in non-production environments for local testing
+  if (process.env.NODE_ENV !== "production") {
+    req.user = { id: "local-admin", email: "local@admin" };
+    return next();
+  }
+
   const header = req.headers.authorization || "";
   const token = header.startsWith("Bearer ") ? header.slice(7) : null;
 

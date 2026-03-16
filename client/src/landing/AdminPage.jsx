@@ -82,7 +82,7 @@ export default function AdminPage() {
 
   useEffect(() => {
     const session = getAuthSession();
-    if (!session?.accessToken) {
+    if (!session?.accessToken && import.meta.env.PROD) {
       navigate("/waitlist", { replace: true });
       return;
     }
