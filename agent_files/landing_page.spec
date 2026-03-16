@@ -1,4 +1,7 @@
-Access to the 24 Deals page is gated behind Basic member status
+Access to the 12 Deals page is gated behind Basic member status
+Now user is not forced to the invite dashboard post registration rather to /24deals page and only 12 deals are shown rest are blurred. 
+As soon as user becomes a basic member, all 24 deals are displayed. and this modal should disappear.
+Update this for existing users as well
 A user reaches Basic member status by inviting 2 friends who successfully register
 The 24 Deals page must feature products from a minimum of 10 shops
 Not more than 3 deals from one shop.

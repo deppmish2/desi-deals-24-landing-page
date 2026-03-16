@@ -4,10 +4,13 @@ const { verifyJwt } = require("../utils/jwt");
 const db = require("../db");
 
 // Always-admin emails — works even before the DB row is updated
-const HARDCODED_ADMIN_EMAILS = new Set([
-  "itsjustrahul@gmail.com",
-  "deppmish2@googlemail.com",
-]);
+// Configurable via ADMIN_EMAILS env var (comma-separated)
+const HARDCODED_ADMIN_EMAILS = new Set(
+  (process.env.ADMIN_EMAILS || "itsjustrahul@gmail.com,deppmish2@googlemail.com")
+    .split(",")
+    .map((e) => e.trim().toLowerCase())
+    .filter(Boolean),
+);
 
 function resolveAccessSecret() {
   return (
