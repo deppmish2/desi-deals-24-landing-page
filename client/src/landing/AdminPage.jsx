@@ -250,6 +250,17 @@ export default function AdminPage() {
                         {u.name || u.email.split("@")[0]}
                       </div>
                       <div className="text-[11px] text-slate-400 truncate">{u.email}</div>
+                      {u.created_at && (
+                        <div className="text-[10px] text-slate-300 mt-0.5">
+                          {new Date(u.created_at).toLocaleString("en-GB", {
+                            day: "2-digit",
+                            month: "short",
+                            year: "numeric",
+                            hour: "2-digit",
+                            minute: "2-digit",
+                          })}
+                        </div>
+                      )}
                     </div>
                     <span
                       className={`shrink-0 px-2 py-0.5 rounded-full text-[10px] font-bold uppercase tracking-wide ${
