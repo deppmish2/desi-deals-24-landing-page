@@ -412,8 +412,7 @@ export default function Deals24Page() {
   const navigate = useNavigate();
   const dealsRef = useRef(null);
   const countdownRef = useRef(null);
-  const [accessState, setAccessState] = useState("checking");
-  const [accessError, setAccessError] = useState("");
+  const [accessState, setAccessState] = useState("preview");
   const [waitlistStatus, setWaitlistStatus] = useState(null);
   const [feedbackMessage, setFeedbackMessage] = useState("");
   const [feedbackState, setFeedbackState] = useState("idle");
@@ -429,7 +428,7 @@ export default function Deals24Page() {
     [clockMs],
   );
   const { deals, meta, loading, error } = useDeals({
-    enabled: accessState === "allowed" || accessState === "preview",
+    enabled: true,
     limit: TODAY_COUNT,
     curated: "daily_live_pool",
     seed: dailySeed,
@@ -442,20 +441,16 @@ export default function Deals24Page() {
 
 
   useEffect(() => {
-    // Local dev bypass — show preview state to test the lock wall
-    if (import.meta.env.DEV) {
-      setAccessState("preview");
-      setWaitlistStatus({ confirmed_count: 1, remaining_count: 1 });
-      return undefined;
-    }
-
-    let cancelled = false;
+    // Page starts in "preview" immediately — membership check runs in background
+    // and silently upgrades to "allowed" if the user is a basic/premium member.
     const session = getAuthSession();
 
     if (!session?.accessToken) {
       navigate("/waitlist", { replace: true });
       return undefined;
     }
+
+    let cancelled = false;
 
     fetchWaitlistMe()
       .then((payload) => {
@@ -464,19 +459,16 @@ export default function Deals24Page() {
         setWaitlistStatus(status);
         if (hasDealsMembership(status)) {
           setAccessState("allowed");
-        } else {
-          setAccessState("preview");
         }
+        // else: stay in "preview" — lock wall already visible
       })
       .catch((err) => {
         if (cancelled) return;
-        const message = err?.message || "Unable to verify your deals access.";
+        const message = err?.message || "";
         if (/missing access token|expired access token|invalid/i.test(message)) {
           navigate("/waitlist", { replace: true });
-          return;
         }
-        setAccessError(message);
-        setAccessState("error");
+        // On other errors, stay in preview — don't block the user
       });
 
     return () => {
@@ -543,48 +535,6 @@ export default function Deals24Page() {
     dealsRef.current?.scrollIntoView({ behavior: "smooth", block: "start" });
   }
 
-  if (accessState === "checking") {
-    return (
-      <div className="min-h-screen bg-[#f8f6f6] flex items-center justify-center px-4">
-        <div className="max-w-md w-full bg-white border border-[#e2e8f0] rounded-[24px] shadow-sm p-8 text-center">
-          <h1
-            className="text-[#1e293b] text-[30px] leading-[34px] font-black"
-            style={{ fontFamily: "Fraunces, serif" }}
-          >
-            Checking your access
-          </h1>
-          <p className="mt-3 text-[#64748b] text-[15px] leading-7">
-            Hang on — we&apos;re loading today&apos;s deals for you.
-          </p>
-        </div>
-      </div>
-    );
-  }
-
-  if (accessState === "error") {
-    return (
-      <div className="min-h-screen bg-[#f8f6f6] flex items-center justify-center px-4">
-        <div className="max-w-md w-full bg-white border border-[#e2e8f0] rounded-[24px] shadow-sm p-8 text-center">
-          <h1
-            className="text-[#1e293b] text-[30px] leading-[34px] font-black"
-            style={{ fontFamily: "Fraunces, serif" }}
-          >
-            Access check failed
-          </h1>
-          <p className="mt-3 text-[#64748b] text-[15px] leading-7">
-            {accessError}
-          </p>
-          <button
-            type="button"
-            onClick={() => navigate("/waitlist", { replace: true })}
-            className="mt-6 bg-[#16a34a] hover:bg-[#15803d] text-white font-extrabold rounded-[12px] px-6 py-3 text-[15px] leading-6 transition-colors"
-          >
-            Back to waitlist
-          </button>
-        </div>
-      </div>
-    );
-  }
 
   return (
     <div className="min-h-screen bg-[#f8f6f6]">
@@ -809,7 +759,7 @@ export default function Deals24Page() {
                             style={{ boxShadow: "0px 8px 20px rgba(22,163,74,0.25)" }}
                           >
                             <WhatsAppIcon />
-                            Share invite on WhatsApp
+                            Invite on WhatsApp
                           </a>
                         </div>
                       ) : (

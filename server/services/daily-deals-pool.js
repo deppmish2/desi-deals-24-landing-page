@@ -253,8 +253,33 @@ async function getRecentProductSignatures(db, poolDate) {
   );
 }
 
-function buildPoolEntriesFromSelection(selection) {
-  return selection.map((candidate, index) => ({
+function shuffleWithSeed(arr, seed) {
+  const out = arr.slice();
+  let s = hashSeed(String(seed));
+  for (let i = out.length - 1; i > 0; i--) {
+    s = Math.imul(s ^ (s >>> 16), 0x45d9f3b) >>> 0;
+    const j = s % (i + 1);
+    [out[i], out[j]] = [out[j], out[i]];
+  }
+  return out;
+}
+
+function separateStores(arr) {
+  // Greedy reorder: at each position pick the next item not from the same store as previous.
+  // With max 3 per store across 10+ stores this always succeeds.
+  const remaining = arr.slice();
+  const result = [];
+  while (remaining.length > 0) {
+    const lastStore = result.length > 0 ? result[result.length - 1].store_id : null;
+    const idx = remaining.findIndex((item) => item.store_id !== lastStore);
+    result.push(remaining.splice(idx === -1 ? 0 : idx, 1)[0]);
+  }
+  return result;
+}
+
+function buildPoolEntriesFromSelection(selection, poolDate) {
+  const shuffled = separateStores(shuffleWithSeed(selection, poolDate || "default"));
+  return shuffled.map((candidate, index) => ({
     pool_date: null,
     slot_index: index,
     deal_id: candidate.id,
@@ -506,7 +531,7 @@ async function ensureDailyDealsPool(db, options = {}) {
     DAILY_POOL_LIMIT,
   );
   const liveRows = await filterDeadUrls(selection.rows);
-  entries = buildPoolEntriesFromSelection(liveRows);
+  entries = buildPoolEntriesFromSelection(liveRows, poolDate);
   await persistPoolEntries(db, poolDate, entries);
 
   return {
