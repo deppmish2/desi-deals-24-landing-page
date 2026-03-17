@@ -190,7 +190,7 @@ async function fetchActiveDealRows(db) {
        WHERE d.is_active = 1
          AND lower(coalesce(d.availability, '')) = 'in_stock'
          AND (d.best_before IS NULL OR d.best_before >= strftime('%Y-%m', 'now'))
-         AND d.discount_percent IS NOT NULL AND d.discount_percent > 0`,
+         AND d.discount_percent IS NOT NULL AND d.discount_percent >= 10`,
     )
     .all();
 }

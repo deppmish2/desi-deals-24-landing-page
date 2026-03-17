@@ -27,7 +27,7 @@ db.ready.then(async () => {
 
   const deadSlots = allEntries.filter(e => {
     if (!e.is_active || e.is_active === 0) return true;
-    return !(e.discount_percent > 0);
+    return !(e.discount_percent >= 10);
   });
   console.log("Removing dead/no-discount slots:", deadSlots.length);
   for (const e of deadSlots) {
@@ -59,7 +59,7 @@ db.ready.then(async () => {
     WHERE d.is_active = 1
       AND lower(coalesce(d.availability,'')) = 'in_stock'
       AND (d.best_before IS NULL OR d.best_before >= strftime('%Y-%m','now'))
-      AND d.discount_percent IS NOT NULL AND d.discount_percent > 0
+      AND d.discount_percent IS NOT NULL AND d.discount_percent >= 10
       AND d.id NOT IN (SELECT deal_id FROM daily_deal_pool_entries WHERE pool_date = ? AND deal_id IS NOT NULL)
     ORDER BY d.last_pool_used_at ASC NULLS FIRST
     LIMIT 3000
