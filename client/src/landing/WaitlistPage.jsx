@@ -2189,27 +2189,8 @@ export default function WaitlistPage() {
           authError={authError}
           authLoading={authLoading}
         />
-      ) : statusLoading ? (
-        centerPanel(
-          "Checking your unlock",
-          "We're loading your waitlist status and confirming whether your deals section is already unlocked.",
-          undefined,
-          true,
-        )
-      ) : statusError ? (
-        centerPanel(
-          "Unable to load waitlist",
-          statusError,
-          <button
-            type="button"
-            onClick={() => setReloadKey((value) => value + 1)}
-            style={{ width:"100%", border:"none", borderRadius:12, padding:"12px 14px", fontWeight:800, cursor:"pointer", background:T.brand, color:"#fff" }}
-          >
-            Try again
-          </button>,
-        )
       ) : (
-        (() => { navigate("/24deals", { replace: true }); return centerPanel("Checking your access", "Opening today's deals.", null, true); })()
+        (() => { navigate("/24deals", { replace: true }); return null; })()
       )}
     </>
   );

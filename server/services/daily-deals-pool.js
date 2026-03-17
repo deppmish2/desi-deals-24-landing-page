@@ -530,8 +530,7 @@ async function ensureDailyDealsPool(db, options = {}) {
     previousProducts,
     DAILY_POOL_LIMIT,
   );
-  const liveRows = await filterDeadUrls(selection.rows);
-  entries = buildPoolEntriesFromSelection(liveRows, poolDate);
+  entries = buildPoolEntriesFromSelection(selection.rows, poolDate);
   await persistPoolEntries(db, poolDate, entries);
 
   return {
