@@ -16,7 +16,7 @@ const {
 } = require("../services/user-store");
 
 const router = express.Router();
-const INVITES_NEEDED = 2;
+const INVITES_NEEDED = 1;
 
 function getCurrentUser(userId) {
   return findUserByIdOrCache(db, userId);

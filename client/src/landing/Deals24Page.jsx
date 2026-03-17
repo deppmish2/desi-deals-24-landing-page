@@ -757,7 +757,7 @@ export default function Deals24Page() {
                         {shownDeals.length - PREVIEW_LIMIT} more deals waiting
                       </h3>
                       <p className="mt-2 text-[#64748b] text-[15px] leading-6">
-                        Invite 2 friends to unlock all{" "}
+                        Invite 1 friend to unlock all{" "}
                         <span className="font-bold text-[#1e293b]">{shownDeals.length} deals</span>{" "}
                         — free, every day.
                       </p>
@@ -765,7 +765,7 @@ export default function Deals24Page() {
                       {/* Invite progress */}
                       {waitlistStatus && (
                         <div className="mt-5 flex items-center justify-center gap-3">
-                          {[0, 1].map((i) => (
+                          {[0].map((i) => (
                             <div
                               key={i}
                               className={`flex items-center gap-1.5 px-3 py-1.5 rounded-full text-[13px] font-bold border ${
@@ -813,7 +813,7 @@ export default function Deals24Page() {
                           </a>
                         </div>
                       ) : (
-                        <p className="mt-6 text-[13px] text-[#64748b]">Invite 2 friends using your unique link to unlock all deals.</p>
+                        <p className="mt-6 text-[13px] text-[#64748b]">Invite 1 friend using your unique link to unlock all deals.</p>
                       )}
                     </div>
                   </div>

@@ -16,7 +16,7 @@ const {
 const DAILY_POOL_LIMIT = 24;
 const DAILY_POOL_MIN_STORES = 10;
 const DAILY_POOL_MAX_PER_STORE = 3;
-const DAILY_POOL_REPEAT_WINDOW_DAYS = 10;
+const DAILY_POOL_REPEAT_WINDOW_DAYS = 7;
 const DAILY_POOL_CATEGORY_RATIO = 0.8;
 const REFRESH_TIME_ZONE = BERLIN_TIME_ZONE;
 const REFRESH_HOUR = 7;
@@ -227,7 +227,10 @@ function buildEligibleCandidates(rows, poolDate) {
     }
   }
 
-  return Array.from(bestByStoreProduct.values()).sort(compareCandidateRank);
+  // Sort by day-seeded random rank so pool order varies daily, not by discount
+  return Array.from(bestByStoreProduct.values()).sort(
+    (a, b) => Number(a.seed_rank || 0) - Number(b.seed_rank || 0),
+  );
 }
 
 async function getRecentProductSignatures(db, poolDate) {
