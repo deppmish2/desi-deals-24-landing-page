@@ -44,7 +44,7 @@ const T = {
 };
 
 // ─── Constants ────────────────────────────────────────────────────────────────
-const INVITES_NEEDED = 2;
+const INVITES_NEEDED = 1;
 const HERO_IMAGE_URL = "/landing/24deals-hero.jpg";
 const HERO_IMAGE_MOBILE_URL = "/landing/24deals-hero-mobile.jpg";
 const HERO_IMAGE_WEBP_URL = "/landing/24deals-hero.webp";
@@ -1347,10 +1347,10 @@ function InviteDashboard({ identity, status, onLogout, logoutLoading = false }) 
             🔒 Deals locked · {remaining} registration{remaining === 1 ? "" : "s"} needed
           </div>
           <h1 style={{ fontFamily:"'Fraunces',Georgia,serif", fontSize:"clamp(26px,4vw,40px)", fontWeight:900, letterSpacing:-1.5, margin:"0 0 10px", lineHeight:1.1, color:T.textPrimary }}>
-            You're in, <span style={{ color:T.brand }}>{displayName || "friend"}</span>.<br />Now invite 2 friends. 🚀
+            You're in, <span style={{ color:T.brand }}>{displayName || "friend"}</span>.<br />Now invite 1 friend. 🚀
           </h1>
           <p style={{ color:T.textSecondary, fontSize:15, maxWidth:560 }}>
-            The moment <strong style={{ color:T.textPrimary }}>2 friends register</strong> from your invite link, the deals section unlocks automatically.
+            The moment <strong style={{ color:T.textPrimary }}>1 friend registers</strong> from your invite link, the deals section unlocks automatically.
           </p>
         </div>
 
@@ -1406,7 +1406,7 @@ function InviteDashboard({ identity, status, onLogout, logoutLoading = false }) 
               <h2 style={{ fontFamily:"'Fraunces',Georgia,serif", fontSize:20, fontWeight:800, letterSpacing:-0.5, color:T.textPrimary, margin:0 }}>Invite {remaining} more friend{remaining === 1 ? "" : "s"}</h2>
             </div>
             <p style={{ fontSize:13, color:T.textSecondary, marginBottom:20, lineHeight:1.7 }}>
-              Share your invite link. Once 2 friends sign up through it, your deals section unlocks automatically.
+              Share your invite link. Once 1 friend signs up through it, your deals section unlocks automatically.
             </p>
 
             <div style={{ marginBottom:16 }}>
@@ -1706,7 +1706,7 @@ function DealsUnlocked({ identity, status }) {
           <span style={{ fontSize:28 }}>🎉</span>
           <div style={{ textAlign:"center" }}>
             <div style={{ fontFamily:"'Fraunces',Georgia,serif", fontSize:18, fontWeight:900, color:"#fff", letterSpacing:-0.5 }}>Deals unlocked, {displayName}!</div>
-            <div style={{ fontSize:13, color:T.brandMid }}>2 friends registered · your deals section is now live</div>
+            <div style={{ fontSize:13, color:T.brandMid }}>1 friend registered · your deals section is now live</div>
           </div>
           <span style={{ fontSize:28 }}>🎉</span>
         </div>

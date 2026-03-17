@@ -29,7 +29,7 @@ const T = {
 };
 
 // ─── Constants ────────────────────────────────────────────────────────────────
-const INVITES_NEEDED = 2;
+const INVITES_NEEDED = 1;
 
 const ALL_DEALS = [
   { store:"Jamoona",       product:"Aashirvaad Atta 5kg",     was:"€13.49", now:"€9.99",  off:"26%", emoji:"🌾", tag:"Best price" },
@@ -160,7 +160,7 @@ function AuthCard({ onAuthChoice, glass=false }) {
         <div style={{ display:"inline-flex", alignItems:"center", justifyContent:"center", width:52, height:52, borderRadius:16, background:T.brandLight, border:`1px solid ${T.brandMid}`, fontSize:26, marginBottom:14 }}>🛒</div>
         <h2 style={{ fontFamily:"'Fraunces',Georgia,serif", fontSize:21, fontWeight:900, letterSpacing:-0.8, color:T.textPrimary, marginBottom:8 }}>Start saving today</h2>
         <p style={{ fontSize:13, color:T.textSecondary, lineHeight:1.72, maxWidth:260, margin:"0 auto" }}>
-          Sign up free. Invite <strong style={{ color:T.textPrimary }}>2 friends</strong> who register and your full deals section unlocks — instantly.
+          Sign up free. Invite <strong style={{ color:T.textPrimary }}>1 friend</strong> who register and your full deals section unlocks — instantly.
         </p>
       </div>
 
@@ -170,7 +170,7 @@ function AuthCard({ onAuthChoice, glass=false }) {
         <div style={{ padding:"16px 20px 0" }}>
           {[
             { n:1, label:"Sign up with Google", done:false },
-            { n:2, label:"Invite 2 friends",    done:false },
+            { n:2, label:"Invite 1 friend",    done:false },
             { n:3, label:"They register",       done:false },
           ].map((s,i,arr)=>(
             <div key={i} style={{ display:"flex", alignItems:"flex-start", gap:12, paddingBottom: i<arr.length-1?0:16 }}>
@@ -217,7 +217,7 @@ function DealsStrip() {
             <div style={{ width:8, height:8, borderRadius:"50%", background:T.brand, boxShadow:`0 0 6px ${T.brand}` }} />
             <span style={{ fontSize:12, color:T.textMuted, fontWeight:600, letterSpacing:0.6, textTransform:"uppercase" }}>Live deals across 27 stores · refreshed every 24h</span>
           </div>
-          <span style={{ fontSize:12, color:T.brand, fontWeight:600 }}>200+ deals unlock after 2 invites →</span>
+          <span style={{ fontSize:12, color:T.brand, fontWeight:600 }}>200+ deals unlock after 1 invite →</span>
         </div>
         <div style={{ display:"flex", gap:12, overflowX:"auto", paddingBottom:4, position:"relative" }}>
           {ALL_DEALS.slice(0,5).map((d,i) => (
@@ -238,7 +238,7 @@ function DealsStrip() {
           ))}
           {/* Lock overlay on last visible cards */}
           <div style={{ position:"absolute", right:0, top:0, bottom:4, width:220, background:`linear-gradient(90deg,transparent,${T.bgCard})`, display:"flex", alignItems:"center", justifyContent:"flex-end", paddingRight:8, pointerEvents:"none" }}>
-            <div style={{ fontSize:11, color:T.textMuted, fontWeight:600, textAlign:"center", lineHeight:1.6 }}>🔒<br/>Invite 2 friends<br/>to unlock all</div>
+            <div style={{ fontSize:11, color:T.textMuted, fontWeight:600, textAlign:"center", lineHeight:1.6 }}>🔒<br/>Invite 1 friend<br/>to unlock all</div>
           </div>
         </div>
       </div>
@@ -271,7 +271,7 @@ function LandingPage({ onAuthChoice }) {
         <nav style={{ position:"relative", zIndex:10, padding:"20px 48px", display:"flex", alignItems:"center", justifyContent:"space-between", maxWidth:1280, margin:"0 auto", width:"100%" }}>
           <Logo light />
           <div style={{ display:"flex", alignItems:"center", gap:10 }}>
-            <div style={{ padding:"5px 14px", borderRadius:99, background:"rgba(255,255,255,0.15)", backdropFilter:"blur(8px)", border:"1px solid rgba(255,255,255,0.3)", fontSize:12, fontWeight:600, color:"#fff" }}>🔓 Free access via 2 invites</div>
+            <div style={{ padding:"5px 14px", borderRadius:99, background:"rgba(255,255,255,0.15)", backdropFilter:"blur(8px)", border:"1px solid rgba(255,255,255,0.3)", fontSize:12, fontWeight:600, color:"#fff" }}>🔓 Free access via 1 invite</div>
             <div style={{ padding:"5px 14px", borderRadius:99, background:"rgba(255,255,255,0.10)", backdropFilter:"blur(8px)", border:"1px solid rgba(255,255,255,0.22)", fontSize:12, color:"rgba(255,255,255,0.85)" }}>🇩🇪 Germany</div>
           </div>
         </nav>
@@ -323,7 +323,7 @@ function LandingPage({ onAuthChoice }) {
         <div style={{ maxWidth:1200, margin:"0 auto", padding:"20px 48px", display:"flex", justifyContent:"center" }}>
           {[
             { icon:"🏪", title:"Deals from 27 stores",    sub:"Every live deal, aggregated daily" },
-            { icon:"🔓", title:"Unlock with 2 invites",  sub:"Invite 2 friends · deals section opens" },
+            { icon:"🔓", title:"Unlock with 1 invite",  sub:"Invite 1 friend · deals section opens" },
           ].map((v,i,arr)=>(
             <div key={i} style={{ flex:1, display:"flex", alignItems:"center", gap:14, padding:"0 28px", borderRight:i<arr.length-1?`1px solid ${T.border}`:"none" }}>
               <span style={{ fontSize:26, flexShrink:0 }}>{v.icon}</span>
@@ -546,10 +546,10 @@ function InviteDashboard({ identity, confirmedCount, pendingInvites, onSimulateJ
             <>
               <div style={{ display:"inline-flex", alignItems:"center", gap:8, padding:"5px 14px", borderRadius:99, background:T.amberLight, border:`1px solid ${T.amberBorder}`, fontSize:12, fontWeight:600, color:T.amber, marginBottom:14 }}>🔒 Deals locked · 2 registrations needed</div>
               <h1 style={{ fontFamily:"'Fraunces',Georgia,serif", fontSize:"clamp(26px,4vw,40px)", fontWeight:900, letterSpacing:-1.5, margin:"0 0 10px", lineHeight:1.1, color:T.textPrimary }}>
-                You're in, <span style={{ color:T.brand }}>{displayName}</span>.<br />Now invite 2 friends. 🚀
+                You're in, <span style={{ color:T.brand }}>{displayName}</span>.<br />Now invite 1 friend. 🚀
               </h1>
               <p style={{ color:T.textSecondary, fontSize:15, maxWidth:560 }}>
-                Your deals section is currently locked. The moment <strong style={{ color:T.textPrimary }}>2 friends register</strong> using your link, it unlocks instantly.
+                Your deals section is currently locked. The moment <strong style={{ color:T.textPrimary }}>1 friend register</strong> using your link, it unlocks instantly.
               </p>
             </>
           ) : (
@@ -753,7 +753,7 @@ function DealsUnlocked({ identity }) {
           <span style={{ fontSize:28 }}>🎉</span>
           <div style={{ textAlign:"center" }}>
             <div style={{ fontFamily:"'Fraunces',Georgia,serif", fontSize:18, fontWeight:900, color:"#fff", letterSpacing:-0.5 }}>Deals unlocked, {displayName}!</div>
-            <div style={{ fontSize:13, color:T.brandMid }}>2 friends registered · your full deals section is now live</div>
+            <div style={{ fontSize:13, color:T.brandMid }}>1 friend registered · your full deals section is now live</div>
           </div>
           <span style={{ fontSize:28 }}>🎉</span>
         </div>
