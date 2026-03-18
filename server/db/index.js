@@ -238,6 +238,13 @@ const ready = (async () => {
     } catch (_) {}
   }
 
+  // Seed display member count (starts at 4347, incremented on each signup)
+  try {
+    await db.execute(
+      `INSERT OR IGNORE INTO app_settings (key, value) VALUES ('display_member_count', '4347')`,
+    );
+  } catch (_) {}
+
   // Seed admin status for known admin accounts (configurable via ADMIN_EMAILS env var)
   const adminEmails = (process.env.ADMIN_EMAILS || "itsjustrahul@gmail.com,deppmish2@googlemail.com")
     .split(",")

@@ -15,6 +15,7 @@ const adminDashboardRouter = require("./routes/admin-dashboard");
 const contactRouter = require("./routes/contact");
 const waitlistRouter = require("./routes/waitlist");
 const { productionLikeRuntime, smtpConfigured } = require("./services/email-auth");
+const { getDisplayMemberCount } = require("./services/member-count");
 const { startScheduler } = require("../crawler/scheduler");
 const isServerless = Boolean(process.env.VERCEL);
 
@@ -49,6 +50,15 @@ app.use("/api/v1/admin", adminRouter);
 app.use("/api/v1/admin-dashboard", adminDashboardRouter);
 app.use("/api/v1/contact", contactRouter);
 app.use("/api/v1/waitlist", waitlistRouter);
+
+app.get("/api/v1/member-count", async (_req, res) => {
+  try {
+    const count = await getDisplayMemberCount();
+    res.json({ count });
+  } catch {
+    res.json({ count: 4347 });
+  }
+});
 
 // ── Serve React Frontend (production) ────────────────────────────────────────
 const CLIENT_DIST = path.join(__dirname, "../client/dist");

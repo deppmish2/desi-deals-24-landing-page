@@ -857,6 +857,14 @@ function LandingPage({
   const dealsSectionRef = useRef(null);
   const pulseTimeoutRef = useRef(null);
   const [pulseGoogle, setPulseGoogle] = useState(false);
+  const [memberCount, setMemberCount] = useState(4347);
+
+  useEffect(() => {
+    fetch("/api/v1/member-count")
+      .then((r) => r.json())
+      .then((d) => { if (d?.count > 0) setMemberCount(d.count); })
+      .catch(() => {});
+  }, []);
 
   const focusStartSaving = () => {
     startSavingRef.current?.scrollIntoView({ behavior: "smooth", block: "center" });
@@ -1004,7 +1012,7 @@ function LandingPage({
                 }}
                 style={{ background:"rgba(255,255,255,0.15)", backdropFilter:"blur(8px)", borderRadius:99, padding:"7px 16px", border:"1px solid rgba(255,255,255,0.25)", cursor:"pointer" }}
               >
-                <span style={{ fontSize:13, color:"#fff", fontWeight:700 }}>4,247</span>
+                <span style={{ fontSize:13, color:"#fff", fontWeight:700 }}>{memberCount.toLocaleString("en-US")}</span>
                 <span style={{ fontSize:13, color:"rgba(255,255,255,0.8)" }}> members already in</span>
               </div>
             </div>

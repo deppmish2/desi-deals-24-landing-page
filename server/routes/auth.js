@@ -14,6 +14,7 @@ const {
   revokeAllUserSessions,
 } = require("../services/session-store");
 const { trackEvent } = require("../services/event-tracker");
+const { incrementDisplayMemberCount } = require("../services/member-count");
 const {
   findUserByIdOrCache,
   findUserByEmailOrCache,
@@ -321,6 +322,7 @@ async function insertGoogleUser({ profile, postcode }) {
     now,
   );
 
+  incrementDisplayMemberCount().catch(() => {});
   return await db.prepare("SELECT * FROM users WHERE id = ? LIMIT 1").get(id);
 }
 
@@ -444,6 +446,7 @@ async function insertFacebookUser({ profile, postcode }) {
     now,
   );
 
+  incrementDisplayMemberCount().catch(() => {});
   return await db.prepare("SELECT * FROM users WHERE id = ? LIMIT 1").get(id);
 }
 
@@ -672,6 +675,7 @@ async function insertEmailLinkUser(email, verifiedAt) {
     now,
   );
 
+  incrementDisplayMemberCount().catch(() => {});
   return await db.prepare("SELECT * FROM users WHERE id = ? LIMIT 1").get(id);
 }
 
@@ -934,6 +938,7 @@ router.post("/register", async (req, res) => {
       has_postcode: Boolean(stored.postcode),
     },
   });
+  incrementDisplayMemberCount().catch(() => {});
   res.status(201).json(await buildAuthResponse(stored));
 });
 

@@ -267,6 +267,13 @@ CREATE TABLE IF NOT EXISTS events (
   created_at    DATETIME DEFAULT CURRENT_TIMESTAMP
 );
 
+-- Generic key-value settings store
+CREATE TABLE IF NOT EXISTS app_settings (
+  key        TEXT PRIMARY KEY,
+  value      TEXT NOT NULL,
+  updated_at DATETIME DEFAULT CURRENT_TIMESTAMP
+);
+
 -- Indexes
 CREATE INDEX IF NOT EXISTS idx_deals_store_id   ON deals(store_id);
 CREATE INDEX IF NOT EXISTS idx_deals_name       ON deals(product_name);
