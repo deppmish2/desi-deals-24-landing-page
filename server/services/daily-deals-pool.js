@@ -18,6 +18,7 @@ const DAILY_POOL_MIN_STORES = 10;
 const DAILY_POOL_MAX_PER_STORE = 3;
 const DAILY_POOL_REPEAT_WINDOW_DAYS = 7;
 const DAILY_POOL_CATEGORY_RATIO = 0.8;
+const DAILY_POOL_MIN_DISCOUNT = Number(process.env.DAILY_POOL_MIN_DISCOUNT_PCT || 20);
 const REFRESH_TIME_ZONE = BERLIN_TIME_ZONE;
 const REFRESH_HOUR = 7;
 
@@ -190,7 +191,7 @@ async function fetchActiveDealRows(db) {
        WHERE d.is_active = 1
          AND lower(coalesce(d.availability, '')) = 'in_stock'
          AND (d.best_before IS NULL OR d.best_before >= strftime('%Y-%m', 'now'))
-         AND d.discount_percent IS NOT NULL AND d.discount_percent >= 10`,
+         AND d.discount_percent IS NOT NULL AND d.discount_percent >= ${DAILY_POOL_MIN_DISCOUNT}`,
     )
     .all();
 }
