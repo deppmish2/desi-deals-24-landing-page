@@ -17,8 +17,8 @@
       "includeFiles": "server/**/*"
     },
     "api/cron.js": {
-      "maxDuration": 300,
-      "includeFiles": "server/db/schema.sql"
+      "maxDuration": 60,
+      "includeFiles": "server/**/*"
     }
   }
 }
