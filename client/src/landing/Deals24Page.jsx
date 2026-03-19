@@ -615,15 +615,25 @@ export default function Deals24Page() {
           {loading ? (
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
               {Array.from({ length: 12 }).map((_, i) => (
-                <div key={i} className="rounded-2xl border border-slate-100 bg-white overflow-hidden animate-pulse">
-                  <div className="bg-slate-100 h-48 w-full" />
-                  <div className="p-4 space-y-3">
-                    <div className="h-3 bg-slate-100 rounded w-1/3" />
-                    <div className="h-4 bg-slate-100 rounded w-5/6" />
-                    <div className="h-4 bg-slate-100 rounded w-4/6" />
-                    <div className="flex justify-between items-center pt-2">
-                      <div className="h-6 bg-slate-100 rounded w-1/4" />
-                      <div className="h-8 bg-slate-100 rounded-xl w-1/3" />
+                <div key={i} className="deal-card">
+                  {/* Image placeholder */}
+                  <div className="skeleton-shimmer h-48 w-full" />
+                  <div className="p-4 flex flex-col gap-3">
+                    {/* Store + category badge */}
+                    <div className="flex items-center gap-2">
+                      <div className="skeleton-shimmer h-3 w-16 rounded-full" />
+                      <div className="skeleton-shimmer h-3 w-20 rounded-full" />
+                    </div>
+                    {/* Product name */}
+                    <div className="skeleton-shimmer h-4 w-full rounded" />
+                    <div className="skeleton-shimmer h-4 w-4/5 rounded" />
+                    {/* Price + button row */}
+                    <div className="flex items-center justify-between mt-1">
+                      <div className="flex items-baseline gap-2">
+                        <div className="skeleton-shimmer h-6 w-14 rounded" />
+                        <div className="skeleton-shimmer h-4 w-10 rounded" />
+                      </div>
+                      <div className="skeleton-shimmer h-9 w-28 rounded-lg" />
                     </div>
                   </div>
                 </div>
