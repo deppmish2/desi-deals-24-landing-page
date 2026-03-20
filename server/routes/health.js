@@ -16,7 +16,6 @@ const requireAuth = require("../middleware/auth");
 const { isCrawlLocked } = require("../../crawler/utils/snapshot");
 const { getCurrentPoolDate } = require("../services/daily-deals-pool");
 const { latestJobRun } = require("../services/job-runs");
-const { kvConfigured } = require("../services/pool-kv-cache");
 
 const router = Router();
 
@@ -87,9 +86,6 @@ async function gatherHealthData() {
     },
     deals: {
       active_count: activeDeals,
-    },
-    cache: {
-      kv_configured: kvConfigured(),
     },
   };
 }

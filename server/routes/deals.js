@@ -11,13 +11,12 @@ const {
   getCurrentPoolDate,
   getDailyDealsPool,
 } = require("../services/daily-deals-pool");
-const { getPoolFromKv, setPoolInKv } = require("../services/pool-kv-cache");
 
 const router = express.Router();
 
 // In-memory pool cache — safe because the daily pool is fixed until midnight Berlin.
-// On warm serverless instances this eliminates all DB round-trips.
-// TTL: 5 minutes (refreshed by crawl → KV invalidation on new data).
+// On warm instances this trims repeated Turso reads, while Turso remains the only
+// persistent backing store.
 const MEM_CACHE_TTL_MS = 5 * 60 * 1000;
 const _memCache = new Map(); // key → { pool, expiresAt }
 
@@ -100,20 +99,17 @@ router.get("/", async (req, res, next) => {
     const curatedSeed = String(req.query.seed || "").trim() || getCurrentPoolDate();
     const isToday = curatedSeed === getCurrentPoolDate();
 
-    // ── Cache fast path (memory → KV → DB) ───────────────────────────────────
+    // ── Cache fast path (memory → Turso) ─────────────────────────────────────
     // Memory: sub-millisecond, survives within same warm serverless instance.
-    // KV:     sub-5ms, survives across instances (Vercel edge network).
-    // DB:     ~150-400ms, always correct, used as fallback.
+    // Turso:  persistent source of truth for fixed daily pools.
     let pool = null;
-    let kvHit = false;
+    let cacheHit = false;
     if (pageNum === 1 && isToday) {
       pool = getMemCache(curatedSeed);
       if (!pool) {
-        pool = await getPoolFromKv(curatedSeed);
-        if (pool) {
-          kvHit = true;
-          setMemCache(curatedSeed, pool); // warm memory from KV
-        }
+        cacheHit = false;
+      } else {
+        cacheHit = true;
       }
     }
 
@@ -154,16 +150,13 @@ router.get("/", async (req, res, next) => {
         crawling: Number(localCrawlingRow?.cnt || 0) > 0 || globalCrawling,
       };
 
-      // Populate memory + KV so subsequent requests are instant.
+      // Populate memory so subsequent warm-instance requests are instant.
       if (isToday && pool.rows.length > 0) {
         setMemCache(curatedSeed, pool);
-        setPoolInKv(curatedSeed, pool).catch((err) =>
-          console.warn("[deals] KV write failed (non-fatal):", err.message),
-        );
       }
     }
 
-    // On KV hit the meta extension wasn't fetched — do it now (single parallel batch).
+    // On memory hit the meta extension wasn't fetched — do it now.
     if (!pool._meta_ext) {
       const [lastCrawlRow, activeStoresRow, localCrawlingRow, globalCrawling] =
         await Promise.all([
@@ -221,7 +214,7 @@ router.get("/", async (req, res, next) => {
         page: pageNum,
         limit: limitNum,
         curated_mode: "daily_live_pool",
-        cache: kvHit ? "kv_hit" : "db_miss",
+        cache: cacheHit ? "memory_hit" : "db_read",
       },
     });
   } catch (error) {

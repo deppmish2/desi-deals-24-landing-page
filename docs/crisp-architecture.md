@@ -77,20 +77,20 @@ The lock mechanism in `crawler/utils/snapshot.js` prevents double-runs within a 
 │                                                                     │
 │  Turso (libSQL) — persistent source of truth                       │
 │    ├── deals (active/inactive, deduped by product_url)             │
-│    ├── crawl_runs (audit log)                                       │
+│    ├── crawl_runs (audit log)                                      │
 │    └── daily_deal_pool_entries (precomputed, per-date)             │
 │                                                                     │
-│  Vercel Edge Config / KV — ultra-low-latency cache                 │
-│    └── today_pool:{date} → JSON blob (24 deals, TTL = midnight)    │
+│  Warm-instance memory cache                                         │
+│    └── short-lived in-process cache for repeated reads             │
 └────────────────────────────────────────────────────────────────────┘
 
 ┌────────────────────────────────────────────────────────────────────┐
 │ API / DELIVERY LAYER (Vercel Serverless + Edge)                    │
 │                                                                     │
 │  GET /api/v1/deals                                                  │
-│    1. Read from Edge KV cache (< 5 ms, no cold start)             │
-│    2. Cache hit → return immediately (CDN-level)                   │
-│    3. Cache miss → read from Turso → populate KV → return         │
+│    1. Read from warm-instance memory cache when available          │
+│    2. Otherwise read fixed pool from Turso                        │
+│    3. Return CDN-cacheable response                               │
 │                                                                     │
 │  Vercel Edge Cache headers on /api/v1/deals:                       │
 │    Cache-Control: s-maxage=300, stale-while-revalidate=3600        │
@@ -121,9 +121,9 @@ The lock mechanism in `crawler/utils/snapshot.js` prevents double-runs within a 
 | **Crawl trigger** | GitHub Actions (external repo) | GitHub Actions (this repo, `.github/workflows/daily-pipeline.yml`) | Same tool, but owned here. Visible, auditable, alertable. |
 | **Crawl runtime** | Vercel function (60 s limit workaround) | GitHub Actions runner (no time limit) | No workarounds needed. 21 stores × ~5 s = ~2 min, well within limits. |
 | **DB** | Turso | Turso (keep) | Already good. libSQL, edge replicas, fast reads. |
-| **Pool cache** | None (DB query on every request) | Vercel KV (Redis-compatible, Edge network) | Eliminates Turso round-trip on hot path. Sub-5ms reads from edge. |
+| **Pool cache** | None (DB query on every request) | Warm-instance memory cache only | Keeps infra simple while Turso remains the only persistent store. |
 | **API cache** | None | Vercel Edge Cache (`Cache-Control` headers) | Free CDN caching. Serves millions of requests without hitting function. |
-| **Cold start mitigation** | None | Edge caching + KV | Cold starts only affect cache-miss path (rare). |
+| **Cold start mitigation** | None | Edge caching + precomputed Turso reads | Removes live crawl work from requests and keeps the read path deterministic. |
 | **Monitoring** | None | UptimeRobot (free) + email/Slack alerts via existing `alert-notifier.js` | No new infra needed. Wire up existing code. |
 | **Crawl pool builder** | Vercel Cron 3× daily | Step in GitHub Actions workflow (after crawl job) | Sequential, reliable, no separate cron needed. |
 
@@ -145,22 +145,22 @@ Vercel CDN Edge
    ▼
 Vercel Serverless Function: GET /api/v1/deals
    │
-   ├─ Check Vercel KV for key "pool:{date}"
-   │    HIT → return JSON (< 5 ms), set CDN cache headers
+   ├─ Check warm-instance memory cache for today's pool
+   │    HIT → return JSON, set CDN cache headers
    │
-   └─ MISS (rare: pool not yet built for today)
+   └─ MISS
         │
         ▼
       Turso DB — query daily_deal_pool_entries for today
         │
         ▼
-      Populate KV cache (TTL = seconds until midnight Berlin)
+      Warm in-process memory cache
         │
         ▼
       Return response + CDN cache headers
 ```
 
-Cold starts only affect the KV-miss path. Once KV is warm (populated after morning crawl), all requests are served from CDN or KV — no DB round-trip, no cold-start sensitivity.
+Cold starts only affect the first read path after inactivity. Because the pool is precomputed, requests never wait on a live crawl.
 
 ### 4.2 Crawl Flow
 
@@ -185,11 +185,7 @@ GitHub Actions: .github/workflows/daily-pipeline.yml
       ├── Run ensureDailyDealsPool() for today
       └── Log pool size + store count
 
-    Step 4: node scripts/invalidate-kv-cache.js
-      └── DELETE Vercel KV key "pool:{today}"
-          (forces next API request to re-read from DB → re-populate KV)
-
-    Step 5: Notify on failure
+    Step 4: Notify on failure
       └── If any step fails → POST to Slack webhook / send email via alert-notifier.js
 
   Job: verify-pool (runs after crawl, even on failure)
@@ -226,14 +222,9 @@ GitHub Actions: .github/workflows/daily-pipeline.yml
 
 ### 5.4 DB unavailability (Turso outage)
 
-- KV cache serves existing pool without DB access for TTL duration.
-- If KV also misses (rare), function returns 503 with `Retry-After: 60`.
+- CDN may still serve cached responses briefly.
+- Once that expires, function returns 503 with `Retry-After: 60`.
 - Do NOT serve empty array — always serve last known data or clear error.
-
-### 5.5 KV cache unavailability
-
-- API falls back to direct Turso query (current behavior).
-- No user impact beyond slightly higher latency.
 
 ---
 
@@ -261,8 +252,7 @@ Extend to return:
     "min_discount": 0.22,
     "stores_represented": 12
   },
-  "db_latency_ms": 12,
-  "cache_hit": true
+  "db_latency_ms": 12
 }
 ```
 
@@ -307,29 +297,15 @@ Extend to return:
 
 ---
 
-### Phase 2 — Add Vercel KV cache (1 day)
+### Phase 2 — Tighten the Turso read path (1 day)
 
-1. Enable Vercel KV in project dashboard (free tier: 30 MB, enough for 365 days of pool blobs)
-2. Install `@vercel/kv`: `npm install @vercel/kv`
-3. In `server/routes/deals.js`, wrap the pool fetch:
-   ```js
-   const kv = require('@vercel/kv');
-   const cacheKey = `pool:${poolDate}`;
+1. Keep `GET /api/v1/deals` fully precomputed:
+   - no crawl work in requests
+   - fixed daily pool only
+2. Keep short-lived in-memory cache for repeated warm-instance reads.
+3. Keep `Cache-Control: public, s-maxage=300, stale-while-revalidate=3600` on `/api/v1/deals`.
 
-   let pool = await kv.get(cacheKey);
-   if (!pool) {
-     pool = await getDailyDealsPool(db, { poolDate });
-     const ttl = secondsUntilMidnightBerlin();
-     await kv.set(cacheKey, pool, { ex: ttl });
-   }
-   ```
-4. Add `Cache-Control: public, s-maxage=300, stale-while-revalidate=3600` response header on `/api/v1/deals`
-5. Add KV invalidation step to crawl workflow (after pool builder runs):
-   ```bash
-   node scripts/invalidate-kv-cache.js
-   ```
-
-**Success criteria:** Second request to `/api/v1/deals` is served from KV (< 10 ms). Vercel dashboard shows CDN cache hit rate > 80%.
+**Success criteria:** After inactivity, first request reads only Turso + fixed pool, and subsequent warm-instance reads are faster.
 
 ---
 
@@ -409,7 +385,7 @@ Track `stores.last_crawled_at` per store. Only re-crawl stores whose last crawl 
 If the pool ever grows to 100+ items, stream the response using Node.js streams or `res.write()` to reduce time-to-first-byte.
 
 ### 8.4 Edge Function for `/api/v1/deals`
-Convert to a Vercel Edge Function (runs on V8 isolates, no cold start at all). Reads directly from Vercel KV at the edge. Sub-10ms globally. Requires removing Node.js-only APIs from the hot path.
+Convert to a Vercel Edge Function later if needed. This would require removing Node.js-only APIs from the hot path.
 
 ### 8.5 Stale pool as permanent fallback
 If today's pool cannot be built (e.g., all stores down), serve yesterday's pool with a `X-Pool-Date: yesterday` header. Frontend can show a banner: "Deals last updated yesterday."

@@ -11,7 +11,6 @@ const {
   getCurrentPoolDate,
 } = require("../server/services/daily-deals-pool");
 const { getBerlinHour, formatBerlinDateKey } = require("../server/services/berlin-time");
-const { deletePoolFromKv } = require("../server/services/pool-kv-cache");
 const { verifyPoolQuality } = require("./verify-pool");
 
 function forcedJob() {
@@ -33,19 +32,6 @@ function shouldRunPool(berlinHour) {
     force === "verify" ||
     berlinHour >= 7
   );
-}
-
-async function invalidateTodayPoolCache(poolDate) {
-  try {
-    const deleted = await deletePoolFromKv(poolDate);
-    console.log(
-      deleted
-        ? `[schedule] Invalidated KV cache for ${poolDate}.`
-        : `[schedule] KV cache not present for ${poolDate}.`,
-    );
-  } catch (error) {
-    console.warn("[schedule] KV invalidation failed:", error.message);
-  }
 }
 
 async function main() {
@@ -78,7 +64,6 @@ async function main() {
       const pool = await ensureDailyDealsPool(db, {
         poolDate: getCurrentPoolDate(),
       });
-      await invalidateTodayPoolCache(pool.poolDate);
       const verifyResult = await verifyPoolQuality({
         triggerType: "github_actions_cron",
         poolDate: pool.poolDate,
