@@ -16,6 +16,8 @@
  *    immediately after each crawl so the next request reads fresh DB data.
  */
 
+const fetch = require("node-fetch");
+
 const { BERLIN_TIME_ZONE, getZonedParts } = require("./berlin-time");
 
 const KV_PREFIX = "pool";
@@ -27,15 +29,25 @@ function kvConfigured() {
   );
 }
 
-/** Lazy-load @vercel/kv to avoid hard dependency when not configured. */
-function getKvClient() {
+async function runKvPipeline(commands) {
   if (!kvConfigured()) return null;
-  try {
-    // eslint-disable-next-line global-require
-    return require("@vercel/kv");
-  } catch {
-    return null;
+
+  const res = await fetch(`${process.env.KV_REST_API_URL}/pipeline`, {
+    method: "POST",
+    headers: {
+      Authorization: `Bearer ${process.env.KV_REST_API_TOKEN}`,
+      "Content-Type": "application/json",
+    },
+    body: JSON.stringify(commands),
+    timeout: 10000,
+  });
+
+  if (!res.ok) {
+    const text = await res.text().catch(() => "");
+    throw new Error(`KV REST failed (${res.status}): ${text}`);
   }
+
+  return res.json();
 }
 
 /**
@@ -46,18 +58,6 @@ function secondsUntilBerlinMidnight() {
   const now = new Date();
   const parts = getZonedParts(now, BERLIN_TIME_ZONE);
 
-  // Build midnight UTC for the *next* Berlin day
-  const msPerDay = 24 * 60 * 60 * 1000;
-  const todayBerlinNoon = Date.UTC(
-    parts.year,
-    parts.month - 1,
-    parts.day,
-    12,
-    0,
-    0,
-  );
-  // Tomorrow midnight Berlin = today noon Berlin + half-day + offset correction.
-  // Simpler: just compute 24:00 - currentBerlinTime in seconds.
   const elapsedSecondsToday =
     parts.hour * 3600 + parts.minute * 60 + parts.second;
   const secondsInDay = 24 * 3600;
@@ -75,14 +75,13 @@ function cacheKey(poolDate) {
  * Returns the parsed pool object, or null on miss / error / unconfigured.
  */
 async function getPoolFromKv(poolDate) {
-  const kv = getKvClient();
-  if (!kv) return null;
+  if (!kvConfigured()) return null;
 
   try {
-    const value = await kv.get(cacheKey(poolDate));
+    const response = await runKvPipeline([["GET", cacheKey(poolDate)]]);
+    const value = response?.[0]?.result;
     if (!value) return null;
-    // @vercel/kv auto-parses JSON
-    return value;
+    return JSON.parse(value);
   } catch (err) {
     console.warn("[pool-kv-cache] get failed (non-fatal):", err.message);
     return null;
@@ -94,12 +93,13 @@ async function getPoolFromKv(poolDate) {
  * Fire-and-forget — callers should not await unless they need confirmation.
  */
 async function setPoolInKv(poolDate, pool) {
-  const kv = getKvClient();
-  if (!kv) return;
+  if (!kvConfigured()) return;
 
   try {
     const ttl = secondsUntilBerlinMidnight();
-    await kv.set(cacheKey(poolDate), pool, { ex: ttl });
+    await runKvPipeline([
+      ["SET", cacheKey(poolDate), JSON.stringify(pool), "EX", String(ttl)],
+    ]);
     console.log(
       `[pool-kv-cache] Cached pool:${poolDate} (TTL ${ttl}s)`,
     );
@@ -112,13 +112,13 @@ async function setPoolInKv(poolDate, pool) {
  * Delete a pool entry from KV (called by invalidation script after crawl).
  */
 async function deletePoolFromKv(poolDate) {
-  const kv = getKvClient();
-  if (!kv) return false;
+  if (!kvConfigured()) return false;
 
   try {
-    await kv.del(cacheKey(poolDate));
+    const response = await runKvPipeline([["DEL", cacheKey(poolDate)]]);
+    const deleted = Number(response?.[0]?.result || 0);
     console.log(`[pool-kv-cache] Invalidated pool:${poolDate}`);
-    return true;
+    return deleted > 0;
   } catch (err) {
     console.warn("[pool-kv-cache] delete failed:", err.message);
     return false;
