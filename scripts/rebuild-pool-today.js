@@ -2,19 +2,39 @@
 /**
  * Remove dead pool entries (is_active=0) and refill to 24 with active deals.
  * Max 3 per store, prefers stores with fewest current slots.
+ *
+ * Flags:
+ *   --force   Wipe today's pool entirely and rebuild from scratch via ensureDailyDealsPool.
+ *             Use after a full crawl to start with a clean slate.
  */
 require("dotenv").config();
 require("dotenv").config({ path: ".env.local", override: true });
 const crypto = require("crypto");
 const db = require("../server/db");
-const { getDailyDealsPool, getCurrentPoolDate } = require("../server/services/daily-deals-pool");
+const {
+  getDailyDealsPool,
+  ensureDailyDealsPool,
+  getCurrentPoolDate,
+} = require("../server/services/daily-deals-pool");
 
 const MAX_PER_STORE = 3;
 const TARGET = 24;
 const MIN_DISCOUNT = Number(process.env.DAILY_POOL_MIN_DISCOUNT_PCT || 20);
+const FORCE_REBUILD = process.argv.includes("--force");
 
 db.ready.then(async () => {
   const poolDate = getCurrentPoolDate();
+
+  // --force: nuke the existing pool and regenerate clean via standard builder
+  if (FORCE_REBUILD) {
+    console.log(`[rebuild-pool] --force: deleting pool for ${poolDate} and rebuilding...`);
+    await db.prepare(
+      `DELETE FROM daily_deal_pool_entries WHERE pool_date = ?`,
+    ).run(poolDate);
+    const pool = await ensureDailyDealsPool(db, { poolDate, allowGenerate: true });
+    console.log(`[rebuild-pool] Done. Pool size: ${pool.entries.length}`);
+    process.exit(0);
+  }
   const now = new Date().toISOString();
 
   // 1. Remove pool entries whose deal is inactive or has no discount

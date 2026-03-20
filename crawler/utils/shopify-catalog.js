@@ -1,6 +1,6 @@
 "use strict";
 
-const fetch = require("node-fetch");
+const { fetchWithRetry } = require("./fetch-with-retry");
 const { isFullCatalogEnabled } = require("./crawl-scope");
 
 function dedupe(values) {
@@ -9,10 +9,11 @@ function dedupe(values) {
 
 async function discoverCollectionHandles({ storeId, storeUrl, ua }) {
   try {
-    const res = await fetch(`${storeUrl}/collections.json?limit=250`, {
-      headers: { "User-Agent": ua },
-      timeout: 30000,
-    });
+    const res = await fetchWithRetry(
+      `${storeUrl}/collections.json?limit=250`,
+      { headers: { "User-Agent": ua }, timeout: 30000 },
+      { label: `[${storeId}] collections.json` },
+    );
 
     if (!res.ok) {
       console.warn(
@@ -41,10 +42,11 @@ async function fetchCollectionProducts({ storeId, storeUrl, ua, handle }) {
 
   while (true) {
     const url = `${storeUrl}/collections/${handle}/products.json?limit=250&page=${page}`;
-    const res = await fetch(url, {
-      headers: { "User-Agent": ua },
-      timeout: 30000,
-    });
+    const res = await fetchWithRetry(
+      url,
+      { headers: { "User-Agent": ua }, timeout: 30000 },
+      { label: `[${storeId}] ${handle} p${page}` },
+    );
 
     if (!res.ok) {
       if (page === 1) {

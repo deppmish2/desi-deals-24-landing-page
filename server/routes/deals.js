@@ -11,8 +11,28 @@ const {
   getCurrentPoolDate,
   getDailyDealsPool,
 } = require("../services/daily-deals-pool");
+const { getPoolFromKv, setPoolInKv } = require("../services/pool-kv-cache");
 
 const router = express.Router();
+
+// In-memory pool cache — safe because the daily pool is fixed until midnight Berlin.
+// On warm serverless instances this eliminates all DB round-trips.
+// TTL: 5 minutes (refreshed by crawl → KV invalidation on new data).
+const MEM_CACHE_TTL_MS = 5 * 60 * 1000;
+const _memCache = new Map(); // key → { pool, expiresAt }
+
+function getMemCache(key) {
+  const entry = _memCache.get(key);
+  if (!entry || Date.now() > entry.expiresAt) {
+    _memCache.delete(key);
+    return null;
+  }
+  return entry.pool;
+}
+
+function setMemCache(key, pool) {
+  _memCache.set(key, { pool, expiresAt: Date.now() + MEM_CACHE_TTL_MS });
+}
 
 function seedFallbackAllowed() {
   return !String(process.env.TURSO_DATABASE_URL || "").trim();
@@ -54,56 +74,21 @@ function serializeDeal(row) {
 }
 
 async function ensureDealsAvailable() {
+  // In Turso/Vercel mode the seed fallback can never fire — skip the round-trip.
+  if (!seedFallbackAllowed()) return;
   const activeCount = Number(
     (await db
       .prepare("SELECT COUNT(*) AS cnt FROM deals WHERE is_active = 1")
       .get())?.cnt || 0,
   );
-  if (activeCount > 0) return;
-  if (!seedFallbackAllowed()) return;
-  await restoreDealsFromSeed(db);
-}
-
-async function buildMeta(curatedSeed, curatedMeta) {
-  const lastCrawl = await db
-    .prepare(
-      `SELECT finished_at
-       FROM crawl_runs
-       WHERE status = 'completed'
-       ORDER BY finished_at DESC
-       LIMIT 1`,
-    )
-    .get();
-
-  const activeStores = Number(
-    (await db
-      .prepare(`SELECT COUNT(*) AS cnt FROM stores WHERE crawl_status = 'active'`)
-      .get())?.cnt || 0,
-  );
-
-  const localCrawling = Number(
-    (await db
-      .prepare(`SELECT COUNT(*) AS cnt FROM crawl_runs WHERE status = 'running'`)
-      .get())?.cnt || 0,
-  ) > 0;
-  const globalCrawling = await isCrawlLocked(db).catch(() => false);
-
-  return {
-    last_crawl: lastCrawl?.finished_at || null,
-    active_stores: activeStores,
-    crawling: localCrawling || globalCrawling,
-    curated: {
-      mode: "daily_live_pool",
-      seed: curatedSeed,
-      ...curatedMeta,
-    },
-  };
+  if (activeCount === 0) await restoreDealsFromSeed(db);
 }
 
 router.get("/", async (req, res, next) => {
   const startedAt = Date.now();
 
   try {
+    // Only needed in local SQLite mode — no-op in Turso/Vercel.
     await ensureDealsAvailable();
 
     const pageNum = Math.max(1, parseInt(req.query.page || "1", 10) || 1);
@@ -113,14 +98,100 @@ router.get("/", async (req, res, next) => {
     );
     const offset = (pageNum - 1) * limitNum;
     const curatedSeed = String(req.query.seed || "").trim() || getCurrentPoolDate();
+    const isToday = curatedSeed === getCurrentPoolDate();
 
-    const pool = await getDailyDealsPool(db, {
-      poolDate: curatedSeed,
-      limit: DAILY_POOL_LIMIT,
-      allowGenerate: !fixedPoolReadOnlyRuntime(),
-    });
+    // ── Cache fast path (memory → KV → DB) ───────────────────────────────────
+    // Memory: sub-millisecond, survives within same warm serverless instance.
+    // KV:     sub-5ms, survives across instances (Vercel edge network).
+    // DB:     ~150-400ms, always correct, used as fallback.
+    let pool = null;
+    let kvHit = false;
+    if (pageNum === 1 && isToday) {
+      pool = getMemCache(curatedSeed);
+      if (!pool) {
+        pool = await getPoolFromKv(curatedSeed);
+        if (pool) {
+          kvHit = true;
+          setMemCache(curatedSeed, pool); // warm memory from KV
+        }
+      }
+    }
+
+    // ── DB path — pool + meta queries fire in parallel ────────────────────────
+    // Previously: pool fetch → 4 sequential meta queries = ~600ms wasted waiting.
+    // Now: all 5 DB operations run concurrently, total latency = slowest single query.
+    if (!pool) {
+      const [
+        freshPool,
+        lastCrawlRow,
+        activeStoresRow,
+        localCrawlingRow,
+        globalCrawling,
+      ] = await Promise.all([
+        getDailyDealsPool(db, {
+          poolDate: curatedSeed,
+          limit: DAILY_POOL_LIMIT,
+          allowGenerate: !fixedPoolReadOnlyRuntime(),
+        }),
+        db.prepare(
+          `SELECT finished_at FROM crawl_runs
+           WHERE status = 'completed'
+           ORDER BY finished_at DESC LIMIT 1`,
+        ).get(),
+        db.prepare(
+          `SELECT COUNT(*) AS cnt FROM stores WHERE crawl_status = 'active'`,
+        ).get(),
+        db.prepare(
+          `SELECT COUNT(*) AS cnt FROM crawl_runs WHERE status = 'running'`,
+        ).get(),
+        isCrawlLocked(db).catch(() => false),
+      ]);
+
+      pool = freshPool;
+      pool._meta_ext = {
+        last_crawl: lastCrawlRow?.finished_at || null,
+        active_stores: Number(activeStoresRow?.cnt || 0),
+        crawling: Number(localCrawlingRow?.cnt || 0) > 0 || globalCrawling,
+      };
+
+      // Populate memory + KV so subsequent requests are instant.
+      if (isToday && pool.rows.length > 0) {
+        setMemCache(curatedSeed, pool);
+        setPoolInKv(curatedSeed, pool).catch((err) =>
+          console.warn("[deals] KV write failed (non-fatal):", err.message),
+        );
+      }
+    }
+
+    // On KV hit the meta extension wasn't fetched — do it now (single parallel batch).
+    if (!pool._meta_ext) {
+      const [lastCrawlRow, activeStoresRow, localCrawlingRow, globalCrawling] =
+        await Promise.all([
+          db.prepare(
+            `SELECT finished_at FROM crawl_runs
+             WHERE status = 'completed'
+             ORDER BY finished_at DESC LIMIT 1`,
+          ).get(),
+          db.prepare(
+            `SELECT COUNT(*) AS cnt FROM stores WHERE crawl_status = 'active'`,
+          ).get(),
+          db.prepare(
+            `SELECT COUNT(*) AS cnt FROM crawl_runs WHERE status = 'running'`,
+          ).get(),
+          isCrawlLocked(db).catch(() => false),
+        ]);
+      pool._meta_ext = {
+        last_crawl: lastCrawlRow?.finished_at || null,
+        active_stores: Number(activeStoresRow?.cnt || 0),
+        crawling: Number(localCrawlingRow?.cnt || 0) > 0 || globalCrawling,
+      };
+    }
+
     const pageRows = pool.rows.slice(offset, offset + limitNum);
     const data = pageRows.map(serializeDeal);
+
+    // CDN caches for 5 min; serves stale up to 1h while revalidating.
+    res.set("Cache-Control", "public, s-maxage=300, stale-while-revalidate=3600");
 
     res.json({
       data,
@@ -130,7 +201,16 @@ router.get("/", async (req, res, next) => {
         total: pool.rows.length,
         total_pages: Math.max(1, Math.ceil(pool.rows.length / limitNum)),
       },
-      meta: await buildMeta(curatedSeed, pool.meta),
+      meta: {
+        last_crawl: pool._meta_ext.last_crawl,
+        active_stores: pool._meta_ext.active_stores,
+        crawling: pool._meta_ext.crawling,
+        curated: {
+          mode: "daily_live_pool",
+          seed: curatedSeed,
+          ...pool.meta,
+        },
+      },
     });
 
     trackEvent(db, "browse.deals24", {
@@ -141,6 +221,7 @@ router.get("/", async (req, res, next) => {
         page: pageNum,
         limit: limitNum,
         curated_mode: "daily_live_pool",
+        cache: kvHit ? "kv_hit" : "db_miss",
       },
     });
   } catch (error) {

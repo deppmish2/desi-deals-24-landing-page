@@ -1,6 +1,6 @@
 "use strict";
 
-const fetch = require("node-fetch");
+const { fetchWithRetry } = require("./fetch-with-retry");
 const cheerio = require("cheerio");
 const { isFullCatalogEnabled } = require("./crawl-scope");
 
@@ -35,13 +35,17 @@ async function discoverLinksByPatterns({
 
   for (const seed of seeds) {
     try {
-      const res = await fetch(seed, {
-        headers: {
-          "User-Agent": ua,
-          Accept: "text/html,application/xhtml+xml",
+      const res = await fetchWithRetry(
+        seed,
+        {
+          headers: {
+            "User-Agent": ua,
+            Accept: "text/html,application/xhtml+xml",
+          },
+          timeout: 30000,
         },
-        timeout: 30000,
-      });
+        { label: `[${storeId}] link-discovery ${seed}` },
+      );
       if (!res.ok) continue;
 
       const html = await res.text();
