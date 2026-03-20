@@ -250,6 +250,12 @@ export default function AdminPage() {
                         {u.name || u.email.split("@")[0]}
                       </div>
                       <div className="text-[11px] text-slate-400 truncate">{u.email}</div>
+                      {u.invited_by && (
+                        <div className="text-[10px] text-slate-400 mt-0.5 truncate">
+                          <span className="text-slate-300">invited by </span>
+                          <span className="font-medium">{u.invited_by.name}</span>
+                        </div>
+                      )}
                       {u.created_at && (
                         <div className="text-[10px] text-slate-300 mt-0.5">
                           {new Date(u.created_at).toLocaleString("en-GB", {

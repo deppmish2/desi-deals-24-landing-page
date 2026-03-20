@@ -47,9 +47,14 @@ router.get("/stats", async (req, res) => {
         LIMIT 10
       `).all(),
       db.prepare(`
-        SELECT email, first_name, name, created_at, waitlist_unlocked_at
-        FROM users
-        ORDER BY created_at DESC
+        SELECT u.email, u.first_name, u.name, u.created_at, u.waitlist_unlocked_at,
+               inv.email      AS inviter_email,
+               inv.first_name AS inviter_first_name,
+               inv.name       AS inviter_name
+        FROM users u
+        LEFT JOIN waitlist_referrals wr ON wr.invited_user_id = u.id
+        LEFT JOIN users inv             ON inv.id = wr.inviter_user_id
+        ORDER BY u.created_at DESC
         LIMIT 20
       `).all(),
     ]);
@@ -83,6 +88,12 @@ router.get("/stats", async (req, res) => {
         name: r.first_name || r.name || null,
         created_at: r.created_at,
         unlocked: !!r.waitlist_unlocked_at,
+        invited_by: r.inviter_email
+          ? {
+              email: r.inviter_email,
+              name: r.inviter_first_name || r.inviter_name || r.inviter_email.split("@")[0],
+            }
+          : null,
       })),
     });
   } catch (err) {
