@@ -11,6 +11,7 @@ const {
   getCurrentPoolDate,
   getDailyDealsPool,
 } = require("../services/daily-deals-pool");
+const { getPoolFromKv, setPoolInKv } = require("../services/pool-kv-cache");
 
 const router = express.Router();
 
@@ -114,13 +115,38 @@ router.get("/", async (req, res, next) => {
     const offset = (pageNum - 1) * limitNum;
     const curatedSeed = String(req.query.seed || "").trim() || getCurrentPoolDate();
 
-    const pool = await getDailyDealsPool(db, {
-      poolDate: curatedSeed,
-      limit: DAILY_POOL_LIMIT,
-      allowGenerate: !fixedPoolReadOnlyRuntime(),
-    });
+    // Serve today's pool from KV when available — eliminates Turso round-trip
+    // and cold-start sensitivity on the hot path.
+    let pool;
+    let kvHit = false;
+    if (pageNum === 1 && curatedSeed === getCurrentPoolDate()) {
+      pool = await getPoolFromKv(curatedSeed);
+      if (pool) kvHit = true;
+    }
+
+    if (!pool) {
+      pool = await getDailyDealsPool(db, {
+        poolDate: curatedSeed,
+        limit: DAILY_POOL_LIMIT,
+        allowGenerate: !fixedPoolReadOnlyRuntime(),
+      });
+      // Populate KV on the first cache miss (today's pool only)
+      if (curatedSeed === getCurrentPoolDate() && pool.rows.length > 0) {
+        setPoolInKv(curatedSeed, pool).catch((err) =>
+          console.warn("[deals] KV write failed (non-fatal):", err.message),
+        );
+      }
+    }
+
     const pageRows = pool.rows.slice(offset, offset + limitNum);
     const data = pageRows.map(serializeDeal);
+
+    // Cache-Control: CDN may cache for 5 min; serve stale up to 1h while
+    // revalidating in the background. Balances freshness with cold-start avoidance.
+    res.set(
+      "Cache-Control",
+      "public, s-maxage=300, stale-while-revalidate=3600",
+    );
 
     res.json({
       data,
@@ -141,6 +167,7 @@ router.get("/", async (req, res, next) => {
         page: pageNum,
         limit: limitNum,
         curated_mode: "daily_live_pool",
+        cache: kvHit ? "kv_hit" : "db_miss",
       },
     });
   } catch (error) {

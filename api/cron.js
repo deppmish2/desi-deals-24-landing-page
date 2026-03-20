@@ -1,9 +1,17 @@
 "use strict";
 
 /**
- * Vercel Cron — daily pool refresh (equivalent to scripts/rebuild-pool-today.js).
- * Runs the same logic regardless of hour — idempotent guard prevents double-runs.
- * Crawl is handled separately (GitHub Actions) due to Hobby's 60s function limit.
+ * Vercel Cron — safety-net pool refresh.
+ *
+ * Runs once daily at 08:00 UTC (09:00 Berlin) as a catch-up in case the
+ * primary GitHub Actions crawl workflow was delayed or missed.
+ *
+ * This cron does NOT run the crawler — crawling is handled exclusively by
+ * GitHub Actions (.github/workflows/crawl.yml) which has no 60s time limit.
+ * This cron only rebuilds the deal pool from whatever data is already in the DB.
+ *
+ * The idempotent guard (existingCount >= TARGET) means this is a no-op on
+ * days when GH Actions already built the pool successfully.
  */
 
 const db = require("../server/db");

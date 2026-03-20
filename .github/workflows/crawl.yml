@@ -1,0 +1,87 @@
+name: Daily Crawl
+
+# Runs at 05:00 UTC = 06:00 CET (winter) / 07:00 CEST (summer).
+# Pool builder runs after crawl completes in the same job.
+# A second safety-net run at 07:00 UTC catches DST edge cases.
+on:
+  schedule:
+    - cron: "0 5 * * *"   # primary run
+    - cron: "0 7 * * *"   # safety-net fallback
+  workflow_dispatch:        # allow manual trigger from GitHub UI
+    inputs:
+      force_pool_rebuild:
+        description: "Delete and rebuild today's pool even if it already exists"
+        required: false
+        default: "false"
+
+concurrency:
+  group: daily-crawl
+  cancel-in-progress: false   # never cancel a running crawl mid-way
+
+jobs:
+  crawl:
+    name: Crawl stores + build pool
+    runs-on: ubuntu-latest
+    timeout-minutes: 45       # 21 stores × ~5 s + overhead — well under limit
+
+    env:
+      NODE_ENV: production
+      TURSO_DATABASE_URL: ${{ secrets.TURSO_DATABASE_URL }}
+      TURSO_AUTH_TOKEN: ${{ secrets.TURSO_AUTH_TOKEN }}
+      ADMIN_SECRET: ${{ secrets.ADMIN_SECRET }}
+      CRON_SECRET: ${{ secrets.CRON_SECRET }}
+      DAILY_POOL_MIN_DISCOUNT_PCT: ${{ vars.DAILY_POOL_MIN_DISCOUNT_PCT || '20' }}
+      SLACK_WEBHOOK_URL: ${{ secrets.SLACK_WEBHOOK_URL }}
+      ALERT_EMAIL_TO: ${{ vars.ALERT_EMAIL_TO }}
+      REQUEST_DELAY_MIN_MS: "1500"
+      REQUEST_DELAY_MAX_MS: "4000"
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+          cache: "npm"
+
+      - name: Install dependencies
+        run: npm ci --omit=dev
+
+      # ── Step 1: Run the crawler ─────────────────────────────────────────────
+      - name: Run crawler
+        id: crawl
+        run: node crawler/index.js
+        timeout-minutes: 35
+
+      # ── Step 2: Rebuild daily pool ──────────────────────────────────────────
+      - name: Rebuild daily pool
+        id: pool
+        run: node scripts/rebuild-pool-today.js ${{ github.event.inputs.force_pool_rebuild == 'true' && '--force' || '' }}
+        timeout-minutes: 5
+
+      # ── Step 3: Verify pool meets minimum quality bar ───────────────────────
+      - name: Verify pool
+        id: verify
+        run: node scripts/verify-pool.js
+        timeout-minutes: 2
+
+      # ── Step 4: Invalidate KV cache so next API request reads fresh data ────
+      - name: Invalidate KV cache
+        if: success()
+        env:
+          KV_REST_API_URL: ${{ secrets.KV_REST_API_URL }}
+          KV_REST_API_TOKEN: ${{ secrets.KV_REST_API_TOKEN }}
+        run: node scripts/invalidate-kv-cache.js
+        timeout-minutes: 2
+        continue-on-error: true   # KV is not yet wired — don't block on this
+
+      # ── Failure notification (runs even if earlier steps fail) ──────────────
+      - name: Notify on failure
+        if: failure()
+        env:
+          FAILED_STEP: ${{ steps.crawl.outcome == 'failure' && 'crawl' || steps.pool.outcome == 'failure' && 'pool_build' || steps.verify.outcome == 'failure' && 'pool_verify' || 'unknown' }}
+          RUN_URL: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
+        run: node scripts/ops-notify.js
+        continue-on-error: true   # notification must never block the workflow result
