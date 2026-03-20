@@ -548,16 +548,20 @@ async function getDailyDealsPool(db, options = {}) {
     Math.min(DAILY_POOL_LIMIT, Number(options.limit) || DAILY_POOL_LIMIT),
   );
 
-  const ensured = await ensureDailyDealsPool(db, {
-    poolDate: requestedPoolDate,
-    allowGenerate: options.allowGenerate,
-  });
+  // In the happy path (pool already exists) ensureDailyDealsPool only reads
+  // pool entries and never touches active deals — so both queries can run in
+  // parallel, saving one full Turso round-trip on every request.
+  const [ensured, activeRows] = await Promise.all([
+    ensureDailyDealsPool(db, {
+      poolDate: requestedPoolDate,
+      allowGenerate: options.allowGenerate,
+    }),
+    fetchActiveDealRows(db),
+  ]);
+
   const poolDate = ensured.poolDate;
   const entries = ensured.entries;
-  const currentCandidates = buildEligibleCandidates(
-    await fetchActiveDealRows(db),
-    poolDate,
-  );
+  const currentCandidates = buildEligibleCandidates(activeRows, poolDate);
   const rows = materializePoolRows(entries, currentCandidates).slice(0, limit);
   const summary = buildPoolSummary(entries);
 
