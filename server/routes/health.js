@@ -15,6 +15,7 @@ const db = require("../db");
 const requireAuth = require("../middleware/auth");
 const { isCrawlLocked } = require("../../crawler/utils/snapshot");
 const { getCurrentPoolDate } = require("../services/daily-deals-pool");
+const { latestJobRun } = require("../services/job-runs");
 const { kvConfigured } = require("../services/pool-kv-cache");
 
 const router = Router();
@@ -120,19 +121,29 @@ router.get("/detail", requireAuth, async (_req, res) => {
   try {
     const data = await gatherHealthData();
 
-    // Fetch last 7 crawl runs for trend visibility
-    const recentRuns = await db.prepare(
-      `SELECT id, started_at, finished_at, status,
-              stores_attempted, stores_succeeded, deals_found,
-              json(errors) AS errors
-       FROM crawl_runs
-       ORDER BY started_at DESC
-       LIMIT 7`,
-    ).all();
+    const [recentRuns, latestCrawlJob, latestPoolJob, latestVerifyJob] =
+      await Promise.all([
+        db.prepare(
+          `SELECT id, started_at, finished_at, status,
+                  stores_attempted, stores_succeeded, deals_found,
+                  json(errors) AS errors
+           FROM crawl_runs
+           ORDER BY started_at DESC
+           LIMIT 7`,
+        ).all(),
+        latestJobRun(db, "full_crawl"),
+        latestJobRun(db, "daily_pool_refresh"),
+        latestJobRun(db, "daily_pool_verify"),
+      ]);
 
     res.set("Cache-Control", "no-store");
     res.json({
       ...data,
+      jobs: {
+        full_crawl: latestCrawlJob,
+        daily_pool_refresh: latestPoolJob,
+        daily_pool_verify: latestVerifyJob,
+      },
       recent_crawl_runs: recentRuns.map((run) => ({
         id: run.id,
         started_at: run.started_at,

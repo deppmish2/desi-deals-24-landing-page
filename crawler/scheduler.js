@@ -16,7 +16,7 @@ function startScheduler(db) {
     async () => {
       console.log("[scheduler] Starting 06:00 Europe/Berlin crawl...");
       try {
-        await runCrawl(db);
+        await runCrawl(db, { triggerType: "local_scheduler" });
       } catch (error) {
         console.error("[scheduler] Crawl error:", error.message);
       }
@@ -51,7 +51,7 @@ function startScheduler(db) {
   if (process.env.CRAWL_ON_STARTUP === "true") {
     console.log("[scheduler] Running startup crawl...");
     setTimeout(() => {
-      runCrawl(db).catch((error) =>
+      runCrawl(db, { triggerType: "startup" }).catch((error) =>
         console.error("[scheduler] Startup crawl error:", error.message),
       );
     }, 2000);

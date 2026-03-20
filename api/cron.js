@@ -1,17 +1,10 @@
 "use strict";
 
 /**
- * Vercel Cron — safety-net pool refresh.
+ * Manual / fallback pool refresh endpoint.
  *
- * Runs once daily at 08:00 UTC (09:00 Berlin) as a catch-up in case the
- * primary GitHub Actions crawl workflow was delayed or missed.
- *
- * This cron does NOT run the crawler — crawling is handled exclusively by
- * GitHub Actions (.github/workflows/crawl.yml) which has no 60s time limit.
- * This cron only rebuilds the deal pool from whatever data is already in the DB.
- *
- * The idempotent guard (existingCount >= TARGET) means this is a no-op on
- * days when GH Actions already built the pool successfully.
+ * The primary production scheduler lives in `.github/workflows/daily-pipeline.yml`.
+ * This handler remains available for manual recovery or one-off fallback runs.
  */
 
 const db = require("../server/db");
@@ -20,6 +13,10 @@ const {
   getCurrentPoolDate,
 } = require("../server/services/daily-deals-pool");
 const { formatBerlinDateKey, getBerlinHour } = require("../server/services/berlin-time");
+const {
+  finishJobRun,
+  startJobRun,
+} = require("../server/services/job-runs");
 
 const MIN_DISCOUNT = Number(process.env.DAILY_POOL_MIN_DISCOUNT_PCT || 20);
 const TARGET = 24;
@@ -36,8 +33,13 @@ module.exports = async (req, res) => {
     return res.status(401).end();
   }
 
+  await db.ready;
+  const jobRun = await startJobRun(db, {
+    jobName: "daily_pool_refresh",
+    triggerType: "vercel_cron",
+  });
+
   try {
-    await db.ready;
     const now = new Date();
     const berlinDate = formatBerlinDateKey(now);
     const berlinHour = getBerlinHour(now);
@@ -45,6 +47,15 @@ module.exports = async (req, res) => {
     // Idempotent: skip if today's pool is already fully generated
     const existingCount = await getPoolCountForDate(berlinDate);
     if (existingCount >= TARGET) {
+      await finishJobRun(db, jobRun, {
+        status: "skipped",
+        itemCount: existingCount,
+        details: {
+          berlin_date: berlinDate,
+          berlin_hour: berlinHour,
+          reason: "already_generated",
+        },
+      });
       return res.json({
         ok: true,
         berlin_date: berlinDate,
@@ -56,6 +67,20 @@ module.exports = async (req, res) => {
     // Remove any existing incomplete/bad entries for today and regenerate fresh
     await db.prepare(`DELETE FROM daily_deal_pool_entries WHERE pool_date = ?`).run(berlinDate);
     const pool = await ensureDailyDealsPool(db, { poolDate: berlinDate });
+    const warningCount = pool.entries.length < TARGET ? 1 : 0;
+
+    await finishJobRun(db, jobRun, {
+      status: warningCount > 0 ? "completed_with_warnings" : "completed",
+      itemCount: pool.entries.length,
+      warningCount,
+      details: {
+        berlin_date: berlinDate,
+        berlin_hour: berlinHour,
+        min_discount_pct: MIN_DISCOUNT,
+        target_entries: TARGET,
+        pool_date: pool.poolDate,
+      },
+    });
 
     res.json({
       ok: true,
@@ -69,6 +94,10 @@ module.exports = async (req, res) => {
       },
     });
   } catch (e) {
+    await finishJobRun(db, jobRun, {
+      status: "failed",
+      errorMessage: e.message,
+    });
     console.error("[cron] pool refresh error:", e);
     res.status(500).json({ error: e.message });
   }

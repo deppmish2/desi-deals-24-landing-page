@@ -6,9 +6,6 @@
     { "source": "/api/:path*", "destination": "/api/server" },
     { "source": "/:path*", "destination": "/index.html" }
   ],
-  "crons": [
-    { "path": "/api/cron", "schedule": "0 8 * * *" }
-  ],
   "functions": {
     "api/server.js": {
       "maxDuration": 300,

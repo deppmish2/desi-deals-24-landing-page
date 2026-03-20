@@ -54,6 +54,22 @@ CREATE TABLE IF NOT EXISTS crawl_runs (
   errors            TEXT
 );
 
+-- Generic scheduled/ops job ledger (crawl, pool refresh, verification)
+CREATE TABLE IF NOT EXISTS job_runs (
+  id                TEXT PRIMARY KEY,
+  job_name          TEXT NOT NULL,
+  trigger_type      TEXT,
+  status            TEXT NOT NULL,
+  started_at        DATETIME NOT NULL,
+  finished_at       DATETIME,
+  duration_ms       INTEGER,
+  item_count        INTEGER,
+  warning_count     INTEGER DEFAULT 0,
+  details           TEXT,
+  error_message     TEXT,
+  created_at        DATETIME DEFAULT CURRENT_TIMESTAMP
+);
+
 CREATE TABLE IF NOT EXISTS crawl_locks (
   lock_key          TEXT PRIMARY KEY,
   owner_id          TEXT NOT NULL,
@@ -284,6 +300,8 @@ CREATE INDEX IF NOT EXISTS idx_deals_discount   ON deals(discount_percent);
 CREATE INDEX IF NOT EXISTS idx_deals_crawl_run  ON deals(crawl_run_id);
 CREATE INDEX IF NOT EXISTS idx_deals_canonical  ON deals(canonical_id);
 CREATE INDEX IF NOT EXISTS idx_crawl_locks_expires ON crawl_locks(expires_at);
+CREATE INDEX IF NOT EXISTS idx_job_runs_job_name_started ON job_runs(job_name, started_at);
+CREATE INDEX IF NOT EXISTS idx_job_runs_status_started ON job_runs(status, started_at);
 CREATE INDEX IF NOT EXISTS idx_users_email      ON users(email);
 CREATE INDEX IF NOT EXISTS idx_users_google_id  ON users(google_id);
 CREATE INDEX IF NOT EXISTS idx_email_auth_tokens_email ON email_auth_tokens(email);

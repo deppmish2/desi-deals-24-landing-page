@@ -204,6 +204,35 @@ const ready = (async () => {
     }
   }
 
+  const bootstrapStatements = [
+    `CREATE TABLE IF NOT EXISTS job_runs (
+      id TEXT PRIMARY KEY,
+      job_name TEXT NOT NULL,
+      trigger_type TEXT,
+      status TEXT NOT NULL,
+      started_at DATETIME NOT NULL,
+      finished_at DATETIME,
+      duration_ms INTEGER,
+      item_count INTEGER,
+      warning_count INTEGER DEFAULT 0,
+      details TEXT,
+      error_message TEXT,
+      created_at DATETIME DEFAULT CURRENT_TIMESTAMP
+    )`,
+    `CREATE INDEX IF NOT EXISTS idx_job_runs_job_name_started
+       ON job_runs(job_name, started_at)`,
+    `CREATE INDEX IF NOT EXISTS idx_job_runs_status_started
+       ON job_runs(status, started_at)`,
+  ];
+
+  for (const sql of bootstrapStatements) {
+    try {
+      await db.execute(sql);
+    } catch (error) {
+      console.warn("[db] bootstrap statement warning:", error.message);
+    }
+  }
+
   const stores = [
     ["jamoona", "Jamoona", "https://www.jamoona.com"],
     ["dookan", "Dookan", "https://eu.dookan.com"],

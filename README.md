@@ -42,6 +42,17 @@ Edit `.env` if needed (defaults work for local development):
 npm run crawl
 ```
 
+### 3a. Run the scheduled pipeline locally
+
+```bash
+npm run schedule:run
+```
+
+This uses Europe/Berlin time windows:
+- `06:00` Berlin: full crawl
+- `07:00+` Berlin: daily pool refresh + verification until today's pool exists
+- outside those windows it exits quickly unless `FORCE_JOB=crawl|pool|all` is set
+
 Expected output:
 
 ```
@@ -108,11 +119,18 @@ This builds the React app into `client/dist/`. The Express server automatically 
 - No intra-day re-curation happens after the pool is fixed.
 - Only currently active, in-stock deals are materialized for viewing.
 
-### Serverless note (Vercel)
+### Production scheduling
 
-- Vercel cron runs hourly and the handler gates execution in code using Europe/Berlin time.
-- That keeps the 06:00 crawl and 07:00 pool generation aligned across DST changes.
-- Ensure function `maxDuration` is high enough for your store count.
+- The production scheduler lives in [`.github/workflows/daily-pipeline.yml`](./.github/workflows/daily-pipeline.yml).
+- GitHub Actions runs hourly and the app gates execution in code using Europe/Berlin time.
+- That keeps the `06:00` crawl and `07:00` daily-pool generation aligned across DST changes without relying on Vercel cold-start behavior for data freshness.
+- Vercel serves precomputed data only; it is no longer the source of truth for scheduled ingestion.
+
+### Health / ops
+
+- Public health endpoint: `GET /api/v1/health`
+- Detailed health endpoint: `GET /api/v1/health/detail` (admin auth)
+- Scheduled jobs are durably recorded in `job_runs` for crawl, pool refresh, and pool verification visibility.
 
 ---
 

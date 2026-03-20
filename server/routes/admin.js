@@ -156,7 +156,7 @@ router.get("/crawl/warmup", async (req, res) => {
 // POST /api/v1/admin/crawl/trigger
 router.post("/crawl/trigger", requireAuth, async (req, res) => {
   try {
-    await runCrawl(db);
+    await runCrawl(db, { triggerType: "admin_manual" });
     res.json({ message: "Crawl completed" });
   } catch (e) {
     console.error("[admin] Crawl error:", e);

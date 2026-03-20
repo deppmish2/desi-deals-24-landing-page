@@ -100,7 +100,7 @@ The lock mechanism in `crawler/utils/snapshot.js` prevents double-runs within a 
 ┌────────────────────────────────────────────────────────────────────┐
 │ MONITORING                                                          │
 │                                                                     │
-│  Crawl health endpoint:  GET /api/v1/admin/health                  │
+│  Crawl health endpoint:  GET /api/v1/health/detail                 │
 │  Checked by UptimeRobot or similar every 5 min                     │
 │  Returns: last_crawl_at, pool_size, deals_active, crawl_errors     │
 │                                                                     │
@@ -118,7 +118,7 @@ The lock mechanism in `crawler/utils/snapshot.js` prevents double-runs within a 
 
 | Concern | Current | Recommended | Why |
 |---|---|---|---|
-| **Crawl trigger** | GitHub Actions (external repo) | GitHub Actions (this repo, `.github/workflows/crawl.yml`) | Same tool, but owned here. Visible, auditable, alertable. |
+| **Crawl trigger** | GitHub Actions (external repo) | GitHub Actions (this repo, `.github/workflows/daily-pipeline.yml`) | Same tool, but owned here. Visible, auditable, alertable. |
 | **Crawl runtime** | Vercel function (60 s limit workaround) | GitHub Actions runner (no time limit) | No workarounds needed. 21 stores × ~5 s = ~2 min, well within limits. |
 | **DB** | Turso | Turso (keep) | Already good. libSQL, edge replicas, fast reads. |
 | **Pool cache** | None (DB query on every request) | Vercel KV (Redis-compatible, Edge network) | Eliminates Turso round-trip on hot path. Sub-5ms reads from edge. |
@@ -165,8 +165,8 @@ Cold starts only affect the KV-miss path. Once KV is warm (populated after morni
 ### 4.2 Crawl Flow
 
 ```
-GitHub Actions: .github/workflows/crawl.yml
-  Triggers: cron "0 5 * * *" (UTC) = 06:00 Berlin
+GitHub Actions: .github/workflows/daily-pipeline.yml
+  Triggers: hourly cron, with Berlin-time gating inside the app
 
   Job: crawl
     Step 1: checkout + npm install
@@ -212,7 +212,7 @@ GitHub Actions: .github/workflows/crawl.yml
 
 - GitHub Actions sends failure email automatically (free, built-in).
 - `crawl_runs` record has `status = 'failed'` and `ended_at` timestamp.
-- Health endpoint `/api/v1/admin/health` exposes `last_successful_crawl_at`.
+- Health endpoint `/api/v1/health/detail` exposes `last_successful_crawl_at`.
 - If crawl fails, **yesterday's active deals remain in DB** (never auto-deleted).
 - Pool builder re-runs on the existing data — users see slightly stale but real data.
 - Alert fires if `last_successful_crawl_at` > 26 hours ago.
@@ -241,7 +241,7 @@ GitHub Actions: .github/workflows/crawl.yml
 
 ### 6.1 Health endpoint
 
-`GET /api/v1/admin/health` (already exists — `server/routes/admin-dashboard.js`)
+`GET /api/v1/health/detail` (already exists — `server/routes/health.js`)
 
 Extend to return:
 ```json
@@ -279,7 +279,7 @@ Extend to return:
 
 ### 6.3 UptimeRobot setup (free tier)
 
-- Monitor: `GET /api/v1/admin/health` every 5 minutes
+- Monitor: `GET /api/v1/health` every 5 minutes
 - Keyword check: `"status":"ok"` must be present
 - Alert contacts: email (Rahul, Deepak)
 - Escalation: if down > 15 min → SMS or Slack webhook
@@ -296,9 +296,9 @@ Extend to return:
 
 ### Phase 1 — Move crawl into this repo (1–2 days)
 
-1. Create `.github/workflows/crawl.yml`:
-   - Trigger: `cron: "0 5 * * *"` + `workflow_dispatch` (manual)
-   - Steps: checkout, `npm ci`, `node crawler/index.js`, notify on failure
+1. Create `.github/workflows/daily-pipeline.yml`:
+   - Trigger: hourly cron + `workflow_dispatch`
+   - Steps: checkout, `npm ci`, `npm run schedule:run`, notify on failure
 2. Set GitHub repo secrets: `TURSO_DATABASE_URL`, `TURSO_AUTH_TOKEN`, `ADMIN_SECRET`, `CRON_SECRET`, Slack webhook URL
 3. Run manually once to verify end-to-end: crawl → pool → health check
 4. Disable / archive the external GitHub Actions repo (do not delete — keep as backup for 30 days)
@@ -357,7 +357,7 @@ Extend to return:
 ### Phase 4 — Health endpoint + UptimeRobot (1 day)
 
 1. Extend `server/routes/admin-dashboard.js` to expose the health JSON format from §6.1
-2. Expose at `GET /api/v1/health` (no auth) and `GET /api/v1/admin/health` (admin auth, more detail)
+2. Expose at `GET /api/v1/health` (no auth) and `GET /api/v1/health/detail` (admin auth, more detail)
 3. Wire `alert-notifier.js` to fire on crawl failure in the GitHub Actions workflow:
    ```bash
    node -e "require('./server/services/alert-notifier').sendCrawlFailureAlert(process.env.CRAWL_ERROR)"
@@ -374,7 +374,7 @@ Extend to return:
    - Queries today's pool size
    - Exits with code 1 if pool_size < 18
    - Sends alert if critical
-2. Add as final step in `.github/workflows/crawl.yml`:
+2. Add as final step in `.github/workflows/daily-pipeline.yml`:
    ```yaml
    - name: Verify pool
      run: node scripts/verify-pool.js

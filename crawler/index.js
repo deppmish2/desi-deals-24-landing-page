@@ -14,9 +14,19 @@ const {
   getCurrentPoolDate,
 } = require("../server/services/daily-deals-pool");
 const { getBerlinHour } = require("../server/services/berlin-time");
+const {
+  finishJobRun,
+  startJobRun,
+} = require("../server/services/job-runs");
 
 const DELAY_MIN = parseInt(process.env.REQUEST_DELAY_MIN_MS || "2000", 10);
 const DELAY_MAX = parseInt(process.env.REQUEST_DELAY_MAX_MS || "5000", 10);
+const CRAWL_WARNING_SUCCESS_RATE = Number(
+  process.env.CRAWL_WARNING_SUCCESS_RATE || 0.8,
+);
+const CRAWL_WARNING_MIN_DEALS_RATIO = Number(
+  process.env.CRAWL_WARNING_MIN_DEALS_RATIO || 0.5,
+);
 
 const adapters = [
   require("./stores/jamoona"),
@@ -271,27 +281,89 @@ async function ensureTodayPoolAfterCrawl(db) {
   };
 }
 
-async function runCrawl(db) {
+async function previousCompletedCrawl(db, excludeRunId) {
+  return await db
+    .prepare(
+      `SELECT id, stores_attempted, stores_succeeded, deals_found, finished_at
+       FROM crawl_runs
+       WHERE status = 'completed'
+         AND id != ?
+       ORDER BY finished_at DESC
+       LIMIT 1`,
+    )
+    .get(excludeRunId);
+}
+
+async function buildCrawlWarnings(db, summary) {
+  const warnings = [];
+
+  if (summary.dealsFound === 0) {
+    warnings.push({
+      code: "zero_deals",
+      message: "Crawl completed with zero active deals.",
+    });
+  }
+
+  if (summary.storesAttempted > 0) {
+    const successRate = summary.storesSucceeded / summary.storesAttempted;
+    if (successRate < CRAWL_WARNING_SUCCESS_RATE) {
+      warnings.push({
+        code: "low_store_success_rate",
+        message: `Only ${summary.storesSucceeded}/${summary.storesAttempted} stores succeeded.`,
+        success_rate: Math.round(successRate * 1000) / 10,
+      });
+    }
+  }
+
+  const previous = await previousCompletedCrawl(db, summary.runId);
+  const previousDeals = Number(previous?.deals_found || 0);
+  if (
+    previousDeals > 0 &&
+    summary.dealsFound < previousDeals * CRAWL_WARNING_MIN_DEALS_RATIO
+  ) {
+    warnings.push({
+      code: "abnormally_low_deal_count",
+      message: `Deal count dropped from ${previousDeals} to ${summary.dealsFound}.`,
+      previous_deals_found: previousDeals,
+      current_deals_found: summary.dealsFound,
+    });
+  }
+
+  return warnings;
+}
+
+async function runCrawl(db, options = {}) {
+  await db.ready;
   const runId = uuidv4();
+  const triggerType = String(options.triggerType || "manual").trim() || "manual";
+  const jobRun = await startJobRun(db, {
+    jobName: "full_crawl",
+    triggerType,
+    details: { run_id: runId },
+  });
   const lock = await acquireCrawlLock(db, { ownerId: runId });
   if (!lock.acquired) {
     console.log("[crawl] Another crawl is already running — skipping.");
+    await finishJobRun(db, jobRun, {
+      status: "skipped",
+      details: { run_id: runId, reason: "lock" },
+    });
     return { skipped: true, reason: "lock" };
   }
 
   const startedAt = new Date().toISOString();
   console.log(`\n=== Crawl run ${runId} started at ${startedAt} ===`);
 
+  let storesAttempted = 0;
+  let storesSucceeded = 0;
+  let dealsFound = 0;
+  const errors = [];
+
   try {
     await db.prepare(
       `INSERT INTO crawl_runs (id, started_at, status)
        VALUES (?, ?, 'running')`,
     ).run(runId, startedAt);
-
-    let storesAttempted = 0;
-    let storesSucceeded = 0;
-    let dealsFound = 0;
-    const errors = [];
 
     for (const adapter of adapters) {
       storesAttempted += 1;
@@ -357,6 +429,13 @@ async function runCrawl(db) {
       runId,
     );
 
+    const warnings = await buildCrawlWarnings(db, {
+      runId,
+      storesAttempted,
+      storesSucceeded,
+      dealsFound,
+    });
+
     const dailyPool = await ensureTodayPoolAfterCrawl(db).catch((error) => {
       console.error("[crawl] Daily pool refresh error:", error.message);
       return null;
@@ -373,14 +452,77 @@ async function runCrawl(db) {
       );
     }
 
+    if (warnings.length > 0) {
+      for (const warning of warnings) {
+        console.warn(`[crawl] Warning: ${warning.message}`);
+      }
+    }
+
+    await finishJobRun(db, jobRun, {
+      status: warnings.length > 0 ? "completed_with_warnings" : "completed",
+      itemCount: dealsFound,
+      warningCount: warnings.length,
+      details: {
+        run_id: runId,
+        stores_attempted: storesAttempted,
+        stores_succeeded: storesSucceeded,
+        deals_found: dealsFound,
+        errors,
+        warnings,
+        daily_pool: dailyPool,
+      },
+    });
+
     return {
       runId,
       storesAttempted,
       storesSucceeded,
       dealsFound,
       errors,
+      warnings,
       dailyPool,
     };
+  } catch (error) {
+    const failedAt = new Date().toISOString();
+    try {
+      await db.prepare(
+        `UPDATE crawl_runs
+         SET finished_at = ?,
+             status = 'failed',
+             stores_attempted = ?,
+             stores_succeeded = ?,
+             deals_found = ?,
+             errors = ?
+         WHERE id = ?`,
+      ).run(
+        failedAt,
+        storesAttempted,
+        storesSucceeded,
+        dealsFound,
+        JSON.stringify([
+          ...errors,
+          { store_id: null, error_message: error.message },
+        ]),
+        runId,
+      );
+    } catch (updateError) {
+      console.warn("[crawl] Failed to mark crawl run as failed:", updateError.message);
+    }
+
+    await finishJobRun(db, jobRun, {
+      status: "failed",
+      itemCount: dealsFound,
+      details: {
+        run_id: runId,
+        stores_attempted: storesAttempted,
+        stores_succeeded: storesSucceeded,
+        deals_found: dealsFound,
+        errors,
+      },
+      errorMessage: error.message,
+      finishedAt: failedAt,
+    });
+    throw error;
   } finally {
     await releaseCrawlLock(db, { ownerId: runId });
   }
