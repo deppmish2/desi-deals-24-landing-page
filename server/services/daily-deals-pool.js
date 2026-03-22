@@ -203,16 +203,19 @@ function buildEligibleCandidates(rows, poolDate) {
     if (!row?.id) continue;
 
     const resolved = resolveBaseProduct(row?.product_name);
-    if (!resolved?.base_key) continue;
+
+    // Fallback: if catalog doesn't recognise the product, derive base_key from URL
+    const baseKey = resolved?.base_key ||
+      `url:${require("crypto").createHash("md5").update(String(row.product_url || row.id)).digest("hex")}`;
 
     const productSignature = normalizeProductSignature(row.product_name);
     if (!productSignature) continue;
 
     const candidate = {
       ...row,
-      base_key: resolved.base_key,
+      base_key: baseKey,
       resolved_category:
-        String(resolved.category || row.product_category || "").trim() || "Other",
+        String(resolved?.category || row.product_category || "").trim() || "Other",
       product_signature: productSignature,
       discount_value: computeDiscountValue(row),
       seed_rank: stableSeedRank(
