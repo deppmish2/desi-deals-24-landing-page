@@ -15,6 +15,7 @@ Use this comprehensive checklist when creating or auditing a design system.
 ### Design Tokens
 
 #### Color Tokens
+
 - [ ] **Primitive Colors Defined**: Base color palette (50-950 scale for each hue)
 - [ ] **Semantic Colors Mapped**: Brand, text, background, border, feedback colors
 - [ ] **Color Contrast Validated**: All text meets WCAG 2.1 Level AA (4.5:1 for normal text, 3:1 for large text)
@@ -22,6 +23,7 @@ Use this comprehensive checklist when creating or auditing a design system.
 - [ ] **Token Naming**: Consistent, semantic naming (text-primary vs gray-900)
 
 #### Typography Tokens
+
 - [ ] **Font Families Selected**: Primary (sans), secondary (serif), mono fonts
 - [ ] **Type Scale Established**: Font sizes from xs (12px) to 5xl (48px)
 - [ ] **Font Weights Defined**: At least 3 weights (normal, medium, bold)
@@ -29,11 +31,13 @@ Use this comprehensive checklist when creating or auditing a design system.
 - [ ] **Letter Spacing**: Defined for uppercase and large headings
 
 #### Spacing Tokens
+
 - [ ] **Spacing Scale Created**: Consistent scale (4px or 8px base)
 - [ ] **Spacing Values**: 0, 1, 2, 3, 4, 5, 6, 8, 10, 12, 16, 20, 24
 - [ ] **Component Spacing**: Specific spacing for components (button padding, card gap)
 
 #### Other Tokens
+
 - [ ] **Border Radius**: none, sm, base, md, lg, xl, 2xl, full
 - [ ] **Shadows**: xs, sm, base, md, lg, xl
 - [ ] **Transitions**: Duration and easing functions
@@ -46,6 +50,7 @@ Use this comprehensive checklist when creating or auditing a design system.
 ### Atomic Components (Atoms)
 
 #### Button
+
 - [ ] **Variants**: Primary, secondary, outline, ghost
 - [ ] **Sizes**: sm, md, lg
 - [ ] **States**: Default, hover, active, focus, disabled, loading
@@ -54,6 +59,7 @@ Use this comprehensive checklist when creating or auditing a design system.
 - [ ] **Accessibility**: Keyboard accessible, ARIA attributes
 
 #### Input
+
 - [ ] **Types**: Text, email, password, number, search
 - [ ] **Sizes**: sm, md, lg
 - [ ] **States**: Default, focus, error, disabled
@@ -62,12 +68,14 @@ Use this comprehensive checklist when creating or auditing a design system.
 - [ ] **Accessibility**: Labels, ARIA descriptions
 
 #### Checkbox & Radio
+
 - [ ] **Sizes**: sm, md, lg
 - [ ] **States**: Default, checked, indeterminate, disabled
 - [ ] **Labels**: Properly associated labels
 - [ ] **Accessibility**: Keyboard navigation, ARIA states
 
 #### Select / Dropdown
+
 - [ ] **Single Select**: Basic dropdown
 - [ ] **Multi Select**: Multiple selection support
 - [ ] **Search**: Searchable options (if applicable)
@@ -75,16 +83,19 @@ Use this comprehensive checklist when creating or auditing a design system.
 - [ ] **Accessibility**: Keyboard navigation, ARIA combobox
 
 #### Badge
+
 - [ ] **Variants**: Default, success, warning, error, info
 - [ ] **Sizes**: sm, md, lg
 - [ ] **Removable**: Option for dismiss button
 
 #### Avatar
+
 - [ ] **Sizes**: xs, sm, md, lg, xl
 - [ ] **Fallback**: Initials or default icon
 - [ ] **Status Indicator**: Online/offline dot (if applicable)
 
 #### Icon
+
 - [ ] **Icon Set**: Consistent icon library (Heroicons, Lucide, etc.)
 - [ ] **Sizes**: 16px, 20px, 24px, 32px
 - [ ] **Accessibility**: ARIA labels or aria-hidden
@@ -92,23 +103,27 @@ Use this comprehensive checklist when creating or auditing a design system.
 ### Molecular Components (Molecules)
 
 #### Form Field
+
 - [ ] **Composition**: Label + Input + Helper/Error
 - [ ] **Required Indicator**: Asterisk or (required) text
 - [ ] **Error States**: Validation error display
 - [ ] **Accessibility**: Proper label associations
 
 #### Search Bar
+
 - [ ] **Composition**: Input + Search button/icon
 - [ ] **Clear Button**: X to clear search
 - [ ] **Keyboard Support**: Enter to submit
 
 #### Card
+
 - [ ] **Variants**: Default, outlined, elevated
 - [ ] **Composition**: Header, body, footer sections
 - [ ] **Hover State**: If interactive
 - [ ] **Clickable Area**: Full card clickable (if applicable)
 
 #### Alert / Toast
+
 - [ ] **Variants**: Success, warning, error, info
 - [ ] **Dismissible**: Close button
 - [ ] **Icons**: Contextual icons for each variant
@@ -117,6 +132,7 @@ Use this comprehensive checklist when creating or auditing a design system.
 ### Organism Components
 
 #### Navigation Bar
+
 - [ ] **Responsive**: Mobile hamburger menu
 - [ ] **Logo**: Branding placement
 - [ ] **Links**: Primary navigation links
@@ -125,6 +141,7 @@ Use this comprehensive checklist when creating or auditing a design system.
 - [ ] **Accessibility**: Keyboard navigation, ARIA navigation
 
 #### Modal / Dialog
+
 - [ ] **Overlay**: Background overlay
 - [ ] **Close Button**: X button and ESC key
 - [ ] **Focus Trap**: Focus stays within modal
@@ -132,6 +149,7 @@ Use this comprehensive checklist when creating or auditing a design system.
 - [ ] **Accessibility**: Focus management, ARIA dialog
 
 #### Table
+
 - [ ] **Header**: Column headers
 - [ ] **Sortable**: Click to sort columns
 - [ ] **Selectable**: Checkbox selection
@@ -140,6 +158,7 @@ Use this comprehensive checklist when creating or auditing a design system.
 - [ ] **Accessibility**: Proper table semantics
 
 #### Pagination
+
 - [ ] **Page Numbers**: Current and nearby pages
 - [ ] **Previous/Next**: Arrow navigation
 - [ ] **First/Last**: Jump to first/last page

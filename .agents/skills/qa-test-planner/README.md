@@ -33,17 +33,20 @@ use the skill qa-test-planner
 The QA Test Planner follows a three-phase workflow:
 
 ### 1. Analyze Phase
+
 - Parses your feature description or requirement
 - Identifies the types of testing needed (functional, UI, integration, etc.)
 - Determines scope, priorities, and edge cases to cover
 
 ### 2. Generate Phase
+
 - Creates structured deliverables using proven templates
 - Applies QA best practices automatically
 - Includes comprehensive edge cases and test variations
 - Organizes content for easy execution and tracking
 
 ### 3. Validate Phase
+
 - Checks completeness of generated documentation
 - Verifies traceability between requirements and tests
 - Ensures all steps are clear and actionable
@@ -51,7 +54,9 @@ The QA Test Planner follows a three-phase workflow:
 ## Key Features
 
 ### 1. Test Plan Generation
+
 Creates complete test plans including:
+
 - Executive summary with objectives and risks
 - Clear scope definition (in-scope and out-of-scope)
 - Testing strategy and approach
@@ -61,7 +66,9 @@ Creates complete test plans including:
 - Timeline and deliverables
 
 ### 2. Manual Test Case Creation
+
 Generates structured test cases with:
+
 - Step-by-step test instructions
 - Expected results for each step
 - Preconditions and test data requirements
@@ -70,21 +77,27 @@ Generates structured test cases with:
 - Edge cases and variations
 
 ### 3. Regression Test Suites
+
 Builds tiered test suites:
+
 - **Smoke tests** (15-30 min) - Critical paths only
 - **Targeted regression** (30-60 min) - Affected areas
 - **Full regression** (2-4 hours) - Comprehensive coverage
 - **Sanity tests** (10-15 min) - Quick validation after hotfixes
 
 ### 4. Figma Design Validation
+
 Integrates with Figma MCP to:
+
 - Extract design specifications (colors, spacing, typography)
 - Compare implementation against design system
 - Create validation checklists for UI testing
 - Document visual discrepancies as bugs
 
 ### 5. Bug Report Documentation
+
 Generates structured bug reports with:
+
 - Clear reproduction steps
 - Environment details (OS, browser, device, build)
 - Expected vs actual behavior
@@ -97,6 +110,7 @@ Generates structured bug reports with:
 ### Example 1: Create Test Plan
 
 **Input:**
+
 ```
 /qa-test-planner
 Create a test plan for the user authentication feature
@@ -104,6 +118,7 @@ Create a test plan for the user authentication feature
 
 **Output:**
 A complete test plan document including:
+
 - Testing objectives for login, registration, password reset
 - Scope definition (web and mobile apps)
 - Test strategy (manual, exploratory, security testing)
@@ -115,6 +130,7 @@ A complete test plan document including:
 ### Example 2: Generate Test Cases
 
 **Input:**
+
 ```
 /qa-test-planner
 Generate 5 manual test cases for the checkout flow
@@ -122,6 +138,7 @@ Generate 5 manual test cases for the checkout flow
 
 **Output:**
 Five numbered test cases covering:
+
 1. Valid checkout with credit card
 2. Invalid credit card handling
 3. Empty cart checkout attempt
@@ -133,6 +150,7 @@ Each includes preconditions, step-by-step instructions, expected results, test d
 ### Example 3: Build Regression Suite
 
 **Input:**
+
 ```
 /qa-test-planner
 Build a smoke test suite for the payment module
@@ -140,6 +158,7 @@ Build a smoke test suite for the payment module
 
 **Output:**
 A prioritized smoke test suite (15-30 min execution) with:
+
 - Critical path tests (payment processing, refunds)
 - Execution order and dependencies
 - Pass/fail criteria
@@ -148,6 +167,7 @@ A prioritized smoke test suite (15-30 min execution) with:
 ### Example 4: Validate Against Figma
 
 **Input:**
+
 ```
 /qa-test-planner
 Compare the login page against the Figma design at [Figma URL]
@@ -155,6 +175,7 @@ Compare the login page against the Figma design at [Figma URL]
 
 **Output:**
 A validation checklist comparing:
+
 - Button dimensions, colors, and states
 - Typography (fonts, sizes, weights)
 - Spacing and layout
@@ -166,6 +187,7 @@ Plus test cases to verify each element and document discrepancies.
 ### Example 5: Create Bug Report
 
 **Input:**
+
 ```
 /qa-test-planner
 Create a bug report for: Form validation doesn't prevent submission when email field is empty
@@ -173,6 +195,7 @@ Create a bug report for: Form validation doesn't prevent submission when email f
 
 **Output:**
 A structured bug report with:
+
 - Clear title: "[Contact Form] Submission allowed with empty email field"
 - Severity: High (data quality issue)
 - Reproduction steps (numbered, specific actions)
@@ -187,20 +210,26 @@ A structured bug report with:
 The skill includes bash scripts for guided test case and bug report creation:
 
 ### Generate Test Cases Script
+
 ```bash
 ./scripts/generate_test_cases.sh
 ```
+
 Prompts for:
+
 - Feature name
 - Test type (functional, UI, integration)
 - Number of test cases
 - Priority level
 
 ### Create Bug Report Script
+
 ```bash
 ./scripts/create_bug_report.sh
 ```
+
 Prompts for:
+
 - Bug title
 - Severity and priority
 - Reproduction steps
@@ -219,12 +248,14 @@ The skill includes comprehensive reference guides in the `references/` directory
 ## Quality Standards
 
 ### Test Plan Checklist
+
 - Scope clearly defined (in/out)
 - Entry/exit criteria specified
 - Risks identified with mitigations
 - Timeline is realistic and achievable
 
 ### Test Case Checklist
+
 - Each step has an expected result
 - Preconditions documented
 - Test data available or specified
@@ -232,6 +263,7 @@ The skill includes comprehensive reference guides in the `references/` directory
 - Edge cases included
 
 ### Bug Report Checklist
+
 - Reproducible steps provided
 - Environment documented completely
 - Screenshots or evidence attached
@@ -241,13 +273,13 @@ The skill includes comprehensive reference guides in the `references/` directory
 
 The skill helps you avoid common testing mistakes:
 
-| Avoid | Why It's Bad | What to Do Instead |
-|-------|--------------|-------------------|
-| Vague test steps | Can't reproduce consistently | Use specific actions with expected results |
-| Missing preconditions | Tests fail unexpectedly | Document all setup requirements |
-| No test data | Testers get blocked | Provide sample data or generation instructions |
-| Generic bug titles | Hard to track and prioritize | Be specific: "[Feature] issue when [action]" |
-| Skipping edge cases | Miss critical bugs | Include boundary values, nulls, empty states |
+| Avoid                 | Why It's Bad                 | What to Do Instead                             |
+| --------------------- | ---------------------------- | ---------------------------------------------- |
+| Vague test steps      | Can't reproduce consistently | Use specific actions with expected results     |
+| Missing preconditions | Tests fail unexpectedly      | Document all setup requirements                |
+| No test data          | Testers get blocked          | Provide sample data or generation instructions |
+| Generic bug titles    | Hard to track and prioritize | Be specific: "[Feature] issue when [action]"   |
+| Skipping edge cases   | Miss critical bugs           | Include boundary values, nulls, empty states   |
 
 ## Integration with Figma MCP
 
@@ -259,11 +291,13 @@ When Figma MCP is configured, the skill can:
 4. Create bug reports with Figma links for UI discrepancies
 
 **Example Query:**
+
 ```
 Get button specifications from Figma design [URL]
 ```
 
 **Returns:**
+
 - Dimensions (width x height)
 - Colors (background, text, border with hex values)
 - Typography (font family, size, weight, line-height)
@@ -274,6 +308,7 @@ Get button specifications from Figma design [URL]
 ## Best Practices
 
 ### Test Case Writing
+
 - Be specific and unambiguous
 - Include expected results for each step
 - Test one thing per test case
@@ -281,6 +316,7 @@ Get button specifications from Figma design [URL]
 - Keep test cases maintainable (update as features change)
 
 ### Bug Reporting
+
 - Provide clear reproduction steps anyone can follow
 - Include screenshots, videos, or console logs
 - Specify exact environment details
@@ -288,6 +324,7 @@ Get button specifications from Figma design [URL]
 - Link to Figma designs for UI bugs
 
 ### Regression Testing
+
 - Maintain regression suite regularly
 - Prioritize critical paths
 - Run smoke tests frequently (daily/per build)
@@ -313,6 +350,7 @@ qa-test-planner/
 ## Output Formats
 
 All deliverables are generated in **Markdown format** for easy copy-paste into:
+
 - Jira, Linear, GitHub Issues
 - Confluence, Notion
 - TestRail, Zephyr
@@ -324,13 +362,13 @@ The structured format ensures consistency across your team and makes test docume
 
 Typical time to create documentation:
 
-| Deliverable | Manual Time | With Skill | Time Saved |
-|-------------|-------------|------------|------------|
-| Test Plan | 2-3 hours | 10-15 min | 90% |
-| 10 Test Cases | 1-2 hours | 5-10 min | 85% |
-| Regression Suite | 2-4 hours | 15-20 min | 90% |
-| Bug Report | 10-15 min | 5 min | 50% |
-| Figma Validation | 30-60 min | 10-15 min | 75% |
+| Deliverable      | Manual Time | With Skill | Time Saved |
+| ---------------- | ----------- | ---------- | ---------- |
+| Test Plan        | 2-3 hours   | 10-15 min  | 90%        |
+| 10 Test Cases    | 1-2 hours   | 5-10 min   | 85%        |
+| Regression Suite | 2-4 hours   | 15-20 min  | 90%        |
+| Bug Report       | 10-15 min   | 5 min      | 50%        |
+| Figma Validation | 30-60 min   | 10-15 min  | 75%        |
 
 ## Getting Started
 
@@ -342,6 +380,7 @@ Typical time to create documentation:
 ## Support
 
 For detailed information on specific deliverables, see SKILL.md which includes:
+
 - Deep dive sections on each deliverable type
 - Complete templates with examples
 - QA process workflow

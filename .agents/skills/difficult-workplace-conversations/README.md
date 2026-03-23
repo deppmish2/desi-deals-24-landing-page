@@ -27,6 +27,7 @@ Activate this skill when you need to:
 - Follow up after difficult conversations to ensure agreements stick
 
 **Trigger Phrases:**
+
 - "I need to have a tough conversation with..."
 - "How do I address this performance issue?"
 - "Help me prepare for a difficult discussion"
@@ -43,6 +44,7 @@ The skill guides you through three distinct phases, each critical to success:
 **Phase 1: Preparation (40% of Success)**
 
 Most difficult conversations fail before they start. Thorough preparation includes:
+
 1. Clarifying the facts (separating observations from interpretations)
 2. Checking your emotional state and identifying triggers
 3. Considering the other person's perspective and constraints
@@ -52,6 +54,7 @@ Most difficult conversations fail before they start. Thorough preparation includ
 **Phase 2: Delivery (The Conversation)**
 
 The actual conversation follows a structured flow:
+
 1. Open neutrally with purpose, intent, and an invitation to dialogue
 2. Share your perspective using the SBI model (Situation-Behavior-Impact)
 3. Listen actively to understand their viewpoint
@@ -61,6 +64,7 @@ The actual conversation follows a structured flow:
 **Phase 3: Follow-up (Ensuring Lasting Change)**
 
 After the conversation:
+
 1. Document agreements within 24 hours
 2. Check progress at scheduled intervals
 3. Acknowledge improvements and address continued issues
@@ -176,16 +180,17 @@ Focus your conversation on behavior and impact, not assumed intentions.
 
 ### Managing Emotions Before They Manage You
 
-| If You Feel | Before Acting |
-|-------------|---------------|
-| Angry | Wait 24 hours, write but don't send |
-| Hurt | Talk to a neutral party first |
-| Anxious | Practice the conversation |
-| Defensive | Identify your contribution |
+| If You Feel | Before Acting                       |
+| ----------- | ----------------------------------- |
+| Angry       | Wait 24 hours, write but don't send |
+| Hurt        | Talk to a neutral party first       |
+| Anxious     | Practice the conversation           |
+| Defensive   | Identify your contribution          |
 
 ### When to Escalate
 
 Escalate to HR or management when:
+
 - Safety is at risk
 - Legal issues are involved
 - Repeated conversations haven't worked
@@ -206,16 +211,19 @@ Escalate to HR or management when:
 ### Avoid
 
 **In Preparation:**
+
 - Scripting every word (you'll sound robotic)
 - Building a case (this isn't a trial)
 - Waiting too long (issues compound)
 
 **In Delivery:**
+
 - Starting with "You always..." (triggers defensiveness)
 - Burying the lead (get to the point)
 - Asking leading questions ("Don't you think...")
 
 **In Follow-up:**
+
 - Forgetting to check in (without follow-up, nothing changes)
 - Holding grudges (issue resolved means relationship continues)
 - Over-documenting (not everything needs a written record)

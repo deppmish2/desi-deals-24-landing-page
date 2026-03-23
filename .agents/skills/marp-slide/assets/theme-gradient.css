@@ -1,12 +1,13 @@
 /* Google Fontsから日本語フォントを読み込み */
-@import url('https://fonts.googleapis.com/css2?family=Noto+Sans+JP:wght@400;700&display=swap');
+@import url("https://fonts.googleapis.com/css2?family=Noto+Sans+JP:wght@400;700&display=swap");
 
 /* --- グラデーション背景テーマ --- */
 :root {
   --color-foreground: #ffffff;
   --color-heading: #ffffff;
   --color-accent: #ffd700;
-  --font-default: 'Noto Sans JP', 'Hiragino Kaku Gothic ProN', 'Meiryo', sans-serif;
+  --font-default:
+    "Noto Sans JP", "Hiragino Kaku Gothic ProN", "Meiryo", sans-serif;
 }
 
 section {
@@ -38,7 +39,12 @@ section:nth-child(5n) {
   background: linear-gradient(135deg, #43e97b 0%, #38f9d7 100%);
 }
 
-h1, h2, h3, h4, h5, h6 {
+h1,
+h2,
+h3,
+h4,
+h5,
+h6 {
   font-weight: 700;
   color: var(--color-heading);
   margin: 0;
@@ -63,7 +69,7 @@ h2 {
 }
 
 h2::after {
-  content: '';
+  content: "";
   position: absolute;
   left: 0;
   bottom: 8px;
@@ -85,7 +91,8 @@ h3 {
   text-shadow: 0 2px 5px rgba(0, 0, 0, 0.3);
 }
 
-ul, ol {
+ul,
+ol {
   padding-left: 32px;
 }
 

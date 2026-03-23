@@ -26,15 +26,15 @@ cp .env.example .env
 
 Edit `.env` if needed (defaults work for local development):
 
-| Variable                      | Default                  | Description                                                  |
-| ----------------------------- | ------------------------ | ------------------------------------------------------------ |
-| `PORT`                        | `3000`                   | Express server port                                          |
-| `DB_PATH`                     | `./data/desiDeals24.db`  | SQLite database file                                         |
-| `TURSO_DATABASE_URL`          | —                        | Remote Turso/libsql database URL                             |
-| `TURSO_AUTH_TOKEN`            | —                        | Turso auth token                                             |
-| `ADMIN_SECRET`                | `changeme-in-production` | Bearer token for admin endpoints                             |
-| `CRAWL_ON_STARTUP`            | `false`                  | Set `true` to crawl immediately on server start              |
-| `CRAWL_LOCK_TTL_MINUTES`      | `180`                    | Shared crawl lock expiry for Turso-backed crawl runs         |
+| Variable                 | Default                  | Description                                          |
+| ------------------------ | ------------------------ | ---------------------------------------------------- |
+| `PORT`                   | `3000`                   | Express server port                                  |
+| `DB_PATH`                | `./data/desiDeals24.db`  | SQLite database file                                 |
+| `TURSO_DATABASE_URL`     | —                        | Remote Turso/libsql database URL                     |
+| `TURSO_AUTH_TOKEN`       | —                        | Turso auth token                                     |
+| `ADMIN_SECRET`           | `changeme-in-production` | Bearer token for admin endpoints                     |
+| `CRAWL_ON_STARTUP`       | `false`                  | Set `true` to crawl immediately on server start      |
+| `CRAWL_LOCK_TTL_MINUTES` | `180`                    | Shared crawl lock expiry for Turso-backed crawl runs |
 
 ### 3. Run the crawler (fetch deals)
 
@@ -49,6 +49,7 @@ npm run schedule:run
 ```
 
 This uses Europe/Berlin time windows:
+
 - `06:00` Berlin: full crawl
 - `07:00+` Berlin: daily pool refresh + verification until today's pool exists
 - outside those windows it exits quickly unless `FORCE_JOB=crawl|pool|all` is set

@@ -116,41 +116,45 @@ import { GlobalStyles } from '@mui/material';
 For reusable styled components:
 
 ```typescript
-import { styled } from '@mui/material/styles';
+import { styled } from "@mui/material/styles";
 
 const StyledCard = styled(Card)(({ theme }) => ({
   padding: theme.spacing(2),
   borderRadius: theme.shape.borderRadius * 2,
   backgroundColor: theme.palette.background.paper,
-  transition: theme.transitions.create(['transform', 'box-shadow']),
-  '&:hover': {
-    transform: 'translateY(-4px)',
-    boxShadow: theme.shadows[8]
-  }
+  transition: theme.transitions.create(["transform", "box-shadow"]),
+  "&:hover": {
+    transform: "translateY(-4px)",
+    boxShadow: theme.shadows[8],
+  },
 }));
 
 // With props
 interface StyledButtonProps {
-  variant: 'primary' | 'secondary';
+  variant: "primary" | "secondary";
 }
 
-const StyledButton = styled(Button)<StyledButtonProps>(({ theme, variant }) => ({
-  backgroundColor: variant === 'primary'
-    ? theme.palette.primary.main
-    : theme.palette.secondary.main,
-  color: theme.palette.primary.contrastText,
-  '&:hover': {
-    backgroundColor: variant === 'primary'
-      ? theme.palette.primary.dark
-      : theme.palette.secondary.dark
-  }
-}));
+const StyledButton = styled(Button)<StyledButtonProps>(
+  ({ theme, variant }) => ({
+    backgroundColor:
+      variant === "primary"
+        ? theme.palette.primary.main
+        : theme.palette.secondary.main,
+    color: theme.palette.primary.contrastText,
+    "&:hover": {
+      backgroundColor:
+        variant === "primary"
+          ? theme.palette.primary.dark
+          : theme.palette.secondary.dark,
+    },
+  }),
+);
 ```
 
 ## Theme Overrides
 
 ```typescript
-import { createTheme } from '@mui/material/styles';
+import { createTheme } from "@mui/material/styles";
 
 const theme = createTheme({
   components: {
@@ -158,29 +162,29 @@ const theme = createTheme({
       styleOverrides: {
         root: {
           borderRadius: 8,
-          textTransform: 'none',
-          fontWeight: 600
+          textTransform: "none",
+          fontWeight: 600,
         },
         containedPrimary: {
-          boxShadow: 'none',
-          '&:hover': {
-            boxShadow: 'none'
-          }
-        }
+          boxShadow: "none",
+          "&:hover": {
+            boxShadow: "none",
+          },
+        },
       },
       defaultProps: {
-        disableRipple: true
-      }
+        disableRipple: true,
+      },
     },
     MuiCard: {
       styleOverrides: {
         root: {
           borderRadius: 12,
-          boxShadow: '0 2px 8px rgba(0,0,0,0.1)'
-        }
-      }
-    }
-  }
+          boxShadow: "0 2px 8px rgba(0,0,0,0.1)",
+        },
+      },
+    },
+  },
 });
 ```
 
@@ -205,6 +209,7 @@ const theme = createTheme({
 ## Common Patterns
 
 ### Card with Hover Effect
+
 ```typescript
 <Card
   sx={{
@@ -219,6 +224,7 @@ const theme = createTheme({
 ```
 
 ### Gradient Background
+
 ```typescript
 <Box
   sx={{
@@ -230,6 +236,7 @@ const theme = createTheme({
 ```
 
 ### Sticky Header
+
 ```typescript
 <AppBar
   sx={{
@@ -241,6 +248,7 @@ const theme = createTheme({
 ```
 
 ### Flexbox Layouts
+
 ```typescript
 <Box
   sx={{

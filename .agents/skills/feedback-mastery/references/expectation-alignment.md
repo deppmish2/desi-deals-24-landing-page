@@ -6,14 +6,14 @@ Frameworks for setting, communicating, and managing expectations with teammates,
 
 Common causes of expectation misalignment in software teams:
 
-| Cause | Example |
-| --- | --- |
-| **Implicit assumptions** | "I assumed we'd use the existing API" vs "I thought we'd build a new one" |
-| **Different definitions** | "Done" means code complete to you, but deployed to them |
-| **Information gaps** | You know about a dependency; they don't |
-| **Timeline optimism** | Estimates given under pressure without accounting for reality |
-| **Scope creep** | Small additions pile up into major differences |
-| **Communication gaps** | Updates not shared, changes not communicated |
+| Cause                     | Example                                                                   |
+| ------------------------- | ------------------------------------------------------------------------- |
+| **Implicit assumptions**  | "I assumed we'd use the existing API" vs "I thought we'd build a new one" |
+| **Different definitions** | "Done" means code complete to you, but deployed to them                   |
+| **Information gaps**      | You know about a dependency; they don't                                   |
+| **Timeline optimism**     | Estimates given under pressure without accounting for reality             |
+| **Scope creep**           | Small additions pile up into major differences                            |
+| **Communication gaps**    | Updates not shared, changes not communicated                              |
 
 ## The Expectation Alignment Framework
 
@@ -21,11 +21,11 @@ Common causes of expectation misalignment in software teams:
 
 Never assume alignment. Make success criteria explicit:
 
-| Vague | Explicit |
-| --- | --- |
-| "Make it fast" | "Page load under 2 seconds on 3G" |
-| "High quality" | "Zero P1 bugs in first month; 80% test coverage" |
-| "Soon" | "By end of sprint (Friday 5pm)" |
+| Vague           | Explicit                                             |
+| --------------- | ---------------------------------------------------- |
+| "Make it fast"  | "Page load under 2 seconds on 3G"                    |
+| "High quality"  | "Zero P1 bugs in first month; 80% test coverage"     |
+| "Soon"          | "By end of sprint (Friday 5pm)"                      |
 | "User-friendly" | "New users can complete checkout in under 3 minutes" |
 
 ### 2. Expose Assumptions
@@ -71,12 +71,15 @@ Don't wait until delivery to discover misalignment:
 ### Response Framework
 
 **1. Acknowledge the goal:**
+
 > "I understand hitting this date is important for [business reason]."
 
 **2. Present data:**
+
 > "Based on similar past work, this typically takes [X]. Here's the breakdown..."
 
 **3. Offer options:**
+
 > "We have a few paths:"
 >
 > - "Hit the date by reducing scope to [core features]"
@@ -84,6 +87,7 @@ Don't wait until delivery to discover misalignment:
 > - "Add resources, but onboarding will take [time]"
 
 **4. Get explicit agreement:**
+
 > "Which approach would you like? Can I document this so we're aligned?"
 
 ### Sample Conversation
@@ -113,26 +117,30 @@ Don't wait until delivery to discover misalignment:
 ### Response Framework
 
 **1. Identify the gap:**
+
 > "I've noticed some confusion about who owns [task/decision]. Can we clarify?"
 
 **2. Propose explicit ownership:**
+
 > "My understanding is that [Person A] owns [X] and [Person B] owns [Y]. Does that match your understanding?"
 
 **3. Define handoff points:**
+
 > "The handoff happens when [specific condition]. At that point, [Person B] takes over."
 
 **4. Document and share:**
+
 > "Let me send a quick summary so everyone's aligned."
 
 ### RACI for Common Confusion Points
 
-| Task | Responsible | Accountable | Consulted | Informed |
-| --- | --- | --- | --- | --- |
-| Code complete | Developer | Developer | Reviewer | Team |
-| PR merged | Reviewer | Developer | - | Team |
-| Deployed to staging | DevOps/Dev | Team Lead | QA | Stakeholders |
-| Bug triage | Tech Lead | Product | Development | Stakeholders |
-| Scope changes | Product | Product | Tech Lead | Development |
+| Task                | Responsible | Accountable | Consulted   | Informed     |
+| ------------------- | ----------- | ----------- | ----------- | ------------ |
+| Code complete       | Developer   | Developer   | Reviewer    | Team         |
+| PR merged           | Reviewer    | Developer   | -           | Team         |
+| Deployed to staging | DevOps/Dev  | Team Lead   | QA          | Stakeholders |
+| Bug triage          | Tech Lead   | Product     | Development | Stakeholders |
+| Scope changes       | Product     | Product     | Tech Lead   | Development  |
 
 ## Scenario: Scope Creep
 
@@ -147,15 +155,19 @@ Don't wait until delivery to discover misalignment:
 ### Response Framework
 
 **1. Acknowledge the request:**
+
 > "That's a good idea. Let me think through the impact."
 
 **2. Quantify the change:**
+
 > "Adding [feature] would take approximately [time]. That would push our delivery from [date] to [new date]."
 
 **3. Present trade-offs:**
+
 > "We could add this by dropping [other feature] or extending the timeline. Which would you prefer?"
 
 **4. Get explicit approval:**
+
 > "Before I add this to the scope, can you confirm [the trade-off]?"
 
 ### The Scope Change Template
@@ -166,11 +178,13 @@ When scope changes are requested, respond with:
 **Change Request:** [What's being asked]
 
 **Impact:**
+
 - Timeline: [Current] → [New]
 - Resources: [Any changes]
 - Risk: [New risks introduced]
 
 **Options:**
+
 1. Add scope, extend timeline to [date]
 2. Add scope, drop [other feature]
 3. Defer to next phase

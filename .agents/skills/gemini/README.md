@@ -40,6 +40,7 @@ User Request → Model Selection → Approval Mode → Command Assembly → Exec
 ```
 
 The skill handles all complexity around:
+
 - Preventing hung processes in background mode
 - Choosing between interactive and automated execution
 - Timeout management for safety
@@ -49,13 +50,13 @@ The skill handles all complexity around:
 
 ### 1. Multiple Model Options
 
-| Model | Best For | Performance |
-|-------|----------|-------------|
-| `gemini-3-pro-preview` ⭐ | Complex reasoning, coding, agentic tasks | 76.2% SWE-bench, flagship quality |
-| `gemini-3-flash` | Sub-second latency, speed-critical tasks | Distilled from 3 Pro, TPU-optimized |
-| `gemini-2.5-pro` | Legacy all-around performance | Mature stability |
-| `gemini-2.5-flash` | Cost-efficient, high-volume tasks | $0.15/M tokens |
-| `gemini-2.5-flash-lite` | Fastest processing | Maximum speed |
+| Model                     | Best For                                 | Performance                         |
+| ------------------------- | ---------------------------------------- | ----------------------------------- |
+| `gemini-3-pro-preview` ⭐ | Complex reasoning, coding, agentic tasks | 76.2% SWE-bench, flagship quality   |
+| `gemini-3-flash`          | Sub-second latency, speed-critical tasks | Distilled from 3 Pro, TPU-optimized |
+| `gemini-2.5-pro`          | Legacy all-around performance            | Mature stability                    |
+| `gemini-2.5-flash`        | Cost-efficient, high-volume tasks        | $0.15/M tokens                      |
+| `gemini-2.5-flash-lite`   | Fastest processing                       | Maximum speed                       |
 
 ### 2. Smart Approval Modes
 
@@ -66,6 +67,7 @@ The skill handles all complexity around:
 ### 3. Background Execution Safety
 
 The skill automatically protects against hung processes by:
+
 - Enforcing `--approval-mode yolo` for non-interactive shells
 - Providing timeout wrappers for safety
 - Detecting and killing hung processes
@@ -152,22 +154,22 @@ gemini -m gemini-3-pro-preview --approval-mode yolo \
 
 ### Core Flags
 
-| Flag | Description | Example |
-|------|-------------|---------|
-| `-m, --model` | Select Gemini model | `-m gemini-3-pro-preview` |
-| `--approval-mode` | Control tool approval | `--approval-mode yolo` |
-| `-y, --yolo` | Shorthand for auto-approve | `-y` |
-| `-i, --prompt-interactive` | Execute prompt and continue | `-i "Review auth system"` |
-| `--include-directories` | Add directories to workspace | `--include-directories /path` |
-| `-s, --sandbox` | Run in sandbox mode | `-s` |
+| Flag                       | Description                  | Example                       |
+| -------------------------- | ---------------------------- | ----------------------------- |
+| `-m, --model`              | Select Gemini model          | `-m gemini-3-pro-preview`     |
+| `--approval-mode`          | Control tool approval        | `--approval-mode yolo`        |
+| `-y, --yolo`               | Shorthand for auto-approve   | `-y`                          |
+| `-i, --prompt-interactive` | Execute prompt and continue  | `-i "Review auth system"`     |
+| `--include-directories`    | Add directories to workspace | `--include-directories /path` |
+| `-s, --sandbox`            | Run in sandbox mode          | `-s`                          |
 
 ### Approval Modes Quick Reference
 
-| Mode | Interactive | Background | Auto-edits | Use When |
-|------|------------|------------|------------|----------|
-| `default` | ✅ | ❌ | ❌ | Interactive terminal with manual approval |
-| `auto_edit` | ✅ | ⚠️ | ✅ | Code reviews with automatic edit suggestions |
-| `yolo` | ✅ | ✅ | ✅ | Background/automated tasks (required) |
+| Mode        | Interactive | Background | Auto-edits | Use When                                     |
+| ----------- | ----------- | ---------- | ---------- | -------------------------------------------- |
+| `default`   | ✅          | ❌         | ❌         | Interactive terminal with manual approval    |
+| `auto_edit` | ✅          | ⚠️         | ✅         | Code reviews with automatic edit suggestions |
+| `yolo`      | ✅          | ✅         | ✅         | Background/automated tasks (required)        |
 
 ## Critical: Background Mode Warning
 
@@ -176,6 +178,7 @@ gemini -m gemini-3-pro-preview --approval-mode yolo \
 ### For Automated/Background Tasks
 
 ✅ **DO THIS**:
+
 ```bash
 # Use yolo for fully automated execution
 gemini -m gemini-3-pro-preview --approval-mode yolo "Review codebase"
@@ -185,6 +188,7 @@ timeout 300 gemini -m gemini-3-pro-preview --approval-mode yolo "Review codebase
 ```
 
 ❌ **NEVER DO THIS**:
+
 ```bash
 # Will hang indefinitely in background
 gemini -m gemini-3-pro-preview --approval-mode default "Review codebase"
@@ -255,12 +259,14 @@ The skill handles common errors:
 ### Process Hung in Background
 
 **Detection**:
+
 ```bash
 ps aux | grep -E "gemini.*gemini-3" | grep -v grep
 # Look for: 20+ min runtime, 0% CPU, state 'S'
 ```
 
 **Resolution**:
+
 ```bash
 pkill -9 -f "gemini.*gemini-3-pro-preview"
 ```
@@ -270,6 +276,7 @@ pkill -9 -f "gemini.*gemini-3-pro-preview"
 ### No Output After Long Time
 
 Check if process is waiting for approval:
+
 ```bash
 ps -o pid,etime,pcpu,stat,command -p <PID>
 ```
@@ -279,6 +286,7 @@ If stat is 'S' and CPU is 0%, kill and restart with `--approval-mode yolo`
 ### Out of Memory
 
 For very large codebases:
+
 - Use `gemini-3-flash` instead of Pro
 - Break analysis into smaller chunks
 - Use `--include-directories` to limit scope
@@ -302,6 +310,7 @@ For very large codebases:
 ## Performance Benchmarks
 
 Gemini 3 Pro advantages:
+
 - **SWE-bench**: 76.2% (state-of-the-art)
 - **GPQA Diamond**: 91.9%
 - **WebDev Arena**: 1487 Elo
@@ -319,6 +328,7 @@ The skill seamlessly integrates with Claude Code workflows:
 6. Returns structured results to user
 
 After completion, users can:
+
 - Start new Gemini session for follow-up
 - Continue exploring findings with Claude Code
 - Save reports for documentation

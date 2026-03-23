@@ -16,18 +16,18 @@ paginate: true
 
 ### Main Global Directives
 
-| Directive | Description | Example Values |
-|-----------|-------------|----------------|
-| `marp` | Enable Marp functionality | `true` |
-| `theme` | Specify theme | `default`, `gaia`, `uncover` |
-| `size` | Slide size (Marp Core extension) | `16:9`, `4:3`, `A4` |
-| `paginate` | Show page numbers | `true`, `false` |
-| `header` | Header for all slides | Any text |
-| `footer` | Footer for all slides | Any text |
-| `backgroundColor` | Background color | `#fff`, `white` |
-| `backgroundImage` | Background image | `url('image.png')` |
-| `color` | Text color | `#000`, `black` |
-| `class` | Apply CSS class | `lead`, `invert` |
+| Directive         | Description                      | Example Values               |
+| ----------------- | -------------------------------- | ---------------------------- |
+| `marp`            | Enable Marp functionality        | `true`                       |
+| `theme`           | Specify theme                    | `default`, `gaia`, `uncover` |
+| `size`            | Slide size (Marp Core extension) | `16:9`, `4:3`, `A4`          |
+| `paginate`        | Show page numbers                | `true`, `false`              |
+| `header`          | Header for all slides            | Any text                     |
+| `footer`          | Footer for all slides            | Any text                     |
+| `backgroundColor` | Background color                 | `#fff`, `white`              |
+| `backgroundImage` | Background image                 | `url('image.png')`           |
+| `color`           | Text color                       | `#000`, `black`              |
+| `class`           | Apply CSS class                  | `lead`, `invert`             |
 
 ### Size Directive (Marp Core)
 
@@ -38,6 +38,7 @@ size: 16:9
 ```
 
 Available sizes:
+
 - `16:9` (1280x720, default)
 - `4:3` (960x720)
 - `A4` (210mm x 297mm)
@@ -55,6 +56,7 @@ To change settings per slide, use `<!-- directive_name: value -->` format:
 ```
 
 **Meaning of underscore `_`**:
+
 - Without `_`: Apply to all following slides
 - With `_`: Apply to current slide only
 
@@ -62,9 +64,7 @@ To change settings per slide, use `<!-- directive_name: value -->` format:
 
 ```markdown
 ---
-
 # First Slide
-
 ---
 
 # Next Slide
@@ -80,8 +80,8 @@ To change settings per slide, use `<!-- directive_name: value -->` format:
 
 ```markdown
 ---
-header: 'Lecture Name'
-footer: 'October 2024'
+header: "Lecture Name"
+footer: "October 2024"
 ---
 ```
 
@@ -110,11 +110,13 @@ paginate: true
 Display position and style vary by theme.
 
 Hide on specific slide:
+
 ```markdown
 <!-- paginate: false -->
 ```
 
 Or:
+
 ```markdown
 <!-- _paginate: false -->
 ```

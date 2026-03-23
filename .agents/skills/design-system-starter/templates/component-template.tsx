@@ -11,8 +11,8 @@
  * ```
  */
 
-import React from 'react';
-import { cn } from '../utils/cn'; // Utility for className merging
+import React from "react";
+import { cn } from "../utils/cn"; // Utility for className merging
 
 // ============================================================================
 // Types & Interfaces
@@ -21,12 +21,12 @@ import { cn } from '../utils/cn'; // Utility for className merging
 /**
  * Variants define the visual style of the component
  */
-export type ComponentVariant = 'primary' | 'secondary' | 'outline' | 'ghost';
+export type ComponentVariant = "primary" | "secondary" | "outline" | "ghost";
 
 /**
  * Sizes define the dimensions of the component
  */
-export type ComponentSize = 'sm' | 'md' | 'lg';
+export type ComponentSize = "sm" | "md" | "lg";
 
 /**
  * Props for the Component
@@ -68,7 +68,7 @@ export interface ComponentProps {
   /**
    * ARIA label for accessibility
    */
-  'aria-label'?: string;
+  "aria-label"?: string;
 }
 
 // ============================================================================
@@ -76,19 +76,22 @@ export interface ComponentProps {
 // ============================================================================
 
 const componentStyles = {
-  base: 'inline-flex items-center justify-center font-medium transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50',
+  base: "inline-flex items-center justify-center font-medium transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50",
 
   variants: {
-    primary: 'bg-blue-600 text-white hover:bg-blue-700 focus-visible:ring-blue-500',
-    secondary: 'bg-gray-600 text-white hover:bg-gray-700 focus-visible:ring-gray-500',
-    outline: 'border border-gray-300 bg-transparent hover:bg-gray-100 focus-visible:ring-gray-500',
-    ghost: 'hover:bg-gray-100 focus-visible:ring-gray-500',
+    primary:
+      "bg-blue-600 text-white hover:bg-blue-700 focus-visible:ring-blue-500",
+    secondary:
+      "bg-gray-600 text-white hover:bg-gray-700 focus-visible:ring-gray-500",
+    outline:
+      "border border-gray-300 bg-transparent hover:bg-gray-100 focus-visible:ring-gray-500",
+    ghost: "hover:bg-gray-100 focus-visible:ring-gray-500",
   },
 
   sizes: {
-    sm: 'h-8 px-3 text-sm rounded-md',
-    md: 'h-10 px-4 text-base rounded-md',
-    lg: 'h-12 px-6 text-lg rounded-lg',
+    sm: "h-8 px-3 text-sm rounded-md",
+    md: "h-10 px-4 text-base rounded-md",
+    lg: "h-12 px-6 text-lg rounded-lg",
   },
 };
 
@@ -99,15 +102,15 @@ const componentStyles = {
 export const Component = React.forwardRef<HTMLDivElement, ComponentProps>(
   (
     {
-      variant = 'primary',
-      size = 'md',
+      variant = "primary",
+      size = "md",
       disabled = false,
       className,
       children,
       onClick,
-      'aria-label': ariaLabel,
+      "aria-label": ariaLabel,
     },
-    ref
+    ref,
   ) => {
     // =========================================================================
     // State & Hooks
@@ -128,7 +131,7 @@ export const Component = React.forwardRef<HTMLDivElement, ComponentProps>(
     const handleKeyDown = (event: React.KeyboardEvent<HTMLDivElement>) => {
       // Handle Enter and Space for keyboard accessibility
       if (disabled) return;
-      if (event.key === 'Enter' || event.key === ' ') {
+      if (event.key === "Enter" || event.key === " ") {
         event.preventDefault();
         onClick?.(event as any);
       }
@@ -145,7 +148,7 @@ export const Component = React.forwardRef<HTMLDivElement, ComponentProps>(
           componentStyles.base,
           componentStyles.variants[variant],
           componentStyles.sizes[size],
-          className
+          className,
         )}
         onClick={handleClick}
         onKeyDown={handleKeyDown}
@@ -157,10 +160,10 @@ export const Component = React.forwardRef<HTMLDivElement, ComponentProps>(
         {children}
       </div>
     );
-  }
+  },
 );
 
-Component.displayName = 'Component';
+Component.displayName = "Component";
 
 // ============================================================================
 // Compound Components (if applicable)
@@ -169,7 +172,11 @@ Component.displayName = 'Component';
 /**
  * Example of a compound component pattern
  */
-export const ComponentHeader = ({ children }: { children: React.ReactNode }) => {
+export const ComponentHeader = ({
+  children,
+}: {
+  children: React.ReactNode;
+}) => {
   return <div className="component-header">{children}</div>;
 };
 

@@ -12,18 +12,20 @@ const {
   ensureDailyDealsPool,
   getCurrentPoolDate,
 } = require("../server/services/daily-deals-pool");
-const { formatBerlinDateKey, getBerlinHour } = require("../server/services/berlin-time");
 const {
-  finishJobRun,
-  startJobRun,
-} = require("../server/services/job-runs");
+  formatBerlinDateKey,
+  getBerlinHour,
+} = require("../server/services/berlin-time");
+const { finishJobRun, startJobRun } = require("../server/services/job-runs");
 
 const MIN_DISCOUNT = Number(process.env.DAILY_POOL_MIN_DISCOUNT_PCT || 20);
 const TARGET = 24;
 
 async function getPoolCountForDate(dateKey) {
   const row = await db
-    .prepare(`SELECT COUNT(*) AS cnt FROM daily_deal_pool_entries WHERE pool_date = ?`)
+    .prepare(
+      `SELECT COUNT(*) AS cnt FROM daily_deal_pool_entries WHERE pool_date = ?`,
+    )
     .get(dateKey);
   return Number(row?.cnt || 0);
 }
@@ -60,12 +62,18 @@ module.exports = async (req, res) => {
         ok: true,
         berlin_date: berlinDate,
         berlin_hour: berlinHour,
-        daily_pool: { skipped: true, reason: "already_generated", entries: existingCount },
+        daily_pool: {
+          skipped: true,
+          reason: "already_generated",
+          entries: existingCount,
+        },
       });
     }
 
     // Remove any existing incomplete/bad entries for today and regenerate fresh
-    await db.prepare(`DELETE FROM daily_deal_pool_entries WHERE pool_date = ?`).run(berlinDate);
+    await db
+      .prepare(`DELETE FROM daily_deal_pool_entries WHERE pool_date = ?`)
+      .run(berlinDate);
     const pool = await ensureDailyDealsPool(db, { poolDate: berlinDate });
     const warningCount = pool.entries.length < TARGET ? 1 : 0;
 

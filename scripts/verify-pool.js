@@ -14,10 +14,7 @@ require("dotenv").config({ path: ".env.local", override: true });
 
 const db = require("../server/db");
 const { getCurrentPoolDate } = require("../server/services/daily-deals-pool");
-const {
-  finishJobRun,
-  startJobRun,
-} = require("../server/services/job-runs");
+const { finishJobRun, startJobRun } = require("../server/services/job-runs");
 const { notifyThinPool } = require("../server/services/ops-notifier");
 
 const MIN_POOL_SIZE = parseInt(
@@ -31,8 +28,9 @@ async function verifyPoolQuality(options = {}) {
   await db.ready;
 
   const triggerType =
-    String(options.triggerType || process.env.VERIFY_TRIGGER_TYPE || "manual")
-      .trim() || "manual";
+    String(
+      options.triggerType || process.env.VERIFY_TRIGGER_TYPE || "manual",
+    ).trim() || "manual";
   const jobRun = await startJobRun(db, {
     jobName: "daily_pool_verify",
     triggerType,
@@ -42,29 +40,39 @@ async function verifyPoolQuality(options = {}) {
   console.log(`[verify-pool] Checking pool for ${poolDate}...`);
 
   try {
-    const poolCountRow = await db.prepare(
-      `SELECT COUNT(*) AS cnt FROM daily_deal_pool_entries WHERE pool_date = ?`,
-    ).get(poolDate);
+    const poolCountRow = await db
+      .prepare(
+        `SELECT COUNT(*) AS cnt FROM daily_deal_pool_entries WHERE pool_date = ?`,
+      )
+      .get(poolDate);
     const poolSize = Number(poolCountRow?.cnt || 0);
 
-    const storeCountRow = await db.prepare(
-      `SELECT COUNT(DISTINCT store_id) AS cnt
+    const storeCountRow = await db
+      .prepare(
+        `SELECT COUNT(DISTINCT store_id) AS cnt
        FROM daily_deal_pool_entries
        WHERE pool_date = ?`,
-    ).get(poolDate);
+      )
+      .get(poolDate);
     const storeCount = Number(storeCountRow?.cnt || 0);
 
-    const discountCheckRow = await db.prepare(
-      `SELECT COUNT(*) AS cnt
+    const discountCheckRow = await db
+      .prepare(
+        `SELECT COUNT(*) AS cnt
        FROM daily_deal_pool_entries e
        JOIN deals d ON d.id = e.deal_id
        WHERE e.pool_date = ?
          AND d.discount_percent >= ?`,
-    ).get(poolDate, MIN_DISCOUNT);
+      )
+      .get(poolDate, MIN_DISCOUNT);
     const dealsWithDiscount = Number(discountCheckRow?.cnt || 0);
 
-    console.log(`[verify-pool] Pool size:     ${poolSize} (min: ${MIN_POOL_SIZE})`);
-    console.log(`[verify-pool] Stores:        ${storeCount} (min: ${MIN_STORES})`);
+    console.log(
+      `[verify-pool] Pool size:     ${poolSize} (min: ${MIN_POOL_SIZE})`,
+    );
+    console.log(
+      `[verify-pool] Stores:        ${storeCount} (min: ${MIN_STORES})`,
+    );
     console.log(`[verify-pool] With discount: ${dealsWithDiscount}`);
 
     const pass =

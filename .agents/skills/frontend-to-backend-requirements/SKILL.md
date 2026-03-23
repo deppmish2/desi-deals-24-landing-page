@@ -15,6 +15,7 @@ You are a frontend developer documenting what data you need from backend. You de
 ## The Point
 
 This mode is for frontend devs to communicate data needs:
+
 - What data do I need to render this screen?
 - What actions should the user be able to perform?
 - What business rules affect the UI?
@@ -26,13 +27,13 @@ This mode is for frontend devs to communicate data needs:
 
 ## What You Own vs. What Backend Owns
 
-| Frontend Owns | Backend Owns |
-|---------------|--------------|
-| What data is needed | How data is structured |
-| What actions exist | Endpoint design |
-| UI states to handle | Field names, types |
-| User-facing validation | API conventions |
-| Display requirements | Performance/caching |
+| Frontend Owns          | Backend Owns           |
+| ---------------------- | ---------------------- |
+| What data is needed    | How data is structured |
+| What actions exist     | Endpoint design        |
+| UI states to handle    | Field names, types     |
+| User-facing validation | API conventions        |
+| Display requirements   | Performance/caching    |
 
 ---
 
@@ -51,22 +52,26 @@ Before listing requirements:
 For each screen/component, describe:
 
 **Data I need to display:**
+
 - What information appears on screen?
 - What's the relationship between pieces?
 - What determines visibility/state?
 
 **Actions user can perform:**
+
 - What can the user do?
 - What's the expected outcome?
 - What feedback should they see?
 
 **States I need to handle:**
+
 - Loading, empty, error, success
 - Edge cases (partial data, expired, etc.)
 
 ### Step 3: Surface Uncertainties
 
 List what you're unsure about:
+
 - Business rules you don't fully understand
 - Edge cases you're not sure how to handle
 - Places where you're guessing
@@ -76,6 +81,7 @@ List what you're unsure about:
 ### Step 4: Leave Room for Discussion
 
 End with open questions:
+
 - "Would it make sense to...?"
 - "Should I expect...?"
 - "Is there a simpler way to...?"
@@ -90,46 +96,56 @@ Create `.claude/docs/ai/<feature-name>/backend-requirements.md`:
 # Backend Requirements: <Feature Name>
 
 ## Context
+
 [What we're building, who it's for, what problem it solves]
 
 ## Screens/Components
 
 ### <Screen/Component Name>
+
 **Purpose**: What this screen does
 
 **Data I need to display**:
+
 - [Description of data piece, not field name]
 - [Another piece]
 - [Relationships between pieces]
 
 **Actions**:
+
 - [Action description] → [Expected outcome]
 - [Another action] → [Expected outcome]
 
 **States to handle**:
+
 - **Empty**: [When/why this happens]
 - **Loading**: [What's being fetched]
 - **Error**: [What can go wrong, what user sees]
 - **Special**: [Any edge cases]
 
 **Business rules affecting UI**:
+
 - [Rule that changes what's visible/enabled]
 - [Permissions that affect actions]
 
 ### <Next Screen/Component>
+
 ...
 
 ## Uncertainties
+
 - [ ] Not sure if [X] should show when [Y]
 - [ ] Don't understand the business rule for [Z]
 - [ ] Guessing that [A] means [B]
 
 ## Questions for Backend
+
 - Would it make sense to combine [X] and [Y]?
 - Should I expect [Z] to always be present?
 - Is there existing data I can reuse for [W]?
 
 ## Discussion Log
+
 [Backend responses, decisions made, changes to requirements]
 ```
 
@@ -138,21 +154,27 @@ Create `.claude/docs/ai/<feature-name>/backend-requirements.md`:
 ## Good vs. Bad Requests
 
 ### Bad (Dictating Implementation)
+
 > "I need a GET /api/contracts endpoint that returns an array with fields: id, title, status, created_at"
 
 ### Good (Describing Needs)
+
 > "I need to show a list of contracts. Each item shows the contract title, its current status, and when it was created. User should be able to filter by status."
 
 ### Bad (Assuming Structure)
+
 > "The provider object should be nested inside the contract response"
 
 ### Good (Describing Relationship)
+
 > "For each contract, I need to show who the provider is (their name and maybe logo)"
 
 ### Bad (No Context)
+
 > "I need contract data"
 
 ### Good (With Context)
+
 > "On the dashboard, there's a 'Recent Contracts' widget showing the 5 most recent contracts. User clicks one to go to detail page."
 
 ---
@@ -185,6 +207,7 @@ Include these prompts in your requirements:
 ## After Backend Responds
 
 Update the requirements doc:
+
 1. Add responses to Discussion Log
 2. Adjust requirements based on feedback
 3. Mark resolved uncertainties

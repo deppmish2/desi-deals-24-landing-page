@@ -11,19 +11,19 @@ Official documentation: https://github.com/marp-team/marpit/tree/main/docs/fragm
 ### Basic Usage
 
 ```markdown
-* Item 1
-* Item 2
-* Item 3
+- Item 1
+- Item 2
+- Item 3
 ```
 
 Normally, all items are displayed at once.
 
-### Using Asterisks (*)
+### Using Asterisks (\*)
 
 ```markdown
-* Item 1
-* Item 2
-* Item 3
+- Item 1
+- Item 2
+- Item 3
 ```
 
 When using `--html` option with Marp CLI, each item displays sequentially.
@@ -302,9 +302,7 @@ Customizable in VS Code settings:
 
 ```json
 {
-  "markdown.marp.themes": [
-    "./themes/custom-theme.css"
-  ],
+  "markdown.marp.themes": ["./themes/custom-theme.css"],
   "markdown.marp.enableHtml": true
 }
 ```
@@ -320,7 +318,7 @@ name: Marp Build
 
 on:
   push:
-    branches: [ main ]
+    branches: [main]
 
 jobs:
   build:
@@ -361,7 +359,7 @@ jobs:
 
 ```css
 section::after {
-  content: 'Page ' attr(data-marpit-pagination);
+  content: "Page " attr(data-marpit-pagination);
 }
 ```
 
@@ -403,7 +401,7 @@ Right side content
 
 ```css
 section::before {
-  content: '';
+  content: "";
   position: absolute;
   top: 0;
   left: 0;

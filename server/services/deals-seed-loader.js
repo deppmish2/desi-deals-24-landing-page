@@ -50,8 +50,11 @@ async function restoreDealsFromSeed(db, options = {}) {
   }
 
   const activeDeals =
-    (await db.prepare("SELECT COUNT(*) AS n FROM deals WHERE is_active = 1").get())
-      ?.n || 0;
+    (
+      await db
+        .prepare("SELECT COUNT(*) AS n FROM deals WHERE is_active = 1")
+        .get()
+    )?.n || 0;
 
   return {
     ok: activeDeals > 0,

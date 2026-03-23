@@ -47,13 +47,13 @@ Internal command used:
 drawio -x -f png -s 2 -t -o output.drawio.png input.drawio
 ```
 
-| Option | Description |
-|--------|-------------|
-| `-x` | Export mode |
-| `-f png` | PNG format output |
-| `-s 2` | 2x scale (high resolution) |
-| `-t` | Transparent background |
-| `-o` | Output file path |
+| Option   | Description                |
+| -------- | -------------------------- |
+| `-x`     | Export mode                |
+| `-f png` | PNG format output          |
+| `-s 2`   | 2x scale (high resolution) |
+| `-t`     | Transparent background     |
+| `-o`     | Output file path           |
 
 ## 4. Layout Adjustment
 
@@ -98,14 +98,14 @@ drawio -x -f png -s 2 -t -o output.drawio.png input.drawio
 
 Separate complex systems into staged diagrams:
 
-| Diagram Type | Purpose |
-|--------------|---------|
-| Context Diagram | System overview from external perspective |
-| System Diagram | Main components and relationships |
-| Component Diagram | Technical details and integration points |
-| Deployment Diagram | Infrastructure configuration |
-| Data Flow Diagram | Data flow and transformation |
-| Sequence Diagram | Time-series interactions |
+| Diagram Type       | Purpose                                   |
+| ------------------ | ----------------------------------------- |
+| Context Diagram    | System overview from external perspective |
+| System Diagram     | Main components and relationships         |
+| Component Diagram  | Technical details and integration points  |
+| Deployment Diagram | Infrastructure configuration              |
+| Data Flow Diagram  | Data flow and transformation              |
+| Sequence Diagram   | Time-series interactions                  |
 
 ### 5.5. Metadata
 
@@ -258,7 +258,7 @@ python ~/.claude/skills/draw-io/scripts/find_aws_icon.py lambda
 - [ ] Internal elements not overflowing background frame (verify in PNG)
 - [ ] 30px+ margin between background frame and internal elements
 - [ ] AWS service names are official names/correct abbreviations
-- [ ] AWS icons are latest version (mxgraph.aws4.*)
+- [ ] AWS icons are latest version (mxgraph.aws4.\*)
 - [ ] No unnecessary elements remaining
 - [ ] Visually verified PNG conversion
 

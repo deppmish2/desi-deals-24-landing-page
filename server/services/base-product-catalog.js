@@ -57,7 +57,9 @@ function normalizeText(value) {
 }
 
 function canonicalizeToken(token) {
-  const normalized = String(token || "").trim().toLowerCase();
+  const normalized = String(token || "")
+    .trim()
+    .toLowerCase();
   if (!normalized) return "";
   return TOKEN_CANONICAL_MAP.get(normalized) || normalized;
 }
@@ -294,7 +296,11 @@ function detectBrandForBase(text, baseKey) {
   if (!textNorm) return null;
 
   const { byBaseKey } = getCatalog();
-  const entry = byBaseKey.get(String(baseKey || "").trim().toLowerCase());
+  const entry = byBaseKey.get(
+    String(baseKey || "")
+      .trim()
+      .toLowerCase(),
+  );
   if (!entry || !Array.isArray(entry.brands) || entry.brands.length === 0) {
     return null;
   }

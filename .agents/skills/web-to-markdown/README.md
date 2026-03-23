@@ -18,6 +18,7 @@ Use this skill when you need to:
 - Batch convert multiple URLs to Markdown files
 
 **Important:** This skill must be explicitly invoked by the user with phrases like:
+
 - "use the skill web-to-markdown ..."
 - "use a skill web-to-markdown ..."
 
@@ -68,6 +69,7 @@ use the skill web-to-markdown to convert https://example.com/article to article.
 ```
 
 This will run:
+
 ```bash
 web2md 'https://example.com/article' --out ./article.md
 ```
@@ -81,6 +83,7 @@ use the skill web-to-markdown to convert https://example.com/article and save to
 ```
 
 This creates a directory and auto-names the file:
+
 ```bash
 mkdir -p ./output
 web2md 'https://example.com/article' --out ./output/
@@ -95,6 +98,7 @@ use the skill web-to-markdown to convert https://example.com/article and print t
 ```
 
 This will run:
+
 ```bash
 web2md 'https://example.com/article' --print
 ```
@@ -108,6 +112,7 @@ use the skill web-to-markdown to convert https://example.com/protected-article i
 ```
 
 This will run:
+
 ```bash
 mkdir -p ./tmp/web2md-profile
 web2md 'https://example.com/protected-article' --interactive --user-data-dir ./tmp/web2md-profile --out ./output/
@@ -128,6 +133,7 @@ Save them to ./articles/
 ```
 
 This will create the directory and run separate commands for each URL:
+
 ```bash
 mkdir -p ./articles
 web2md 'https://example.com/article1' --out ./articles/
@@ -145,6 +151,7 @@ Wait for the main selector to appear
 ```
 
 This will run:
+
 ```bash
 web2md 'https://app.example.com/dashboard' --wait-until domcontentloaded --wait-for 'main' --out ./dashboard.md
 ```
@@ -181,18 +188,22 @@ The generated Markdown includes:
 ## Troubleshooting
 
 **Chrome not found:**
+
 - Install Chrome/Chromium or specify path with `--chrome-path`
 
 **Page content incomplete:**
+
 - Try `--wait-until networkidle2` (waits for network to settle)
 - Use `--wait-for '<selector>'` to wait for specific elements
 - Add `--wait-ms 2000` for additional delay
 
 **Login required:**
+
 - Use `--interactive` mode to manually login
 - Use `--user-data-dir` to persist session across runs
 
 **Verification/CAPTCHA:**
+
 - Use `--interactive` mode to complete verification manually
 
 ## Version

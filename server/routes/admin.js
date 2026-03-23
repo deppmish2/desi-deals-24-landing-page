@@ -101,21 +101,26 @@ function seedFallbackAllowed() {
 // Called by the frontend on page load to ensure deals are available.
 router.get("/crawl/warmup", async (req, res) => {
   const dealCount = Number(
-    (await db
-      .prepare(`SELECT COUNT(*) as cnt FROM deals WHERE is_active = 1`)
-      .get())?.cnt || 0,
+    (
+      await db
+        .prepare(`SELECT COUNT(*) as cnt FROM deals WHERE is_active = 1`)
+        .get()
+    )?.cnt || 0,
   );
 
   // Deals already available — just report crawl status and return.
   if (dealCount > 0) {
     const globalCrawling = await isCrawlLocked(db).catch(() => false);
-    const localCrawling = Number(
-      (await db
-        .prepare(
-          `SELECT COUNT(*) as cnt FROM crawl_runs WHERE status = 'running'`,
-        )
-        .get())?.cnt || 0,
-    ) > 0;
+    const localCrawling =
+      Number(
+        (
+          await db
+            .prepare(
+              `SELECT COUNT(*) as cnt FROM crawl_runs WHERE status = 'running'`,
+            )
+            .get()
+        )?.cnt || 0,
+      ) > 0;
     return res.json({
       deal_count: dealCount,
       crawling: globalCrawling || localCrawling,
@@ -132,9 +137,11 @@ router.get("/crawl/warmup", async (req, res) => {
     const seeded = await restoreDealsFromSeed(db);
     if (seeded.ok) {
       const newCount = Number(
-        (await db
-          .prepare(`SELECT COUNT(*) as cnt FROM deals WHERE is_active = 1`)
-          .get())?.cnt || 0,
+        (
+          await db
+            .prepare(`SELECT COUNT(*) as cnt FROM deals WHERE is_active = 1`)
+            .get()
+        )?.cnt || 0,
       );
       return res.json({ deal_count: newCount, crawling: false });
     }
@@ -142,13 +149,16 @@ router.get("/crawl/warmup", async (req, res) => {
 
   // No data is available yet — do NOT auto-crawl here.
   // Crawls are scheduled centrally and materialize into Turso.
-  const localCrawling = Number(
-    (await db
-      .prepare(
-        `SELECT COUNT(*) as cnt FROM crawl_runs WHERE status = 'running'`,
-      )
-      .get())?.cnt || 0,
-  ) > 0;
+  const localCrawling =
+    Number(
+      (
+        await db
+          .prepare(
+            `SELECT COUNT(*) as cnt FROM crawl_runs WHERE status = 'running'`,
+          )
+          .get()
+      )?.cnt || 0,
+    ) > 0;
 
   res.json({ deal_count: 0, crawling: localCrawling });
 });

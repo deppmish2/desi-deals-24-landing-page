@@ -26,18 +26,23 @@ Use this skill when you need help with:
 The skill is organized around several core frameworks:
 
 ### 1. The What-Why-How Structure
+
 A universal framework for organizing any professional message:
+
 - **What** - State the topic/request clearly
 - **Why** - Explain the reasoning
 - **How** - Outline next steps/action items
 
 ### 2. Three Golden Rules
+
 1. Start with a clear subject/purpose
 2. Use bullets, headlines, and scannable formatting
 3. Put key messages first
 
 ### 3. Audience Calibration
+
 Before communicating, consider:
+
 - Who is the audience?
 - What level of detail do they need?
 - What's the value for them?
@@ -45,30 +50,35 @@ Before communicating, consider:
 ## Key Features
 
 ### Email Best Practices
+
 - Subject line formulas
 - Structured email templates
 - Common email types (status update, request, escalation, FYI)
 - Email vs chat decision framework
 
 ### Team Messaging Etiquette
+
 - When to use chat vs email
 - Thread management and @mention guidelines
 - The "No Hello" principle for async communication
 - Channel organization best practices
 
 ### Technical vs Non-Technical Communication
+
 - Audience-specific approaches
 - Jargon translation strategies
 - Simplification without losing accuracy
 - Plain language examples
 
 ### Writing Clarity Principles
+
 - Active vs passive voice
 - Eliminating filler words
 - The "So What?" test
 - Professional tone guidelines
 
 ### Meeting Communication
+
 - Agenda best practices
 - Facilitation tips
 - Meeting summary format
@@ -79,6 +89,7 @@ Before communicating, consider:
 ### Example 1: Writing a Status Update Email
 
 **Before (ineffective):**
+
 ```
 Subject: Updates
 
@@ -88,6 +99,7 @@ we're handling them. Let me know if you have questions.
 ```
 
 **After (using frameworks from this skill):**
+
 ```
 Subject: Project X: Week 12 Status Update - On Track with Minor Delay
 
@@ -118,6 +130,7 @@ Best,
 ### Example 2: Team Chat Message
 
 **Before (ineffective):**
+
 ```
 Hey
 Are you there?
@@ -125,6 +138,7 @@ Can I ask you something?
 ```
 
 **After (using "No Hello" principle):**
+
 ```
 Hi Sarah - quick question about the deployment script.
 
@@ -137,12 +151,14 @@ Have you seen this before? I checked file permissions and they look correct.
 ### Example 3: Technical to Non-Technical Translation
 
 **Before (too technical):**
+
 ```
 We're implementing a microservices architecture with asynchronous message
 processing via a Kafka event bus to enable horizontal scalability.
 ```
 
 **After (accessible):**
+
 ```
 We're splitting our system into smaller, independent pieces that communicate
 through messages. This means:
@@ -154,6 +170,7 @@ through messages. This means:
 ### Example 4: Meeting Agenda
 
 **Before (vague):**
+
 ```
 Meeting: Project Discussion
 Time: Tuesday 2pm
@@ -161,6 +178,7 @@ Please attend.
 ```
 
 **After (structured):**
+
 ```
 Meeting: Project X Architecture Review
 Time: Tuesday 2pm-3pm

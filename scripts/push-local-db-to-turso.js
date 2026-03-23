@@ -7,9 +7,7 @@ const path = require("path");
 const { execFileSync } = require("child_process");
 const { createClient } = require("@libsql/client");
 
-const LOCAL_DB_PATH = path.resolve(
-  process.argv[2] || "./data/desiDeals24.db",
-);
+const LOCAL_DB_PATH = path.resolve(process.argv[2] || "./data/desiDeals24.db");
 const READ_BATCH_SIZE = Math.max(
   1,
   parseInt(process.env.TURSO_IMPORT_READ_BATCH_SIZE || "500", 10),
@@ -67,14 +65,10 @@ function quoteIdentifier(value) {
 }
 
 function sqliteJson(sql) {
-  const output = execFileSync(
-    "sqlite3",
-    ["-json", LOCAL_DB_PATH, sql],
-    {
-      encoding: "utf8",
-      maxBuffer: SQLITE_MAX_BUFFER_BYTES,
-    },
-  ).trim();
+  const output = execFileSync("sqlite3", ["-json", LOCAL_DB_PATH, sql], {
+    encoding: "utf8",
+    maxBuffer: SQLITE_MAX_BUFFER_BYTES,
+  }).trim();
   return output ? JSON.parse(output) : [];
 }
 
@@ -94,8 +88,12 @@ function sortTablesForImport(tables) {
     TABLE_IMPORT_ORDER.map((tableName, index) => [tableName, index]),
   );
   return [...tables].sort((a, b) => {
-    const aRank = order.has(a.name) ? order.get(a.name) : Number.MAX_SAFE_INTEGER;
-    const bRank = order.has(b.name) ? order.get(b.name) : Number.MAX_SAFE_INTEGER;
+    const aRank = order.has(a.name)
+      ? order.get(a.name)
+      : Number.MAX_SAFE_INTEGER;
+    const bRank = order.has(b.name)
+      ? order.get(b.name)
+      : Number.MAX_SAFE_INTEGER;
     if (aRank !== bRank) return aRank - bRank;
     return String(a.name).localeCompare(String(b.name));
   });
@@ -125,9 +123,9 @@ async function listRemoteNames(client, type) {
 }
 
 function getTableColumns(tableName) {
-  return sqliteJson(
-    `PRAGMA table_info(${quoteIdentifier(tableName)})`,
-  ).map((column) => String(column.name));
+  return sqliteJson(`PRAGMA table_info(${quoteIdentifier(tableName)})`).map(
+    (column) => String(column.name),
+  );
 }
 
 function getTableRowsChunk(tableName, limit, offset) {
@@ -215,9 +213,11 @@ async function main() {
     authToken: remoteAuthToken,
   });
 
-  const tableDefs = sortTablesForImport(sqliteJson(
-    "SELECT name, sql FROM sqlite_master WHERE type = 'table' AND name NOT LIKE 'sqlite_%' AND sql IS NOT NULL ORDER BY name",
-  ));
+  const tableDefs = sortTablesForImport(
+    sqliteJson(
+      "SELECT name, sql FROM sqlite_master WHERE type = 'table' AND name NOT LIKE 'sqlite_%' AND sql IS NOT NULL ORDER BY name",
+    ),
+  );
   const viewDefs = sqliteJson(
     "SELECT name, sql FROM sqlite_master WHERE type = 'view' AND name NOT LIKE 'sqlite_%' AND sql IS NOT NULL ORDER BY name",
   );
@@ -235,7 +235,9 @@ async function main() {
 
   const remoteViews = await listRemoteNames(remoteClient, "view");
   for (const viewName of remoteViews) {
-    await remoteClient.execute(`DROP VIEW IF EXISTS ${quoteIdentifier(viewName)}`);
+    await remoteClient.execute(
+      `DROP VIEW IF EXISTS ${quoteIdentifier(viewName)}`,
+    );
   }
 
   const remoteTables = await listRemoteNames(remoteClient, "table");

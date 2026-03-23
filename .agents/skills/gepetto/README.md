@@ -54,11 +54,13 @@ Result: Clear implementation roadmap, reviewed by multiple LLMs, ready for execu
 ### Recommended: Plugin Installation
 
 **Step 1:** Add the marketplace (first time only)
+
 ```bash
 /plugin marketplace add softaworks/agent-skills
 ```
 
 **Step 2:** Install gepetto
+
 ```bash
 /plugin install gepetto
 ```
@@ -136,12 +138,14 @@ Answer research and interview questions. Review the generated plan. Done.
 ## When to Use
 
 **Use gepetto when:**
+
 - Requirements are fuzzy and need clarification
 - The feature is complex enough to benefit from external review
 - You want implementation sections that can be worked on in parallel
 - You prefer thinking before coding
 
 **Skip gepetto when:**
+
 - Simple bug fixes or one-file changes
 - Requirements are already crystal clear
 - You just want to start coding
@@ -172,13 +176,13 @@ planning/
 
 ### Key Files
 
-| File | Purpose |
-|------|---------|
-| `claude-plan.md` | The main deliverable - complete implementation plan |
-| `sections/*.md` | Self-contained units ready for implementation |
-| `reviews/*.md` | External perspectives on your plan |
+| File                          | Purpose                                                    |
+| ----------------------------- | ---------------------------------------------------------- |
+| `claude-plan.md`              | The main deliverable - complete implementation plan        |
+| `sections/*.md`               | Self-contained units ready for implementation              |
+| `reviews/*.md`                | External perspectives on your plan                         |
 | `claude-ralph-loop-prompt.md` | One-command execution with ralph-loop (Claude Code plugin) |
-| `claude-ralphy-prd.md` | One-command execution with Ralphy (external CLI) |
+| `claude-ralphy-prd.md`        | One-command execution with Ralphy (external CLI)           |
 
 ## External Review
 
@@ -199,6 +203,7 @@ Install at least one:
 ### What Reviewers Check
 
 Both LLMs analyze your plan for:
+
 - Potential footguns and edge cases
 - Missing considerations
 - Security vulnerabilities
@@ -222,16 +227,16 @@ gepetto detects existing files and resumes from where it left off.
 
 ### Resume Points
 
-| Files Found | Resumes At |
-|-------------|------------|
-| `claude-research.md` | Interview |
-| `+ claude-interview.md` | Spec synthesis |
-| `+ claude-spec.md` | Plan generation |
-| `+ claude-plan.md` | External review |
-| `+ reviews/` | Feedback integration |
-| `+ sections/index.md` | Section writing |
-| `+ all sections` | Execution files generation |
-| `+ claude-ralph-loop-prompt.md + claude-ralphy-prd.md` | Done |
+| Files Found                                            | Resumes At                 |
+| ------------------------------------------------------ | -------------------------- |
+| `claude-research.md`                                   | Interview                  |
+| `+ claude-interview.md`                                | Spec synthesis             |
+| `+ claude-spec.md`                                     | Plan generation            |
+| `+ claude-plan.md`                                     | External review            |
+| `+ reviews/`                                           | Feedback integration       |
+| `+ sections/index.md`                                  | Section writing            |
+| `+ all sections`                                       | Execution files generation |
+| `+ claude-ralph-loop-prompt.md + claude-ralphy-prd.md` | Done                       |
 
 ## Best Practices
 
@@ -266,6 +271,7 @@ cat planning/sections/section-01-foundation.md
 ```
 
 Each section file contains:
+
 - Background context
 - Requirements
 - Implementation details
@@ -387,15 +393,15 @@ Ralphy is an external CLI tool that iterates through a task list (PRD.md) and ex
 
 ### Key Differences: ralph-loop vs Ralphy
 
-| Feature | ralph-loop | Ralphy |
-|---------|-----------|--------|
-| **Runs in** | Claude Code (plugin) | External CLI |
-| **AI Engines** | Claude only | Claude, Codex, Cursor, Qwen, Droid |
-| **Input format** | Single large prompt | Checkbox task list |
-| **Context passing** | Embedded in prompt | AI reads referenced files |
-| **Parallel execution** | No | Yes (`--parallel`) |
-| **Branch per task** | No | Yes (`--branch-per-task`) |
-| **Auto PR creation** | No | Yes (`--create-pr`) |
+| Feature                | ralph-loop           | Ralphy                             |
+| ---------------------- | -------------------- | ---------------------------------- |
+| **Runs in**            | Claude Code (plugin) | External CLI                       |
+| **AI Engines**         | Claude only          | Claude, Codex, Cursor, Qwen, Droid |
+| **Input format**       | Single large prompt  | Checkbox task list                 |
+| **Context passing**    | Embedded in prompt   | AI reads referenced files          |
+| **Parallel execution** | No                   | Yes (`--parallel`)                 |
+| **Branch per task**    | No                   | Yes (`--branch-per-task`)          |
+| **Auto PR creation**   | No                   | Yes (`--create-pr`)                |
 
 ### One-Command Execution
 
@@ -468,13 +474,13 @@ See the [Ralphy repository](https://github.com/michaelshimeles/ralphy) for insta
 
 ## Differences from Similar Tools
 
-| Feature | gepetto |
-|---------|---------|
-| API Keys Required | No - uses CLI tools |
-| TDD Phase | No - focused on planning |
-| Python Scripts | No - pure Claude skill |
-| External Review | Via Gemini + Codex CLI |
-| Resume Support | Yes - automatic |
+| Feature           | gepetto                  |
+| ----------------- | ------------------------ |
+| API Keys Required | No - uses CLI tools      |
+| TDD Phase         | No - focused on planning |
+| Python Scripts    | No - pure Claude skill   |
+| External Review   | Via Gemini + Codex CLI   |
+| Resume Support    | Yes - automatic          |
 
 ---
 
@@ -482,4 +488,4 @@ See the [Ralphy repository](https://github.com/michaelshimeles/ralphy) for insta
 **License:** MIT
 **Repository:** https://github.com/softaworks/gepetto
 
-*"When you wish upon a spec..."* ⭐🪵
+_"When you wish upon a spec..."_ ⭐🪵

@@ -1,6 +1,6 @@
 # Adding Reference Mindsets
 
-Reference mindsets are philosophical foundations for simplicity. They explain *why* less is more, giving agents deeper calibration beyond the mechanical checkpoints.
+Reference mindsets are philosophical foundations for simplicity. They explain _why_ less is more, giving agents deeper calibration beyond the mechanical checkpoints.
 
 ## Where They Live
 
@@ -48,30 +48,34 @@ Before adding a mindset:
 
 Ideas that would make strong mindsets:
 
-| Concept | Core Insight |
-|---------|--------------|
-| `worse-is-better` | Shipping a simple thing beats perfecting a complex one |
-| `essential-vs-accidental` | Most complexity is accidental and can be eliminated |
-| `locality-of-behavior` | Code should be understandable without jumping around |
-| `boring-technology` | Innovation tokens are limited; use boring tech by default |
-| `separation-of-concerns` | Each piece should have one reason to change |
-| `rule-of-three` | Don't abstract until you've seen the pattern three times |
+| Concept                   | Core Insight                                              |
+| ------------------------- | --------------------------------------------------------- |
+| `worse-is-better`         | Shipping a simple thing beats perfecting a complex one    |
+| `essential-vs-accidental` | Most complexity is accidental and can be eliminated       |
+| `locality-of-behavior`    | Code should be understandable without jumping around      |
+| `boring-technology`       | Innovation tokens are limited; use boring tech by default |
+| `separation-of-concerns`  | Each piece should have one reason to change               |
+| `rule-of-three`           | Don't abstract until you've seen the pattern three times  |
 
 ## What NOT to Add
 
 **Technology-specific advice** → Belongs in project docs or tech-specific skills
-- "React components should..." 
+
+- "React components should..."
 - "In Rust, prefer..."
 
 **Process/workflow rules** → Belongs in skills, not mindsets
+
 - "Always run tests before..."
 - "Use TDD when..."
 
 **Vague platitudes** → If there's no actionable insight, skip it
+
 - "Write clean code"
 - "Think before you code"
 
 **Anything requiring context** → Mindsets should be universal
+
 - "In microservices architectures..."
 - "When working with legacy code..."
 

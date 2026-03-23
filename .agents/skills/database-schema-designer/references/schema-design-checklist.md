@@ -86,7 +86,7 @@ Complete checklist for designing and reviewing database schemas.
 ## Performance
 
 - [ ] **Joins Optimized**: N+1 queries avoided
-- [ ] **SELECT * Avoided**: Only fetch needed columns
+- [ ] **SELECT \* Avoided**: Only fetch needed columns
 - [ ] **Pagination**: LIMIT/OFFSET or cursor-based
 - [ ] **Aggregations**: Pre-calculated for expensive queries
 

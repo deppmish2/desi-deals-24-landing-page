@@ -5,6 +5,7 @@ A comprehensive skill for creating high-quality, production-ready git commits th
 ## Purpose
 
 This skill helps you create well-crafted git commits by:
+
 - Ensuring only intended changes are included
 - Splitting work into logically scoped commits
 - Writing clear, descriptive commit messages that explain what changed and why
@@ -14,6 +15,7 @@ This skill helps you create well-crafted git commits by:
 ## When to Use
 
 Use this skill when you need to:
+
 - Commit your work with proper staging and review
 - Craft meaningful commit messages
 - Split mixed changes into multiple logical commits
@@ -21,6 +23,7 @@ Use this skill when you need to:
 - Ensure commits are review-ready and safe to merge
 
 **Trigger phrases:**
+
 - "commit this work"
 - "create a commit"
 - "split these changes into commits"
@@ -45,6 +48,7 @@ The skill follows a rigorous 8-step workflow:
 ### Smart Commit Splitting
 
 Automatically identifies when to split commits by:
+
 - Feature vs refactor
 - Backend vs frontend
 - Formatting vs logic
@@ -54,6 +58,7 @@ Automatically identifies when to split commits by:
 ### Conventional Commits Format
 
 All commits follow the standard:
+
 ```
 type(scope): short summary
 
@@ -65,6 +70,7 @@ BREAKING CHANGE: if applicable
 ### Safety Checks
 
 Reviews staged changes for:
+
 - Secrets or tokens
 - Accidental debug logging
 - Unrelated formatting changes
@@ -124,11 +130,13 @@ git commit -m "refactor(ui): extract menu logic to custom hook"
 ## Inputs
 
 The skill may ask for:
+
 - **Commit strategy**: Single commit or multiple logical commits?
 - **Commit style**: Conventional Commits (required by default)
 - **Project rules**: Max subject length, required scopes, etc.
 
 If not provided, defaults to:
+
 - Multiple small commits when changes are unrelated
 - Conventional Commits format
 - Standard best practices
@@ -136,6 +144,7 @@ If not provided, defaults to:
 ## Deliverables
 
 After running, the skill provides:
+
 - Final commit message(s) used
 - Short summary per commit (what/why)
 - Commands used for staging and review

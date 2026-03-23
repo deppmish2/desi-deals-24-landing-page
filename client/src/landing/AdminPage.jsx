@@ -18,11 +18,7 @@ function BarChart({ data }) {
 
   return (
     <div className="overflow-x-auto">
-      <svg
-        width={Math.max(totalW, 200)}
-        height={chartH + 24}
-        className="block"
-      >
+      <svg width={Math.max(totalW, 200)} height={chartH + 24} className="block">
         {data.map((d, i) => {
           const barH = Math.max(2, Math.round((d.count / max) * chartH));
           const x = i * (barW + 2);
@@ -30,7 +26,14 @@ function BarChart({ data }) {
           const every = Math.max(1, Math.ceil(data.length / 8));
           return (
             <g key={d.day}>
-              <rect x={x} y={y} width={barW} height={barH} fill="#16a34a" rx={2} />
+              <rect
+                x={x}
+                y={y}
+                width={barW}
+                height={barH}
+                fill="#16a34a"
+                rx={2}
+              />
               {d.count > 0 && (
                 <text
                   x={x + barW / 2}
@@ -91,7 +94,11 @@ export default function AdminPage() {
       .then(setStats)
       .catch((err) => {
         const msg = String(err?.message || "");
-        if (msg.includes("401") || msg.includes("Missing") || msg.includes("expired")) {
+        if (
+          msg.includes("401") ||
+          msg.includes("Missing") ||
+          msg.includes("expired")
+        ) {
           navigate("/waitlist", { replace: true });
         } else {
           setError(msg || "Failed to load dashboard");
@@ -117,7 +124,9 @@ export default function AdminPage() {
     return (
       <div className="min-h-screen bg-slate-50 flex items-center justify-center p-6">
         <div className="text-center">
-          <div className="text-slate-900 font-extrabold text-xl mb-2">Access denied</div>
+          <div className="text-slate-900 font-extrabold text-xl mb-2">
+            Access denied
+          </div>
           <div className="text-slate-500 text-sm mb-6">{error}</div>
           <button
             onClick={() => navigate("/waitlist")}
@@ -134,9 +143,12 @@ export default function AdminPage() {
     return (
       <div className="min-h-screen bg-slate-50 flex items-center justify-center p-6">
         <div className="text-center">
-          <div className="text-slate-900 font-extrabold text-xl mb-2">Unexpected response</div>
+          <div className="text-slate-900 font-extrabold text-xl mb-2">
+            Unexpected response
+          </div>
           <div className="text-slate-500 text-sm mb-6">
-            The server returned an unexpected response. Make sure the backend is running and restart it.
+            The server returned an unexpected response. Make sure the backend is
+            running and restart it.
           </div>
           <button
             onClick={() => window.location.reload()}
@@ -149,7 +161,8 @@ export default function AdminPage() {
     );
   }
 
-  const { kpis, signups_by_day, invites_by_day, top_inviters, recent_signups } = stats;
+  const { kpis, signups_by_day, invites_by_day, top_inviters, recent_signups } =
+    stats;
 
   return (
     <div className="min-h-screen bg-slate-50">
@@ -157,7 +170,9 @@ export default function AdminPage() {
       <div className="bg-white border-b border-slate-100 sticky top-0 z-10">
         <div className="max-w-5xl mx-auto px-6 py-4 flex items-center justify-between">
           <div className="flex items-center gap-3">
-            <span className="font-extrabold text-slate-900 text-base">DesiDeals24</span>
+            <span className="font-extrabold text-slate-900 text-base">
+              DesiDeals24
+            </span>
             <span className="px-2 py-0.5 rounded-md bg-slate-100 text-slate-500 text-[11px] font-bold uppercase tracking-wide">
               Admin
             </span>
@@ -215,8 +230,13 @@ export default function AdminPage() {
                 </thead>
                 <tbody>
                   {top_inviters.map((u, i) => (
-                    <tr key={u.email} className="border-b border-slate-50 last:border-0">
-                      <td className="py-2.5 pr-3 text-slate-300 font-mono text-xs">{i + 1}</td>
+                    <tr
+                      key={u.email}
+                      className="border-b border-slate-50 last:border-0"
+                    >
+                      <td className="py-2.5 pr-3 text-slate-300 font-mono text-xs">
+                        {i + 1}
+                      </td>
                       <td className="py-2.5 pr-3">
                         <div className="font-medium text-slate-700 text-[13px] truncate max-w-[160px]">
                           {u.name}
@@ -244,16 +264,23 @@ export default function AdminPage() {
             ) : (
               <div className="space-y-3">
                 {recent_signups.map((u) => (
-                  <div key={u.email} className="flex items-center justify-between gap-3">
+                  <div
+                    key={u.email}
+                    className="flex items-center justify-between gap-3"
+                  >
                     <div className="min-w-0">
                       <div className="text-[13px] font-medium text-slate-700 truncate">
                         {u.name || u.email.split("@")[0]}
                       </div>
-                      <div className="text-[11px] text-slate-400 truncate">{u.email}</div>
+                      <div className="text-[11px] text-slate-400 truncate">
+                        {u.email}
+                      </div>
                       {u.invited_by && (
                         <div className="text-[10px] text-slate-400 mt-0.5 truncate">
                           <span className="text-slate-300">invited by </span>
-                          <span className="font-medium">{u.invited_by.name}</span>
+                          <span className="font-medium">
+                            {u.invited_by.name}
+                          </span>
                         </div>
                       )}
                       {u.created_at && (

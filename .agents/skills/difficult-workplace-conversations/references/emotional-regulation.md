@@ -33,13 +33,13 @@ When emotions take over:
 
 Common workplace triggers:
 
-| Trigger | Example | Underlying Need |
-| ------- | ------- | --------------- |
-| Criticism | "Your code has issues" | Competence |
-| Being ignored | Not invited to meeting | Relatedness |
-| Unfairness | Colleague gets credit | Fairness |
-| Micromanagement | Being told how to do task | Autonomy |
-| Public embarrassment | Called out in meeting | Identity |
+| Trigger              | Example                   | Underlying Need |
+| -------------------- | ------------------------- | --------------- |
+| Criticism            | "Your code has issues"    | Competence      |
+| Being ignored        | Not invited to meeting    | Relatedness     |
+| Unfairness           | Colleague gets credit     | Fairness        |
+| Micromanagement      | Being told how to do task | Autonomy        |
+| Public embarrassment | Called out in meeting     | Identity        |
 
 **Personal Trigger Inventory:**
 
@@ -135,6 +135,7 @@ Notice when you're starting to get triggered:
 ### In-the-Moment Techniques
 
 **The Pause:**
+
 > "Let me think about that for a moment."
 
 Use this to:
@@ -185,6 +186,7 @@ It's okay to pause the conversation if:
 - Emotions are escalating for either party
 
 **How to exit gracefully:**
+
 > "I want to give this the attention it deserves. I'm finding it hard to think clearly right now. Can we take a break and continue [tomorrow/in an hour]?"
 
 ## Post-Conversation Processing
@@ -276,12 +278,12 @@ Write or talk through:
 **Reframing:**
 Change how you interpret situations.
 
-| Triggering Thought | Reframe |
-| ------------------ | ------- |
-| "They're attacking me" | "They have feedback for me" |
-| "This is unfair" | "I don't have all the information" |
-| "I can't handle this" | "This is uncomfortable and temporary" |
-| "They're wrong" | "They see it differently" |
+| Triggering Thought     | Reframe                               |
+| ---------------------- | ------------------------------------- |
+| "They're attacking me" | "They have feedback for me"           |
+| "This is unfair"       | "I don't have all the information"    |
+| "I can't handle this"  | "This is uncomfortable and temporary" |
+| "They're wrong"        | "They see it differently"             |
 
 **Self-compassion:**
 Speak to yourself as you would a friend.

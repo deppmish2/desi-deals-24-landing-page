@@ -2,13 +2,13 @@
 
 [![A screenshot of ChatGPT reading: "[header] Legacy & Interpretation [body] The "Black Hole Edition" is not just a meme — it's a celebration of grassroots car culture, where ideas are limitless and fun is more important than spec sheets. Whether powered by a rotary engine, a V8 swap, or an imagined fighter jet turbine, the Miata remains the canvas for car enthusiasts worldwide."](https://upload.wikimedia.org/wikipedia/commons/thumb/5/59/ChatGPT_response_screenshot_1.jpg/250px-ChatGPT_response_screenshot_1.jpg)](https://en.wikipedia.org/wiki/File:ChatGPT_response_screenshot_1.jpg)
 
-*LLMs tend to have an identifiable writing style.*
+_LLMs tend to have an identifiable writing style._
 
-This is a list of writing and formatting conventions typical of [AI chatbots](https://en.wikipedia.org/wiki/AI_chatbot "AI chatbot") such as [ChatGPT](https://en.wikipedia.org/wiki/ChatGPT "ChatGPT"), with real examples taken from Wikipedia articles and drafts. It is a [field guide](https://en.wikipedia.org/wiki/Field_guide "Field guide") to help detect [undisclosed AI-generated content](https://en.wikipedia.org/wiki/Wikipedia:LLMDISCLOSE "Wikipedia:LLMDISCLOSE") on Wikipedia. This list is *descriptive*, not *prescriptive*; it consists of observations, not rules. Advice about formatting or language to avoid in Wikipedia articles can be found in the [policies and guidelines](https://en.wikipedia.org/wiki/Wikipedia:PAG "Wikipedia:PAG") and the [Manual of Style](https://en.wikipedia.org/wiki/Wikipedia:MOS "Wikipedia:MOS"), but does not belong on this page.
+This is a list of writing and formatting conventions typical of [AI chatbots](https://en.wikipedia.org/wiki/AI_chatbot "AI chatbot") such as [ChatGPT](https://en.wikipedia.org/wiki/ChatGPT "ChatGPT"), with real examples taken from Wikipedia articles and drafts. It is a [field guide](https://en.wikipedia.org/wiki/Field_guide "Field guide") to help detect [undisclosed AI-generated content](https://en.wikipedia.org/wiki/Wikipedia:LLMDISCLOSE "Wikipedia:LLMDISCLOSE") on Wikipedia. This list is _descriptive_, not _prescriptive_; it consists of observations, not rules. Advice about formatting or language to avoid in Wikipedia articles can be found in the [policies and guidelines](https://en.wikipedia.org/wiki/Wikipedia:PAG "Wikipedia:PAG") and the [Manual of Style](https://en.wikipedia.org/wiki/Wikipedia:MOS "Wikipedia:MOS"), but does not belong on this page.
 
-This list is *not* a ban on certain words, phrases, or punctuation. Not all text featuring these indicators is AI-generated, as the [large language models](https://en.wikipedia.org/wiki/Large_language_model "Large language model") that power AI chatbots are trained on human writing, including the writing of Wikipedia editors. This is simply a catalog of very common patterns observed over many thousands of instances of AI-generated text, *specific to Wikipedia.* While some of its advice may be broadly applicable, some signs—particularly those involving punctuation and formatting—may not apply in a non-Wikipedia context.
+This list is _not_ a ban on certain words, phrases, or punctuation. Not all text featuring these indicators is AI-generated, as the [large language models](https://en.wikipedia.org/wiki/Large_language_model "Large language model") that power AI chatbots are trained on human writing, including the writing of Wikipedia editors. This is simply a catalog of very common patterns observed over many thousands of instances of AI-generated text, _specific to Wikipedia._ While some of its advice may be broadly applicable, some signs—particularly those involving punctuation and formatting—may not apply in a non-Wikipedia context.
 
-The patterns here are also only potential *signs* of a problem, not *the problem itself*. While many of these issues are immediately obvious and easy to fix—e.g., excessive boldface, poor use of language and punctuation, broken markup, citation style quirks—they can point to less outwardly visible problems that carry [much more serious policy risks](https://en.wikipedia.org/wiki/Wikipedia:AIFAIL "Wikipedia:AIFAIL"). If LLM-generated text is polished enough (initially or subsequently), those surface defects might not be present, but deeper problems can be. Please do not merely treat these signs as the problems to be fixed; that could just make detection harder. The actual problems are those deeper concerns, so make sure to address them, either yourself or by flagging them, per the advice at [Wikipedia:Large language models §Handling suspected LLM-generated content](https://en.wikipedia.org/wiki/Wikipedia:Large_language_models#Handling_suspected_LLM-generated_content "Wikipedia:Large language models") and [Wikipedia:WikiProject AI Cleanup/Guide](https://en.wikipedia.org/wiki/Wikipedia:WikiProject_AI_Cleanup/Guide "Wikipedia:WikiProject AI Cleanup/Guide").
+The patterns here are also only potential _signs_ of a problem, not _the problem itself_. While many of these issues are immediately obvious and easy to fix—e.g., excessive boldface, poor use of language and punctuation, broken markup, citation style quirks—they can point to less outwardly visible problems that carry [much more serious policy risks](https://en.wikipedia.org/wiki/Wikipedia:AIFAIL "Wikipedia:AIFAIL"). If LLM-generated text is polished enough (initially or subsequently), those surface defects might not be present, but deeper problems can be. Please do not merely treat these signs as the problems to be fixed; that could just make detection harder. The actual problems are those deeper concerns, so make sure to address them, either yourself or by flagging them, per the advice at [Wikipedia:Large language models §Handling suspected LLM-generated content](https://en.wikipedia.org/wiki/Wikipedia:Large_language_models#Handling_suspected_LLM-generated_content "Wikipedia:Large language models") and [Wikipedia:WikiProject AI Cleanup/Guide](https://en.wikipedia.org/wiki/Wikipedia:WikiProject_AI_Cleanup/Guide "Wikipedia:WikiProject AI Cleanup/Guide").
 
 The [speedy deletion policy](https://en.wikipedia.org/wiki/Wikipedia:Speedy_deletion "Wikipedia:Speedy deletion") criterion [G15](https://en.wikipedia.org/wiki/Wikipedia:G15 "Wikipedia:G15") (LLM-generated pages without human review) is limited to the most objective and least contestable indications that the page's content was generated by an LLM. There are three such indicators, the first of which can be found in [§Communication intended for the user](#communication-intended-for-the-user) and the other two in [§Citations](#citations).
 
@@ -26,7 +26,7 @@ This statistical regression to the mean, a smoothing over of specific facts into
 
 ### Undue emphasis on symbolism, legacy, and importance
 
-**Words to watch:** *stands/serves as*, *is a testament/reminder*, *plays a vital/significant/crucial/pivotal role*, *underscores/highlights its importance/significance*, *reflects broader*, *symbolizing its ongoing/enduring/lasting impact*, *key turning point*, *indelible mark*, *deeply rooted*, *profound heritage*, *steadfast dedication*...
+**Words to watch:** _stands/serves as_, _is a testament/reminder_, _plays a vital/significant/crucial/pivotal role_, _underscores/highlights its importance/significance_, _reflects broader_, _symbolizing its ongoing/enduring/lasting impact_, _key turning point_, _indelible mark_, _deeply rooted_, _profound heritage_, _steadfast dedication_...
 
 LLM writing often puffs up the importance of the subject matter by adding statements about how arbitrary aspects of the topic represent or contribute to a broader topic.[^5] There is a distinct and easily identifiable repertoire of ways that it writes these statements.[^6]
 
@@ -40,7 +40,7 @@ LLMs may include these statements for even the most mundane of subjects like ety
 
 **Examples**
 
-> During the [Spanish colonial period](https://en.wikipedia.org/wiki/Spanish_Colonial_Period_(Philippines) "Spanish Colonial Period (Philippines)"), the name *Bakunutan* was hispanized to *Bacnotan*, a modification reflected in official documents preserved in the [National Archives](https://en.wikipedia.org/wiki/National_Archives_of_the_Philippines "National Archives of the Philippines") in Manila. This etymology highlights the enduring legacy of the community's resistance and the transformative power of unity in shaping its identity.
+> During the [Spanish colonial period](<https://en.wikipedia.org/wiki/Spanish_Colonial_Period_(Philippines)> "Spanish Colonial Period (Philippines)"), the name _Bakunutan_ was hispanized to _Bacnotan_, a modification reflected in official documents preserved in the [National Archives](https://en.wikipedia.org/wiki/National_Archives_of_the_Philippines "National Archives of the Philippines") in Manila. This etymology highlights the enduring legacy of the community's resistance and the transformative power of unity in shaping its identity.
 
 > Though it saw only limited application, it contributes to the broader history of early aviation engineering and reflects the influence of French rotary designs on German manufacturers.
 
@@ -50,11 +50,11 @@ When talking about biology (e.g., when asked to discuss an animal or plant speci
 
 > It plays a role in the ecosystem and contributes to Hawaii's rich cultural heritage. [...] Preserving this endemic species is vital not only for ecological diversity but also for sustaining the cultural traditions connected to Hawaii's native flora.
 
-> Currently, there is no specific conservation assessment for *Lethrinops lethrinus* by the International Union for Conservation of Nature (IUCN). However, the general health of the Lake Malawi ecosystem is crucial for the survival of this and other endemic species. Factors such as overfishing, pollution, and habitat destruction could potentially impact their populations.
+> Currently, there is no specific conservation assessment for _Lethrinops lethrinus_ by the International Union for Conservation of Nature (IUCN). However, the general health of the Lake Malawi ecosystem is crucial for the survival of this and other endemic species. Factors such as overfishing, pollution, and habitat destruction could potentially impact their populations.
 
 ### Undue emphasis on notability, attribution, and media coverage
 
-**Words to watch:** *independent coverage*, *local/regional/national/[country name] media outlets*, *music/business/tech outlets*, *active social media presence*
+**Words to watch:** _independent coverage_, _local/regional/national/[country name] media outlets_, _music/business/tech outlets_, _active social media presence_
 
 Similarly, LLMs act as if the best way to prove that a subject is notable is to hit readers over the head with claims of notability, often by listing sources that a subject has been covered in. They may or may not provide additional context as to what those sources have actually said about the subject, and often inaccurately attribute their own [superficial analyses](#superficial-analyses) to the source. This is more common in text from newer AI tools (2025 or later).
 
@@ -62,17 +62,17 @@ Human-written press releases have of course also cited news clippings for decade
 
 **Examples**
 
-> She spoke about AI on CNN, and was featured in Vogue, Wired, Toronto Star, and other media. [...] Her insights have also been featured in *Wired*, *Refinery29*, and other prominent media outlets.
+> She spoke about AI on CNN, and was featured in Vogue, Wired, Toronto Star, and other media. [...] Her insights have also been featured in _Wired_, _Refinery29_, and other prominent media outlets.
 
-> Her views have been cited in *The New York Times*, *BBC*, *Financial Times*, and *The Hindu*.
+> Her views have been cited in _The New York Times_, _BBC_, _Financial Times_, and _The Hindu_.
 
-> Its significance is documented in archived school event programs and regional press coverage, including the *Mesabi Daily News*, which regularly reviewed performances held there.
+> Its significance is documented in archived school event programs and regional press coverage, including the _Mesabi Daily News_, which regularly reviewed performances held there.
 
 On Wikipedia specifically, LLMs often painstakingly emphasize their sources in the body text—even for trivial coverage, uncontroversial facts, or other situations where a human Wikipedia editor would be more likely to either provide an inline citation or no source at all.
 
 **Examples**
 
-> The restaurant has also been mentioned in [ABC News](https://en.wikipedia.org/wiki/ABC_News_(Australia) "ABC News (Australia)") coverage relating to incidents in the surrounding precinct, underscoring its role as a well-known late-night venue in the city [of [Adelaide](https://en.wikipedia.org/wiki/Adelaide "Adelaide")].
+> The restaurant has also been mentioned in [ABC News](<https://en.wikipedia.org/wiki/ABC_News_(Australia)> "ABC News (Australia)") coverage relating to incidents in the surrounding precinct, underscoring its role as a well-known late-night venue in the city [of [Adelaide](https://en.wikipedia.org/wiki/Adelaide "Adelaide")].
 
 > In the United States, university-based incubators and accelerators have expanded alongside these centers; an official Library of Congress review found that 31.5% of SBA [[Small Business Administration](https://en.wikipedia.org/wiki/Small_Business_Administration "Small Business Administration")] Growth Accelerator Fund Competition winners from 2014–2016 were university-based programs.
 
@@ -82,7 +82,7 @@ In articles about people/entities who use social media, LLMs will often note tha
 
 ### Superficial analyses
 
-**Words to watch:** *ensuring ...*, *highlighting ...*, *emphasizing ...*, *reflecting ...*, *underscoring ...*, *showcasing ...*, *aligns with...*, *contributing to...*
+**Words to watch:** _ensuring ..._, _highlighting ..._, _emphasizing ..._, _reflecting ..._, _underscoring ..._, _showcasing ..._, _aligns with..._, _contributing to..._
 
 AI chatbots tend to insert superficial analysis of information, often in relation to its significance, recognition, or impact.[^7] This is often done by attaching a [present participle](https://en.wikipedia.org/wiki/Participle#Forms "Participle") ("-ing") phrase at the end of sentences, sometimes with [vague attributions](#vague-attributions-of-opinion) to third parties (see below).[^7][^5]
 
@@ -104,7 +104,7 @@ Such comments are usually [synthesis](https://en.wikipedia.org/wiki/Wikipedia:SY
 
 ### Promotional and advertisement-like language
 
-**Words to watch:** *continues to captivate*, *groundbreaking* (in the figurative sense), *stunning natural beauty*, *enduring/lasting legacy*, *nestled*, *in the heart of*, *boasts a*...
+**Words to watch:** _continues to captivate_, _groundbreaking_ (in the figurative sense), _stunning natural beauty_, _enduring/lasting legacy_, _nestled_, _in the heart of_, _boasts a_...
 
 LLMs have serious problems keeping a neutral tone, especially when writing about something that could be considered "cultural heritage"—in which case they [constantly remind the reader of its importance](#undue-emphasis-on-symbolism-legacy-and-importance).
 
@@ -122,7 +122,7 @@ In a similar way, LLM chatbots also add promotional/positive-sounding language t
 
 ### Didactic, editorializing disclaimers
 
-**Words to watch:** *it's important/critical/crucial to note/remember/consider*, *may vary*...
+**Words to watch:** _it's important/critical/crucial to note/remember/consider_, _may vary_...
 
 LLMs often tell the reader about things "it's important to remember." This frequently takes the form of "disclaimers" to an imagined reader regarding safety or controversial topics, or disambiguating topics that vary in different locales/jurisdictions.
 
@@ -136,7 +136,7 @@ LLMs often tell the reader about things "it's important to remember." This frequ
 
 ### Summaries and conclusions
 
-**Words to watch:** *In summary*, *In conclusion*, *Overall*...
+**Words to watch:** _In summary_, _In conclusion_, _Overall_...
 
 When generating longer outputs (such as when told to "write an article"), LLMs often add a section titled "Conclusion" or similar, and will often end a paragraph or section by summarizing and restating its core idea.[^9]
 
@@ -146,7 +146,7 @@ When generating longer outputs (such as when told to "write an article"), LLMs o
 
 ### Outline-like conclusions about challenges and future prospects
 
-**Words to watch:** *Despite its... faces several challenges...*, *Despite these challenges*, *Challenges and Legacy*, *Future Outlook*...
+**Words to watch:** _Despite its... faces several challenges..._, _Despite these challenges_, _Challenges and Legacy_, _Future Outlook_...
 
 Many LLM-generated Wikipedia articles include a "Challenges" section, which typically begins with a sentence like "Despite its [positive/promotional words], [article subject] faces challenges..." and ends with either a vaguely positive assessment of the article subject,[^1] or speculation about how ongoing or potential initiatives could benefit the subject. Such paragraphs usually appear at the end of articles with a rigid outline structure, which may also include a separate section for "Future Prospects."
 
@@ -184,11 +184,11 @@ In AI-generated articles about topics with a title that is not a [proper name](h
 
 ### Overused "AI vocabulary" words
 
-**Words to watch:** *align/aligns/aligning with*,[^6][^8] *crucial*,[^1] *delve/delves/delving* (pre-2025),[^6][^8][^1] *emphasizing*,[^6][^8] *enduring*,[^8] *enhance/enhances/enhancing*,[^8][^1] *fostering*,[^8][^1] *garnered/garnering*,[^6][^8] *highlight/highlighted/highlighting/highlights* (as a verb),[^1] *interplay*,[^8] *intricate/intricacies*,[^6][^8][^7] *key* (as an adjective), *landscape*,[^8] *leveraging*,[^1] *multifaceted*,[^6][^8][^7] *notably*,[^8] *nuanced*,[^6][^8] *realm*,[^8] *robust*,[^1] *seamless/seamlessly*,[^1] *shed light on*, *showcasing*,[^8] *streamline*,[^1] *tapestry*,[^8] *testament*,[^1][^8] *underpin/underpins/underpinning*,[^8] *underscore/underscores/underscoring*,[^8] *vibrant*,[^8][^7] *vital*,[^1] ...
+**Words to watch:** _align/aligns/aligning with_,[^6][^8] _crucial_,[^1] _delve/delves/delving_ (pre-2025),[^6][^8][^1] _emphasizing_,[^6][^8] _enduring_,[^8] _enhance/enhances/enhancing_,[^8][^1] _fostering_,[^8][^1] _garnered/garnering_,[^6][^8] _highlight/highlighted/highlighting/highlights_ (as a verb),[^1] _interplay_,[^8] _intricate/intricacies_,[^6][^8][^7] _key_ (as an adjective), _landscape_,[^8] _leveraging_,[^1] _multifaceted_,[^6][^8][^7] _notably_,[^8] _nuanced_,[^6][^8] _realm_,[^8] _robust_,[^1] _seamless/seamlessly_,[^1] _shed light on_, _showcasing_,[^8] _streamline_,[^1] _tapestry_,[^8] _testament_,[^1][^8] _underpin/underpins/underpinning_,[^8] _underscore/underscores/underscoring_,[^8] _vibrant_,[^8][^7] _vital_,[^1] ...
 
 Many studies have demonstrated that LLMs overuse certain words – especially compared to pre-2022 text, which is almost certain to be human-written.[^6] These "AI vocabulary" words are also ubiquitous in AI-generated encyclopedias, such as [Grokipedia](https://en.wikipedia.org/wiki/Grokipedia "Grokipedia"), and in AI-generated Wikipedia text. They often co-occur in LLM output: where there is one, there are likely others.[^10] An edit introducing one or two of these words may not be a big deal, but an edit (post-2022) introducing lots of them, lots of times, is one of the strongest tells for AI use.
 
-The distribution of "AI vocabulary" is slightly different depending on which chatbot or LLM was used,[^7] and has changed over time. For instance, the word *delve* was famously overused by ChatGPT until 2025, when its incidence dropped off sharply.[^11]
+The distribution of "AI vocabulary" is slightly different depending on which chatbot or LLM was used,[^7] and has changed over time. For instance, the word _delve_ was famously overused by ChatGPT until 2025, when its incidence dropped off sharply.[^11]
 
 Please keep context in mind. For example, while the word "underscore" is overused in AI text, it can also refer to a literal underline mark, or to [incidental music](https://en.wikipedia.org/wiki/Incidental_music "Incidental music").
 
@@ -246,7 +246,7 @@ On rare occasions, user messages that appear AI-generated may also include short
 
 ### Rule of three
 
-LLMs overuse the '[rule of three](https://en.wikipedia.org/wiki/Rule_of_three_(writing) "Rule of three (writing)")'. This can take different forms, from "adjective, adjective, adjective" to "short phrase, short phrase, and short phrase".[^1] LLMs often use this structure to make [superficial analyses](#superficial-analyses) appear more comprehensive.
+LLMs overuse the '[rule of three](<https://en.wikipedia.org/wiki/Rule_of_three_(writing)> "Rule of three (writing)")'. This can take different forms, from "adjective, adjective, adjective" to "short phrase, short phrase, and short phrase".[^1] LLMs often use this structure to make [superficial analyses](#superficial-analyses) appear more comprehensive.
 
 **Examples**
 
@@ -254,7 +254,7 @@ LLMs overuse the '[rule of three](https://en.wikipedia.org/wiki/Rule_of_three_(w
 
 ### Vague attributions of opinion
 
-**Words to watch:** *Industry reports*, *Observers have cited*, *Some critics argue*...
+**Words to watch:** _Industry reports_, _Observers have cited_, _Some critics argue_...
 
 AI chatbots tend to attribute opinions or claims to some vague authority—a practice called [weasel wording](https://en.wikipedia.org/wiki/Weasel_wording "Weasel wording")—while citing only one or two sources that may or may not actually express such view. They also tend to overgeneralize the perspective of one or few sources into that of a wider group.
 
@@ -262,7 +262,7 @@ AI chatbots tend to attribute opinions or claims to some vague authority—a pra
 
 > His [Nick Ford's] compositions have been described as exploring conceptual themes and bridging the gaps between artistic media.
 
-— From [Draft:Nick Ford (musician)](https://en.wikipedia.org/wiki/Draft:Nick_Ford_(musician) "Draft:Nick Ford (musician)"). Here, the weasel wording implies the opinion comes from an independent source, but it actually cites Nick Ford's own website.
+— From [Draft:Nick Ford (musician)](<https://en.wikipedia.org/wiki/Draft:Nick_Ford_(musician)> "Draft:Nick Ford (musician)"). Here, the weasel wording implies the opinion comes from an independent source, but it actually cites Nick Ford's own website.
 
 > Due to its unique characteristics, the Haolai River is of interest to researchers and conservationists. Efforts are ongoing to monitor its ecological health and preserve the surrounding grassland environment, which is part of a larger initiative to protect China's semi-arid ecosystems from degradation.
 
@@ -284,7 +284,7 @@ Note: If a user adds multiple pieces of AI-generated content in separate edits, 
 
 ### False ranges
 
-When *from ... to ...* constructions are not used figuratively, they are used to indicate the lower and upper bounds of a scale. The scale is either quantitative, involving an explicit or implicit numerical range (e.g. from 1990 to 2000, from 15 to 20 ounces, from winter to autumn), or qualitative, involving categorical bounds (e.g. "from seed to tree", "from mild to severe", "from white belt to black belt"). The same constructions may be used to form a [merism](https://en.wikipedia.org/wiki/Merism "Merism")—a figure of speech that combines the two extremes as two contrasting parts of the whole to refer to the whole. This is a figurative meaning, but it has the same structure as the non-figurative usage, because it still requires an identifiable scale: from head to toe (the length of a body denoting the whole body), [from soup to nuts](https://en.wiktionary.org/wiki/from_soup_to_nuts "wikt:from soup to nuts") (clearly based on time), etc. This is *not* a false range.
+When _from ... to ..._ constructions are not used figuratively, they are used to indicate the lower and upper bounds of a scale. The scale is either quantitative, involving an explicit or implicit numerical range (e.g. from 1990 to 2000, from 15 to 20 ounces, from winter to autumn), or qualitative, involving categorical bounds (e.g. "from seed to tree", "from mild to severe", "from white belt to black belt"). The same constructions may be used to form a [merism](https://en.wikipedia.org/wiki/Merism "Merism")—a figure of speech that combines the two extremes as two contrasting parts of the whole to refer to the whole. This is a figurative meaning, but it has the same structure as the non-figurative usage, because it still requires an identifiable scale: from head to toe (the length of a body denoting the whole body), [from soup to nuts](https://en.wiktionary.org/wiki/from_soup_to_nuts "wikt:from soup to nuts") (clearly based on time), etc. This is _not_ a false range.
 
 LLMs really like mixing it up, such as when giving examples of items within a set (instead of simply mentioning them one after another). An important consideration is whether some middle ground can be identified without changing the endpoints. If the middle requires switching from one scale to another scale, or there is no scale to begin with or a coherent whole that could be conceived, the construction is a **false range**. LLMs often employ "figurative" (often simply: meaningless) "from ... to ..." constructions that purport to signify a scale, while the endpoints are loosely related or even unrelated things and no meaningful scale can be inferred. LLMs do this because such meaningless language is used in persuasive writing to impress and woo, and LLMs are heavily influenced by examples of persuasive writing during their training.
 
@@ -410,7 +410,7 @@ AI chatbots love using [emojis](https://en.wikipedia.org/wiki/Emoji "Emoji").[^1
 
 ### Overuse of em dashes
 
-While human editors and writers often like [em dashes](https://en.wikipedia.org/wiki/Em_dash "Em dash") (—), AI *loves* them.[^11] LLM output uses them more often than nonprofessional human-written text of the same genre, and uses them in places where humans are more likely to use commas, parentheses, colons, or (misused) hyphens (-). LLMs especially tend to use em dashes in a formulaic, pat way, often mimicking "punched up" sales-like writing by over-emphasizing clauses or parallelisms.
+While human editors and writers often like [em dashes](https://en.wikipedia.org/wiki/Em_dash "Em dash") (—), AI _loves_ them.[^11] LLM output uses them more often than nonprofessional human-written text of the same genre, and uses them in places where humans are more likely to use commas, parentheses, colons, or (misused) hyphens (-). LLMs especially tend to use em dashes in a formulaic, pat way, often mimicking "punched up" sales-like writing by over-emphasizing clauses or parallelisms.
 
 This sign is most useful when taken in combination with other indicators, not by itself.
 
@@ -436,17 +436,17 @@ This sign is most useful when taken in combination with other indicators, not by
 
 ### Curly quotation marks and apostrophes
 
-AI chatbots typically use curly quotation marks ("..." or '...') instead of straight quotation marks ("..." or '...'). In some cases, AI chatbots inconsistently use pairs of curly and straight quotation marks in the same response. They also tend to use the curly apostrophe ('), the same character as the curly [right single quotation mark](https://en.wikipedia.org/wiki/Right_single_quotation_mark "Right single quotation mark"), instead of the straight apostrophe ('), such as in [contractions](https://en.wikipedia.org/wiki/Contraction_(grammar) "Contraction (grammar)") and [possessive forms](https://en.wikipedia.org/wiki/English_possessive "English possessive"). They may also do this inconsistently.
+AI chatbots typically use curly quotation marks ("..." or '...') instead of straight quotation marks ("..." or '...'). In some cases, AI chatbots inconsistently use pairs of curly and straight quotation marks in the same response. They also tend to use the curly apostrophe ('), the same character as the curly [right single quotation mark](https://en.wikipedia.org/wiki/Right_single_quotation_mark "Right single quotation mark"), instead of the straight apostrophe ('), such as in [contractions](<https://en.wikipedia.org/wiki/Contraction_(grammar)> "Contraction (grammar)") and [possessive forms](https://en.wikipedia.org/wiki/English_possessive "English possessive"). They may also do this inconsistently.
 
 Curly quotes alone do not prove LLM use. [Microsoft Word](https://en.wikipedia.org/wiki/Microsoft_Word "Microsoft Word") as well as [macOS](https://en.wikipedia.org/wiki/MacOS "MacOS") and [iOS](https://en.wikipedia.org/wiki/IOS "IOS") devices have a "[smart quotes](https://en.wikipedia.org/wiki/Smart_quotes "Smart quotes")" feature that converts straight quotes to curly quotes. Grammar correcting tools such as [LanguageTool](https://en.wikipedia.org/wiki/LanguageTool "LanguageTool") may also have such a feature. Curly quotation marks and apostrophes are common in professionally typeset works such as major newspapers. Citation tools like [Citer](https://citer.toolforge.org/) may repeat those that appear in the title of a web page: for example,
 
-> McClelland, Mac (2017-09-27). ["When 'Not Guilty' Is a Life Sentence"](https://www.nytimes.com/2017/09/27/magazine/when-not-guilty-is-a-life-sentence.html). *The New York Times*. Retrieved 2025-08-03.
+> McClelland, Mac (2017-09-27). ["When 'Not Guilty' Is a Life Sentence"](https://www.nytimes.com/2017/09/27/magazine/when-not-guilty-is-a-life-sentence.html). _The New York Times_. Retrieved 2025-08-03.
 
 Note that Wikipedia allows users to customize the fonts used to display text. Some fonts display matched curly apostrophes as straight, in which case the distinction is invisible to the user.
 
 ### Subject lines
 
-User messages and [unblock requests](https://en.wikipedia.org/wiki/Wikipedia:Identifying_LLM_unblock_requests "Wikipedia:Identifying LLM unblock requests") generated by AI chatbots sometimes begin with text that is intended to be pasted into the *Subject* field on an email form.
+User messages and [unblock requests](https://en.wikipedia.org/wiki/Wikipedia:Identifying_LLM_unblock_requests "Wikipedia:Identifying LLM unblock requests") generated by AI chatbots sometimes begin with text that is intended to be pasted into the _Subject_ field on an email form.
 
 **Examples**
 
@@ -460,9 +460,9 @@ User messages and [unblock requests](https://en.wikipedia.org/wiki/Wikipedia:Ide
 
 ### Collaborative communication
 
-**Words to watch:** *I hope this helps*, *Of course!*, *Certainly!*, *You're absolutely right!*, *Would you like...*, *is there anything else*, *let me know*, *more detailed breakdown*, *here is a*...
+**Words to watch:** _I hope this helps_, _Of course!_, _Certainly!_, _You're absolutely right!_, _Would you like..._, _is there anything else_, _let me know_, _more detailed breakdown_, _here is a_...
 
-Editors sometimes paste text from an AI chatbot that was meant as correspondence, prewriting or advice, rather than article content. This may appear in article text or within comments (`<!-- -->`). Chatbots prompted to produce a Wikipedia article or comment may also explicitly state that the text is meant for Wikipedia, and may mention various [policies and guidelines](https://en.wikipedia.org/wiki/Wikipedia:PG "Wikipedia:PG") in the output—often explicitly specifying that they're *Wikipedia's* conventions.
+Editors sometimes paste text from an AI chatbot that was meant as correspondence, prewriting or advice, rather than article content. This may appear in article text or within comments (`<!-- -->`). Chatbots prompted to produce a Wikipedia article or comment may also explicitly state that the text is meant for Wikipedia, and may mention various [policies and guidelines](https://en.wikipedia.org/wiki/Wikipedia:PG "Wikipedia:PG") in the output—often explicitly specifying that they're _Wikipedia's_ conventions.
 
 **Examples**
 
@@ -478,7 +478,7 @@ Editors sometimes paste text from an AI chatbot that was meant as correspondence
 
 ### Knowledge-cutoff disclaimers and speculation about gaps in sources
 
-**Words to watch:** *as of [date]*,[^a] *Up to my last training update*, *as of my last knowledge update*, *While specific details are limited/scarce...*, *not widely available/documented/disclosed*, *...in the provided/available sources/search results...*, *based on available information*...
+**Words to watch:** _as of [date]_,[^a] _Up to my last training update_, _as of my last knowledge update_, _While specific details are limited/scarce..._, _not widely available/documented/disclosed_, _...in the provided/available sources/search results..._, _based on available information_...
 
 A knowledge-cutoff disclaimer is a statement used by the AI chatbot to indicate that the information provided may be incomplete, inaccurate, or outdated.
 
@@ -502,7 +502,7 @@ If an LLM with retrieval-augmented generation fails to find sources on a given t
 
 ### Prompt refusals
 
-**Words to watch:** *as an AI language model*, *as a large language model*, *I'm sorry*...
+**Words to watch:** _as an AI language model_, _as a large language model_, _I'm sorry_...
 
 Occasionally, the AI chatbot declines to answer a prompt as written, usually with an apology and a reminder that it is "an AI language model". Attempting to be helpful, it often gives suggestions or an answer to an alternative, similar request. Outright refusals have become increasingly rare.
 
@@ -514,7 +514,7 @@ Prompt refusals are obviously unacceptable for Wikipedia articles, so if a user 
 
 ### Phrasal templates and placeholder text
 
-AI chatbots may generate responses with fill-in-the-blank [phrasal templates](https://en.wikipedia.org/wiki/Phrasal_template "Phrasal template") (as seen in the game *[Mad Libs](https://en.wikipedia.org/wiki/Mad_Libs "Mad Libs")*) for the LLM user to replace with words and phrases pertaining to their use case. However, some LLM users forget to fill in those blanks. Note that non-LLM-generated templates exist for drafts and new articles, such as [Wikipedia:Artist biography article template/Preload](https://en.wikipedia.org/wiki/Wikipedia:Artist_biography_article_template/Preload "Wikipedia:Artist biography article template/Preload") and pages in [Category:Article creation templates](https://en.wikipedia.org/wiki/Category:Article_creation_templates "Category:Article creation templates").
+AI chatbots may generate responses with fill-in-the-blank [phrasal templates](https://en.wikipedia.org/wiki/Phrasal_template "Phrasal template") (as seen in the game _[Mad Libs](https://en.wikipedia.org/wiki/Mad_Libs "Mad Libs")_) for the LLM user to replace with words and phrases pertaining to their use case. However, some LLM users forget to fill in those blanks. Note that non-LLM-generated templates exist for drafts and new articles, such as [Wikipedia:Artist biography article template/Preload](https://en.wikipedia.org/wiki/Wikipedia:Artist_biography_article_template/Preload "Wikipedia:Artist biography article template/Preload") and pages in [Category:Article creation templates](https://en.wikipedia.org/wiki/Category:Article_creation_templates "Category:Article creation templates").
 
 **Examples**
 
@@ -587,11 +587,11 @@ When asked about its "formatting guidelines", a chatbot willing to reveal some o
 > - Reserve code blocks for code, poems, lyrics, or similarly formatted content.
 > - For mathematical expressions, use LaTeX outside of code blocks.
 
-As the above suggests, Markdown's syntax is completely different from wikitext's: Markdown uses asterisks (*) or underscores (_) instead of single-quotes (') for bold and italic formatting, hash symbols (#) instead of equals signs (=) for section headings, parentheses (()) instead of square brackets ([]) around URLs, and three symbols (---, ***, or ___) instead of four hyphens (----) for thematic breaks.
+As the above suggests, Markdown's syntax is completely different from wikitext's: Markdown uses asterisks (\*) or underscores (\_) instead of single-quotes (') for bold and italic formatting, hash symbols (#) instead of equals signs (=) for section headings, parentheses (()) instead of square brackets ([]) around URLs, and three symbols (---, \*\*\*, or \_\_\_) instead of four hyphens (----) for thematic breaks.
 
 Even when they are told to do so explicitly, chatbots generally struggle to generate text using syntactically correct wikitext, as their training data lead to a drastically greater affinity for and fluency in Markdown. When told to "generate an article", a chatbot typically defaults to using Markdown for the generated output, which is preserved in clipboard text by the copy functions on some chatbot platforms. If instructed to generate content for Wikipedia, the chatbot might "realize" the need to generate Wikipedia-compatible code, and might include a message like "Would you like me to ... turn this into actual Wikipedia markup format (`wikitext`)?"[^b] in its output. If the chatbot is told to proceed, the resulting syntax is often rudimentary, syntactically incorrect, or both. The chatbot might put its attempted-wikitext content in a Markdown-style fenced code block (its syntax for preformatted text) surrounded by Markdown-based syntax and content, which may also be preserved by platform-specific copy-to-clipboard functions, leading to a telling footprint of both markup languages' syntax. This might include the appearance of three backticks in the text, such as: ` ```wikitext `.[^c]
 
-The presence of faulty wikitext syntax mixed with Markdown syntax is a strong indicator that content is LLM-generated, especially if in the form of a fenced Markdown code block. However, Markdown *alone* is not such a strong indicator. Software developers, researchers, technical writers, and experienced internet users frequently use Markdown in tools like [Obsidian](https://en.wikipedia.org/wiki/Obsidian_(software) "Obsidian (software)") and [GitHub](https://en.wikipedia.org/wiki/GitHub_Flavored_Markdown "GitHub Flavored Markdown"), and on platforms like Reddit, Discord, and Slack. Some writing tools and apps, such as iOS Notes, Google Docs, and Windows Notepad, support Markdown editing or exporting. The increasing ubiquity of Markdown may also lead new editors to expect or assume Wikipedia to support Markdown by default.
+The presence of faulty wikitext syntax mixed with Markdown syntax is a strong indicator that content is LLM-generated, especially if in the form of a fenced Markdown code block. However, Markdown _alone_ is not such a strong indicator. Software developers, researchers, technical writers, and experienced internet users frequently use Markdown in tools like [Obsidian](<https://en.wikipedia.org/wiki/Obsidian_(software)> "Obsidian (software)") and [GitHub](https://en.wikipedia.org/wiki/GitHub_Flavored_Markdown "GitHub Flavored Markdown"), and on platforms like Reddit, Discord, and Slack. Some writing tools and apps, such as iOS Notes, Google Docs, and Windows Notepad, support Markdown editing or exporting. The increasing ubiquity of Markdown may also lead new editors to expect or assume Wikipedia to support Markdown by default.
 
 **Examples**
 
@@ -648,29 +648,30 @@ Due to a bug, ChatGPT may add code in the form of `:contentReference[oaicite:0]{
 > 1. **Ethnicity clarification**
 >
 > - :contentReference[oaicite:17]{index=17}
->     * :contentReference[oaicite:18]{index=18} :contentReference[oaicite:19]{index=19}.
->     * Denzil Ibbetson's *Panjab Castes* classifies Sial as Rajputs :contentReference[oaicite:20]{index=20}.
->     * Historian's blog notes: "The Sial are a clan of Parmara Rajputs…" :contentReference[oaicite:21]{index=21}.
+>   - :contentReference[oaicite:18]{index=18} :contentReference[oaicite:19]{index=19}.
+>   - Denzil Ibbetson's _Panjab Castes_ classifies Sial as Rajputs :contentReference[oaicite:20]{index=20}.
+>   - Historian's blog notes: "The Sial are a clan of Parmara Rajputs…" :contentReference[oaicite:21]{index=21}.
+>
 > 2. :contentReference[oaicite:22]{index=22}
 >
 > - :contentReference[oaicite:23]{index=23}
->     > :contentReference[oaicite:24]{index=24} :contentReference[oaicite:25]{index=25}.
+>   > :contentReference[oaicite:24]{index=24} :contentReference[oaicite:25]{index=25}.
 
 > #### Key facts needing addition or correction:
 >
 > 1. **Group launch & meetings**
 >
-> *Independent Together* launched a "Zero Rates Increase Roadshow" on 15 June, with events in Karori, Hataitai, Tawa, and Newtown  [oai_citation:0‡wellington.scoop.co.nz](https://wellington.scoop.co.nz/?p=171473&utm_source=chatgpt.com).
+> _Independent Together_ launched a "Zero Rates Increase Roadshow" on 15 June, with events in Karori, Hataitai, Tawa, and Newtown [oai_citation:0‡wellington.scoop.co.nz](https://wellington.scoop.co.nz/?p=171473&utm_source=chatgpt.com).
 >
 > 2. **Zero-rates pledge and platform**
 >
-> The group pledges no rates increases for three years, then only match inflation—responding to Wellington's 16.9% hike for 2024/25  [oai_citation:1‡en.wikipedia.org](https://en.wikipedia.org/wiki/Independent_Together?utm_source=chatgpt.com).
+> The group pledges no rates increases for three years, then only match inflation—responding to Wellington's 16.9% hike for 2024/25 [oai_citation:1‡en.wikipedia.org](https://en.wikipedia.org/wiki/Independent_Together?utm_source=chatgpt.com).
 
 As of fall 2025, tags like `[attached_file:1]`, `[web:1]` have been seen at the end of sentences. This may be Perplexity-specific.[^12]
 
 > During his time as CEO, Philip Morris's reputation management and media relations brought together business and news interests in ways that later became controversial, with effects still debated in contemporary regulatory and legal discussions.[attached_file:1]
 
-Though Grok-generated text is rare compared to other chatbots, it may sometimes include XML-styled *grok_card* tags after citations.
+Though Grok-generated text is rare compared to other chatbots, it may sometimes include XML-styled _grok_card_ tags after citations.
 
 > Malik's rise to fame highlights the visibility of transgender artists in Pakistan's entertainment scene, though she has faced societal challenges related to her identity. [...]<grok-card data-id="e8ff4f" data-type="citation_card">
 
@@ -686,7 +687,7 @@ ChatGPT may add JSON-formatted code at the end of sentences in the form of `({"a
 
 ### Non-existent or out-of-place categories and "see also" pages
 
-LLMs may hallucinate non-existent categories, sometimes for generic concepts that *seem like* plausible category titles (or SEO keywords), and sometimes because their training set includes obsolete and renamed categories. These will appear as red links. You may also find category redirects, such as the longtime spammer favorite Category:Entrepreneurs. Sometimes, broken categories may be deleted by reviewers, so if you suspect a page may be LLM-generated, it may be worth checking earlier revisions.
+LLMs may hallucinate non-existent categories, sometimes for generic concepts that _seem like_ plausible category titles (or SEO keywords), and sometimes because their training set includes obsolete and renamed categories. These will appear as red links. You may also find category redirects, such as the longtime spammer favorite Category:Entrepreneurs. Sometimes, broken categories may be deleted by reviewers, so if you suspect a page may be LLM-generated, it may be worth checking earlier revisions.
 
 Pay attention to blue links under "see also" headers as well. LLM-generated "see also" sections often tend to fill them up (to at least three links) seemingly out of obligation. If a new page/draft on some startup links to a broad term like Financial technology in its see-also section, that's a bit suspicious.
 
@@ -718,7 +719,7 @@ If a new article or draft has multiple citations with external links, and severa
 
 ### Invalid DOI and ISBNs
 
-A [checksum](https://en.wikipedia.org/wiki/Checksum "Checksum") can be used to verify [ISBNs](https://en.wikipedia.org/wiki/ISBN "ISBN"). An invalid checksum is a very likely sign that an ISBN is incorrect, and citation templates display a warning if so. Similarly, [DOIs](https://en.wikipedia.org/wiki/Digital_object_identifier "Digital object identifier") are more resistant to link rot than regular hyperlinks. Unresolvable DOIs and invalid ISBNs can be indicators of [hallucinated](https://en.wikipedia.org/wiki/Hallucination_(AI) "Hallucination (AI)") references.
+A [checksum](https://en.wikipedia.org/wiki/Checksum "Checksum") can be used to verify [ISBNs](https://en.wikipedia.org/wiki/ISBN "ISBN"). An invalid checksum is a very likely sign that an ISBN is incorrect, and citation templates display a warning if so. Similarly, [DOIs](https://en.wikipedia.org/wiki/Digital_object_identifier "Digital object identifier") are more resistant to link rot than regular hyperlinks. Unresolvable DOIs and invalid ISBNs can be indicators of [hallucinated](<https://en.wikipedia.org/wiki/Hallucination_(AI)> "Hallucination (AI)") references.
 
 Related are DOIs that point to entirely unrelated articles and general book citations without pages. This passage, for example, was generated by ChatGPT.
 
@@ -727,12 +728,10 @@ Related are DOIs that point to entirely unrelated articles and general book cita
 > References:
 >
 > 1. Dorf, R. C., & Svoboda, J. A. (2010). Introduction to Electric Circuits (8th ed.). Hoboken, NJ: John Wiley & Sons. ISBN 9780470521571.
->
 > 2. M. E. Van Valkenburg, "The validity and limitations of Ohm's law in non-linear circuits," Proceedings of the IEEE, vol. 62, no. 6, pp. 769–770, Jun. 1974. doi:10.1109/PROC.1974.9547
->
 > 3. C. L. Fortescue, "Ohm's Law in alternating current circuits," Proceedings of the IEEE, vol. 55, no. 11, pp. 1934–1936, Nov. 1967. doi:10.1109/PROC.1967.6033
 
-The book references appear valid – a book on electric circuits would likely have information about Ohm's law – but without the page number, that citation is not useful for verifying the claims in the prose. Worse, both *Proceedings of the IEEE* citations are completely made up. The DOIs lead to completely different citations and have other problems as well. For instance, [C. L. Fortescue](https://en.wikipedia.org/wiki/Charles_LeGeyt_Fortescue "Charles LeGeyt Fortescue") was dead for 30+ years at the purported time of writing, and Vol 55, Issue 11 does not list any articles that match anything remotely close to the information given in reference 3.
+The book references appear valid – a book on electric circuits would likely have information about Ohm's law – but without the page number, that citation is not useful for verifying the claims in the prose. Worse, both _Proceedings of the IEEE_ citations are completely made up. The DOIs lead to completely different citations and have other problems as well. For instance, [C. L. Fortescue](https://en.wikipedia.org/wiki/Charles_LeGeyt_Fortescue "Charles LeGeyt Fortescue") was dead for 30+ years at the purported time of writing, and Vol 55, Issue 11 does not list any articles that match anything remotely close to the information given in reference 3.
 
 ### Incorrect or unconventional use of references
 
@@ -742,11 +741,11 @@ AI tools may have been prompted to include references, and make an attempt to do
 
 In the below example, note the incorrect attempt at re-using references. The tool used here was not capable of searching for non-confabulated sources (as it was done the day before Bing Deep Search launched) but nonetheless found one real reference. The syntax for re-using the references was incorrect.
 
-In this case, the *Smith, R. J.* source – being the "third source" the tool presumably generated the link 'https://pubmed.ncbi.nlm.nih.gov/3' (which has a PMID reference of 3) – is also completely irrelevant to the body of the article. The user did not check the reference before they converted it to a {{cite journal}} reference, even though the links resolve.
+In this case, the _Smith, R. J._ source – being the "third source" the tool presumably generated the link 'https://pubmed.ncbi.nlm.nih.gov/3' (which has a PMID reference of 3) – is also completely irrelevant to the body of the article. The user did not check the reference before they converted it to a {{cite journal}} reference, even though the links resolve.
 
 The LLM in this case has diligently included the incorrect re-use syntax after every single full stop.
 
-> For over thirty years, computers have been utilized in the rehabilitation of individuals with brain injuries. Initially, researchers delved into the potential of developing a "prosthetic memory."<ref>Fowler R, Hart J, Sheehan M. A prosthetic memory: an application of the prosthetic environment concept. *Rehabil Counseling Bull*. 1972;15:80–85.</ref> However, by the early 1980s, the focus shifted towards addressing brain dysfunction through repetitive practice.<ref>{{Cite journal |last=Smith |first=R. J. |last2=Bryant |first2=R. G. |date=1975-10-27 |title=Metal substitutions incarbonic anhydrase: a halide ion probe study |url=https://pubmed.ncbi.nlm.nih.gov/3 |journal=Biochemical and Biophysical Research Communications |volume=66 |issue=4 |pages=1281–1286 |doi=10.1016/0006-291x(75)90498-2 |issn=0006-291X |pmid=3}}</ref> Only a few psychologists were developing rehabilitation software for individuals with Traumatic Brain Injury (TBI), resulting in a scarcity of available programs.<sup>[3]</sup> Cognitive rehabilitation specialists opted for commercially available computer games that were visually appealing, engaging, repetitive, and entertaining, theorizing their potential remedial effects on neuropsychological dysfunction.<sup>[3]</sup>
+> For over thirty years, computers have been utilized in the rehabilitation of individuals with brain injuries. Initially, researchers delved into the potential of developing a "prosthetic memory."<ref>Fowler R, Hart J, Sheehan M. A prosthetic memory: an application of the prosthetic environment concept. _Rehabil Counseling Bull_. 1972;15:80–85.</ref> However, by the early 1980s, the focus shifted towards addressing brain dysfunction through repetitive practice.<ref>{{Cite journal |last=Smith |first=R. J. |last2=Bryant |first2=R. G. |date=1975-10-27 |title=Metal substitutions incarbonic anhydrase: a halide ion probe study |url=https://pubmed.ncbi.nlm.nih.gov/3 |journal=Biochemical and Biophysical Research Communications |volume=66 |issue=4 |pages=1281–1286 |doi=10.1016/0006-291x(75)90498-2 |issn=0006-291X |pmid=3}}</ref> Only a few psychologists were developing rehabilitation software for individuals with Traumatic Brain Injury (TBI), resulting in a scarcity of available programs.<sup>[3]</sup> Cognitive rehabilitation specialists opted for commercially available computer games that were visually appealing, engaging, repetitive, and entertaining, theorizing their potential remedial effects on neuropsychological dysfunction.<sup>[3]</sup>
 
 Some LLMs or chatbot interfaces use the character ↩ to indicate footnotes:
 
@@ -756,8 +755,8 @@ Some LLMs or chatbot interfaces use the character ↩ to indicate footnotes:
 >
 > **Footnotes**
 >
-> 1.   KLAS Research. (2024). *Top Performing RCM Vendors 2024*. https://klasresearch.com ↩ ↩2
-> 2.   PR Newswire. (2025, February 18). *CureMD AI Scribe Launch Announcement*. https://www.prnewswire.com/news-releases/curemd-ai-scribe ↩
+> 1.  KLAS Research. (2024). _Top Performing RCM Vendors 2024_. https://klasresearch.com ↩ ↩2
+> 2.  PR Newswire. (2025, February 18). _CureMD AI Scribe Launch Announcement_. https://www.prnewswire.com/news-releases/curemd-ai-scribe ↩
 
 ### ChatGPT-specific UTM parameters
 
@@ -773,7 +772,7 @@ Note: While this does definitively prove ChatGPT's involvement, it doesn't prove
 
 ### Named references declared in references section but unused in article body
 
-*This section is empty.* You can help by adding to it. *(October 2025)*
+_This section is empty._ You can help by adding to it. _(October 2025)_
 
 **Examples**
 
@@ -848,13 +847,13 @@ False accusations of AI use can [drive away new editors](https://en.wikipedia.or
 
 - **"Bland" or "robotic" prose**: By default, modern LLMs tend toward effusive and verbose prose, as detailed above; while this tendency is formulaic, it may not scan as "robotic" to those unfamiliar with AI writing.[^14]
 
-- **"Fancy," "academic," or unusual words**: While LLMs disproportionately favor certain words and phrases, many of which are long and have difficult readability scores, the correlation does not extend to *all* "fancy," academic, or "advanced"-sounding prose.[^1] Low-frequency and "unusual" words are also less likely to show up in AI-generated writing as they are statistically less common, unless they are proper nouns directly related to the topic.
+- **"Fancy," "academic," or unusual words**: While LLMs disproportionately favor certain words and phrases, many of which are long and have difficult readability scores, the correlation does not extend to _all_ "fancy," academic, or "advanced"-sounding prose.[^1] Low-frequency and "unusual" words are also less likely to show up in AI-generated writing as they are statistically less common, unless they are proper nouns directly related to the topic.
 
-- **Letter-like writing (in isolation)**: Although many talk page messages written with salutations, valedictions, subject lines, and other formalities after 2023 tend to appear AI-generated, letters and emails have conventionally been written in such ways *long* before modern LLMs existed. Human editors (particularly newer editors) may format their talk page comments similarly for various reasons, such as being more accustomed to formal communication, posting as part of a school assignment that requires such at one, or simply mistaking the talk page for email. AI-generated talk page messages tend to have other tells, such as vertical lists,[^d] placeholders, or abrupt cutoffs.
+- **Letter-like writing (in isolation)**: Although many talk page messages written with salutations, valedictions, subject lines, and other formalities after 2023 tend to appear AI-generated, letters and emails have conventionally been written in such ways _long_ before modern LLMs existed. Human editors (particularly newer editors) may format their talk page comments similarly for various reasons, such as being more accustomed to formal communication, posting as part of a school assignment that requires such at one, or simply mistaking the talk page for email. AI-generated talk page messages tend to have other tells, such as vertical lists,[^d] placeholders, or abrupt cutoffs.
 
 - **Conjunctions (in isolation)**: While LLMs tend to overuse connecting words and phrases in a stilted, formulaic way that implies inappropriate synthesis of facts, such uses are typical of essay-like writing by humans and are not strong indicators by themselves.
 
-- **Bizarre wikitext**: While LLMs may hallucinate templates or generate wikitext code with invalid syntax for reasons explained in [§Use of Markdown](#use-of-markdown), they are not likely to generate content with certain random-seeming, "inexplicable" errors and artifacts (excluding the ones listed on this page in [§Markup](#markup)). Bizarrely placed HTML tags like `<span>` are more indicative of poorly programmed browser extensions or a known bug with Wikipedia's content translation tool (T113137). Misplaced syntax like `''Catch-22 i''s a satirical novel.` (rendered as "*Catch-22 i* s a satirical novel.") are more indicative of mistakes in VisualEditor, where such errors are harder to notice than in source editing.
+- **Bizarre wikitext**: While LLMs may hallucinate templates or generate wikitext code with invalid syntax for reasons explained in [§Use of Markdown](#use-of-markdown), they are not likely to generate content with certain random-seeming, "inexplicable" errors and artifacts (excluding the ones listed on this page in [§Markup](#markup)). Bizarrely placed HTML tags like `<span>` are more indicative of poorly programmed browser extensions or a known bug with Wikipedia's content translation tool (T113137). Misplaced syntax like `''Catch-22 i''s a satirical novel.` (rendered as "_Catch-22 i_ s a satirical novel.") are more indicative of mistakes in VisualEditor, where such errors are harder to notice than in source editing.
 
 ---
 
@@ -872,30 +871,30 @@ False accusations of AI use can [drive away new editors](https://en.wikipedia.or
 
 ## References
 
-[^1]: Russell, Jenna; Karpinska, Marzena; Iyyer, Mohit (2025). [*People who frequently use ChatGPT for writing tasks are accurate and robust detectors of AI-generated text*](https://aclanthology.org/2025.acl-long.267/). Proceedings of the 63rd Annual Meeting of the Association for Computational Linguistics (Volume 1: Long Papers). Vienna, Austria: Association for Computational Linguistics. pp.5342–5373. arXiv:[2501.15654](https://arxiv.org/abs/2501.15654).
+[^1]: Russell, Jenna; Karpinska, Marzena; Iyyer, Mohit (2025). [_People who frequently use ChatGPT for writing tasks are accurate and robust detectors of AI-generated text_](https://aclanthology.org/2025.acl-long.267/). Proceedings of the 63rd Annual Meeting of the Association for Computational Linguistics (Volume 1: Long Papers). Vienna, Austria: Association for Computational Linguistics. pp.5342–5373. arXiv:[2501.15654](https://arxiv.org/abs/2501.15654).
 
-[^2]: Dugan, Liam; Hwang, Alyssa; Trhlik, Filip; Zhu, Andrew; Ludan, Josh Magnus; Xu, Hainiu; Ippolito, Daphne; Callison-Burch, Chris (2024). [*RAID: A Shared Benchmark for Robust Evaluation of Machine-Generated Text Detectors*](https://aclanthology.org/2024.acl-long.674). Proceedings of the 62nd Annual Meeting of the Association for Computational Linguistics (Volume 1: Long Papers). Bangkok, Thailand: Association for Computational Linguistics. pp.12463–12492. arXiv:[2405.07940](https://arxiv.org/abs/2405.07940).
+[^2]: Dugan, Liam; Hwang, Alyssa; Trhlik, Filip; Zhu, Andrew; Ludan, Josh Magnus; Xu, Hainiu; Ippolito, Daphne; Callison-Burch, Chris (2024). [_RAID: A Shared Benchmark for Robust Evaluation of Machine-Generated Text Detectors_](https://aclanthology.org/2024.acl-long.674). Proceedings of the 62nd Annual Meeting of the Association for Computational Linguistics (Volume 1: Long Papers). Bangkok, Thailand: Association for Computational Linguistics. pp.12463–12492. arXiv:[2405.07940](https://arxiv.org/abs/2405.07940).
 
-[^3]: ["People who frequently use ChatGPT for writing tasks are accurate and robust detectors of AI-generated text"](https://arxiv.org/html/2501.15654v2). *arxiv.org*. Retrieved 2025-11-28.
+[^3]: ["People who frequently use ChatGPT for writing tasks are accurate and robust detectors of AI-generated text"](https://arxiv.org/html/2501.15654v2). _arxiv.org_. Retrieved 2025-11-28.
 
 [^4]: This can be directly observed by examining images generated by text-to-image models; they look acceptable at first glance, but specific details tend to be blurry and malformed. This is especially true for background objects and text.
 
-[^5]: ["10 Ways AI Is Ruining Your Students' Writing"](https://www.chronicle.com/article/10-ways-ai-is-ruining-your-students-writing). *Chronicle of Higher Education*. September 16, 2025. Archived from the original on October 1, 2025. Retrieved October 1, 2025.
+[^5]: ["10 Ways AI Is Ruining Your Students' Writing"](https://www.chronicle.com/article/10-ways-ai-is-ruining-your-students-writing). _Chronicle of Higher Education_. September 16, 2025. Archived from the original on October 1, 2025. Retrieved October 1, 2025.
 
-[^6]: Juzek, Tom S.; Ward, Zina B. (2025). [*Why Does ChatGPT "Delve" So Much? Exploring the Sources of Lexical Overrepresentation in Large Language Models*](https://aclanthology.org/2025.coling-main.426.pdf) (PDF). Findings of the Association for Computational Linguistics: ACL 2025. Association for Computational Linguistics. arXiv:[2412.11385](https://arxiv.org/abs/2412.11385).
+[^6]: Juzek, Tom S.; Ward, Zina B. (2025). [_Why Does ChatGPT "Delve" So Much? Exploring the Sources of Lexical Overrepresentation in Large Language Models_](https://aclanthology.org/2025.coling-main.426.pdf) (PDF). Findings of the Association for Computational Linguistics: ACL 2025. Association for Computational Linguistics. arXiv:[2412.11385](https://arxiv.org/abs/2412.11385).
 
 [^7]: Reinhart, Alex; Markey, Ben; Laudenbach, Michael; Pantusen, Kachatad; Yurko, Ronald; Weinberg, Gordon; Brown, David West. ["Do LLMs write like humans? Variation in grammatical and rhetorical styles"](http://arxiv.org/abs/2410.16107). Retrieved 4 December 2025.
 
-[^8]: Kobak, Dmitry; González-Márquez, Rita; Horvát, Emőke-Ágnes; Lause, Jan (2 July 2025). ["Delving into LLM-assisted writing in biomedical publications through excess vocabulary"](https://www.science.org/doi/10.1126/sciadv.adt3813). *Science Advances*. **11** (27). doi:[10.1126/sciadv.adt3813](https://doi.org/10.1126%2Fsciadv.adt3813). ISSN 2375-2548. PMC 12219543. PMID 40009654.
+[^8]: Kobak, Dmitry; González-Márquez, Rita; Horvát, Emőke-Ágnes; Lause, Jan (2 July 2025). ["Delving into LLM-assisted writing in biomedical publications through excess vocabulary"](https://www.science.org/doi/10.1126/sciadv.adt3813). _Science Advances_. **11** (27). doi:[10.1126/sciadv.adt3813](https://doi.org/10.1126%2Fsciadv.adt3813). ISSN 2375-2548. PMC 12219543. PMID 40009654.
 
-[^9]: Ju, Da; Blix, Hagen; Williams, Adina (2025). [*Domain Regeneration: How well do LLMs match syntactic properties of text domains?*](https://aclanthology.org/2025.findings-acl.120). Findings of the Association for Computational Linguistics: ACL 2025. Vienna, Austria: Association for Computational Linguistics. pp.2367–2388. arXiv:[2505.07784](https://arxiv.org/abs/2505.07784). doi:[10.18653/v1/2025.findings-acl.120](https://doi.org/10.18653%2Fv1%2F2025.findings-acl.120).
+[^9]: Ju, Da; Blix, Hagen; Williams, Adina (2025). [_Domain Regeneration: How well do LLMs match syntactic properties of text domains?_](https://aclanthology.org/2025.findings-acl.120). Findings of the Association for Computational Linguistics: ACL 2025. Vienna, Austria: Association for Computational Linguistics. pp.2367–2388. arXiv:[2505.07784](https://arxiv.org/abs/2505.07784). doi:[10.18653/v1/2025.findings-acl.120](https://doi.org/10.18653%2Fv1%2F2025.findings-acl.120).
 
-[^10]: Kousha, Kayvan; Thelwall, Mike (2025). [*How much are LLMs changing the language of academic papers after ChatGPT? A multi-database and full text analysis*](https://arxiv.org/pdf/2509.09596). ISSI 2025 Conference. arXiv:[2509.09596](https://arxiv.org/abs/2509.09596).
+[^10]: Kousha, Kayvan; Thelwall, Mike (2025). [_How much are LLMs changing the language of academic papers after ChatGPT? A multi-database and full text analysis_](https://arxiv.org/pdf/2509.09596). ISSI 2025 Conference. arXiv:[2509.09596](https://arxiv.org/abs/2509.09596).
 
-[^11]: Merrill, Jeremy B.; Chen, Szu Yu; Kumer, Emma (13 November 2025). ["What are the clues that ChatGPT wrote something? We analyzed its style"](https://www.washingtonpost.com/technology/interactive/2025/how-detect-chatgpt-em-dash/). *The Washington Post*. Retrieved 14 November 2025.
+[^11]: Merrill, Jeremy B.; Chen, Szu Yu; Kumer, Emma (13 November 2025). ["What are the clues that ChatGPT wrote something? We analyzed its style"](https://www.washingtonpost.com/technology/interactive/2025/how-detect-chatgpt-em-dash/). _The Washington Post_. Retrieved 14 November 2025.
 
 [^12]: ["Unproductive Interpretation of Work and Employment as Misinformation?"](https://www.laetusinpraesens.org/docs20s/workeco.php). Archived from the original on 2 September 2025. Retrieved 21 October 2025.
 
 [^13]: See [T387903](https://phabricator.wikimedia.org/T387903 "phabricator:T387903").
 
-[^14]: Murray, Nathan; Tersigni, Elisa (21 July 2024). ["Can instructors detect AI-generated papers? Postsecondary writing instructor knowledge and perceptions of AI"](https://journals.sfu.ca/jalt/index.php/jalt/article/view/1895). *Journal of Applied Learning & Teaching*. **7** (2). doi:[10.37074/jalt.2024.7.2.12](https://doi.org/10.37074%2Fjalt.2024.7.2.12). ISSN 2591-801X. Retrieved 21 November 2025.
+[^14]: Murray, Nathan; Tersigni, Elisa (21 July 2024). ["Can instructors detect AI-generated papers? Postsecondary writing instructor knowledge and perceptions of AI"](https://journals.sfu.ca/jalt/index.php/jalt/article/view/1895). _Journal of Applied Learning & Teaching_. **7** (2). doi:[10.37074/jalt.2024.7.2.12](https://doi.org/10.37074%2Fjalt.2024.7.2.12). ISSN 2591-801X. Retrieved 21 November 2025.

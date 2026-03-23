@@ -45,13 +45,13 @@ Before restructuring, the skill identifies conflicting instructions that need re
 
 Extracts only what truly belongs in the root file - information that applies to every single task:
 
-| Keep in Root | Move Out |
-|-------------|----------|
+| Keep in Root                     | Move Out                      |
+| -------------------------------- | ----------------------------- |
 | One-sentence project description | Language-specific conventions |
-| Non-standard package manager | Testing guidelines |
-| Custom build/test commands | Code style details |
-| Critical overrides | Framework patterns |
-| Universal rules (100% of tasks) | Documentation standards |
+| Non-standard package manager     | Testing guidelines            |
+| Custom build/test commands       | Code style details            |
+| Critical overrides               | Framework patterns            |
+| Universal rules (100% of tasks)  | Documentation standards       |
 
 ### Phase 3: Group the Rest
 
@@ -129,6 +129,7 @@ agent instructions...
 After running the skill, you get:
 
 **Minimal root file (~50 lines or less):**
+
 ```markdown
 # Project Name
 
@@ -148,35 +149,41 @@ One-sentence description of the project.
 ```
 
 **Organized linked files with consistent structure:**
+
 ```markdown
 # Testing Guidelines
 
 ## Overview
+
 Brief context for when these guidelines apply.
 
 ## Rules
 
 ### Unit Tests
+
 - Specific, actionable instruction
 - Another specific instruction
 
 ## Examples
 
 ### Good
+
 [code example]
 
 ### Avoid
+
 [code example]
 ```
 
 **Deletion report:**
+
 ```markdown
 ## Flagged for Deletion
 
-| Instruction | Reason |
-|-------------|--------|
-| "Write clean, maintainable code" | Too vague to be actionable |
-| "Use TypeScript" | Redundant - project is already TS |
+| Instruction                      | Reason                            |
+| -------------------------------- | --------------------------------- |
+| "Write clean, maintainable code" | Too vague to be actionable        |
+| "Use TypeScript"                 | Redundant - project is already TS |
 ```
 
 ## Best Practices
@@ -202,13 +209,13 @@ Brief context for when these guidelines apply.
 
 ## Anti-Patterns to Avoid
 
-| Avoid | Why | Instead |
-|-------|-----|---------|
-| Keeping everything in root | Bloated, hard to maintain | Split into linked files |
-| Too many categories | Fragmentation, navigation overhead | Consolidate related topics |
-| Vague instructions | Wastes tokens, no value | Be specific or delete |
-| Duplicating defaults | Agent already knows | Only override when needed |
-| Deep nesting | Hard to navigate | Flat structure with links |
+| Avoid                      | Why                                | Instead                    |
+| -------------------------- | ---------------------------------- | -------------------------- |
+| Keeping everything in root | Bloated, hard to maintain          | Split into linked files    |
+| Too many categories        | Fragmentation, navigation overhead | Consolidate related topics |
+| Vague instructions         | Wastes tokens, no value            | Be specific or delete      |
+| Duplicating defaults       | Agent already knows                | Only override when needed  |
+| Deep nesting               | Hard to navigate                   | Flat structure with links  |
 
 ## Verification Checklist
 

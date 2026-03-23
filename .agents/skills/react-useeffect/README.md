@@ -7,6 +7,7 @@ A comprehensive guide teaching when to use `useEffect` in React, and more import
 Effects are an **escape hatch** from React's reactive paradigm. They let you synchronize with external systems like browser APIs, third-party widgets, or network requests. However, many developers overuse Effects for tasks that React handles better through other means.
 
 This skill helps you:
+
 - Identify when you truly need an Effect vs. when you don't
 - Recognize common anti-patterns and their fixes
 - Apply better alternatives like `useMemo`, `key` prop, and event handlers
@@ -15,6 +16,7 @@ This skill helps you:
 ## When to Use This Skill
 
 Use this skill when you're:
+
 - Writing or reviewing `useEffect` code
 - Using `useState` to store derived values
 - Implementing data fetching or subscriptions
@@ -23,6 +25,7 @@ Use this skill when you're:
 - Wondering if your Effect is necessary
 
 **Trigger phrases:**
+
 - "Should I use useEffect for this?"
 - "How do I fix this useEffect?"
 - "My Effect is causing too many re-renders"
@@ -40,6 +43,7 @@ This skill provides guidance through three key resources:
 4. **Better Alternatives** - 8 proven patterns to replace unnecessary Effects
 
 The skill teaches you to ask the right questions:
+
 - Is there an external system involved?
 - Am I responding to a user event or component appearance?
 - Can this value be calculated during render?
@@ -50,6 +54,7 @@ The skill teaches you to ask the right questions:
 ### 1. Quick Reference Guide
 
 Visual table showing the DO/DON'T for common scenarios:
+
 - Derived state from props/state
 - Expensive calculations
 - Resetting state on prop change
@@ -60,6 +65,7 @@ Visual table showing the DO/DON'T for common scenarios:
 ### 2. Decision Tree
 
 Clear flowchart that guides you from "Need to respond to something?" to the correct solution:
+
 - User interaction → Event handler
 - Component appeared → Effect (for external sync/analytics)
 - Derived value needed → Calculate during render (+ useMemo if expensive)
@@ -68,6 +74,7 @@ Clear flowchart that guides you from "Need to respond to something?" to the corr
 ### 3. Anti-Pattern Recognition
 
 Detailed examples of 9 common mistakes:
+
 1. Redundant state for derived values
 2. Filtering/transforming data in Effect
 3. Resetting state on prop change
@@ -79,6 +86,7 @@ Detailed examples of 9 common mistakes:
 9. App initialization in Effect
 
 Each anti-pattern includes:
+
 - Bad example with explanation
 - Good example with fix
 - Why the anti-pattern is problematic
@@ -86,6 +94,7 @@ Each anti-pattern includes:
 ### 4. Better Alternatives
 
 8 proven patterns to replace unnecessary Effects:
+
 1. Calculate during render for derived state
 2. `useMemo` for expensive calculations
 3. `key` prop to reset state
@@ -100,60 +109,65 @@ Each anti-pattern includes:
 ### Example 1: Derived State
 
 **Bad - Unnecessary Effect:**
+
 ```tsx
 function Form() {
-  const [firstName, setFirstName] = useState('Taylor');
-  const [lastName, setLastName] = useState('Swift');
-  const [fullName, setFullName] = useState('');
+  const [firstName, setFirstName] = useState("Taylor");
+  const [lastName, setLastName] = useState("Swift");
+  const [fullName, setFullName] = useState("");
 
   useEffect(() => {
-    setFullName(firstName + ' ' + lastName);
+    setFullName(firstName + " " + lastName);
   }, [firstName, lastName]);
 }
 ```
 
 **Good - Calculate during render:**
+
 ```tsx
 function Form() {
-  const [firstName, setFirstName] = useState('Taylor');
-  const [lastName, setLastName] = useState('Swift');
-  const fullName = firstName + ' ' + lastName; // Just compute it
+  const [firstName, setFirstName] = useState("Taylor");
+  const [lastName, setLastName] = useState("Swift");
+  const fullName = firstName + " " + lastName; // Just compute it
 }
 ```
 
 ### Example 2: Resetting State
 
 **Bad - Effect to reset:**
+
 ```tsx
 function ProfilePage({ userId }) {
-  const [comment, setComment] = useState('');
+  const [comment, setComment] = useState("");
 
   useEffect(() => {
-    setComment('');
+    setComment("");
   }, [userId]);
 }
 ```
 
 **Good - Key prop:**
+
 ```tsx
 function ProfilePage({ userId }) {
   return <Profile userId={userId} key={userId} />;
 }
 
 function Profile({ userId }) {
-  const [comment, setComment] = useState(''); // Resets automatically
+  const [comment, setComment] = useState(""); // Resets automatically
 }
 ```
 
 ### Example 3: Data Fetching with Cleanup
 
 **Bad - Race condition:**
+
 ```tsx
 function SearchResults({ query }) {
   const [results, setResults] = useState([]);
 
   useEffect(() => {
-    fetchResults(query).then(json => {
+    fetchResults(query).then((json) => {
       setResults(json); // "hello" response may arrive after "hell"
     });
   }, [query]);
@@ -161,6 +175,7 @@ function SearchResults({ query }) {
 ```
 
 **Good - Cleanup flag:**
+
 ```tsx
 function SearchResults({ query }) {
   const [results, setResults] = useState([]);
@@ -168,11 +183,13 @@ function SearchResults({ query }) {
   useEffect(() => {
     let ignore = false;
 
-    fetchResults(query).then(json => {
+    fetchResults(query).then((json) => {
       if (!ignore) setResults(json);
     });
 
-    return () => { ignore = true; };
+    return () => {
+      ignore = true;
+    };
   }, [query]);
 }
 ```
@@ -180,6 +197,7 @@ function SearchResults({ query }) {
 ### Example 4: Event Handler Instead of Effect
 
 **Bad - Effect watching state:**
+
 ```tsx
 function ProductPage({ product, addToCart }) {
   useEffect(() => {
@@ -195,6 +213,7 @@ function ProductPage({ product, addToCart }) {
 ```
 
 **Good - Handle in event:**
+
 ```tsx
 function ProductPage({ product, addToCart }) {
   function handleBuyClick() {
@@ -303,6 +322,7 @@ This skill includes three detailed reference documents:
 ## Resources
 
 This skill is based on:
+
 - [React Official Docs: You Might Not Need an Effect](https://react.dev/learn/you-might-not-need-an-effect)
 - [React Official Docs: Synchronizing with Effects](https://react.dev/learn/synchronizing-with-effects)
 - [React Official Docs: Lifecycle of Reactive Effects](https://react.dev/learn/lifecycle-of-reactive-effects)
@@ -312,6 +332,7 @@ This skill is based on:
 The golden rule: **Effects are an escape hatch from React.** If you're not synchronizing with an external system, you probably don't need an Effect.
 
 Before writing `useEffect`, ask yourself:
+
 1. Is this responding to a user interaction? → Use event handler
 2. Is this a value I can calculate from props/state? → Calculate during render
 3. Is this resetting state when a prop changes? → Use key prop

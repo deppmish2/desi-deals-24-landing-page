@@ -10,7 +10,10 @@ const {
   ensureDailyDealsPool,
   getCurrentPoolDate,
 } = require("../server/services/daily-deals-pool");
-const { getBerlinHour, formatBerlinDateKey } = require("../server/services/berlin-time");
+const {
+  getBerlinHour,
+  formatBerlinDateKey,
+} = require("../server/services/berlin-time");
 const { verifyPoolQuality } = require("./verify-pool");
 
 function forcedJob() {
@@ -27,10 +30,7 @@ function shouldRunCrawl(berlinHour) {
 function shouldRunPool(berlinHour) {
   const force = forcedJob();
   return (
-    force === "all" ||
-    force === "pool" ||
-    force === "verify" ||
-    berlinHour >= 7
+    force === "all" || force === "pool" || force === "verify" || berlinHour >= 7
   );
 }
 
@@ -59,7 +59,9 @@ async function main() {
     const crawling = await isCrawlLocked(db).catch(() => false);
     if (crawling) {
       actions.push({ job: "pool", skipped: true, reason: "crawl_running" });
-      console.log("[schedule] Skipping pool refresh because crawl is still running.");
+      console.log(
+        "[schedule] Skipping pool refresh because crawl is still running.",
+      );
     } else {
       const pool = await ensureDailyDealsPool(db, {
         poolDate: getCurrentPoolDate(),

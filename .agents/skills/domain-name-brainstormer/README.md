@@ -9,6 +9,7 @@ Finding the perfect domain name is time-consuming and frustrating. You think of 
 ## When to Use This Skill
 
 Use this skill when you need to:
+
 - Find a domain name for a new project, startup, or company
 - Launch a product or service
 - Create a personal brand or portfolio site

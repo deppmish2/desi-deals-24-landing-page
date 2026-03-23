@@ -31,21 +31,21 @@ Use this skill when:
 
 A three-part structure for difficult conversations:
 
-| Phase | Focus | Key Questions |
-| --- | --- | --- |
-| **Preparation** | Understand the issue, define goals, manage emotions | What's the problem? What outcome do I want? Am I calm? |
-| **Delivery** | Open neutrally, use facts not blame, encourage dialogue | How do I start? What evidence do I have? How do I involve them? |
-| **Follow-up** | Document actions, set check-ins, provide support | What did we agree to? When will we check in? How do I support? |
+| Phase           | Focus                                                   | Key Questions                                                   |
+| --------------- | ------------------------------------------------------- | --------------------------------------------------------------- |
+| **Preparation** | Understand the issue, define goals, manage emotions     | What's the problem? What outcome do I want? Am I calm?          |
+| **Delivery**    | Open neutrally, use facts not blame, encourage dialogue | How do I start? What evidence do I have? How do I involve them? |
+| **Follow-up**   | Document actions, set check-ins, provide support        | What did we agree to? When will we check in? How do I support?  |
 
 ### The SBI Feedback Model
 
 **Situation-Behavior-Impact (SBI)** structures feedback to be specific, objective, and actionable:
 
-| Component | Description | Example |
-| --- | --- | --- |
-| **Situation** | Describe the specific context | "During yesterday's code review..." |
-| **Behavior** | State the observable action (not interpretation) | "...you interrupted Sarah three times while she was explaining her approach..." |
-| **Impact** | Explain the effect on team/project/person | "...which made her hesitate to share ideas and slowed down our discussion." |
+| Component     | Description                                      | Example                                                                         |
+| ------------- | ------------------------------------------------ | ------------------------------------------------------------------------------- |
+| **Situation** | Describe the specific context                    | "During yesterday's code review..."                                             |
+| **Behavior**  | State the observable action (not interpretation) | "...you interrupted Sarah three times while she was explaining her approach..." |
+| **Impact**    | Explain the effect on team/project/person        | "...which made her hesitate to share ideas and slowed down our discussion."     |
 
 **Why it works:** SBI removes assumptions and focuses on observable facts, reducing defensiveness.
 
@@ -64,14 +64,15 @@ Ask yourself:
 
 Before the conversation, clarify what you're seeking:
 
-| Goal Type | Example |
-| --- | --- |
-| Behavior change | "I want them to submit code reviews on time" |
-| Mutual understanding | "I want to understand what's blocking them" |
-| Expectation setting | "I want to clarify what 'done' means for features" |
-| Problem solving | "I want to find a solution together" |
+| Goal Type            | Example                                            |
+| -------------------- | -------------------------------------------------- |
+| Behavior change      | "I want them to submit code reviews on time"       |
+| Mutual understanding | "I want to understand what's blocking them"        |
+| Expectation setting  | "I want to clarify what 'done' means for features" |
+| Problem solving      | "I want to find a solution together"               |
 
 **Tip:** Use if-then statements to clarify stakes:
+
 > "If this behavior continues, then the project timeline will suffer, leading to missed deliverables."
 
 ### Step 3: Manage Your Emotions
@@ -85,10 +86,10 @@ High emotional intensity reduces cognitive processing by 30%. Before the convers
 
 **Reframing technique:**
 
-| Accusatory | Constructive |
-| --- | --- |
+| Accusatory                                             | Constructive                                                                          |
+| ------------------------------------------------------ | ------------------------------------------------------------------------------------- |
 | "You always miss deadlines and it slows everyone down" | "I've noticed some recent delays and want to understand any challenges you're facing" |
-| "You never test your code properly" | "I've seen a few bugs slip through recently. Let's talk about our testing process" |
+| "You never test your code properly"                    | "I've seen a few bugs slip through recently. Let's talk about our testing process"    |
 
 ## Delivery Phase
 
@@ -100,20 +101,20 @@ High emotional intensity reduces cognitive processing by 30%. Before the convers
 
 ### Opening Lines That Work
 
-| Context | Opening |
-| --- | --- |
-| General | "I want to talk about something important to our team's success, and I'd love to hear your perspective." |
-| Performance | "I've noticed some patterns I'd like to discuss. My goal is to support you, not criticize." |
-| Conflict | "I sense there might be some tension, and I'd like to understand what's happening from your side." |
-| Expectations | "I want to make sure we're aligned on expectations. Can we talk through how this project is going?" |
+| Context      | Opening                                                                                                  |
+| ------------ | -------------------------------------------------------------------------------------------------------- |
+| General      | "I want to talk about something important to our team's success, and I'd love to hear your perspective." |
+| Performance  | "I've noticed some patterns I'd like to discuss. My goal is to support you, not criticize."              |
+| Conflict     | "I sense there might be some tension, and I'd like to understand what's happening from your side."       |
+| Expectations | "I want to make sure we're aligned on expectations. Can we talk through how this project is going?"      |
 
 ### Facts, Not Blame
 
-| Blaming | Factual |
-| --- | --- |
+| Blaming                                | Factual                                                                                                       |
+| -------------------------------------- | ------------------------------------------------------------------------------------------------------------- |
 | "You're not committed to this project" | "I've noticed your updates have been brief in our last three meetings. Is something affecting your workload?" |
-| "You don't care about code quality" | "This PR had 12 bugs caught in QA. Let's talk about what happened and how we can improve" |
-| "You're always late" | "The standup started at 9:00 and you joined at 9:15 the last three days. What's going on?" |
+| "You don't care about code quality"    | "This PR had 12 bugs caught in QA. Let's talk about what happened and how we can improve"                     |
+| "You're always late"                   | "The standup started at 9:00 and you joined at 9:15 the last three days. What's going on?"                    |
 
 **Key principles:**
 
@@ -125,12 +126,12 @@ High emotional intensity reduces cognitive processing by 30%. Before the convers
 
 After stating your observation, shift to collaboration:
 
-| Situation | Dialogue Prompt |
-| --- | --- |
-| Understanding barriers | "What's been challenging about this?" |
-| Seeking their view | "How do you see the situation?" |
-| Finding solutions | "What would help you succeed here?" |
-| Checking alignment | "Does this match your understanding of what happened?" |
+| Situation              | Dialogue Prompt                                        |
+| ---------------------- | ------------------------------------------------------ |
+| Understanding barriers | "What's been challenging about this?"                  |
+| Seeking their view     | "How do you see the situation?"                        |
+| Finding solutions      | "What would help you succeed here?"                    |
+| Checking alignment     | "Does this match your understanding of what happened?" |
 
 ## Follow-up Phase
 
@@ -151,6 +152,7 @@ Hi [Name],
 Thanks for the conversation yesterday. I appreciated your openness.
 
 **What we agreed to:**
+
 - [Action item 1] - [Timeline]
 - [Action item 2] - [Timeline]
 
@@ -167,11 +169,13 @@ Best,
 ### Positive Feedback
 
 **Code Review:**
+
 > **Situation:** "During Tuesday's code review for the authentication module..."
 > **Behavior:** "...you provided detailed comments on potential security vulnerabilities and suggested efficient fixes..."
 > **Impact:** "...which strengthened our security posture and saved the team hours of debugging later."
 
 **Collaboration:**
+
 > **Situation:** "In yesterday's architecture discussion..."
 > **Behavior:** "...you asked clarifying questions and built on others' ideas instead of pushing your own solution..."
 > **Impact:** "...which helped us reach consensus faster and made everyone feel heard."
@@ -179,11 +183,13 @@ Best,
 ### Constructive Feedback
 
 **Missed Deadlines:**
+
 > **Situation:** "When we were finalizing the API deployment last Thursday..."
 > **Behavior:** "...your testing results came in two hours after our agreed cutoff..."
 > **Impact:** "...which delayed the release, risked our SLA, and caused the QA team to work overtime."
 
 **Meeting Behavior:**
+
 > **Situation:** "In our sprint planning yesterday..."
 > **Behavior:** "...you were on your phone for most of the discussion and didn't contribute when we asked for estimates..."
 > **Impact:** "...which left the team without your expertise on the backend stories and made others feel their time wasn't valued."
@@ -280,7 +286,6 @@ When you're on the receiving end:
 - `references/feedback-sbi-model.md` - Full SBI framework with more examples
 - `references/difficult-conversation-scripts.md` - Opening lines and responses
 - `references/expectation-alignment.md` - Managing stakeholder expectations
-
 
 ## Recommended Reading
 

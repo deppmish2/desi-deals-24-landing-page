@@ -5,20 +5,20 @@
 ```tsx
 // BAD: Extra state + Effect for derived value
 function Form() {
-  const [firstName, setFirstName] = useState('Taylor');
-  const [lastName, setLastName] = useState('Swift');
-  const [fullName, setFullName] = useState('');
+  const [firstName, setFirstName] = useState("Taylor");
+  const [lastName, setLastName] = useState("Swift");
+  const [fullName, setFullName] = useState("");
 
   useEffect(() => {
-    setFullName(firstName + ' ' + lastName);
+    setFullName(firstName + " " + lastName);
   }, [firstName, lastName]);
 }
 
 // GOOD: Calculate during rendering
 function Form() {
-  const [firstName, setFirstName] = useState('Taylor');
-  const [lastName, setLastName] = useState('Swift');
-  const fullName = firstName + ' ' + lastName; // Just compute it
+  const [firstName, setFirstName] = useState("Taylor");
+  const [lastName, setLastName] = useState("Swift");
+  const fullName = firstName + " " + lastName; // Just compute it
 }
 ```
 
@@ -42,7 +42,7 @@ function TodoList({ todos, filter }) {
 function TodoList({ todos, filter }) {
   const visibleTodos = useMemo(
     () => getFilteredTodos(todos, filter),
-    [todos, filter]
+    [todos, filter],
   );
 }
 ```
@@ -54,10 +54,10 @@ function TodoList({ todos, filter }) {
 ```tsx
 // BAD: Effect to reset state
 function ProfilePage({ userId }) {
-  const [comment, setComment] = useState('');
+  const [comment, setComment] = useState("");
 
   useEffect(() => {
-    setComment('');
+    setComment("");
   }, [userId]);
 }
 
@@ -67,7 +67,7 @@ function ProfilePage({ userId }) {
 }
 
 function Profile({ userId }) {
-  const [comment, setComment] = useState(''); // Resets automatically
+  const [comment, setComment] = useState(""); // Resets automatically
 }
 ```
 
@@ -115,12 +115,12 @@ function Game() {
   const [isGameOver, setIsGameOver] = useState(false);
 
   useEffect(() => {
-    if (card?.gold) setGoldCardCount(c => c + 1);
+    if (card?.gold) setGoldCardCount((c) => c + 1);
   }, [card]);
 
   useEffect(() => {
     if (goldCardCount > 3) {
-      setRound(r => r + 1);
+      setRound((r) => r + 1);
       setGoldCardCount(0);
     }
   }, [goldCardCount]);
@@ -138,7 +138,7 @@ function Game() {
   const isGameOver = round > 5; // Derived!
 
   function handlePlaceCard(nextCard) {
-    if (isGameOver) throw Error('Game ended');
+    if (isGameOver) throw Error("Game ended");
 
     setCard(nextCard);
     if (nextCard.gold) {
@@ -147,7 +147,7 @@ function Game() {
       } else {
         setGoldCardCount(0);
         setRound(round + 1);
-        if (round === 5) alert('Good game!');
+        if (round === 5) alert("Good game!");
       }
     }
   }
@@ -234,7 +234,7 @@ function SearchResults({ query }) {
   const [results, setResults] = useState([]);
 
   useEffect(() => {
-    fetchResults(query).then(json => {
+    fetchResults(query).then((json) => {
       setResults(json); // "hello" response may arrive after "hell"
     });
   }, [query]);
@@ -247,11 +247,13 @@ function SearchResults({ query }) {
   useEffect(() => {
     let ignore = false;
 
-    fetchResults(query).then(json => {
+    fetchResults(query).then((json) => {
       if (!ignore) setResults(json);
     });
 
-    return () => { ignore = true; };
+    return () => {
+      ignore = true;
+    };
   }, [query]);
 }
 ```
@@ -283,7 +285,7 @@ function App() {
 }
 
 // ALSO GOOD: Module-level execution
-if (typeof window !== 'undefined') {
+if (typeof window !== "undefined") {
   checkAuthToken();
   loadDataFromLocalStorage();
 }

@@ -4,7 +4,7 @@ A Claude Code skill for efficiently working with Excalidraw diagram files throug
 
 ## Purpose
 
-This skill provides a pattern for working with Excalidraw files (*.excalidraw, *.excalidraw.json) without exhausting the main agent's context budget. Excalidraw JSON files are extremely verbose (4k-22k tokens per file) but have low information density, making them perfect candidates for subagent delegation.
+This skill provides a pattern for working with Excalidraw files (_.excalidraw, _.excalidraw.json) without exhausting the main agent's context budget. Excalidraw JSON files are extremely verbose (4k-22k tokens per file) but have low information density, making them perfect candidates for subagent delegation.
 
 ## When to Use
 
@@ -16,6 +16,7 @@ Use this skill when:
 - Performing architecture/design documentation tasks involving visual artifacts
 
 **Important:** Use delegation even for:
+
 - "Small" files (smallest is still 4k tokens)
 - "Quick checks" (loading full JSON even just to check component names)
 - Single file operations (isolation prevents context pollution)
@@ -52,7 +53,7 @@ Excalidraw files have an extremely low signal-to-noise ratio:
 
 ### What Main Agents Should NEVER Do
 
-- Use Read tool on *.excalidraw files
+- Use Read tool on \*.excalidraw files
 - Parse Excalidraw JSON in main context
 - Load multiple diagrams for comparison
 - Inspect file to "understand the format"
@@ -68,11 +69,11 @@ Excalidraw files have an extremely low signal-to-noise ratio:
 
 ### Token Efficiency
 
-| Scenario | Without Delegation | With Delegation | Savings |
-|----------|-------------------|-----------------|---------|
-| Single large file | 22k tokens (45% budget) | ~500 tokens | 98% |
-| Two-file comparison | 18k tokens (9% budget) | ~800 tokens | 96% |
-| Modification task | 14k tokens (7% budget) | ~300 tokens | 98% |
+| Scenario            | Without Delegation      | With Delegation | Savings |
+| ------------------- | ----------------------- | --------------- | ------- |
+| Single large file   | 22k tokens (45% budget) | ~500 tokens     | 98%     |
+| Two-file comparison | 18k tokens (9% budget)  | ~800 tokens     | 96%     |
+| Modification task   | 14k tokens (7% budget)  | ~300 tokens     | 98%     |
 
 ### Context Preservation
 
@@ -87,6 +88,7 @@ Excalidraw files have an extremely low signal-to-noise ratio:
 **User Request:** "What architecture is shown in detailed-architecture.excalidraw.json?"
 
 **Correct Approach:**
+
 ```
 Agent: I'll use a subagent to extract the architecture details.
 
@@ -112,6 +114,7 @@ Return:
 **User Request:** "Add a Redis cache component to the architecture diagram, connected to the API service"
 
 **Correct Approach:**
+
 ```
 Task: Add Redis cache to architecture.excalidraw.json, connected to API service
 
@@ -133,6 +136,7 @@ Return:
 **User Request:** "Create a flowchart showing the user authentication flow"
 
 **Correct Approach:**
+
 ```
 Task: Create new Excalidraw diagram showing user authentication flow
 
@@ -154,6 +158,7 @@ Return:
 **User Request:** "Compare the monolith vs microservices architecture diagrams"
 
 **Correct Approach:**
+
 ```
 Task: Compare architecture approaches in monolith.excalidraw.json vs microservices.excalidraw.json
 
@@ -174,16 +179,16 @@ Return:
 
 Agents often try to justify reading Excalidraw files directly. Here are common excuses and why they're wrong:
 
-| Excuse | Reality | What to Do |
-|--------|---------|------------|
-| "Direct reading is most efficient" | Consumes 4k-22k tokens unnecessarily | Delegate to subagent |
-| "It's token-efficient to read directly" | Baseline tests showed 9-45% budget used | Always delegate |
-| "This is optimal for one-time analysis" | "One-time" still pollutes main context | Subagent isolation |
-| "The JSON is straightforward" | Simplicity ≠ token efficiency | Delegate anyway |
-| "I need to understand the format" | Format understanding not needed in main agent | Subagent handles format |
-| "Within reasonable bounds" (18k tokens) | "Reasonable" is subjective rationalization | Hard rule: delegate |
-| "Just a quick check of components" | "Quick check" still loads full JSON | Extract text via subagent |
-| "File is small (16K)" | 4k tokens is NOT small | Size threshold doesn't matter |
+| Excuse                                  | Reality                                       | What to Do                    |
+| --------------------------------------- | --------------------------------------------- | ----------------------------- |
+| "Direct reading is most efficient"      | Consumes 4k-22k tokens unnecessarily          | Delegate to subagent          |
+| "It's token-efficient to read directly" | Baseline tests showed 9-45% budget used       | Always delegate               |
+| "This is optimal for one-time analysis" | "One-time" still pollutes main context        | Subagent isolation            |
+| "The JSON is straightforward"           | Simplicity ≠ token efficiency                 | Delegate anyway               |
+| "I need to understand the format"       | Format understanding not needed in main agent | Subagent handles format       |
+| "Within reasonable bounds" (18k tokens) | "Reasonable" is subjective rationalization    | Hard rule: delegate           |
+| "Just a quick check of components"      | "Quick check" still loads full JSON           | Extract text via subagent     |
+| "File is small (16K)"                   | 4k tokens is NOT small                        | Size threshold doesn't matter |
 
 ## Red Flags - Stop and Delegate
 
@@ -200,18 +205,19 @@ If you find yourself about to:
 
 ## Quick Reference
 
-| Operation | Main Agent Action | Subagent Returns |
-|-----------|-------------------|------------------|
-| **Understand diagram** | Delegate with "Extract and explain" template | Component list + relationships |
-| **Modify diagram** | Delegate with "Add [X] connected to [Y]" template | Confirmation + changes made |
-| **Create diagram** | Delegate with "Create showing [description]" template | File location + summary |
-| **Compare diagrams** | Delegate with "Compare [A] vs [B]" template | Key differences (not raw JSON) |
+| Operation              | Main Agent Action                                     | Subagent Returns               |
+| ---------------------- | ----------------------------------------------------- | ------------------------------ |
+| **Understand diagram** | Delegate with "Extract and explain" template          | Component list + relationships |
+| **Modify diagram**     | Delegate with "Add [X] connected to [Y]" template     | Confirmation + changes made    |
+| **Create diagram**     | Delegate with "Create showing [description]" template | File location + summary        |
+| **Compare diagrams**   | Delegate with "Compare [A] vs [B]" template           | Key differences (not raw JSON) |
 
 ## The Iron Law
 
 **Main agents NEVER read Excalidraw files. No exceptions.**
 
 Not for:
+
 - "Quick checks"
 - "Small files"
 - "Understanding format"
@@ -225,12 +231,14 @@ Not for:
 Agents often rationalize: "The format is simple, I can just read it."
 
 The problem isn't complexity - it's verbosity:
+
 - Simple structure with 20+ properties per element
 - Repetitive metadata (seed, version, nonce, roughness)
 - Positioning data (x, y, width, height) not semantically useful
 - Visual styling (strokeColor, opacity, fillStyle) irrelevant to content
 
 Token cost comes from volume, not complexity:
+
 - 79 elements × ~280 tokens/element = 22k tokens
 - Most tokens are metadata noise
 - Only text labels and relationships matter (~10% of content)
@@ -238,6 +246,7 @@ Token cost comes from volume, not complexity:
 ## Task Templates
 
 ### Read/Understand Operation
+
 ```
 Task: Extract and explain the components in [file.excalidraw.json]
 
@@ -255,6 +264,7 @@ Return:
 ```
 
 ### Modify Operation
+
 ```
 Task: Add [component] to [file.excalidraw.json], connected to [existing-component]
 
@@ -272,6 +282,7 @@ Return:
 ```
 
 ### Create Operation
+
 ```
 Task: Create new Excalidraw diagram showing [description]
 
@@ -289,6 +300,7 @@ Return:
 ```
 
 ### Compare Operation
+
 ```
 Task: Compare architecture approaches in [file1] vs [file2]
 

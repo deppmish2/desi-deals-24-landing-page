@@ -21,6 +21,7 @@ Use this skill when:
 - **Resetting expectations** when projects encounter scope creep or timeline pressure
 
 **Trigger phrases:**
+
 - "How do I give feedback about..."
 - "I need to have a difficult conversation..."
 - "Help me address a performance issue..."
@@ -37,21 +38,21 @@ The skill operates through two primary frameworks:
 
 A three-phase structure for any difficult conversation:
 
-| Phase | Focus | Key Activities |
-|-------|-------|----------------|
-| **Preparation** | Understand the issue, define goals, manage emotions | Gather facts, clarify desired outcomes, check emotional readiness |
-| **Delivery** | Open neutrally, use facts not blame, encourage dialogue | Present observations objectively, invite their perspective, collaborate on solutions |
-| **Follow-up** | Document actions, set check-ins, provide support | Send written summary, schedule follow-up, recognize progress |
+| Phase           | Focus                                                   | Key Activities                                                                       |
+| --------------- | ------------------------------------------------------- | ------------------------------------------------------------------------------------ |
+| **Preparation** | Understand the issue, define goals, manage emotions     | Gather facts, clarify desired outcomes, check emotional readiness                    |
+| **Delivery**    | Open neutrally, use facts not blame, encourage dialogue | Present observations objectively, invite their perspective, collaborate on solutions |
+| **Follow-up**   | Document actions, set check-ins, provide support        | Send written summary, schedule follow-up, recognize progress                         |
 
 ### 2. SBI Feedback Model
 
 **Situation-Behavior-Impact** structures feedback to be specific, objective, and actionable:
 
-| Component | What It Is | Example |
-|-----------|-----------|---------|
-| **Situation** | Specific time and place | "During yesterday's code review..." |
-| **Behavior** | Observable action (not interpretation) | "...you provided detailed comments on security vulnerabilities..." |
-| **Impact** | Effect on team, project, or person | "...which prevented a costly production bug." |
+| Component     | What It Is                             | Example                                                            |
+| ------------- | -------------------------------------- | ------------------------------------------------------------------ |
+| **Situation** | Specific time and place                | "During yesterday's code review..."                                |
+| **Behavior**  | Observable action (not interpretation) | "...you provided detailed comments on security vulnerabilities..." |
+| **Impact**    | Effect on team, project, or person     | "...which prevented a costly production bug."                      |
 
 SBI works because it removes assumptions, focuses on observable facts, and reduces defensiveness.
 
@@ -89,11 +90,11 @@ Responses for when conversations get difficult:
 
 Transform accusatory statements into constructive ones:
 
-| Instead of | Say |
-|------------|-----|
-| "You always miss deadlines" | "I've noticed some recent delays and want to understand any challenges you're facing" |
-| "You never test your code" | "I've seen a few bugs slip through recently. Let's talk about our testing process" |
-| "You're not committed" | "I've noticed your updates have been brief in our last three meetings. Is something affecting your workload?" |
+| Instead of                  | Say                                                                                                           |
+| --------------------------- | ------------------------------------------------------------------------------------------------------------- |
+| "You always miss deadlines" | "I've noticed some recent delays and want to understand any challenges you're facing"                         |
+| "You never test your code"  | "I've seen a few bugs slip through recently. Let's talk about our testing process"                            |
+| "You're not committed"      | "I've noticed your updates have been brief in our last three meetings. Is something affecting your workload?" |
 
 ## Usage Examples
 
@@ -102,6 +103,7 @@ Transform accusatory statements into constructive ones:
 **Scenario**: A developer has been submitting PRs with increasing bugs and missing tests.
 
 **Using SBI:**
+
 > **Situation**: "In the last three PRs you submitted..."
 > **Behavior**: "...there were no unit tests and several changes broke existing tests that weren't updated..."
 > **Impact**: "...which caused the CI pipeline to fail repeatedly, blocked other developers' merges, and required the tech lead to spend time debugging."
@@ -113,6 +115,7 @@ Transform accusatory statements into constructive ones:
 **Scenario**: Leadership wants a feature in half the time your estimates suggest.
 
 **Approach**:
+
 1. Acknowledge the goal: "I understand hitting this date is important for [business reason]."
 2. Present data: "Based on similar past work, this typically takes [X]. Here's the breakdown..."
 3. Offer options: "We can hit the date by reducing scope to [core features], or deliver full scope by [realistic date]."
@@ -123,6 +126,7 @@ Transform accusatory statements into constructive ones:
 **Scenario**: Two engineers disagree on a technical approach and it's affecting the team.
 
 **Approach**:
+
 1. Meet separately first: Understand each perspective without the other present
 2. Find common ground: "It sounds like you both want [shared goal]. Where you differ is [specific disagreement]."
 3. Facilitate together: Focus on facts and trade-offs, not personalities
@@ -132,6 +136,7 @@ Transform accusatory statements into constructive ones:
 ### Example 4: Giving Positive Feedback
 
 **Using SBI for recognition:**
+
 > **Situation**: "During Tuesday's code review for the payment processing module..."
 > **Behavior**: "...you not only caught the edge case that would have caused data loss, but you also suggested a more elegant solution and included tests demonstrating the issue..."
 > **Impact**: "...which prevented a potentially costly bug in production and taught our junior developers about defensive coding."
@@ -140,11 +145,11 @@ Transform accusatory statements into constructive ones:
 
 The skill includes three detailed reference guides:
 
-| Reference | Content |
-|-----------|---------|
-| `references/feedback-sbi-model.md` | Full SBI framework with extensive examples for both positive and constructive feedback, common mistakes to avoid, and practice exercises |
+| Reference                                      | Content                                                                                                                                              |
+| ---------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `references/feedback-sbi-model.md`             | Full SBI framework with extensive examples for both positive and constructive feedback, common mistakes to avoid, and practice exercises             |
 | `references/difficult-conversation-scripts.md` | Ready-to-use opening lines, responses to common reactions, and complete playbooks for scenarios like chronic lateness, quality issues, and conflicts |
-| `references/expectation-alignment.md` | Frameworks for setting expectations proactively, handling scope creep, unrealistic deadlines, and unclear role boundaries |
+| `references/expectation-alignment.md`          | Frameworks for setting expectations proactively, handling scope creep, unrealistic deadlines, and unclear role boundaries                            |
 
 ## Best Practices
 
@@ -175,13 +180,13 @@ The skill includes three detailed reference guides:
 
 ### Words to Avoid
 
-| Avoid | Use Instead |
-|-------|-------------|
-| "You always..." | "I've noticed a pattern where..." |
-| "You never..." | "In recent instances..." |
-| "You should have..." | "Going forward, I'd like..." |
-| "That's wrong" | "I see it differently" |
-| "Obviously..." | "From my perspective..." |
+| Avoid                | Use Instead                       |
+| -------------------- | --------------------------------- |
+| "You always..."      | "I've noticed a pattern where..." |
+| "You never..."       | "In recent instances..."          |
+| "You should have..." | "Going forward, I'd like..."      |
+| "That's wrong"       | "I see it differently"            |
+| "Obviously..."       | "From my perspective..."          |
 
 ## Quick Reference Checklist
 
@@ -213,7 +218,7 @@ The skill includes three detailed reference guides:
 
 For deeper exploration of these concepts:
 
-- *Crucial Conversations* by Kerry Patterson and Joseph Grenny
-- *Difficult Conversations* by Stone, Patton, and Heen
-- *Radical Candor* by Kim Scott
+- _Crucial Conversations_ by Kerry Patterson and Joseph Grenny
+- _Difficult Conversations_ by Stone, Patton, and Heen
+- _Radical Candor_ by Kim Scott
 - Amy Edmondson's research on psychological safety

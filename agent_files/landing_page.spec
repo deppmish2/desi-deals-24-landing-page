@@ -10,6 +10,7 @@ In the 24 deals showpage, do not use more than 4 "Best before xxDATEXX"
 no store should be in shown consequently for 2 times in the 24 deals. one store can feature in #1 then it should be on #3 never on #2. never
 continuously for 2 positions.      
 No product repeats across any rolling 7-day window
+Let’s also not include anything below 10% discount in daily deals.
 Deals displayed on the landing page must be live and active at the time of viewing
 Do not ever use any deals without discount percentage.
 Landing page deals are sourced directly from the daily deals pool (no separate curation)

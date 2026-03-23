@@ -10,6 +10,7 @@ This guide documents frequent anti-patterns and errors when creating C4 architec
 Containers are **deployable units** (applications, services, databases). Components are **non-deployable elements inside a container** (modules, classes, packages).
 
 **Wrong - Java class shown as container:**
+
 ```mermaid
 C4Container
   title WRONG: Class as Container
@@ -23,6 +24,7 @@ C4Container
 ```
 
 **Correct - Classes as components inside a container:**
+
 ```mermaid
 C4Component
   title CORRECT: Classes as Components
@@ -46,6 +48,7 @@ C4Component
 C4 defines exactly four levels. Don't invent "subcomponents", "modules", or other arbitrary levels.
 
 **Wrong:**
+
 - Level 3.5: "Subcomponents"
 - Level 2.5: "Microservice groups"
 - Custom levels like "packages" or "modules"
@@ -59,11 +62,13 @@ Stick to Person, Software System, Container, Component. If you need more detail,
 "Subsystem" is ambiguous. Is it a system, container, or component?
 
 **Wrong:**
+
 ```
 Subsystem(orders, "Order Subsystem", "Handles orders")
 ```
 
 **Correct - Be specific:**
+
 ```
 System(orderSystem, "Order System", "Handles order lifecycle")
 # OR
@@ -78,6 +83,7 @@ Component(orderProcessor, "Order Processor", "Spring Bean", "Order business logi
 Modeling a shared library as a container implies it's an independently running service. Libraries are copied into applications, not deployed separately.
 
 **Wrong - Library as separate container:**
+
 ```mermaid
 C4Container
   title WRONG: Library as Container
@@ -91,6 +97,7 @@ C4Container
 ```
 
 **Correct - Show library within each service:**
+
 ```mermaid
 C4Component
   title CORRECT: Library in Each Service
@@ -116,6 +123,7 @@ Or simply omit the library from architecture diagrams since it's an implementati
 Showing Kafka/RabbitMQ as a single container creates a misleading "hub and spoke" diagram that hides actual data flows.
 
 **Wrong - Central message bus:**
+
 ```mermaid
 C4Container
   title WRONG: Central Message Bus
@@ -131,6 +139,7 @@ C4Container
 ```
 
 **Correct - Individual topics:**
+
 ```mermaid
 C4Container
   title CORRECT: Individual Topics
@@ -152,6 +161,7 @@ C4Container
 ```
 
 **Alternative - Topics on relationship labels:**
+
 ```mermaid
 C4Container
   title ALTERNATIVE: Topics as Labels
@@ -173,6 +183,7 @@ C4Container
 You don't control external systems. Showing their internals creates coupling and becomes stale quickly.
 
 **Wrong - External system internals:**
+
 ```mermaid
 C4Container
   title WRONG: External System Internals
@@ -189,6 +200,7 @@ C4Container
 ```
 
 **Correct - External system as black box:**
+
 ```mermaid
 C4Context
   title CORRECT: External System Black Box
@@ -207,11 +219,13 @@ C4Context
 Removing element type labels (Container, Component, System) to "simplify" diagrams creates ambiguity.
 
 **Wrong:**
+
 ```
 Box(api, "API")  # What is this? System? Container? Component?
 ```
 
 **Correct:**
+
 ```
 Container(api, "API Application", "Spring Boot", "REST API backend")
 ```
@@ -222,11 +236,13 @@ Container(api, "API Application", "Spring Boot", "REST API backend")
 Elements without descriptions force viewers to guess their purpose.
 
 **Wrong:**
+
 ```
 Container(svc, "Service", "Java")
 ```
 
 **Correct:**
+
 ```
 Container(orderSvc, "Order Service", "Spring Boot", "Manages order lifecycle and fulfillment")
 ```
@@ -237,12 +253,14 @@ Container(orderSvc, "Order Service", "Spring Boot", "Manages order lifecycle and
 Labels like "uses" or "communicates with" don't explain what data flows or why.
 
 **Wrong:**
+
 ```
 Rel(frontend, api, "Uses")
 Rel(api, db, "Accesses")
 ```
 
 **Correct:**
+
 ```
 Rel(frontend, api, "Fetches products, submits orders", "JSON/HTTPS")
 Rel(api, db, "Reads/writes order data", "JDBC")
@@ -255,13 +273,13 @@ Rel(api, db, "Reads/writes order data", "JDBC")
 **The Problem:**
 Showing Level 4 code diagrams to executives, or only Level 1 to developers who need implementation details.
 
-| Audience | Appropriate Levels |
-|----------|-------------------|
-| Executives | Level 1 (Context) only |
-| Product Managers | Levels 1-2 |
-| Architects | Levels 1-3 |
-| Developers | All levels as needed |
-| DevOps | Levels 2 + Deployment |
+| Audience         | Appropriate Levels     |
+| ---------------- | ---------------------- |
+| Executives       | Level 1 (Context) only |
+| Product Managers | Levels 1-2             |
+| Architects       | Levels 1-3             |
+| Developers       | All levels as needed   |
+| DevOps           | Levels 2 + Deployment  |
 
 ### 2. Creating All Four Levels by Default
 
@@ -269,6 +287,7 @@ Showing Level 4 code diagrams to executives, or only Level 1 to developers who n
 Not every system needs all four levels. Level 3 (Component) and Level 4 (Code) often add no value.
 
 **Guidance:**
+
 - **Always create:** Context (L1) and Container (L2)
 - **Create if valuable:** Component (L3) for complex containers
 - **Rarely create:** Code (L4) - let IDEs generate these
@@ -281,6 +300,7 @@ Diagrams with 20+ elements become unreadable.
 **Simon Brown's advice:** "If a diagram with a dozen boxes is hard to understand, don't draw a diagram with a dozen boxes!"
 
 **Solutions:**
+
 - Split by bounded context or domain
 - Create separate diagrams per service
 - Show one service + its direct dependencies
@@ -294,17 +314,20 @@ Diagrams with 20+ elements become unreadable.
 Bidirectional arrows are ambiguous. Who initiates the call? What flows each direction?
 
 **Wrong:**
+
 ```
 BiRel(frontend, api, "Data")  # Ambiguous direction
 ```
 
 **Correct:**
+
 ```
 Rel(frontend, api, "Requests products", "JSON/HTTPS")
 Rel(api, frontend, "Returns product data", "JSON/HTTPS")
 ```
 
 Or show the initiator's perspective:
+
 ```
 Rel(frontend, api, "Fetches products", "JSON/HTTPS")
 ```
@@ -315,11 +338,13 @@ Rel(frontend, api, "Fetches products", "JSON/HTTPS")
 Arrows without labels force readers to guess what flows between elements.
 
 **Wrong:**
+
 ```
 Rel(orderSvc, paymentSvc)
 ```
 
 **Correct:**
+
 ```
 Rel(orderSvc, paymentSvc, "Requests payment authorization", "gRPC")
 ```
@@ -332,6 +357,7 @@ Rel(orderSvc, paymentSvc, "Requests payment authorization", "gRPC")
 Container diagrams should show logical architecture, not infrastructure details.
 
 **Wrong - Infrastructure in container diagram:**
+
 ```mermaid
 C4Container
   title WRONG: Infrastructure in Container Diagram
@@ -345,6 +371,7 @@ C4Container
 ```
 
 **Correct - Use Deployment diagram for infrastructure:**
+
 ```mermaid
 C4Deployment
   title CORRECT: Deployment Diagram for Infrastructure
@@ -371,12 +398,14 @@ C4Deployment
 Deployment diagrams should specify which environment (production, staging, dev).
 
 **Wrong:**
+
 ```
 C4Deployment
   title Deployment Diagram  # Which environment?
 ```
 
 **Correct:**
+
 ```
 C4Deployment
   title Deployment Diagram - Production (AWS us-east-1)
@@ -390,6 +419,7 @@ C4Deployment
 Using different colors, shapes, or terminology for the same elements across diagrams.
 
 **Wrong:**
+
 - Context diagram: "Payment System" (blue)
 - Container diagram: "Payment Service" (green)
 - Component diagram: "Payment Module" (red)
@@ -416,6 +446,7 @@ Architecture diagrams show **outcomes** of decisions, not the decision-making pr
 Including "Option A vs Option B" annotations in diagrams.
 
 **Correct approach:**
+
 - Document decisions separately in Architecture Decision Records (ADRs)
 - Link ADRs to relevant diagrams
 - Diagrams show the chosen architecture, ADRs explain why

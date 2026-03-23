@@ -36,7 +36,7 @@ Use this skill when:
 Every change must answer:
 
 1. **What's the smallest codebase that solves this?**
-   - Not "smallest change" but smallest *result*
+   - Not "smallest change" but smallest _result_
    - Could this be 2 functions instead of 14?
    - Could this be 0 functions (delete the feature)?
 
@@ -73,13 +73,13 @@ Before starting, **you must load at least one mindset** from the `references/` d
 
 This skill actively rejects these common arguments:
 
-| Argument | Why It's Rejected |
-|----------|-------------------|
-| "Keep what exists" | Status quo bias. The question is total code, not churn. |
-| "This adds flexibility" | Flexibility for what? YAGNI. |
+| Argument                        | Why It's Rejected                                        |
+| ------------------------------- | -------------------------------------------------------- |
+| "Keep what exists"              | Status quo bias. The question is total code, not churn.  |
+| "This adds flexibility"         | Flexibility for what? YAGNI.                             |
 | "Better separation of concerns" | More files/functions = more code. Separation isn't free. |
-| "Type safety" | Worth how many lines? Sometimes runtime checks win. |
-| "Easier to understand" | 14 things are not easier than 2 things. |
+| "Type safety"                   | Worth how many lines? Sometimes runtime checks win.      |
+| "Easier to understand"          | 14 things are not easier than 2 things.                  |
 
 ## When This Doesn't Apply
 

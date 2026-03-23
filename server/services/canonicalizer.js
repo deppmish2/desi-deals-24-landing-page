@@ -43,18 +43,22 @@ async function addAliasToCanonical(db, canonicalId, rawName) {
   const aliases = parseJson(row?.common_aliases, []);
   if (!aliases.includes(rawName)) aliases.push(rawName);
 
-  await db.prepare(
-    `UPDATE canonical_products
+  await db
+    .prepare(
+      `UPDATE canonical_products
      SET common_aliases = ?
      WHERE id = ?`,
-  ).run(JSON.stringify(aliases), canonicalId);
+    )
+    .run(JSON.stringify(aliases), canonicalId);
 }
 
 async function ensureUniqueCanonicalId(db, baseId) {
   let id = baseId;
   let suffix = 2;
   while (
-    await db.prepare("SELECT 1 FROM canonical_products WHERE id = ? LIMIT 1").get(id)
+    await db
+      .prepare("SELECT 1 FROM canonical_products WHERE id = ? LIMIT 1")
+      .get(id)
   ) {
     id = `${baseId}-${suffix}`;
     suffix += 1;
@@ -62,30 +66,39 @@ async function ensureUniqueCanonicalId(db, baseId) {
   return id;
 }
 
-async function createCanonical(db, { canonicalName, category, imageUrl, rawName }) {
+async function createCanonical(
+  db,
+  { canonicalName, category, imageUrl, rawName },
+) {
   const baseId = slugify(canonicalName || rawName);
   const canonicalId = await ensureUniqueCanonicalId(db, baseId);
 
-  await db.prepare(
-    `INSERT INTO canonical_products
+  await db
+    .prepare(
+      `INSERT INTO canonical_products
       (id, canonical_name, category, common_aliases, image_url, verified)
      VALUES (?, ?, ?, ?, ?, 0)`,
-  ).run(
-    canonicalId,
-    canonicalName,
-    category || "Other",
-    JSON.stringify(rawName ? [rawName] : []),
-    imageUrl || null,
-  );
+    )
+    .run(
+      canonicalId,
+      canonicalName,
+      category || "Other",
+      JSON.stringify(rawName ? [rawName] : []),
+      imageUrl || null,
+    );
 
   return await db
     .prepare("SELECT * FROM canonical_products WHERE id = ? LIMIT 1")
     .get(canonicalId);
 }
 
-async function upsertDealMapping(db, { dealId, canonicalId, method, confidence }) {
-  await db.prepare(
-    `INSERT INTO deal_mappings
+async function upsertDealMapping(
+  db,
+  { dealId, canonicalId, method, confidence },
+) {
+  await db
+    .prepare(
+      `INSERT INTO deal_mappings
       (deal_id, canonical_id, match_method, match_confidence, verified_at)
      VALUES (?, ?, ?, ?, ?)
      ON CONFLICT(deal_id, canonical_id)
@@ -93,12 +106,12 @@ async function upsertDealMapping(db, { dealId, canonicalId, method, confidence }
        match_method = excluded.match_method,
        match_confidence = excluded.match_confidence,
        verified_at = excluded.verified_at`,
-  ).run(dealId, canonicalId, method, confidence, new Date().toISOString());
+    )
+    .run(dealId, canonicalId, method, confidence, new Date().toISOString());
 
-  await db.prepare("UPDATE deals SET canonical_id = ? WHERE id = ?").run(
-    canonicalId,
-    dealId,
-  );
+  await db
+    .prepare("UPDATE deals SET canonical_id = ? WHERE id = ?")
+    .run(canonicalId, dealId);
 }
 
 async function enqueueManualReview(
@@ -119,17 +132,19 @@ async function enqueueManualReview(
 
   if (pending) return;
 
-  await db.prepare(
-    `INSERT INTO entity_resolution_queue
+  await db
+    .prepare(
+      `INSERT INTO entity_resolution_queue
       (deal_id, suggested_canonical_id, confidence, raw_name, normalised_name, status)
      VALUES (?, ?, ?, ?, ?, 'pending')`,
-  ).run(
-    deal.id,
-    suggestedCanonicalId || null,
-    confidence == null ? null : Number(confidence),
-    deal.product_name,
-    normalisedName || null,
-  );
+    )
+    .run(
+      deal.id,
+      suggestedCanonicalId || null,
+      confidence == null ? null : Number(confidence),
+      deal.product_name,
+      normalisedName || null,
+    );
 }
 
 async function resolveQueryToCanonicalId(

@@ -12,6 +12,7 @@ Convert web pages to clean Markdown by driving a locally installed browser (via 
 ## Hard trigger gate (must enforce)
 
 This skill MUST NOT be used unless the user explicitly wrote **exactly** a phrase like:
+
 - `use the skill web-to-markdown ...`
 - `use a skill web-to-markdown ...`
 
@@ -47,14 +48,14 @@ If the user did not explicitly request this skill by name, stop and ask them to 
 
 ## Workflow
 
-1) Confirm the user explicitly invoked the skill (`use the skill web-to-markdown`).
-2) Validate URL(s) start with `http://` or `https://`.
-3) Ensure `web2md` is installed:
+1. Confirm the user explicitly invoked the skill (`use the skill web-to-markdown`).
+2. Validate URL(s) start with `http://` or `https://`.
+3. Ensure `web2md` is installed:
    - Run: `command -v web2md`
    - If missing, instruct the user to install it (assume the project exists at `~/workspace/softaworks/projects/web2md`):
      - `cd ~/workspace/softaworks/projects/web2md && npm install && npm run build && npm link`
      - Or: `cd ~/workspace/softaworks/projects/web2md && npm install && npm run build && npm install -g .`
-4) Convert:
+4. Convert:
    - Single URL → file:
      - `web2md '<url>' --out ./page.md`
    - Single URL → auto-named file in directory:
@@ -66,9 +67,9 @@ If the user did not explicitly request this skill by name, stop and ask them to 
      - `web2md '<url>' --print`
    - Multiple URLs (batch):
      - Create output dir (e.g. `./out/`) then run one `web2md` command per URL using `--out ./out/`
-5) Validate output:
+5. Validate output:
    - If writing files, verify they exist and are non-empty (e.g. `ls -la <path>` and `wc -c <path>`).
-6) Return:
+6. Return:
    - The saved file path(s), or the Markdown (stdout mode).
 
 ## Defaults (recommended)

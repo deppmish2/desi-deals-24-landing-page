@@ -66,7 +66,10 @@ async function fetchWithRetry(url, options = {}, retryOptions = {}) {
     }
   }
 
-  throw lastError || new Error(`fetchWithRetry: all ${retries + 1} attempts failed for ${label}`);
+  throw (
+    lastError ||
+    new Error(`fetchWithRetry: all ${retries + 1} attempts failed for ${label}`)
+  );
 }
 
 module.exports = { fetchWithRetry };

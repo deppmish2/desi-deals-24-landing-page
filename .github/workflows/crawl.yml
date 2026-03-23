@@ -5,9 +5,9 @@ name: Daily Crawl
 # A second safety-net run at 07:00 UTC catches DST edge cases.
 on:
   schedule:
-    - cron: "0 5 * * *"   # primary run
-    - cron: "0 7 * * *"   # safety-net fallback
-  workflow_dispatch:        # allow manual trigger from GitHub UI
+    - cron: "0 5 * * *" # primary run
+    - cron: "0 7 * * *" # safety-net fallback
+  workflow_dispatch: # allow manual trigger from GitHub UI
     inputs:
       force_pool_rebuild:
         description: "Delete and rebuild today's pool even if it already exists"
@@ -16,13 +16,13 @@ on:
 
 concurrency:
   group: daily-crawl
-  cancel-in-progress: false   # never cancel a running crawl mid-way
+  cancel-in-progress: false # never cancel a running crawl mid-way
 
 jobs:
   crawl:
     name: Crawl stores + build pool
     runs-on: ubuntu-latest
-    timeout-minutes: 45       # 21 stores × ~5 s + overhead — well under limit
+    timeout-minutes: 45 # 21 stores × ~5 s + overhead — well under limit
 
     env:
       NODE_ENV: production
@@ -75,7 +75,7 @@ jobs:
           KV_REST_API_TOKEN: ${{ secrets.KV_REST_API_TOKEN }}
         run: node scripts/invalidate-kv-cache.js
         timeout-minutes: 2
-        continue-on-error: true   # KV is not yet wired — don't block on this
+        continue-on-error: true # KV is not yet wired — don't block on this
 
       # ── Failure notification (runs even if earlier steps fail) ──────────────
       - name: Notify on failure
@@ -84,4 +84,4 @@ jobs:
           FAILED_STEP: ${{ steps.crawl.outcome == 'failure' && 'crawl' || steps.pool.outcome == 'failure' && 'pool_build' || steps.verify.outcome == 'failure' && 'pool_verify' || 'unknown' }}
           RUN_URL: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
         run: node scripts/ops-notify.js
-        continue-on-error: true   # notification must never block the workflow result
+        continue-on-error: true # notification must never block the workflow result

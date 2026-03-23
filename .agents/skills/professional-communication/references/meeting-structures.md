@@ -41,13 +41,13 @@ Each team member shares (1-2 minutes max per person):
 
 ### Structure
 
-| Phase | Duration | Activity |
-| --- | --- | --- |
-| Sprint Goal | 10 min | What will this sprint accomplish? |
-| Backlog Review | 20 min | Review prioritized items |
-| Estimation | 30 min | Size items being considered |
-| Commitment | 20 min | Team commits to sprint scope |
-| Capacity Check | 10 min | Account for PTO, meetings, etc. |
+| Phase          | Duration | Activity                          |
+| -------------- | -------- | --------------------------------- |
+| Sprint Goal    | 10 min   | What will this sprint accomplish? |
+| Backlog Review | 20 min   | Review prioritized items          |
+| Estimation     | 30 min   | Size items being considered       |
+| Commitment     | 20 min   | Team commits to sprint scope      |
+| Capacity Check | 10 min   | Account for PTO, meetings, etc.   |
 
 ### Agenda Template
 
@@ -91,13 +91,13 @@ Each team member shares (1-2 minutes max per person):
 
 ### Structure
 
-| Phase | Duration | Activity |
-| --- | --- | --- |
-| Set the Stage | 5 min | Check-in, set tone |
-| Gather Data | 20 min | Collect feedback |
-| Generate Insights | 20 min | Discuss patterns |
-| Decide Actions | 15 min | Commit to improvements |
-| Close | 5 min | Appreciate, wrap up |
+| Phase             | Duration | Activity               |
+| ----------------- | -------- | ---------------------- |
+| Set the Stage     | 5 min    | Check-in, set tone     |
+| Gather Data       | 20 min   | Collect feedback       |
+| Generate Insights | 20 min   | Discuss patterns       |
+| Decide Actions    | 15 min   | Commit to improvements |
+| Close             | 5 min    | Appreciate, wrap up    |
 
 ### Common Formats
 

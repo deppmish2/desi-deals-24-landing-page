@@ -38,13 +38,13 @@ The skill operates in three phases:
 
 The skill silently checks for available integrations:
 
-| Integration | Detection Method |
-|-------------|------------------|
+| Integration         | Detection Method                                          |
+| ------------------- | --------------------------------------------------------- |
 | Claude Code History | `~/.claude/projects` directory exists with `.jsonl` files |
-| GitHub CLI | `gh auth status` succeeds |
-| Git | Current directory is a git repository |
-| Jira CLI | `jira` command exists |
-| Atlassian MCP | `mcp__atlassian__*` tools available |
+| GitHub CLI          | `gh auth status` succeeds                                 |
+| Git                 | Current directory is a git repository                     |
+| Jira CLI            | `jira` command exists                                     |
+| Atlassian MCP       | `mcp__atlassian__*` tools available                       |
 
 If integrations are detected, you'll be asked whether to pull data and which repositories/projects to include. **Consent is always required** before accessing any data.
 
@@ -162,9 +162,11 @@ User: "Yes, continuing PROJ-123 and starting PROJ-456"
 ## Prerequisites
 
 **Required:**
+
 - None - the skill works with manual input alone
 
 **Optional (for enhanced functionality):**
+
 - **Claude Code** - For pulling session history (research, debugging, planning work not in git)
 - **GitHub CLI** (`gh`) - For pulling commits, PRs, and reviews
 - **Git** - For local commit history
@@ -178,28 +180,35 @@ The skill generates a Markdown document like this:
 # Daily Update - 2026-01-22
 
 ## Yesterday
+
 - Worked on authentication feature
 - Research on payment providers
 - Merged PR #120 (fix: login timeout)
 - Opened PR #125 (feat: add OAuth flow)
 
 ## Today
+
 - Continue OAuth feature
 - Deploy to staging
 
 ## Blockers
+
 - No blockers
 
 ## PRs & Reviews
+
 - **Opened:** PR #125 - feat: add OAuth flow
 - **Merged:** PR #120 - fix: login timeout
 - **Reviews:** PR #123 (approved), PR #456 (changes requested)
 
 ## Topics for Discussion
+
 - Architecture of the new payments module
 
 ---
-*Links:*
+
+_Links:_
+
 - https://github.com/org/repo/pull/125
 - https://github.com/org/repo/pull/120
 ```
@@ -229,9 +238,9 @@ The skill generates a Markdown document like this:
 
 ## Related Information
 
-| Item | Description |
-|------|-------------|
-| Trigger phrases | "daily", "standup", "scrum update", "status update" |
-| Interview questions | Yesterday, Today, Blockers, Discussion Topics |
+| Item                   | Description                                                   |
+| ---------------------- | ------------------------------------------------------------- |
+| Trigger phrases        | "daily", "standup", "scrum update", "status update"           |
+| Interview questions    | Yesterday, Today, Blockers, Discussion Topics                 |
 | Supported integrations | Claude Code History, GitHub CLI, Git, Jira CLI, Atlassian MCP |
-| Output format | Markdown |
+| Output format          | Markdown                                                      |

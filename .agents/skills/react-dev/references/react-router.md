@@ -59,11 +59,11 @@ import { createBrowserRouter } from "react-router";
 const router = createBrowserRouter([
   {
     path: "/",
-    Component: Root
+    Component: Root,
   },
   {
     path: "/about",
-    Component: About
+    Component: About,
   },
 ]);
 ```
@@ -155,7 +155,7 @@ Multiple dynamic segments:
 
 ```tsx
 {
-  path: ":lang?/categories" // lang is optional
+  path: ":lang?/categories"; // lang is optional
 }
 ```
 
@@ -361,10 +361,7 @@ export default function Timer() {
   const submit = useSubmit();
 
   const handleTimeout = () => {
-    submit(
-      { quizTimedOut: true },
-      { action: "/end-quiz", method: "post" }
-    );
+    submit({ quizTimedOut: true }, { action: "/end-quiz", method: "post" });
   };
 
   return <div>{/* ... */}</div>;
@@ -437,9 +434,7 @@ export default function Project() {
 
   return (
     <div>
-      <Form method="post">
-        {/* form fields */}
-      </Form>
+      <Form method="post">{/* form fields */}</Form>
       {actionData && <p>Success: {actionData.message}</p>}
     </div>
   );
@@ -475,11 +470,9 @@ import { NavLink } from "react-router";
 
 <NavLink to="/messages">
   {({ isActive, isPending }) => (
-    <span className={isActive ? "active" : ""}>
-      Messages
-    </span>
+    <span className={isActive ? "active" : ""}>Messages</span>
   )}
-</NavLink>
+</NavLink>;
 ```
 
 ### Programmatic Navigation
@@ -490,11 +483,7 @@ import { useNavigate } from "react-router";
 export default function LogoutButton() {
   const navigate = useNavigate();
 
-  return (
-    <button onClick={() => navigate("/")}>
-      Go Home
-    </button>
-  );
+  return <button onClick={() => navigate("/")}>Go Home</button>;
 }
 ```
 
@@ -502,15 +491,15 @@ export default function LogoutButton() {
 
 ```tsx
 navigate("/path", {
-  replace: true,              // Don't add to history
-  state: { from: "/" },       // Pass state
-  relative: "route",          // Or "path"
-  preventScrollReset: true,   // Don't scroll to top
-  viewTransition: true,       // Enable view transition
+  replace: true, // Don't add to history
+  state: { from: "/" }, // Pass state
+  relative: "route", // Or "path"
+  preventScrollReset: true, // Don't scroll to top
+  viewTransition: true, // Enable view transition
 });
 
-navigate(-1);  // Go back
-navigate(1);   // Go forward
+navigate(-1); // Go back
+navigate(1); // Go forward
 ```
 
 ### Redirect in Loaders/Actions
@@ -565,9 +554,7 @@ export default function Search() {
   return (
     <div>
       <input value={query} />
-      <button onClick={() => setSearchParams({ q: "react" })}>
-        Search
-      </button>
+      <button onClick={() => setSearchParams({ q: "react" })}>Search</button>
     </div>
   );
 }
@@ -604,7 +591,9 @@ export function ErrorBoundary({ error }: Route.ErrorBoundaryProps) {
   if (isRouteErrorResponse(error)) {
     return (
       <div>
-        <h1>{error.status} {error.statusText}</h1>
+        <h1>
+          {error.status} {error.statusText}
+        </h1>
         <p>{error.data}</p>
       </div>
     );
@@ -729,9 +718,9 @@ Get all active route matches:
 const matches = useMatches();
 // Array of: { route, pathname, params, data, handle }
 
-matches.forEach(match => {
-  console.log(match.data);    // Loader data
-  console.log(match.handle);  // Route handle metadata
+matches.forEach((match) => {
+  console.log(match.data); // Loader data
+  console.log(match.handle); // Route handle metadata
 });
 ```
 
@@ -781,8 +770,8 @@ function Root() {
   return (
     <header>
       {matches
-        .filter(m => m.handle?.breadcrumb)
-        .map(m => m.handle.breadcrumb())}
+        .filter((m) => m.handle?.breadcrumb)
+        .map((m) => m.handle.breadcrumb())}
     </header>
   );
 }
@@ -851,34 +840,39 @@ function Child() {
 
 Both React Router v7 and TanStack Router offer first-class TypeScript support:
 
-| Feature | React Router v7 | TanStack Router |
-|---------|-----------------|-----------------|
-| Route type generation | ✓ Automatic `.react-router/types/` | ✓ Automatic |
-| Param typing | ✓ Auto-inferred from path | ✓ Auto-inferred |
-| Loader data typing | ✓ Via `Route.LoaderArgs` | ✓ Via `loader()` return type |
-| Action typing | ✓ Via `Route.ActionArgs` | ✓ Via `action()` return type |
-| Search params typing | ✓ Manual with `useSearchParams` | ✓ Route-level definition |
-| Redirect typing | ✓ Standard function | ✓ Standard function |
+| Feature               | React Router v7                    | TanStack Router              |
+| --------------------- | ---------------------------------- | ---------------------------- |
+| Route type generation | ✓ Automatic `.react-router/types/` | ✓ Automatic                  |
+| Param typing          | ✓ Auto-inferred from path          | ✓ Auto-inferred              |
+| Loader data typing    | ✓ Via `Route.LoaderArgs`           | ✓ Via `loader()` return type |
+| Action typing         | ✓ Via `Route.ActionArgs`           | ✓ Via `action()` return type |
+| Search params typing  | ✓ Manual with `useSearchParams`    | ✓ Route-level definition     |
+| Redirect typing       | ✓ Standard function                | ✓ Standard function          |
 
 ### Key Differences
 
 **Type Definition Level:**
+
 - React Router: File-based type generation (`.d.ts` files)
 - TanStack Router: Route-level type registration
 
 **Search Params:**
+
 - React Router: Runtime `URLSearchParams` API
 - TanStack Router: Compile-time schema validation
 
 **Nested Route Typing:**
+
 - React Router: Inherited from parent context
 - TanStack Router: Explicit inheritance patterns
 
 **Error Typing:**
+
 - React Router: `isRouteErrorResponse()` utility
 - TanStack Router: Built-in discriminated unions
 
 **Learning Curve:**
+
 - React Router: Familiar to those migrating from v6
 - TanStack Router: More opinionated, explicit type patterns
 
@@ -918,7 +912,7 @@ const fetcher = useFetcher();
 <fetcher.Form method="post" action="/task/123">
   <input name="status" />
   <button>Update</button>
-</fetcher.Form>
+</fetcher.Form>;
 ```
 
 ### 4. Handle Validation Errors Properly

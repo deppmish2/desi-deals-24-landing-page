@@ -1,5 +1,5 @@
 /* Google Fontsから日本語フォントとコードフォントを読み込み */
-@import url('https://fonts.googleapis.com/css2?family=Noto+Sans+JP:wght@400;700&family=Fira+Code:wght@400;500;700&display=swap');
+@import url("https://fonts.googleapis.com/css2?family=Noto+Sans+JP:wght@400;700&family=Fira+Code:wght@400;500;700&display=swap");
 
 /* --- 技術系（コード向け）テーマ --- */
 :root {
@@ -9,8 +9,9 @@
   --color-accent: #7ee787;
   --color-code-bg: #161b22;
   --color-border: #30363d;
-  --font-default: 'Noto Sans JP', 'Hiragino Kaku Gothic ProN', 'Meiryo', sans-serif;
-  --font-code: 'Fira Code', 'Consolas', 'Monaco', monospace;
+  --font-default:
+    "Noto Sans JP", "Hiragino Kaku Gothic ProN", "Meiryo", sans-serif;
+  --font-code: "Fira Code", "Consolas", "Monaco", monospace;
 }
 
 section {
@@ -26,7 +27,12 @@ section {
   padding: 56px;
 }
 
-h1, h2, h3, h4, h5, h6 {
+h1,
+h2,
+h3,
+h4,
+h5,
+h6 {
   font-weight: 700;
   color: var(--color-heading);
   margin: 0;
@@ -41,7 +47,7 @@ h1 {
 }
 
 h1::before {
-  content: '# ';
+  content: "# ";
   color: var(--color-accent);
 }
 
@@ -53,7 +59,7 @@ h2 {
 }
 
 h2::before {
-  content: '## ';
+  content: "## ";
   color: var(--color-accent);
 }
 
@@ -65,11 +71,12 @@ h3 {
 }
 
 h3::before {
-  content: '### ';
+  content: "### ";
   color: var(--color-accent);
 }
 
-ul, ol {
+ul,
+ol {
   padding-left: 32px;
 }
 
@@ -121,7 +128,7 @@ footer {
 }
 
 footer::before {
-  content: '// ';
+  content: "// ";
   color: var(--color-accent);
 }
 
@@ -149,7 +156,8 @@ table {
   margin: 20px 0;
 }
 
-th, td {
+th,
+td {
   border: 1px solid var(--color-border);
   padding: 10px;
   text-align: left;
@@ -197,7 +205,7 @@ blockquote {
 }
 
 .terminal::before {
-  content: '$ ';
+  content: "$ ";
   color: #00ff00;
   font-weight: 700;
 }

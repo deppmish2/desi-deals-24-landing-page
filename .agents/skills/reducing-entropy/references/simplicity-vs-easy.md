@@ -26,8 +26,9 @@ The simple solution might be unfamiliar. It might require thinking. But it doesn
 Complexity comes from braiding together concepts that should be separate. Every time we couple things, we create complexity. Every coupling is a future debugging session.
 
 Simple means:
+
 - One role
-- One task  
+- One task
 - One concept
 
 If you can't explain it simply, it's too complex.
@@ -36,7 +37,7 @@ If you can't explain it simply, it's too complex.
 
 When designing, ask: "Am I choosing this because it's simple, or because it's familiar?"
 
-Familiar feels productive. Simple *is* productive - over the lifetime of the code.
+Familiar feels productive. Simple _is_ productive - over the lifetime of the code.
 
 **Choose simple over easy. Always.**
 
