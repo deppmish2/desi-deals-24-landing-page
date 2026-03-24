@@ -15,7 +15,11 @@ const adminDashboardRouter = require("./routes/admin-dashboard");
 const contactRouter = require("./routes/contact");
 const waitlistRouter = require("./routes/waitlist");
 const healthRouter = require("./routes/health");
-const { productionLikeRuntime, smtpConfigured } = require("./services/email-auth");
+const bookmarksRouter = require("./routes/bookmarks");
+const {
+  productionLikeRuntime,
+  smtpConfigured,
+} = require("./services/email-auth");
 const { getDisplayMemberCount } = require("./services/member-count");
 const { startScheduler } = require("../crawler/scheduler");
 const isServerless = Boolean(process.env.VERCEL);
@@ -26,7 +30,7 @@ const PORT = parseInt(process.env.PORT || "3000");
 if (productionLikeRuntime() && !smtpConfigured()) {
   console.warn(
     "[warn] SMTP credentials are not configured. Email link auth will be unavailable. " +
-    "Set SMTP_HOST, SMTP_PORT, SMTP_SECURE, SMTP_USER, and SMTP_PASS to enable it.",
+      "Set SMTP_HOST, SMTP_PORT, SMTP_SECURE, SMTP_USER, and SMTP_PASS to enable it.",
   );
 }
 
@@ -52,6 +56,7 @@ app.use("/api/v1/admin-dashboard", adminDashboardRouter);
 app.use("/api/v1/contact", contactRouter);
 app.use("/api/v1/waitlist", waitlistRouter);
 app.use("/api/v1/health", healthRouter);
+app.use("/api/v1/bookmarks", bookmarksRouter);
 
 app.get("/api/v1/member-count", async (_req, res) => {
   try {
@@ -84,8 +89,9 @@ function sendClientApp(res) {
 
 app.use(express.static(CLIENT_DIST, { index: false }));
 app.get("/", (req, res) => res.redirect(302, "/waitlist"));
-app.get(["/waitlist", "/24deals", "/admin", "/oauth/:provider/callback"], (req, res) =>
-  sendClientApp(res),
+app.get(
+  ["/waitlist", "/deals", "/admin", "/oauth/:provider/callback"],
+  (req, res) => sendClientApp(res),
 );
 app.get("*", (req, res) => res.redirect(302, "/waitlist"));
 

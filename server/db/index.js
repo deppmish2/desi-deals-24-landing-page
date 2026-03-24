@@ -11,8 +11,7 @@ const tursoUrl =
   process.env.TURSO_DATABASE_URL ||
   process.env.DESI_DEALS_DB_TURSO_DATABASE_URL;
 const tursoAuthToken =
-  process.env.TURSO_AUTH_TOKEN ||
-  process.env.DESI_DEALS_DB_TURSO_AUTH_TOKEN;
+  process.env.TURSO_AUTH_TOKEN || process.env.DESI_DEALS_DB_TURSO_AUTH_TOKEN;
 const client = tursoUrl
   ? createClient({
       url: tursoUrl,
@@ -70,8 +69,12 @@ const db = {
    */
   prepare(sql) {
     const normalizeA = (args) =>
-      args.length === 1 && !Array.isArray(args[0]) && args[0] !== null && typeof args[0] === 'object'
-        ? args[0] : args.flat();
+      args.length === 1 &&
+      !Array.isArray(args[0]) &&
+      args[0] !== null &&
+      typeof args[0] === "object"
+        ? args[0]
+        : args.flat();
 
     return {
       async all(...args) {
@@ -194,6 +197,14 @@ const ready = (async () => {
     "ALTER TABLE waitlist_referrals DROP COLUMN invited_user_id_user_id",
     "ALTER TABLE waitlist_referrals DROP COLUMN inviter_user_id_user_id",
     "ALTER TABLE users ADD COLUMN is_admin INTEGER NOT NULL DEFAULT 0",
+    `CREATE TABLE IF NOT EXISTS bookmarks (
+      id TEXT PRIMARY KEY,
+      user_id TEXT NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+      deal_id TEXT NOT NULL REFERENCES deals(id) ON DELETE CASCADE,
+      created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+      UNIQUE(user_id, deal_id)
+    )`,
+    "CREATE INDEX IF NOT EXISTS idx_bookmarks_user ON bookmarks(user_id)",
   ];
 
   for (const sql of migrations) {
@@ -243,18 +254,42 @@ const ready = (async () => {
     ["desigros", "Desigros", "https://www.desigros.com"],
     ["zora-supermarkt", "Zora Supermarkt", "https://www.zorastore.eu"],
     ["md-store", "MD Store", "https://www.md-store.de"],
-    ["indiansupermarkt", "Indian Supermarkt", "https://www.indiansupermarkt.de"],
-    ["indianstorestuttgart", "Indian Store Stuttgart", "https://www.indianstorestuttgart.com"],
-    ["anuhita-groceries", "AnuHita Groceries", "https://www.anuhitagroceries.de"],
+    [
+      "indiansupermarkt",
+      "Indian Supermarkt",
+      "https://www.indiansupermarkt.de",
+    ],
+    [
+      "indianstorestuttgart",
+      "Indian Store Stuttgart",
+      "https://www.indianstorestuttgart.com",
+    ],
+    [
+      "anuhita-groceries",
+      "AnuHita Groceries",
+      "https://www.anuhitagroceries.de",
+    ],
     ["sairas", "SAIRAS", "https://www.sairas.de"],
-    ["indische-lebensmittel-online", "Indische-Lebensmittel-Online", "https://www.indische-lebensmittel-online.de"],
+    [
+      "indische-lebensmittel-online",
+      "Indische-Lebensmittel-Online",
+      "https://www.indische-lebensmittel-online.de",
+    ],
     ["indianfoodstore", "Indian Food Store", "https://www.indianfoodstore.de"],
     ["swadesh", "Swadesh", "https://www.swadesh.eu"],
     ["spicelands", "Spicelands", "https://www.spicelands.de"],
     ["annachi", "Annachi Europe", "https://www.annachi.fr"],
-    ["namastedeutschland", "Namaste Deutschland", "https://www.namastedeutschland.de"],
+    [
+      "namastedeutschland",
+      "Namaste Deutschland",
+      "https://www.namastedeutschland.de",
+    ],
     ["india-store", "India Store", "https://www.india-store.de"],
-    ["india-express-food", "India Express Food", "https://www.india-express-food.de"],
+    [
+      "india-express-food",
+      "India Express Food",
+      "https://www.india-express-food.de",
+    ],
   ];
 
   for (const [id, name, url] of stores) {
@@ -275,16 +310,18 @@ const ready = (async () => {
   } catch (_) {}
 
   // Seed admin status for known admin accounts (configurable via ADMIN_EMAILS env var)
-  const adminEmails = (process.env.ADMIN_EMAILS || "itsjustrahul@gmail.com,deppmish2@googlemail.com")
+  const adminEmails = (
+    process.env.ADMIN_EMAILS ||
+    "itsjustrahul@gmail.com,deppmish2@googlemail.com"
+  )
     .split(",")
     .map((e) => e.trim().toLowerCase())
     .filter(Boolean);
   for (const email of adminEmails) {
     try {
-      await db.execute(
-        `UPDATE users SET is_admin = 1 WHERE email = ?`,
-        [email],
-      );
+      await db.execute(`UPDATE users SET is_admin = 1 WHERE email = ?`, [
+        email,
+      ]);
     } catch (_) {}
   }
 })();

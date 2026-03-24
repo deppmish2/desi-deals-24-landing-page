@@ -49,13 +49,16 @@ export default function OAuthCallbackPage() {
       .then((result) => {
         if (result?.pending_email_confirmation) {
           if (result.masked_email) {
-            sessionStorage.setItem("dd24_pending_confirm_email", result.masked_email);
+            sessionStorage.setItem(
+              "dd24_pending_confirm_email",
+              result.masked_email,
+            );
           }
           navigate("/waitlist?confirm_email=1", { replace: true });
           return;
         }
         const redirectTo =
-          sessionStorage.getItem(POST_AUTH_REDIRECT_STORAGE_KEY) || "/24deals";
+          sessionStorage.getItem(POST_AUTH_REDIRECT_STORAGE_KEY) || "/deals";
         sessionStorage.removeItem(POST_AUTH_REDIRECT_STORAGE_KEY);
         navigate(redirectTo, { replace: true });
       })
@@ -73,8 +76,24 @@ export default function OAuthCallbackPage() {
       <div className="w-full max-w-md bg-white border border-[#e2e8f0] rounded-xl p-6 shadow-sm text-center">
         {!error ? (
           <>
-            <div style={{ display:"inline-flex", alignItems:"center", justifyContent:"center", marginBottom:16 }}>
-              <div style={{ width:36, height:36, borderRadius:"50%", border:"3px solid #86efac", borderTopColor:"#16a34a", animation:"dd24Spin 0.8s linear infinite" }} />
+            <div
+              style={{
+                display: "inline-flex",
+                alignItems: "center",
+                justifyContent: "center",
+                marginBottom: 16,
+              }}
+            >
+              <div
+                style={{
+                  width: 36,
+                  height: 36,
+                  borderRadius: "50%",
+                  border: "3px solid #86efac",
+                  borderTopColor: "#16a34a",
+                  animation: "dd24Spin 0.8s linear infinite",
+                }}
+              />
             </div>
             <h1 className="text-xl font-bold text-[#0f172a] mb-2">
               Finishing Google sign in...
