@@ -67,16 +67,6 @@ jobs:
         run: node scripts/verify-pool.js
         timeout-minutes: 2
 
-      # ── Step 4: Invalidate KV cache so next API request reads fresh data ────
-      - name: Invalidate KV cache
-        if: success()
-        env:
-          KV_REST_API_URL: ${{ secrets.KV_REST_API_URL }}
-          KV_REST_API_TOKEN: ${{ secrets.KV_REST_API_TOKEN }}
-        run: node scripts/invalidate-kv-cache.js
-        timeout-minutes: 2
-        continue-on-error: true   # KV is not yet wired — don't block on this
-
       # ── Failure notification (runs even if earlier steps fail) ──────────────
       - name: Notify on failure
         if: failure()
