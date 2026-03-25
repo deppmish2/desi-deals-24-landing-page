@@ -12,7 +12,6 @@ require("dotenv").config({ path: ".env.local", override: true });
 const crypto = require("crypto");
 const db = require("../server/db");
 const {
-  getDailyDealsPool,
   ensureDailyDealsPool,
   getCurrentPoolDate,
 } = require("../server/services/daily-deals-pool");
@@ -56,22 +55,31 @@ db.ready.then(async () => {
     console.log(`  Removed slot ${e.slot_index}: ${e.product_name_snapshot}`);
   }
 
-  // 2. Check current state
-  let pool = await getDailyDealsPool(db, { poolDate, limit: 50, allowGenerate: false });
-  console.log("\nPool after cleanup:", pool.rows.length, "materialized");
+  // 2. Check current state — query TODAY's entries directly to avoid stale-pool fallback
+  const todayEntries = await db.prepare(
+    `SELECT e.slot_index, e.deal_id, e.store_id, e.product_signature
+     FROM daily_deal_pool_entries e WHERE e.pool_date = ? ORDER BY e.slot_index ASC`
+  ).all(poolDate);
+
+  // Materialize: which of today's entries still point to an eligible active deal
+  const activeDealIdSet = new Set(
+    (await db.prepare(`
+      SELECT id FROM deals
+      WHERE is_active = 1
+        AND lower(coalesce(availability,'')) = 'in_stock'
+        AND (best_before IS NULL OR best_before >= strftime('%Y-%m','now'))
+        AND discount_percent IS NOT NULL AND discount_percent >= ${MIN_DISCOUNT}
+    `).all()).map(r => String(r.id))
+  );
+  const materializedToday = todayEntries.filter(e => activeDealIdSet.has(String(e.deal_id)));
+  console.log("\nPool after cleanup:", materializedToday.length, "materialized");
 
   const storeCounts = {};
-  for (const r of pool.rows) storeCounts[r.store_id] = (storeCounts[r.store_id] || 0) + 1;
+  for (const e of materializedToday) storeCounts[e.store_id] = (storeCounts[e.store_id] || 0) + 1;
   console.log("Store counts:", storeCounts);
 
-  const usedSigs = new Set(
-    (await db.prepare("SELECT product_signature FROM daily_deal_pool_entries WHERE pool_date = ?").all(poolDate))
-      .map(r => r.product_signature)
-  );
-  const usedDealIds = new Set(
-    (await db.prepare("SELECT deal_id FROM daily_deal_pool_entries WHERE pool_date = ? AND deal_id IS NOT NULL").all(poolDate))
-      .map(r => r.deal_id)
-  );
+  const usedSigs = new Set(todayEntries.map(r => r.product_signature));
+  const usedDealIds = new Set(todayEntries.filter(r => r.deal_id != null).map(r => r.deal_id));
 
   // 3. Get all eligible active deals not in pool, ordered by store diversity then last_pool_used_at
   const candidates = await db.prepare(`
@@ -87,13 +95,13 @@ db.ready.then(async () => {
   `).all(poolDate);
 
   console.log("\nCandidates available:", candidates.length);
-  console.log("Need to add:", TARGET - pool.rows.length);
+  console.log("Need to add:", TARGET - materializedToday.length);
 
   // Use a slot well above any existing ones
   const maxSlotRow = await db.prepare("SELECT MAX(slot_index) as m FROM daily_deal_pool_entries WHERE pool_date = ?").get(poolDate);
   let nextSlot = Math.max(1000, (maxSlotRow?.m || 0) + 1);
   let added = 0;
-  const needed = TARGET - pool.rows.length;
+  const needed = TARGET - materializedToday.length;
 
   for (const deal of candidates) {
     if (added >= needed) break;
@@ -106,8 +114,7 @@ db.ready.then(async () => {
       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
     `).run(poolDate, nextSlot, deal.id, deal.store_id, deal.product_url, sig, deal.product_category, deal.product_name, now);
 
-    const check = await getDailyDealsPool(db, { poolDate, limit: 50, allowGenerate: false });
-    const ok = check.rows.find(r => r.id === deal.id);
+    const ok = activeDealIdSet.has(String(deal.id));
 
     if (!ok) {
       await db.prepare("DELETE FROM daily_deal_pool_entries WHERE pool_date = ? AND slot_index = ?").run(poolDate, nextSlot);
@@ -123,12 +130,15 @@ db.ready.then(async () => {
     added++;
   }
 
-  // 4. Final check
-  const final = await getDailyDealsPool(db, { poolDate, limit: 24, allowGenerate: false });
+  // 4. Final check — count directly from DB, no stale-fallback risk
+  const finalEntries = await db.prepare(
+    `SELECT e.deal_id, e.store_id FROM daily_deal_pool_entries e WHERE e.pool_date = ? ORDER BY e.slot_index ASC`
+  ).all(poolDate);
+  const finalMaterialized = finalEntries.filter(e => activeDealIdSet.has(String(e.deal_id)));
   const finalStoreCounts = {};
-  for (const r of final.rows) finalStoreCounts[r.store_id] = (finalStoreCounts[r.store_id] || 0) + 1;
+  for (const e of finalMaterialized) finalStoreCounts[e.store_id] = (finalStoreCounts[e.store_id] || 0) + 1;
   console.log("\nFinal store counts:", finalStoreCounts);
-  console.log("Final pool size:", final.rows.length);
+  console.log("Final pool size:", finalMaterialized.length);
   const violations = Object.entries(finalStoreCounts).filter(([, c]) => c > MAX_PER_STORE);
   if (violations.length) console.log("VIOLATIONS:", violations);
   else console.log("All stores within cap. Done.");
