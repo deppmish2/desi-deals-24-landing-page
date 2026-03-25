@@ -13,6 +13,7 @@ YAGNI is a good default. But some things are genuinely cheaper to build in from 
 ## Why This Matters
 
 Ruthless YAGNI application can backfire when:
+
 - Adding it later requires touching everything (logging, timestamps, audit trails)
 - You can't add it retroactively at all (API versioning, mobile app kill switches)
 - The cost of not having it is catastrophic (security fundamentals, data you threw away)
@@ -22,17 +23,20 @@ The avoiding-complexity skill pushes toward less. This mindset identifies the ex
 ## Common PAGNIs
 
 **Data you can't get back:**
+
 - `created_at` / `updated_at` timestamps on every table
 - Audit logs (who did what when)
 - Many-to-many from the start if there's any hint you'll need more than one
 
 **Infrastructure that's painful to retrofit:**
+
 - API versioning (even if v1 is the only version)
 - API pagination (even if lists are small now)
 - Automated deploys and CI from day one
 - Logging infrastructure
 
 **Security fundamentals:**
+
 - Vulnerability disclosure policy and security@ email
 - Session/password invalidation mechanisms
 - Safe ways to move redacted data out of production
@@ -40,6 +44,7 @@ The avoiding-complexity skill pushes toward less. This mindset identifies the ex
 ## The Test
 
 Before invoking PAGNI, ask:
+
 1. **Is retrofitting dramatically more expensive?** (10x+, not 2x)
 2. **Is this a known pattern from experience?** (not speculative)
 3. **Is the cost of adding it now actually low?** (minutes/hours, not days)

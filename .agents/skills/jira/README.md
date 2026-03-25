@@ -7,6 +7,7 @@ Natural language interaction with Jira for managing issues, sprints, and workflo
 The Jira skill bridges the gap between natural language requests and Jira operations. Instead of remembering specific CLI commands or API calls, you can simply tell Claude what you want to do with your Jira tickets, and the skill handles the technical details.
 
 Key benefits:
+
 - **Conversational interface**: Ask questions like "What are my open tickets?" or "Move PROJ-123 to Done"
 - **Dual backend support**: Works with either the jira CLI or Atlassian MCP
 - **Safety-first approach**: Always fetches current state before modifications and requires approval for changes
@@ -24,6 +25,7 @@ This skill activates when you:
 - Manage workflow ("Close this ticket", "Add a comment to PROJ-123")
 
 **Trigger phrases include:**
+
 - "create a jira ticket"
 - "show me PROJ-123"
 - "list my tickets"
@@ -65,6 +67,7 @@ Before any modification, the skill:
 ## Key Features
 
 ### Issue Management
+
 - **View issues**: See full details including description, status, assignee, and comments
 - **List issues**: Filter by assignee, status, type, priority, labels, or custom JQL
 - **Create issues**: Create tickets with full field support including multi-line descriptions
@@ -72,16 +75,19 @@ Before any modification, the skill:
 - **Assign issues**: Assign to yourself, others, or unassign
 
 ### Workflow Operations
+
 - **Transition issues**: Move tickets through workflow states (To Do, In Progress, Done)
 - **Add comments**: Document progress or decisions on tickets
 - **Link issues**: Create relationships between tickets (blocks, relates to, duplicates)
 
 ### Sprint Management
+
 - **List sprints**: View active, future, or closed sprints
 - **Sprint issues**: See what's in the current sprint
 - **Add to sprint**: Move issues into a sprint
 
 ### Search and Query
+
 - **Natural language search**: Find issues matching text queries
 - **JQL support**: Use full Jira Query Language for complex searches
 - **Filter combinations**: Combine assignee, status, type, and date filters
@@ -150,6 +156,7 @@ You need one of the following backends configured:
 The jira CLI provides fast, local access to Jira.
 
 **Installation:**
+
 ```bash
 # macOS
 brew install ankitpokhrel/jira-cli/jira-cli
@@ -159,6 +166,7 @@ brew install ankitpokhrel/jira-cli/jira-cli
 ```
 
 **Setup:**
+
 ```bash
 jira init
 ```
@@ -174,7 +182,9 @@ Configure the Atlassian MCP in your Claude settings with your Atlassian credenti
 ## Output
 
 ### Issue View
+
 When viewing an issue, you'll see:
+
 - Issue key and summary
 - Status, priority, and type
 - Assignee and reporter
@@ -183,7 +193,9 @@ When viewing an issue, you'll see:
 - Linked issues
 
 ### Issue Lists
+
 Lists display in a table format showing:
+
 - Issue key
 - Summary
 - Status
@@ -191,7 +203,9 @@ Lists display in a table format showing:
 - Priority
 
 ### Operation Results
+
 After modifications, the skill:
+
 - Confirms the action was successful
 - Shows the updated state
 - Reports any errors with resolution guidance
@@ -199,27 +213,32 @@ After modifications, the skill:
 ## Best Practices
 
 ### Before Creating Issues
+
 1. Check if a similar issue already exists
 2. Understand the project's required fields
 3. Use clear, descriptive summaries
 4. Include acceptance criteria for stories
 
 ### Before Transitioning
+
 1. Let the skill fetch available transitions (they vary by project)
 2. Some workflows require intermediate states
 3. Add comments explaining why you're making the transition
 
 ### For Assignments
+
 1. With MCP, always use account IDs (not display names)
 2. Verify the user exists in the project
 3. Consider notifying the assignee separately
 
 ### For Bulk Operations
+
 1. Request explicit approval before bulk changes
 2. Each change notifies watchers
 3. Consider timing to avoid notification storms
 
 ### General Tips
+
 - Always let the skill fetch current state before modifications
 - Preserve original information when editing descriptions
 - Use the "open in browser" feature for complex editing
@@ -230,6 +249,7 @@ After modifications, the skill:
 The skill follows strict safety protocols:
 
 **Always:**
+
 - Shows commands/tool calls before executing
 - Requests approval before modifications
 - Preserves original content when editing
@@ -237,6 +257,7 @@ The skill follows strict safety protocols:
 - Surfaces authentication issues clearly
 
 **Never:**
+
 - Transitions without fetching current status first
 - Assigns using display names with MCP (only account IDs work)
 - Edits descriptions without showing the original
@@ -249,6 +270,7 @@ The skill follows strict safety protocols:
 ### Authentication Issues
 
 **CLI:**
+
 ```bash
 # Reinitialize
 jira init
@@ -258,25 +280,27 @@ jira me
 ```
 
 **MCP:**
+
 - Check MCP connection status
 - Reconnect the Atlassian service
 - Verify API token permissions
 
 ### Common Errors
 
-| Error | Cause | Solution |
-|-------|-------|----------|
-| "Issue not found" | Invalid key | Verify the issue key is correct |
+| Error                      | Cause               | Solution                          |
+| -------------------------- | ------------------- | --------------------------------- |
+| "Issue not found"          | Invalid key         | Verify the issue key is correct   |
 | "Transition not available" | Workflow constraint | Check available transitions first |
-| "Permission denied" | Project access | Verify your Jira permissions |
-| "Invalid assignee" | Wrong ID format | Use account ID, not display name |
-| "Required field missing" | Project config | Check project's required fields |
+| "Permission denied"        | Project access      | Verify your Jira permissions      |
+| "Invalid assignee"         | Wrong ID format     | Use account ID, not display name  |
+| "Required field missing"   | Project config      | Check project's required fields   |
 
 ### Backend Not Available
 
 If neither CLI nor MCP is available:
 
 1. **Install jira CLI** (recommended):
+
    ```bash
    brew install ankitpokhrel/jira-cli/jira-cli
    jira init
@@ -292,6 +316,7 @@ For advanced usage, the skill includes detailed reference documentation:
 - `references/mcp.md`: Full MCP tool reference with JQL query guide
 
 These are loaded on-demand when handling complex operations like:
+
 - Multi-line descriptions
 - Complex JQL queries
 - Transition workflows

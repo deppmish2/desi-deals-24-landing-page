@@ -33,9 +33,7 @@ function normalizeUserType(value) {
   const normalized = String(value || "")
     .trim()
     .toLowerCase();
-  return normalized === "basic" || normalized === "premium"
-    ? normalized
-    : null;
+  return normalized === "basic" || normalized === "premium" ? normalized : null;
 }
 
 function buildReferralCodeCandidate(userId, offset = 0) {
@@ -59,12 +57,14 @@ async function ensureReferralCode(userId) {
   for (let attempt = 0; attempt < 8; attempt += 1) {
     const candidate = buildReferralCodeCandidate(userId, attempt);
     try {
-      await db.prepare(
-        `UPDATE users
+      await db
+        .prepare(
+          `UPDATE users
          SET waitlist_referral_code = ?
          WHERE id = ?
            AND (waitlist_referral_code IS NULL OR trim(waitlist_referral_code) = '')`,
-      ).run(candidate, userId);
+        )
+        .run(candidate, userId);
       user = await syncCachedUserById(db, userId, { strict: true });
       if (user?.waitlist_referral_code) return user;
     } catch {
@@ -102,13 +102,15 @@ async function getConfirmedInvitees(userId) {
 
 async function countConfirmedReferrals(userId) {
   return Number(
-    (await db
-      .prepare(
-        `SELECT COUNT(*) AS n
+    (
+      await db
+        .prepare(
+          `SELECT COUNT(*) AS n
          FROM waitlist_referrals
          WHERE inviter_user_id = ?`,
-      )
-      .get(userId))?.n || 0,
+        )
+        .get(userId)
+    )?.n || 0,
   );
 }
 
@@ -122,15 +124,17 @@ async function syncUnlockState(userId, confirmedCountInput = null) {
     return confirmedCount;
   }
 
-  await db.prepare(
-    `UPDATE users
+  await db
+    .prepare(
+      `UPDATE users
      SET waitlist_unlocked_at = COALESCE(waitlist_unlocked_at, ?),
          user_type = CASE
            WHEN user_type IS NULL OR trim(user_type) = '' THEN 'basic'
            ELSE user_type
          END
      WHERE id = ?`,
-  ).run(new Date().toISOString(), userId);
+    )
+    .run(new Date().toISOString(), userId);
   await syncCachedUserById(db, userId, { strict: true });
 
   return confirmedCount;
@@ -264,11 +268,13 @@ router.post("/claim-referral", async (req, res) => {
     });
   }
 
-  await db.prepare(
-    `UPDATE users
+  await db
+    .prepare(
+      `UPDATE users
      SET waitlist_referrer_user_id = COALESCE(waitlist_referrer_user_id, ?)
      WHERE id = ?`,
-  ).run(payload.inviter_user_id, payload.invited_user_id);
+    )
+    .run(payload.inviter_user_id, payload.invited_user_id);
 
   const updatedInvitee = await db
     .prepare("SELECT * FROM users WHERE id = ? LIMIT 1")

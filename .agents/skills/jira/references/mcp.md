@@ -7,15 +7,18 @@ Complete reference for Atlassian Jira operations via MCP.
 ### Search Operations
 
 #### `mcp__atlassian__searchJiraIssuesUsingJql`
+
 Search Jira using JQL (Jira Query Language).
 
 **Parameters:**
+
 - `jql` (required): JQL query string
 - `maxResults`: Maximum results (default: 50)
 - `startAt`: Pagination offset
 - `fields`: Comma-separated fields to return
 
 **Example:**
+
 ```
 mcp__atlassian__searchJiraIssuesUsingJql(jql: "project = PROJ AND status = 'In Progress'")
 ```
@@ -23,21 +26,26 @@ mcp__atlassian__searchJiraIssuesUsingJql(jql: "project = PROJ AND status = 'In P
 ### Issue Operations
 
 #### `mcp__atlassian__getJiraIssue`
+
 Retrieve full issue details by key.
 
 **Parameters:**
+
 - `issueKey` (required): Issue key (e.g., "PROJ-123")
 - `expand`: Additional data (changelog, transitions, renderedFields)
 
 **Example:**
+
 ```
 mcp__atlassian__getJiraIssue(issueKey: "PROJ-123")
 ```
 
 #### `mcp__atlassian__createJiraIssue`
+
 Create a new issue.
 
 **Parameters:**
+
 - `projectKey` (required): Target project
 - `issueType` (required): Issue type (Story, Bug, Task, Epic, etc.)
 - `summary` (required): Issue title
@@ -49,6 +57,7 @@ Create a new issue.
 - Custom fields as needed
 
 **Example:**
+
 ```
 mcp__atlassian__createJiraIssue(
   projectKey: "PROJ",
@@ -60,13 +69,16 @@ mcp__atlassian__createJiraIssue(
 ```
 
 #### `mcp__atlassian__editJiraIssue`
+
 Update an existing issue.
 
 **Parameters:**
+
 - `issueKey` (required): Issue to update
 - Any field to update (summary, description, assignee, etc.)
 
 **Example:**
+
 ```
 mcp__atlassian__editJiraIssue(
   issueKey: "PROJ-123",
@@ -77,22 +89,27 @@ mcp__atlassian__editJiraIssue(
 ### Transition Operations
 
 #### `mcp__atlassian__getTransitionsForJiraIssue`
+
 Get available status transitions for an issue.
 
 **Parameters:**
+
 - `issueKey` (required): Issue key
 
 **Returns:** List of available transitions with IDs and names.
 
 #### `mcp__atlassian__transitionJiraIssue`
+
 Change issue status.
 
 **Parameters:**
+
 - `issueKey` (required): Issue key
 - `transitionId` (required): Transition ID from getTransitions
 - `comment`: Optional comment for the transition
 
 **Workflow:**
+
 1. Get transitions: `getTransitionsForJiraIssue("PROJ-123")`
 2. Find desired transition ID from results
 3. Execute: `transitionJiraIssue(issueKey: "PROJ-123", transitionId: "31")`
@@ -100,21 +117,26 @@ Change issue status.
 ### Comment Operations
 
 #### `mcp__atlassian__addCommentToJiraIssue`
+
 Add a comment to an issue.
 
 **Parameters:**
+
 - `issueKey` (required): Issue key
 - `body` (required): Comment text (supports Jira markdown)
 
 ### User Operations
 
 #### `mcp__atlassian__lookupJiraAccountId`
+
 Find user account ID for assignments.
 
 **Parameters:**
+
 - `query` (required): Search by display name, email, or username
 
 **Example:**
+
 ```
 mcp__atlassian__lookupJiraAccountId(query: "user@example.com")
 ```
@@ -124,23 +146,29 @@ mcp__atlassian__lookupJiraAccountId(query: "user@example.com")
 ### Project Operations
 
 #### `mcp__atlassian__getVisibleJiraProjects`
+
 List available Jira projects.
 
 **Parameters:**
+
 - `maxResults`: Maximum results
 
 #### `mcp__atlassian__getJiraProjectIssueTypesMetadata`
+
 Get issue types and required fields for a project.
 
 **Parameters:**
+
 - `projectKey` (required): Project key
 
 **Usage:** Call before creating issues to understand required fields.
 
 #### `mcp__atlassian__getJiraIssueTypeMetaWithFields`
+
 Get detailed field metadata for an issue type.
 
 **Parameters:**
+
 - `projectKey` (required): Project key
 - `issueTypeId` (required): Issue type ID
 
@@ -156,55 +184,55 @@ field operator value [AND|OR field operator value]
 
 ### Common Fields
 
-| Field | Description | Example |
-|-------|-------------|---------|
-| `project` | Project key | `project = "PROJ"` |
-| `issuetype` | Issue type | `issuetype = Bug` |
-| `status` | Issue status | `status = "In Progress"` |
-| `assignee` | Assigned user | `assignee = currentUser()` |
-| `reporter` | Issue creator | `reporter = "jobarksdale"` |
-| `priority` | Priority level | `priority = High` |
-| `labels` | Issue labels | `labels = "backend"` |
-| `component` | Components | `component = "API"` |
-| `created` | Creation date | `created >= -30d` |
-| `updated` | Last update | `updated >= -7d` |
-| `resolved` | Resolution date | `resolved >= startOfMonth()` |
-| `sprint` | Sprint name/ID | `sprint in openSprints()` |
-| `epic` | Parent epic | `"Epic Link" = PROJ-100` |
-| `parent` | Parent issue | `parent = PROJ-50` |
-| `text` | Full-text search | `text ~ "authentication"` |
-| `summary` | Title search | `summary ~ "login"` |
-| `description` | Description search | `description ~ "OAuth"` |
+| Field         | Description        | Example                      |
+| ------------- | ------------------ | ---------------------------- |
+| `project`     | Project key        | `project = "PROJ"`           |
+| `issuetype`   | Issue type         | `issuetype = Bug`            |
+| `status`      | Issue status       | `status = "In Progress"`     |
+| `assignee`    | Assigned user      | `assignee = currentUser()`   |
+| `reporter`    | Issue creator      | `reporter = "jobarksdale"`   |
+| `priority`    | Priority level     | `priority = High`            |
+| `labels`      | Issue labels       | `labels = "backend"`         |
+| `component`   | Components         | `component = "API"`          |
+| `created`     | Creation date      | `created >= -30d`            |
+| `updated`     | Last update        | `updated >= -7d`             |
+| `resolved`    | Resolution date    | `resolved >= startOfMonth()` |
+| `sprint`      | Sprint name/ID     | `sprint in openSprints()`    |
+| `epic`        | Parent epic        | `"Epic Link" = PROJ-100`     |
+| `parent`      | Parent issue       | `parent = PROJ-50`           |
+| `text`        | Full-text search   | `text ~ "authentication"`    |
+| `summary`     | Title search       | `summary ~ "login"`          |
+| `description` | Description search | `description ~ "OAuth"`      |
 
 ### Operators
 
-| Operator | Meaning | Example |
-|----------|---------|---------|
-| `=` | Exact match | `status = Done` |
-| `!=` | Not equal | `status != Closed` |
-| `~` | Contains (text) | `summary ~ "auth*"` |
-| `!~` | Does not contain | `summary !~ "test"` |
-| `>` `>=` `<` `<=` | Comparisons | `priority >= High` |
-| `IN` | Multiple values | `status IN (Open, "In Progress")` |
-| `NOT IN` | Exclude values | `status NOT IN (Done, Closed)` |
-| `IS` | Null check | `assignee IS EMPTY` |
-| `IS NOT` | Not null | `assignee IS NOT EMPTY` |
-| `WAS` | Historical value | `status WAS "In Progress"` |
-| `CHANGED` | Field changed | `status CHANGED` |
+| Operator          | Meaning          | Example                           |
+| ----------------- | ---------------- | --------------------------------- |
+| `=`               | Exact match      | `status = Done`                   |
+| `!=`              | Not equal        | `status != Closed`                |
+| `~`               | Contains (text)  | `summary ~ "auth*"`               |
+| `!~`              | Does not contain | `summary !~ "test"`               |
+| `>` `>=` `<` `<=` | Comparisons      | `priority >= High`                |
+| `IN`              | Multiple values  | `status IN (Open, "In Progress")` |
+| `NOT IN`          | Exclude values   | `status NOT IN (Done, Closed)`    |
+| `IS`              | Null check       | `assignee IS EMPTY`               |
+| `IS NOT`          | Not null         | `assignee IS NOT EMPTY`           |
+| `WAS`             | Historical value | `status WAS "In Progress"`        |
+| `CHANGED`         | Field changed    | `status CHANGED`                  |
 
 ### Functions
 
-| Function | Description | Example |
-|----------|-------------|---------|
-| `currentUser()` | Logged-in user | `assignee = currentUser()` |
-| `now()` | Current timestamp | `created <= now()` |
-| `startOfDay()` | Midnight today | `updated >= startOfDay()` |
-| `startOfWeek()` | Start of week | `created >= startOfWeek()` |
-| `startOfMonth()` | Start of month | `created >= startOfMonth()` |
-| `endOfDay()` | End of today | `due <= endOfDay()` |
-| `openSprints()` | Active sprints | `sprint in openSprints()` |
-| `closedSprints()` | Completed sprints | `sprint in closedSprints()` |
-| `linkedIssues()` | Linked issues | `issue in linkedIssues("PROJ-123")` |
+| Function          | Description       | Example                             |
+| ----------------- | ----------------- | ----------------------------------- |
+| `currentUser()`   | Logged-in user    | `assignee = currentUser()`          |
+| `now()`           | Current timestamp | `created <= now()`                  |
+| `startOfDay()`    | Midnight today    | `updated >= startOfDay()`           |
+| `startOfWeek()`   | Start of week     | `created >= startOfWeek()`          |
+| `startOfMonth()`  | Start of month    | `created >= startOfMonth()`         |
+| `endOfDay()`      | End of today      | `due <= endOfDay()`                 |
+| `openSprints()`   | Active sprints    | `sprint in openSprints()`           |
+| `closedSprints()` | Completed sprints | `sprint in closedSprints()`         |
+| `linkedIssues()`  | Linked issues     | `issue in linkedIssues("PROJ-123")` |
 
 ### Relative Dates
 
@@ -272,17 +300,18 @@ resolved >= -7d AND project = PROJ ORDER BY resolved DESC
 ## Issue Linking
 
 ### Limitation
+
 The Atlassian MCP does not currently support creating issue links. Use the bundled `jira-link-issues` script instead.
 
 ### Link Types
 
-| Link Type | Inward | Outward | Use Case |
-|-----------|--------|---------|----------|
-| Depends On | is dependency of | depends on | Task dependencies |
-| Blocks | is blocked by | blocks | Blocking relationships |
-| Relates To | relates to | relates to | General relationships |
-| Clones | is cloned by | clones | Cloned issues |
-| Duplicates | is duplicated by | duplicates | Duplicate issues |
+| Link Type  | Inward           | Outward    | Use Case               |
+| ---------- | ---------------- | ---------- | ---------------------- |
+| Depends On | is dependency of | depends on | Task dependencies      |
+| Blocks     | is blocked by    | blocks     | Blocking relationships |
+| Relates To | relates to       | relates to | General relationships  |
+| Clones     | is cloned by     | clones     | Cloned issues          |
+| Duplicates | is duplicated by | duplicates | Duplicate issues       |
 
 ### Script Usage
 
@@ -298,13 +327,16 @@ The Atlassian MCP does not currently support creating issue links. Use the bundl
 ```
 
 ### Finding Link Types
+
 Query the Jira API to get available link types:
+
 ```bash
 curl -s -u "$JIRA_USER:$JIRA_API_TOKEN" \
   "$JIRA_BASE_URL/rest/api/3/issueLinkType" | jq '.issueLinkTypes[].name'
 ```
 
 Required environment variables:
+
 - `JIRA_BASE_URL`: Your Atlassian instance (e.g., `https://yourcompany.atlassian.net`)
 - `JIRA_USER`: Your email address
 - `JIRA_API_TOKEN`: API token from Atlassian account settings
@@ -354,6 +386,7 @@ Panel content here
 ### Atlassian Document Format (ADF)
 
 For createJiraIssue, descriptions may use ADF format:
+
 ```json
 {
   "type": "doc",
@@ -361,9 +394,7 @@ For createJiraIssue, descriptions may use ADF format:
   "content": [
     {
       "type": "paragraph",
-      "content": [
-        {"type": "text", "text": "Description text"}
-      ]
+      "content": [{ "type": "text", "text": "Description text" }]
     }
   ]
 }
@@ -375,17 +406,18 @@ For createJiraIssue, descriptions may use ADF format:
 
 ### Common Errors
 
-| HTTP Code | Error | Cause | Resolution |
-|-----------|-------|-------|------------|
-| 400 | Bad Request | Invalid field values | Check required fields for issue type |
-| 401 | Unauthorized | Invalid credentials | Run `/mcp` to reconnect |
-| 403 | Forbidden | Insufficient permissions | Check project permissions |
-| 404 | Not Found | Issue/project doesn't exist | Verify key is correct |
-| 422 | Unprocessable | Validation failed | Check field constraints |
+| HTTP Code | Error         | Cause                       | Resolution                           |
+| --------- | ------------- | --------------------------- | ------------------------------------ |
+| 400       | Bad Request   | Invalid field values        | Check required fields for issue type |
+| 401       | Unauthorized  | Invalid credentials         | Run `/mcp` to reconnect              |
+| 403       | Forbidden     | Insufficient permissions    | Check project permissions            |
+| 404       | Not Found     | Issue/project doesn't exist | Verify key is correct                |
+| 422       | Unprocessable | Validation failed           | Check field constraints              |
 
 ### Authentication Issues
 
 If MCP tools return authentication errors:
+
 1. Run `/mcp` to check connection status
 2. Reconnect the Atlassian MCP service if disconnected
 3. Verify API token permissions in Atlassian settings
@@ -393,6 +425,7 @@ If MCP tools return authentication errors:
 ### Field Validation
 
 Before creating issues:
+
 1. Get project metadata: `getJiraProjectIssueTypesMetadata`
 2. Check required fields for the issue type
 3. Look up user account IDs for assignee fields

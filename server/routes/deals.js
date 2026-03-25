@@ -40,7 +40,7 @@ function seedFallbackAllowed() {
 function fixedPoolReadOnlyRuntime() {
   return Boolean(
     String(process.env.VERCEL || "").trim() ||
-      String(process.env.TURSO_DATABASE_URL || "").trim(),
+    String(process.env.TURSO_DATABASE_URL || "").trim(),
   );
 }
 
@@ -76,9 +76,11 @@ async function ensureDealsAvailable() {
   // In Turso/Vercel mode the seed fallback can never fire — skip the round-trip.
   if (!seedFallbackAllowed()) return;
   const activeCount = Number(
-    (await db
-      .prepare("SELECT COUNT(*) AS cnt FROM deals WHERE is_active = 1")
-      .get())?.cnt || 0,
+    (
+      await db
+        .prepare("SELECT COUNT(*) AS cnt FROM deals WHERE is_active = 1")
+        .get()
+    )?.cnt || 0,
   );
   if (activeCount === 0) await restoreDealsFromSeed(db);
 }
@@ -96,7 +98,8 @@ router.get("/", async (req, res, next) => {
       Math.min(DAILY_POOL_LIMIT, parseInt(req.query.limit || "24", 10) || 24),
     );
     const offset = (pageNum - 1) * limitNum;
-    const curatedSeed = String(req.query.seed || "").trim() || getCurrentPoolDate();
+    const curatedSeed =
+      String(req.query.seed || "").trim() || getCurrentPoolDate();
     const isToday = curatedSeed === getCurrentPoolDate();
 
     // ── Cache fast path (memory → Turso) ─────────────────────────────────────
@@ -129,17 +132,23 @@ router.get("/", async (req, res, next) => {
           limit: DAILY_POOL_LIMIT,
           allowGenerate: !fixedPoolReadOnlyRuntime(),
         }),
-        db.prepare(
-          `SELECT finished_at FROM crawl_runs
+        db
+          .prepare(
+            `SELECT finished_at FROM crawl_runs
            WHERE status = 'completed'
            ORDER BY finished_at DESC LIMIT 1`,
-        ).get(),
-        db.prepare(
-          `SELECT COUNT(*) AS cnt FROM stores WHERE crawl_status = 'active'`,
-        ).get(),
-        db.prepare(
-          `SELECT COUNT(*) AS cnt FROM crawl_runs WHERE status = 'running'`,
-        ).get(),
+          )
+          .get(),
+        db
+          .prepare(
+            `SELECT COUNT(*) AS cnt FROM stores WHERE crawl_status = 'active'`,
+          )
+          .get(),
+        db
+          .prepare(
+            `SELECT COUNT(*) AS cnt FROM crawl_runs WHERE status = 'running'`,
+          )
+          .get(),
         isCrawlLocked(db).catch(() => false),
       ]);
 
@@ -160,17 +169,23 @@ router.get("/", async (req, res, next) => {
     if (!pool._meta_ext) {
       const [lastCrawlRow, activeStoresRow, localCrawlingRow, globalCrawling] =
         await Promise.all([
-          db.prepare(
-            `SELECT finished_at FROM crawl_runs
+          db
+            .prepare(
+              `SELECT finished_at FROM crawl_runs
              WHERE status = 'completed'
              ORDER BY finished_at DESC LIMIT 1`,
-          ).get(),
-          db.prepare(
-            `SELECT COUNT(*) AS cnt FROM stores WHERE crawl_status = 'active'`,
-          ).get(),
-          db.prepare(
-            `SELECT COUNT(*) AS cnt FROM crawl_runs WHERE status = 'running'`,
-          ).get(),
+            )
+            .get(),
+          db
+            .prepare(
+              `SELECT COUNT(*) AS cnt FROM stores WHERE crawl_status = 'active'`,
+            )
+            .get(),
+          db
+            .prepare(
+              `SELECT COUNT(*) AS cnt FROM crawl_runs WHERE status = 'running'`,
+            )
+            .get(),
           isCrawlLocked(db).catch(() => false),
         ]);
       pool._meta_ext = {
@@ -184,7 +199,10 @@ router.get("/", async (req, res, next) => {
     const data = pageRows.map(serializeDeal);
 
     // CDN caches for 5 min; serves stale up to 1h while revalidating.
-    res.set("Cache-Control", "public, s-maxage=300, stale-while-revalidate=3600");
+    res.set(
+      "Cache-Control",
+      "public, s-maxage=300, stale-while-revalidate=3600",
+    );
 
     res.json({
       data,

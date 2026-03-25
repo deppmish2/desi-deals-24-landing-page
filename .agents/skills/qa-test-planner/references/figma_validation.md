@@ -7,11 +7,13 @@ Guide for validating UI implementation against Figma designs using Figma MCP.
 ## Prerequisites
 
 **Required:**
+
 - Figma MCP server configured
 - Access to Figma design files
 - Figma URLs for components/pages
 
 **Setup:**
+
 ```bash
 # Install Figma MCP (follow official docs)
 # Configure API token
@@ -25,6 +27,7 @@ Guide for validating UI implementation against Figma designs using Figma MCP.
 ### Step 1: Get Design Specifications
 
 **Using Figma MCP:**
+
 ```
 "Get the specifications for the primary button from Figma file at [URL]"
 
@@ -40,6 +43,7 @@ Response includes:
 ### Step 2: Inspect Implementation
 
 **Browser DevTools:**
+
 1. Inspect element
 2. Check computed styles
 3. Verify dimensions
@@ -50,6 +54,7 @@ Response includes:
 ### Step 3: Document Discrepancies
 
 **Create test case or bug:**
+
 ```
 TC-UI-001: Primary Button Visual Validation
 
@@ -74,6 +79,7 @@ Bugs: BUG-234, BUG-235
 ## What to Validate
 
 ### Layout & Spacing
+
 - [ ] Component dimensions
 - [ ] Padding (all sides)
 - [ ] Margins
@@ -82,11 +88,13 @@ Bugs: BUG-234, BUG-235
 - [ ] Container max-width
 
 **Example Query:**
+
 ```
 "Extract spacing values for the card component from Figma"
 ```
 
 ### Typography
+
 - [ ] Font family
 - [ ] Font size
 - [ ] Font weight
@@ -96,11 +104,13 @@ Bugs: BUG-234, BUG-235
 - [ ] Text alignment
 
 **Example Query:**
+
 ```
 "Get typography specifications for all heading levels from Figma design system"
 ```
 
 ### Colors
+
 - [ ] Background colors
 - [ ] Text colors
 - [ ] Border colors
@@ -109,11 +119,13 @@ Bugs: BUG-234, BUG-235
 - [ ] Opacity values
 
 **Example Query:**
+
 ```
 "List all color tokens used in the navigation component"
 ```
 
 ### Components
+
 - [ ] Icon sizes and colors
 - [ ] Button states
 - [ ] Input field styling
@@ -122,11 +134,13 @@ Bugs: BUG-234, BUG-235
 - [ ] Card components
 
 **Example Query:**
+
 ```
 "Compare the implemented dropdown menu with Figma design at [URL]"
 ```
 
 ### Interactive States
+
 - [ ] Default state
 - [ ] Hover state
 - [ ] Active/pressed state
@@ -140,24 +154,28 @@ Bugs: BUG-234, BUG-235
 ## Common Discrepancies
 
 ### Typography Mismatches
+
 - Wrong font weight (e.g., Regular instead of Medium)
 - Incorrect font size
 - Missing line-height
 - Color hex codes off by a shade
 
 ### Spacing Issues
+
 - Padding not matching
 - Inconsistent margins
 - Grid misalignment
 - Component spacing varies
 
 ### Color Differences
+
 - Hex values off (#0066FF vs #0052CC)
 - Opacity not applied
 - Gradient angles wrong
 - Shadow colors incorrect
 
 ### Responsive Behavior
+
 - Breakpoints don't match
 - Mobile layout different
 - Tablet view inconsistent
@@ -175,35 +193,42 @@ Bugs: BUG-234, BUG-235
 ### Desktop (1920x1080)
 
 **Layout:**
+
 - [ ] Width: XXXpx
 - [ ] Height: XXXpx
 - [ ] Padding: XXpx XXpx XXpx XXpx
 - [ ] Margin: XXpx
 
 **Typography:**
+
 - [ ] Font: [Family] [Weight]
 - [ ] Size: XXpx
 - [ ] Line-height: XXpx
 - [ ] Color: #XXXXXX
 
 **Colors:**
+
 - [ ] Background: #XXXXXX
 - [ ] Border: Xpx solid #XXXXXX
 - [ ] Shadow: XXpx XXpx XXpx rgba(X,X,X,X)
 
 **Interactive States:**
+
 - [ ] Hover: [changes]
 - [ ] Active: [changes]
 - [ ] Focus: [changes]
 - [ ] Disabled: [changes]
 
 ### Tablet (768px)
+
 - [ ] [Responsive changes]
 
 ### Mobile (375px)
+
 - [ ] [Responsive changes]
 
 ### Status
+
 - [ ] PASS - All match
 - [ ] FAIL - Discrepancies found
 - [ ] BLOCKED - Design incomplete
@@ -214,6 +239,7 @@ Bugs: BUG-234, BUG-235
 ## Figma MCP Queries
 
 ### Component Specifications
+
 ```
 "Get complete specifications for the [component name] from Figma at [URL]"
 "Extract all button variants from the design system"
@@ -221,6 +247,7 @@ Bugs: BUG-234, BUG-235
 ```
 
 ### Color System
+
 ```
 "Show me all color tokens in the Figma design system"
 "What colors are used in the navigation bar design?"
@@ -228,6 +255,7 @@ Bugs: BUG-234, BUG-235
 ```
 
 ### Spacing & Layout
+
 ```
 "What are the padding values for the card component?"
 "Extract grid specifications from the page layout"
@@ -235,6 +263,7 @@ Bugs: BUG-234, BUG-235
 ```
 
 ### Responsive Breakpoints
+
 ```
 "What are the defined breakpoints in this Figma design?"
 "Show mobile vs desktop layout differences for [component]"
@@ -255,11 +284,13 @@ Bugs: BUG-234, BUG-235
 **Figma Design:** [URL]
 
 **Expected (from Figma):**
+
 - Button background: #0066FF
 - Font weight: 600 (Semi-bold)
 - Padding: 12px 24px
 
 **Actual (in implementation):**
+
 - Button background: #0052CC ❌
 - Font weight: 400 (Regular) ❌
 - Padding: 12px 24px ✓
@@ -280,12 +311,14 @@ Users see inconsistent branding. Button appears less prominent than designed.
 ## Automation Ideas
 
 ### Visual Regression Testing
+
 - Capture screenshots
 - Compare against Figma exports
 - Highlight pixel differences
 - Tools: Percy, Chromatic, BackstopJS
 
 ### Design Token Validation
+
 - Extract Figma design tokens
 - Compare with CSS variables
 - Flag mismatches
@@ -296,6 +329,7 @@ Users see inconsistent branding. Button appears less prominent than designed.
 ## Best Practices
 
 **DO:**
+
 - ✅ Always reference specific Figma URLs
 - ✅ Test all component states
 - ✅ Check responsive breakpoints
@@ -304,6 +338,7 @@ Users see inconsistent branding. Button appears less prominent than designed.
 - ✅ Test in multiple browsers
 
 **DON'T:**
+
 - ❌ Assume "it looks right"
 - ❌ Skip hover/active states
 - ❌ Ignore small color differences
@@ -316,6 +351,7 @@ Users see inconsistent branding. Button appears less prominent than designed.
 ## Checklist for UI Test Cases
 
 Per component:
+
 - [ ] Figma URL documented
 - [ ] Desktop layout validated
 - [ ] Mobile/tablet responsive checked
@@ -331,14 +367,14 @@ Per component:
 
 ## Quick Reference
 
-| Element | What to Check | Tool |
-|---------|---------------|------|
-| Colors | Hex values exact | Browser color picker |
-| Spacing | Padding/margin px | DevTools computed styles |
-| Typography | Font, size, weight | DevTools font panel |
-| Layout | Width, height, position | DevTools box model |
-| States | Hover, active, focus | Manual interaction |
-| Responsive | Breakpoint behavior | DevTools device mode |
+| Element    | What to Check           | Tool                     |
+| ---------- | ----------------------- | ------------------------ |
+| Colors     | Hex values exact        | Browser color picker     |
+| Spacing    | Padding/margin px       | DevTools computed styles |
+| Typography | Font, size, weight      | DevTools font panel      |
+| Layout     | Width, height, position | DevTools box model       |
+| States     | Hover, active, focus    | Manual interaction       |
+| Responsive | Breakpoint behavior     | DevTools device mode     |
 
 ---
 

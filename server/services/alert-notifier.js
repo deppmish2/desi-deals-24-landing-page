@@ -55,18 +55,20 @@ async function insertAudit(
   db,
   { alertId, userId, status, sentTo, context, message },
 ) {
-  await db.prepare(
-    `INSERT INTO alert_notifications
+  await db
+    .prepare(
+      `INSERT INTO alert_notifications
       (alert_id, user_id, trigger_context, sent_to, sent_status, provider_message)
      VALUES (?, ?, ?, ?, ?, ?)`,
-  ).run(
-    alertId,
-    userId,
-    context || null,
-    sentTo || null,
-    status,
-    message || null,
-  );
+    )
+    .run(
+      alertId,
+      userId,
+      context || null,
+      sentTo || null,
+      status,
+      message || null,
+    );
 }
 
 async function sendAlertNotification(db, { alert, user, matches, context }) {

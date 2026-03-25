@@ -18,6 +18,7 @@ This skill enables Claude to use the [datadog](https://github.com/leonardocouy/d
 1. Install the CLI from [leonardocouy/datadog-cli](https://github.com/leonardocouy/datadog-cli)
 
 2. Set environment variables:
+
 ```bash
 export DD_API_KEY="your-api-key"
 export DD_APP_KEY="your-app-key"
@@ -46,24 +47,24 @@ Once installed, Claude will automatically use datadog commands when you ask ques
 
 ## Commands Reference
 
-| Command | Purpose |
-|---------|---------|
-| `datadog logs search` | Search and filter logs |
-| `datadog logs tail` | Stream logs in real-time |
-| `datadog logs trace` | Find logs for a trace ID |
-| `datadog logs patterns` | Group similar log messages |
-| `datadog logs compare` | Compare current vs previous period |
-| `datadog logs context` | Get logs around a timestamp |
-| `datadog logs agg` | Aggregate logs by facet |
-| `datadog logs multi` | Run multiple queries in parallel |
-| `datadog metrics query` | Query timeseries metrics |
-| `datadog dashboards list` | List dashboards |
-| `datadog dashboards get` | Get dashboard definition |
-| `datadog dashboards create` | Create a dashboard |
-| `datadog dashboards update` | Update a dashboard |
-| `datadog dashboards delete` | Delete a dashboard |
-| `datadog errors` | Quick error summary |
-| `datadog services` | List services with log activity |
+| Command                     | Purpose                            |
+| --------------------------- | ---------------------------------- |
+| `datadog logs search`       | Search and filter logs             |
+| `datadog logs tail`         | Stream logs in real-time           |
+| `datadog logs trace`        | Find logs for a trace ID           |
+| `datadog logs patterns`     | Group similar log messages         |
+| `datadog logs compare`      | Compare current vs previous period |
+| `datadog logs context`      | Get logs around a timestamp        |
+| `datadog logs agg`          | Aggregate logs by facet            |
+| `datadog logs multi`        | Run multiple queries in parallel   |
+| `datadog metrics query`     | Query timeseries metrics           |
+| `datadog dashboards list`   | List dashboards                    |
+| `datadog dashboards get`    | Get dashboard definition           |
+| `datadog dashboards create` | Create a dashboard                 |
+| `datadog dashboards update` | Update a dashboard                 |
+| `datadog dashboards delete` | Delete a dashboard                 |
+| `datadog errors`            | Quick error summary                |
+| `datadog services`          | List services with log activity    |
 
 See the [datadog-cli](https://github.com/leonardocouy/datadog-cli) repository for complete command documentation.
 

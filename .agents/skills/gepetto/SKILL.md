@@ -14,6 +14,7 @@ Orchestrates a multi-step planning process: Research → Interview → Spec Synt
 ### 1. Print Intro
 
 Print intro banner immediately:
+
 ```
 ═══════════════════════════════════════════════════════════════
 GEPETTO: AI-Assisted Implementation Planning
@@ -28,6 +29,7 @@ Note: GEPETTO will write many .md files to the planning directory you pass it
 **Check if user provided @file at invocation AND it's a spec file (ends with `.md`).**
 
 If NO @file was provided OR the path doesn't end with `.md`, output this and STOP:
+
 ```
 ═══════════════════════════════════════════════════════════════
 GEPETTO: Spec File Required
@@ -48,6 +50,7 @@ To RESUME an existing plan:
 Example: /gepetto @planning/my-feature-spec.md
 ═══════════════════════════════════════════════════════════════
 ```
+
 **Do not continue. Wait for user to re-invoke with a .md file path.**
 
 ### 3. Setup Planning Session
@@ -69,28 +72,30 @@ Determine session state by checking existing files:
 
 4. Determine mode and resume point:
 
-| Files Found | Mode | Resume From |
-|-------------|------|-------------|
-| None | new | Step 4 |
-| research only | resume | Step 6 (interview) |
-| research + interview | resume | Step 8 (spec synthesis) |
-| + spec | resume | Step 9 (plan) |
-| + plan | resume | Step 10 (external review) |
-| + reviews | resume | Step 11 (integrate) |
-| + integration-notes | resume | Step 12 (user review) |
-| + sections/index.md | resume | Step 14 (write sections) |
-| all sections complete | resume | Step 15 (execution files) |
-| + claude-ralph-loop-prompt.md + claude-ralphy-prd.md | complete | Done |
+| Files Found                                          | Mode     | Resume From               |
+| ---------------------------------------------------- | -------- | ------------------------- |
+| None                                                 | new      | Step 4                    |
+| research only                                        | resume   | Step 6 (interview)        |
+| research + interview                                 | resume   | Step 8 (spec synthesis)   |
+| + spec                                               | resume   | Step 9 (plan)             |
+| + plan                                               | resume   | Step 10 (external review) |
+| + reviews                                            | resume   | Step 11 (integrate)       |
+| + integration-notes                                  | resume   | Step 12 (user review)     |
+| + sections/index.md                                  | resume   | Step 14 (write sections)  |
+| all sections complete                                | resume   | Step 15 (execution files) |
+| + claude-ralph-loop-prompt.md + claude-ralphy-prd.md | complete | Done                      |
 
 5. Create TODO list with TodoWrite based on current state
 
 Print status:
+
 ```
 Planning directory: {planning_dir}
 Mode: {mode}
 ```
 
 If resuming:
+
 ```
 Resuming from step {N}
 To start fresh, delete the planning directory files.
@@ -128,6 +133,7 @@ See [research-protocol.md](references/research-protocol.md).
 See [research-protocol.md](references/research-protocol.md).
 
 Based on decisions from step 4, launch research subagents:
+
 - **Codebase research:** `Task(subagent_type=Explore)`
 - **Web research:** `Task(subagent_type=Explore)` with WebSearch
 
@@ -142,6 +148,7 @@ Skip this step entirely if user chose no research in step 4.
 See [interview-protocol.md](references/interview-protocol.md)
 
 Run in main context (AskUserQuestion requires it). The interview should be informed by:
+
 - The initial spec
 - Research findings (if any)
 
@@ -152,6 +159,7 @@ Write Q&A to `<planning_dir>/claude-interview.md`
 ### 8. Write Initial Spec (Spec Synthesis)
 
 Combine into `<planning_dir>/claude-spec.md`:
+
 - **Initial input** (the spec file)
 - **Research findings** (if step 5 was done)
 - **Interview answers** (from step 6)
@@ -162,13 +170,14 @@ This synthesizes the user's raw requirements into a complete specification.
 
 Create detailed plan → `<planning_dir>/claude-plan.md`
 
-**IMPORTANT**: Write for an unfamiliar reader. The plan must be fully self-contained - an engineer or LLM with no prior context should understand *what* we're building, *why*, and *how* just from reading this document.
+**IMPORTANT**: Write for an unfamiliar reader. The plan must be fully self-contained - an engineer or LLM with no prior context should understand _what_ we're building, _why_, and _how_ just from reading this document.
 
 ### 10. External Review
 
 See [external-review.md](references/external-review.md)
 
 Launch TWO subagents in parallel to review the plan:
+
 1. **Gemini** via Bash
 2. **Codex** via Bash
 
@@ -181,6 +190,7 @@ Analyze the suggestions in `<planning_dir>/reviews/`.
 You are the authority on what to integrate or not. It's OK if you decide to not integrate anything.
 
 **Step 1:** Write `<planning_dir>/claude-integration-notes.md` documenting:
+
 - What suggestions you're integrating and why
 - What suggestions you're NOT integrating and why
 
@@ -189,6 +199,7 @@ You are the authority on what to integrate or not. It's OK if you decide to not 
 ### 12. User Review of Integrated Plan
 
 Use AskUserQuestion:
+
 ```
 The plan has been updated with external feedback. You can now review and edit claude-plan.md.
 
@@ -305,6 +316,7 @@ Wait for subagent completion before proceeding.
 ### 16. Final Status
 
 Verify all files were created successfully:
+
 - All section files from SECTION_MANIFEST
 - `claude-ralph-loop-prompt.md`
 - `claude-ralphy-prd.md`
@@ -312,6 +324,7 @@ Verify all files were created successfully:
 ### 17. Output Summary
 
 Print generated files and next steps:
+
 ```
 ═══════════════════════════════════════════════════════════════
 GEPETTO: Planning Complete

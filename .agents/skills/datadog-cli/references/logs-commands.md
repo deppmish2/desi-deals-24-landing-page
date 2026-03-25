@@ -8,13 +8,13 @@ Search logs with filters.
 npx @leoflores/datadog-cli logs search --query "<query>" [--from <time>] [--to <time>] [--limit <n>] [--sort <order>]
 ```
 
-| Flag | Default | Description |
-|------|---------|-------------|
-| `--query` | `*` | Datadog search query |
-| `--from` | `15m` | Start time |
-| `--to` | `now` | End time |
-| `--limit` | `100` | Max results (max: 1000) |
-| `--sort` | `-timestamp` | Sort order |
+| Flag      | Default      | Description             |
+| --------- | ------------ | ----------------------- |
+| `--query` | `*`          | Datadog search query    |
+| `--from`  | `15m`        | Start time              |
+| `--to`    | `now`        | End time                |
+| `--limit` | `100`        | Max results (max: 1000) |
+| `--sort`  | `-timestamp` | Sort order              |
 
 ```bash
 npx @leoflores/datadog-cli logs search --query "service:api status:error" --from 1h --pretty
@@ -28,9 +28,9 @@ Stream logs in real-time. Press Ctrl+C to stop.
 npx @leoflores/datadog-cli logs tail --query "<query>" [--interval <seconds>]
 ```
 
-| Flag | Default | Description |
-|------|---------|-------------|
-| `--interval` | `2` | Polling interval in seconds |
+| Flag         | Default | Description                 |
+| ------------ | ------- | --------------------------- |
+| `--interval` | `2`     | Polling interval in seconds |
 
 ```bash
 npx @leoflores/datadog-cli logs tail --query "status:error" --pretty
@@ -58,11 +58,11 @@ Get logs before and after a specific timestamp.
 npx @leoflores/datadog-cli logs context --timestamp "<iso-timestamp>" [--before <time>] [--after <time>] [--service <svc>]
 ```
 
-| Flag | Default | Description |
-|------|---------|-------------|
-| `--before` | `5m` | Time window before |
-| `--after` | `5m` | Time window after |
-| `--service` | - | Filter by service |
+| Flag        | Default | Description        |
+| ----------- | ------- | ------------------ |
+| `--before`  | `5m`    | Time window before |
+| `--after`   | `5m`    | Time window after  |
+| `--service` | -       | Filter by service  |
 
 ```bash
 npx @leoflores/datadog-cli logs context --timestamp "2024-01-15T10:30:00Z" --service api --before 5m --after 2m --pretty

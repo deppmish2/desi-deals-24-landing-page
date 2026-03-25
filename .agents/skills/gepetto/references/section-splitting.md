@@ -86,6 +86,7 @@ Task(
 ### Resume Handling
 
 If some sections already exist:
+
 1. Only launch Tasks for MISSING sections
 2. Skip sections that have corresponding `section-*.md` files
 
@@ -94,6 +95,7 @@ If some sections already exist:
 **CRITICAL: Each section file must be completely self-contained.**
 
 The implementer reading a section file should NOT need to reference `claude-plan.md` or any other document. They should be able to:
+
 1. Read the single section file
 2. Create a TODO list
 3. Start implementing immediately

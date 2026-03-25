@@ -5,19 +5,13 @@ require("dotenv").config({ path: ".env.local", override: true });
 const { v4: uuidv4 } = require("uuid");
 
 const { parseBestBefore } = require("./utils/best-before-parser");
-const {
-  acquireCrawlLock,
-  releaseCrawlLock,
-} = require("./utils/snapshot");
+const { acquireCrawlLock, releaseCrawlLock } = require("./utils/snapshot");
 const {
   ensureDailyDealsPool,
   getCurrentPoolDate,
 } = require("../server/services/daily-deals-pool");
 const { getBerlinHour } = require("../server/services/berlin-time");
-const {
-  finishJobRun,
-  startJobRun,
-} = require("../server/services/job-runs");
+const { finishJobRun, startJobRun } = require("../server/services/job-runs");
 
 const DELAY_MIN = parseInt(process.env.REQUEST_DELAY_MIN_MS || "2000", 10);
 const DELAY_MAX = parseInt(process.env.REQUEST_DELAY_MAX_MS || "5000", 10);
@@ -124,12 +118,14 @@ async function markDealsInactive(db, dealIds) {
   let changes = 0;
   for (const dealId of dealIds) {
     // eslint-disable-next-line no-await-in-loop
-    const result = await db.prepare(
-      `UPDATE deals
+    const result = await db
+      .prepare(
+        `UPDATE deals
        SET is_active = 0
        WHERE id = ?
          AND is_active = 1`,
-    ).run(dealId);
+      )
+      .run(dealId);
     changes += Number(result?.changes || 0);
   }
   return changes;
@@ -335,7 +331,8 @@ async function buildCrawlWarnings(db, summary) {
 async function runCrawl(db, options = {}) {
   await db.ready;
   const runId = uuidv4();
-  const triggerType = String(options.triggerType || "manual").trim() || "manual";
+  const triggerType =
+    String(options.triggerType || "manual").trim() || "manual";
   const jobRun = await startJobRun(db, {
     jobName: "full_crawl",
     triggerType,
@@ -360,10 +357,12 @@ async function runCrawl(db, options = {}) {
   const errors = [];
 
   try {
-    await db.prepare(
-      `INSERT INTO crawl_runs (id, started_at, status)
+    await db
+      .prepare(
+        `INSERT INTO crawl_runs (id, started_at, status)
        VALUES (?, ?, 'running')`,
-    ).run(runId, startedAt);
+      )
+      .run(runId, startedAt);
 
     for (const adapter of adapters) {
       storesAttempted += 1;
@@ -380,11 +379,13 @@ async function runCrawl(db, options = {}) {
         );
         const stats = await reconcileStoreDeals(db, adapter.storeId, deals);
 
-        await db.prepare(
-          `UPDATE stores
+        await db
+          .prepare(
+            `UPDATE stores
            SET last_crawled_at = ?, crawl_status = 'active'
            WHERE id = ?`,
-        ).run(crawlTimestamp, adapter.storeId);
+          )
+          .run(crawlTimestamp, adapter.storeId);
 
         dealsFound += deals.length;
         storesSucceeded += 1;
@@ -398,11 +399,13 @@ async function runCrawl(db, options = {}) {
           error_message: error.message,
         });
 
-        await db.prepare(
-          `UPDATE stores
+        await db
+          .prepare(
+            `UPDATE stores
            SET crawl_status = 'error'
            WHERE id = ?`,
-        ).run(adapter.storeId);
+          )
+          .run(adapter.storeId);
       }
 
       if (adapters.indexOf(adapter) < adapters.length - 1) {
@@ -411,8 +414,9 @@ async function runCrawl(db, options = {}) {
     }
 
     const finishedAt = new Date().toISOString();
-    await db.prepare(
-      `UPDATE crawl_runs
+    await db
+      .prepare(
+        `UPDATE crawl_runs
        SET finished_at = ?,
            status = 'completed',
            stores_attempted = ?,
@@ -420,14 +424,15 @@ async function runCrawl(db, options = {}) {
            deals_found = ?,
            errors = ?
        WHERE id = ?`,
-    ).run(
-      finishedAt,
-      storesAttempted,
-      storesSucceeded,
-      dealsFound,
-      JSON.stringify(errors),
-      runId,
-    );
+      )
+      .run(
+        finishedAt,
+        storesAttempted,
+        storesSucceeded,
+        dealsFound,
+        JSON.stringify(errors),
+        runId,
+      );
 
     const warnings = await buildCrawlWarnings(db, {
       runId,
@@ -445,7 +450,9 @@ async function runCrawl(db, options = {}) {
       `\n=== Crawl finished: ${storesSucceeded}/${storesAttempted} stores, ${dealsFound} deals ===`,
     );
     if (dailyPool?.reused) {
-      console.log(`[crawl] Daily pool already fixed for ${dailyPool.poolDate}.`);
+      console.log(
+        `[crawl] Daily pool already fixed for ${dailyPool.poolDate}.`,
+      );
     } else if (dailyPool?.poolDate) {
       console.log(
         `[crawl] Daily pool ready for ${dailyPool.poolDate} (${dailyPool.entries} deals).`,
@@ -485,8 +492,9 @@ async function runCrawl(db, options = {}) {
   } catch (error) {
     const failedAt = new Date().toISOString();
     try {
-      await db.prepare(
-        `UPDATE crawl_runs
+      await db
+        .prepare(
+          `UPDATE crawl_runs
          SET finished_at = ?,
              status = 'failed',
              stores_attempted = ?,
@@ -494,19 +502,23 @@ async function runCrawl(db, options = {}) {
              deals_found = ?,
              errors = ?
          WHERE id = ?`,
-      ).run(
-        failedAt,
-        storesAttempted,
-        storesSucceeded,
-        dealsFound,
-        JSON.stringify([
-          ...errors,
-          { store_id: null, error_message: error.message },
-        ]),
-        runId,
-      );
+        )
+        .run(
+          failedAt,
+          storesAttempted,
+          storesSucceeded,
+          dealsFound,
+          JSON.stringify([
+            ...errors,
+            { store_id: null, error_message: error.message },
+          ]),
+          runId,
+        );
     } catch (updateError) {
-      console.warn("[crawl] Failed to mark crawl run as failed:", updateError.message);
+      console.warn(
+        "[crawl] Failed to mark crawl run as failed:",
+        updateError.message,
+      );
     }
 
     await finishJobRun(db, jobRun, {

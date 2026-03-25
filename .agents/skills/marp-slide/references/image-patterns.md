@@ -26,11 +26,13 @@ Marp allows adding size keywords to images:
 ```
 
 **Supported units**:
+
 - `px` - Pixels
 - `%` - Percent
 - `em`, `rem`, `cm`, `mm`, `in`, `pt`, `pc`
 
 **Abbreviations**:
+
 - `w:` = `width:`
 - `h:` = `height:`
 
@@ -53,12 +55,12 @@ Places the image as a slide background. It doesn't overlap with text content and
 ![bg auto](image.png)
 ```
 
-| Keyword | Behavior | CSS Equivalent |
-|---------|----------|----------------|
-| `fit` | Preserve aspect ratio, fit within slide | `background-size: contain` |
-| `cover` | Preserve aspect ratio, cover entire slide | `background-size: cover` |
-| `contain` | Same as `fit` | `background-size: contain` |
-| `auto` | Original size | `background-size: auto` |
+| Keyword   | Behavior                                  | CSS Equivalent             |
+| --------- | ----------------------------------------- | -------------------------- |
+| `fit`     | Preserve aspect ratio, fit within slide   | `background-size: contain` |
+| `cover`   | Preserve aspect ratio, cover entire slide | `background-size: cover`   |
+| `contain` | Same as `fit`                             | `background-size: contain` |
+| `auto`    | Original size                             | `background-size: auto`    |
 
 ### Background Size (Numeric Values)
 
@@ -285,4 +287,5 @@ Subdued background with blur and darkness
 ## Official Reference
 
 For details, refer to official documentation:
+
 - **Image syntax**: https://marpit.marp.app/image-syntax

@@ -25,6 +25,7 @@ The Command Creator skill helps you transform repetitive workflows into reusable
 **Purpose**: Create high-quality, agent-executable slash commands with proper structure, clear instructions, and optimal tool usage patterns.
 
 **Target Users**: Developers who want to:
+
 - Automate repetitive workflows
 - Document consistent processes for reuse
 - Create project-specific or global automation
@@ -44,6 +45,7 @@ Invoke this skill when you need to:
 - Build global commands for personal productivity
 
 **Trigger Phrases**:
+
 - "create a command"
 - "make a slash command"
 - "add a command"
@@ -58,6 +60,7 @@ Invoke this skill when you need to:
 Slash commands are markdown files stored in `.claude/commands/` (project-level) or `~/.claude/commands/` (global/user-level) that get expanded into prompts when invoked.
 
 **Structure**:
+
 ```markdown
 ---
 description: Brief description shown in /help (required)
@@ -70,11 +73,13 @@ argument-hint: <placeholder> (optional, if command takes arguments)
 ```
 
 **Invocation**:
+
 ```
 /command-name [arguments]
 ```
 
 **Storage Locations**:
+
 - **Project-level**: `.claude/commands/my-command.md` (only available in this project)
 - **Global/User-level**: `~/.claude/commands/my-command.md` (available everywhere)
 
@@ -85,6 +90,7 @@ argument-hint: <placeholder> (optional, if command takes arguments)
 ### 1. Intelligent Location Detection
 
 Automatically determines whether commands should be project-level or global based on:
+
 - Current directory git repository status
 - User explicit preferences
 - Command scope and purpose
@@ -92,6 +98,7 @@ Automatically determines whether commands should be project-level or global base
 ### 2. Pattern-Based Design
 
 Guides you through proven command patterns:
+
 - **Workflow Automation**: Multi-step processes with analysis, action, and reporting
 - **Iterative Fixing**: Continuous improvement loops (run → parse → fix → repeat)
 - **Agent Delegation**: Complex tasks broken into specialized agent work
@@ -100,6 +107,7 @@ Guides you through proven command patterns:
 ### 3. Agent-Optimized Instructions
 
 Creates commands that agents can execute autonomously with:
+
 - Imperative/infinitive verb-first instructions
 - Explicit tool usage specifications
 - Clear success criteria
@@ -109,6 +117,7 @@ Creates commands that agents can execute autonomously with:
 ### 4. Quality Assurance
 
 Includes comprehensive best practices for:
+
 - Proper naming conventions (kebab-case enforced)
 - Argument handling and hints
 - Tool restriction guidelines
@@ -118,6 +127,7 @@ Includes comprehensive best practices for:
 ### 5. Bundled Reference Documentation
 
 Provides three comprehensive reference files:
+
 - **patterns.md**: Command design patterns with detailed examples
 - **examples.md**: Real-world command implementations
 - **best-practices.md**: Quality checklist and writing guidelines
@@ -131,6 +141,7 @@ The Command Creator follows a structured 6-step workflow:
 ### Step 1: Determine Location
 
 **Auto-detection Logic**:
+
 1. Check if current directory is inside a git repository
 2. Default to project-level (`.claude/commands/`) if in git repo
 3. Default to global (`~/.claude/commands/`) if not in git repo
@@ -154,22 +165,26 @@ User selects the closest pattern to their needs.
 Interactive Q&A to collect:
 
 **A. Command Name and Purpose**
+
 - Command name (must be kebab-case: `my-command`, not `my_command`)
 - Description for `/help` output
 - Purpose and scope
 
 **B. Arguments**
+
 - Does it take arguments? (yes/no)
 - Required or optional?
 - Argument hint format (`<required>` or `[optional]`)
 
 **C. Workflow Steps**
+
 - Specific steps in execution order
 - Tools/commands to use
 - Success criteria
 - Error handling approach
 
 **D. Tool Restrictions**
+
 - Specific agents or tools to use
 - Operations to avoid
 - Context files to read
@@ -177,6 +192,7 @@ Interactive Q&A to collect:
 ### Step 4: Generate Optimized Command
 
 Create agent-executable instructions using:
+
 - Template structure from best-practices.md
 - Imperative verb-first language
 - Explicit tool specifications
@@ -209,6 +225,7 @@ Create agent-executable instructions using:
 **Use Case**: Multi-step processes requiring analysis, action, and reporting
 
 **Example**: Submit PR stack
+
 ```markdown
 1. Analyze git history to identify commit stack
 2. Create PRs for each commit with proper dependencies
@@ -216,6 +233,7 @@ Create agent-executable instructions using:
 ```
 
 **Key Characteristics**:
+
 - Sequential steps with dependencies
 - Clear analysis phase before action
 - Comprehensive final report
@@ -225,6 +243,7 @@ Create agent-executable instructions using:
 **Use Case**: Continuous improvement until success criteria met
 
 **Example**: Ensure CI passes
+
 ```markdown
 1. Run tests and capture output
 2. Parse failures and errors
@@ -233,6 +252,7 @@ Create agent-executable instructions using:
 ```
 
 **Key Characteristics**:
+
 - Loop until success condition
 - Parse errors to guide fixes
 - Progress tracking across iterations
@@ -242,6 +262,7 @@ Create agent-executable instructions using:
 **Use Case**: Complex tasks requiring specialized agent expertise
 
 **Example**: Create implementation plan
+
 ```markdown
 1. Gather context (requirements, codebase)
 2. Delegate to subagent agent
@@ -250,6 +271,7 @@ Create agent-executable instructions using:
 ```
 
 **Key Characteristics**:
+
 - Use Task tool for specialized agents
 - Pass relevant context to delegated agent
 - Iterate on specialized agent output
@@ -259,12 +281,14 @@ Create agent-executable instructions using:
 **Use Case**: Direct tool/script execution with arguments
 
 **Example**: Code review
+
 ```markdown
 1. Run codex review on specified files
 2. Present results to user
 ```
 
 **Key Characteristics**:
+
 - Minimal logic, direct execution
 - Pass through arguments to underlying tool
 - Quick feedback loop
@@ -276,17 +300,20 @@ Create agent-executable instructions using:
 ### Project-Level Commands (`.claude/commands/`)
 
 **When to Use**:
+
 - Command is specific to this project's workflow
 - Requires project-specific context or files
 - Team members should share this command
 - Automation tied to project structure
 
 **Examples**:
+
 - `/submit-stack` (project's PR submission workflow)
 - `/ensure-ci` (project's test suite)
 - `/deploy-staging` (project's deployment process)
 
 **Advantages**:
+
 - Version controlled with project
 - Shared across team
 - Project-specific customization
@@ -294,17 +321,20 @@ Create agent-executable instructions using:
 ### Global Commands (`~/.claude/commands/`)
 
 **When to Use**:
+
 - Command works across any project
 - Personal productivity tool
 - Generic workflow automation
 - No project-specific dependencies
 
 **Examples**:
+
 - `/codex-review` (code review any files)
 - `/create-implementation-plan` (generic planning)
 - `/git-cleanup` (git maintenance anywhere)
 
 **Advantages**:
+
 - Available everywhere
 - Personal customization
 - Independent of project
@@ -320,6 +350,7 @@ This skill includes three comprehensive reference files in the `references/` dir
 **Purpose**: Detailed command design patterns with implementation guidance
 
 **Contents**:
+
 - Pattern 1: Workflow Automation (Analyze → Act → Report)
 - Pattern 2: Iterative Fixing (Run → Parse → Fix → Repeat)
 - Pattern 3: Agent Delegation (Context → Delegate → Iterate)
@@ -335,6 +366,7 @@ This skill includes three comprehensive reference files in the `references/` dir
 **Purpose**: Real-world command implementations with full source code
 
 **Contents**:
+
 - `/submit-stack`: Submit PR stack from git history
 - `/ensure-ci`: Iteratively fix CI failures
 - `/create-implementation-plan`: Delegate to planner agent
@@ -349,6 +381,7 @@ This skill includes three comprehensive reference files in the `references/` dir
 **Purpose**: Quality checklist and writing guidelines
 
 **Contents**:
+
 - Command template structure
 - Agent-optimized writing style
 - Common pitfalls to avoid
@@ -368,6 +401,7 @@ This skill includes three comprehensive reference files in the `references/` dir
 **User Request**: "I keep fixing CI failures manually. Can we make a command for this?"
 
 **Skill Flow**:
+
 1. Detects project-level (in git repo)
 2. Suggests "Iterative Fixing" pattern
 3. Gathers info:
@@ -384,6 +418,7 @@ This skill includes three comprehensive reference files in the `references/` dir
 **User Request**: "Create a global command to review code with Codex"
 
 **Skill Flow**:
+
 1. Detects global (user requests "global")
 2. Suggests "Simple Execution" pattern
 3. Gathers info:
@@ -400,6 +435,7 @@ This skill includes three comprehensive reference files in the `references/` dir
 **User Request**: "Make a command that analyzes my commits and creates a PR stack"
 
 **Skill Flow**:
+
 1. Detects project-level (in git repo)
 2. Suggests "Workflow Automation" pattern
 3. Gathers info:
@@ -418,6 +454,7 @@ This skill includes three comprehensive reference files in the `references/` dir
 ### Naming Conventions
 
 **MUST use kebab-case** (hyphens, not underscores):
+
 - Correct: `submit-stack`, `ensure-ci`, `create-from-plan`
 - Wrong: `submit_stack`, `ensure_ci`, `create_from_plan`
 
@@ -433,33 +470,40 @@ This skill includes three comprehensive reference files in the `references/` dir
 ### Agent-Optimized Instructions
 
 **Write in imperative/infinitive form**:
+
 - Correct: "Run pytest to execute tests"
 - Wrong: "You should run pytest to execute tests"
 
 **Be explicit about tools**:
+
 - Correct: "Use the Bash tool to run `pytest tests/`"
 - Wrong: "Run the tests"
 
 **Define success criteria**:
+
 - Correct: "Continue until all tests pass (exit code 0)"
 - Wrong: "Fix the tests"
 
 **Include error handling**:
+
 - Correct: "If pytest fails, parse the output to identify failing tests, then fix each one"
 - Wrong: "Fix any test failures"
 
 ### Tool Restrictions
 
 **Use Bash tool for**:
+
 - `pytest`, `pyright`, `ruff`, `prettier`
 - `make`, `npm`, `yarn`
 - `gt` (git-town commands)
 
 **Use Task tool for**:
+
 - Specialized agents (`subagent`, `subagents`)
 - Long-running or complex delegated tasks
 
 **Avoid in commands**:
+
 - Interactive prompts (commands must be autonomous)
 - User confirmation loops (unless explicit in pattern)
 - Ambiguous instructions that require interpretation
@@ -508,6 +552,7 @@ The Command Creator skill provides a comprehensive, guided workflow for creating
 - **Optimized**: Use appropriate tools and agents for the task
 
 **Next Steps**:
+
 1. Identify a repetitive workflow you want to automate
 2. Invoke the command-creator skill
 3. Follow the guided workflow to create your command
@@ -515,6 +560,7 @@ The Command Creator skill provides a comprehensive, guided workflow for creating
 5. Share with your team (project-level) or use personally (global)
 
 **Get Started**:
+
 ```
 /command-creator
 ```

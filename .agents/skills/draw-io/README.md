@@ -54,6 +54,7 @@ bash ~/.claude/skills/draw-io/scripts/convert-drawio-to-png.sh assets/diagram.dr
 ```
 
 Conversion produces:
+
 - 2x scale (high resolution)
 - Transparent background
 - PNG format suitable for presentations

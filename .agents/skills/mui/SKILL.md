@@ -10,6 +10,7 @@ description: Material-UI v7 component library patterns including sx prop styling
 Material-UI v7 (released March 2025) patterns for component usage, styling with sx prop, theme integration, and responsive design.
 
 **Note**: MUI v7 breaking changes from v6:
+
 - Deep imports no longer work - use package exports field
 - `onBackdropClick` removed from Modal - use `onClose` instead
 - All components now use standardized `slots` and `slotProps` pattern
@@ -461,7 +462,7 @@ import { Button, IconButton } from '@mui/material';
 ### 1. Type Your sx Props
 
 ```typescript
-import type { SxProps, Theme } from '@mui/material';
+import type { SxProps, Theme } from "@mui/material";
 
 // ✅ Good
 const styles: Record<string, SxProps<Theme>> = {
@@ -499,6 +500,7 @@ const styles = {
 ## Additional Resources
 
 For more detailed patterns, see:
+
 - [styling-guide.md](resources/styling-guide.md) - Advanced styling patterns
 - [component-library.md](resources/component-library.md) - Component examples
 - [theme-customization.md](resources/theme-customization.md) - Theme setup

@@ -21,32 +21,48 @@ router.get("/stats", async (req, res) => {
     ] = await Promise.all([
       db.prepare("SELECT COUNT(*) as count FROM users").get(),
       db.prepare("SELECT COUNT(*) as count FROM waitlist_referrals").get(),
-      db.prepare(
-        "SELECT COUNT(*) as count FROM users WHERE waitlist_unlocked_at IS NOT NULL",
-      ).get(),
-      db.prepare(`
+      db
+        .prepare(
+          "SELECT COUNT(*) as count FROM users WHERE waitlist_unlocked_at IS NOT NULL",
+        )
+        .get(),
+      db
+        .prepare(
+          `
         SELECT date(created_at) as day, COUNT(*) as count
         FROM users
         WHERE created_at >= date('now', '-30 days')
         GROUP BY date(created_at)
         ORDER BY day ASC
-      `).all(),
-      db.prepare(`
+      `,
+        )
+        .all(),
+      db
+        .prepare(
+          `
         SELECT date(claimed_at) as day, COUNT(*) as count
         FROM waitlist_referrals
         WHERE claimed_at >= date('now', '-30 days')
         GROUP BY date(claimed_at)
         ORDER BY day ASC
-      `).all(),
-      db.prepare(`
+      `,
+        )
+        .all(),
+      db
+        .prepare(
+          `
         SELECT u.email, u.first_name, u.name, COUNT(wr.id) as invite_count
         FROM users u
         JOIN waitlist_referrals wr ON wr.inviter_user_id = u.id
         GROUP BY u.id
         ORDER BY invite_count DESC
         LIMIT 10
-      `).all(),
-      db.prepare(`
+      `,
+        )
+        .all(),
+      db
+        .prepare(
+          `
         SELECT u.email, u.first_name, u.name, u.created_at, u.waitlist_unlocked_at,
                inv.email      AS inviter_email,
                inv.first_name AS inviter_first_name,
@@ -56,7 +72,9 @@ router.get("/stats", async (req, res) => {
         LEFT JOIN users inv             ON inv.id = wr.inviter_user_id
         ORDER BY u.created_at DESC
         LIMIT 20
-      `).all(),
+      `,
+        )
+        .all(),
     ]);
 
     const totalUsers = Number(totalUsersRow?.count ?? 0);
@@ -91,7 +109,10 @@ router.get("/stats", async (req, res) => {
         invited_by: r.inviter_email
           ? {
               email: r.inviter_email,
-              name: r.inviter_first_name || r.inviter_name || r.inviter_email.split("@")[0],
+              name:
+                r.inviter_first_name ||
+                r.inviter_name ||
+                r.inviter_email.split("@")[0],
             }
           : null,
       })),

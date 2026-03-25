@@ -7,7 +7,7 @@ description: Manual-only skill for minimizing total codebase size. Only activate
 
 More code begets more code. Entropy accumulates. This skill biases toward the smallest possible codebase.
 
-**Core question:** "What does the codebase look like *after*?"
+**Core question:** "What does the codebase look like _after_?"
 
 ## Before You Begin
 
@@ -34,7 +34,7 @@ The goal is **less total code in the final codebase** - not less code to write r
 
 ### 1. What's the smallest codebase that solves this?
 
-Not "what's the smallest change" - what's the smallest *result*.
+Not "what's the smallest change" - what's the smallest _result_.
 
 - Could this be 2 functions instead of 14?
 - Could this be 0 functions (delete the feature)?

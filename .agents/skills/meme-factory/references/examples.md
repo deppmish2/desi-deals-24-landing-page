@@ -10,6 +10,7 @@ This document provides practical examples of using the meme generation skill in 
 "Create a meme about bugs everywhere"
 
 **Response:**
+
 ```
 Here's a Buzz Lightyear meme about bugs:
 
@@ -22,6 +23,7 @@ Here's a Buzz Lightyear meme about bugs:
 "Make a Drake meme comparing manual testing vs automated testing"
 
 **Response:**
+
 ```
 Here's a Drake meme comparing testing approaches:
 
@@ -34,6 +36,7 @@ Here's a Drake meme comparing testing approaches:
 "Generate a success kid meme about all tests passing"
 
 **Response:**
+
 ```
 Here's a success meme:
 
@@ -104,6 +107,7 @@ url = meme.generate("fry", "not sure if improvements", "or over engineering")
 ```
 
 **Result:**
+
 ```
 https://api.memegen.link/images/fry/not_sure_if_improvements/or_over_engineering.png
 ```
@@ -118,6 +122,7 @@ url = meme.generate("success", "deployed to production", "zero downtime")
 ```
 
 **Result:**
+
 ```
 https://api.memegen.link/images/success/deployed_to_production/zero_downtime.png
 ```
@@ -132,6 +137,7 @@ url = meme.generate("fine", "production is down", "this is fine")
 ```
 
 **Result:**
+
 ```
 https://api.memegen.link/images/fine/production_is_down/this_is_fine.png
 ```
@@ -150,6 +156,7 @@ url = meme.generate(
 ```
 
 **Result:**
+
 ```
 https://api.memegen.link/images/yodawg/yo_dawg_i_heard_you_like_docs/so_i_documented_the_documentation.png
 ```
@@ -445,6 +452,7 @@ deployment_workflow_with_memes({
 ## Summary
 
 These examples demonstrate:
+
 - Basic meme generation
 - Context-aware template selection
 - Integration with popular platforms
@@ -453,5 +461,6 @@ These examples demonstrate:
 - Real-world use cases
 
 For more examples and templates, visit:
+
 - https://api.memegen.link/docs/
 - https://api.memegen.link/templates/

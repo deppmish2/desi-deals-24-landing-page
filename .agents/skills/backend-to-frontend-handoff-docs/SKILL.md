@@ -14,9 +14,11 @@ You are a backend developer completing API work. Your task is to produce a struc
 > **Simple API shortcut**: If the API is straightforward (CRUD, no complex business logic, obvious validation), skip the full template—just provide the endpoint, method, and example request/response JSON. Frontend can infer the rest.
 
 ## Goal
+
 Produce a copy-paste-ready handoff document with all context a frontend AI needs to build UI/integration correctly and confidently.
 
 ## Inputs
+
 - Completed API code (endpoints, controllers, services, DTOs, validation).
 - Related business context from the task/user story.
 - Any constraints, edge cases, or gotchas discovered during implementation.
@@ -34,15 +36,17 @@ Produce a single markdown block structured as follows. Keep it dense—no fluff,
 
 ---
 
-```markdown
+````markdown
 # API Handoff: [Feature Name]
 
 ## Business Context
+
 [2-4 sentences: What problem does this solve? Who uses it? Why does it matter? Include any domain terms the frontend needs to understand.]
 
 ## Endpoints
 
 ### [METHOD] /path/to/endpoint
+
 - **Purpose**: [1 line: what it does]
 - **Auth**: [required role/permission, or "public"]
 - **Request**:
@@ -51,6 +55,8 @@ Produce a single markdown block structured as follows. Keep it dense—no fluff,
     "field": "type — description, constraints"
   }
   ```
+````
+
 - **Response** (success):
   ```json
   {
@@ -63,38 +69,44 @@ Produce a single markdown block structured as follows. Keep it dense—no fluff,
 [Repeat for each endpoint]
 
 ## Data Models / DTOs
+
 [List key models/DTOs the frontend will receive or send. Include field types, nullability, enums, and business meaning.]
 
 ```typescript
 // Example shape for frontend typing
 interface ExampleDto {
   id: number;
-  status: 'pending' | 'approved' | 'rejected';
+  status: "pending" | "approved" | "rejected";
   createdAt: string; // ISO 8601
 }
 ```
 
 ## Enums & Constants
+
 [List any enums, status codes, or magic values the frontend needs to know. Include display labels if relevant.]
 
-| Value | Meaning | Display Label |
-|-------|---------|---------------|
-| `pending` | Awaiting review | Pending |
+| Value     | Meaning         | Display Label |
+| --------- | --------------- | ------------- |
+| `pending` | Awaiting review | Pending       |
 
 ## Validation Rules
+
 [Summarize key validation rules the frontend should mirror for UX—required fields, min/max, formats, conditional rules.]
 
 ## Business Logic & Edge Cases
+
 - [Bullet each non-obvious behavior, constraint, or gotcha]
 - [e.g., "User can only submit once per day", "Soft-deleted items excluded by default"]
 
 ## Integration Notes
+
 - **Recommended flow**: [e.g., "Fetch list → select item → submit form → poll for status"]
 - **Optimistic UI**: [safe or not, why]
 - **Caching**: [any cache headers, invalidation triggers]
 - **Real-time**: [websocket events, polling intervals if applicable]
 
 ## Test Scenarios
+
 [Key scenarios frontend should handle—happy path, errors, edge cases. Use as acceptance criteria or test cases.]
 
 1. **Happy path**: [brief description]
@@ -103,7 +115,9 @@ interface ExampleDto {
 4. **Permission denied**: [when 403 is returned]
 
 ## Open Questions / TODOs
+
 [Anything unresolved, pending PM decision, or needs frontend input. If none, omit section.]
+
 ```
 
 ---
@@ -120,3 +134,4 @@ interface ExampleDto {
 
 ## After Generating
 Write the final markdown into the handoff file only—do not echo it in chat. (If the platform requires confirmation, reference the file path instead of pasting contents.)
+```

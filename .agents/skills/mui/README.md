@@ -20,6 +20,7 @@ Use this skill when you are:
 - **Migrating from MUI v6** - Understanding v7 breaking changes
 
 **Trigger phrases:**
+
 - "style with sx prop"
 - "MUI component"
 - "Material-UI"
@@ -40,6 +41,7 @@ Use this skill when you are:
 ### MUI v7 Breaking Changes Awareness
 
 The skill includes guidance on v7-specific changes:
+
 - Deep imports no longer work (use package exports)
 - `onBackdropClick` removed from Modal (use `onClose` instead)
 - Standardized `slots` and `slotProps` pattern for all components
@@ -48,6 +50,7 @@ The skill includes guidance on v7-specific changes:
 ### Styling Patterns
 
 Two approaches based on component complexity:
+
 - **Inline styles (< 100 lines)** - Define styles at component top
 - **Separate styles file (>= 100 lines)** - Create `ComponentName.styles.ts`
 
@@ -168,6 +171,7 @@ import { Grid } from '@mui/material';
 ## Output
 
 This skill produces:
+
 - Type-safe component code using MUI patterns
 - Properly structured style definitions
 - Responsive, theme-integrated layouts
@@ -178,7 +182,7 @@ This skill produces:
 ### 1. Always Type Your sx Props
 
 ```typescript
-import type { SxProps, Theme } from '@mui/material';
+import type { SxProps, Theme } from "@mui/material";
 
 const styles: Record<string, SxProps<Theme>> = {
   container: { p: 2 },
@@ -213,6 +217,7 @@ const styles: Record<string, SxProps<Theme>> = {
 ### 5. Use Semantic Color Names
 
 Access palette colors by their semantic names:
+
 - `primary.main`, `primary.light`, `primary.dark`
 - `secondary.main`, `error.main`, `warning.main`
 - `text.primary`, `text.secondary`
@@ -221,6 +226,7 @@ Access palette colors by their semantic names:
 ## Additional Resources
 
 The skill includes supplementary documentation:
+
 - `resources/styling-guide.md` - Advanced styling patterns
 - `resources/component-library.md` - Extended component examples
 - `resources/theme-customization.md` - Theme setup and customization

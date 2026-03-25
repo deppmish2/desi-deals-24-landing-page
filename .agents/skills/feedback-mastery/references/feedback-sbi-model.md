@@ -8,11 +8,11 @@ The Situation-Behavior-Impact (SBI) model, developed by the Center for Creative 
 Situation + Behavior + Impact = Effective Feedback
 ```
 
-| Component | What It Is | What It's NOT |
-| --- | --- | --- |
-| **Situation** | When and where the behavior occurred | Vague timing or generalizations |
-| **Behavior** | Observable actions the person took | Assumptions about motives or character |
-| **Impact** | Effect on you, the team, or the project | Judgment or evaluation |
+| Component     | What It Is                              | What It's NOT                          |
+| ------------- | --------------------------------------- | -------------------------------------- |
+| **Situation** | When and where the behavior occurred    | Vague timing or generalizations        |
+| **Behavior**  | Observable actions the person took      | Assumptions about motives or character |
+| **Impact**    | Effect on you, the team, or the project | Judgment or evaluation                 |
 
 ## Why SBI Works
 
@@ -176,24 +176,24 @@ End with a collaborative discussion of what to do differently:
 
 ## When to Use SBI
 
-| Scenario | Use SBI? | Notes |
-| --- | --- | --- |
-| Formal performance feedback | ✅ Yes | SBI provides documentation |
-| Quick in-the-moment feedback | ✅ Yes | Keep it brief but structured |
-| Positive recognition | ✅ Yes | Makes praise specific and meaningful |
-| Annual reviews | ✅ Yes | Have multiple examples ready |
-| Giving yourself feedback | ✅ Yes | Use for self-reflection |
-| Venting frustration | ❌ No | Get calm first, then use SBI |
+| Scenario                     | Use SBI? | Notes                                |
+| ---------------------------- | -------- | ------------------------------------ |
+| Formal performance feedback  | ✅ Yes   | SBI provides documentation           |
+| Quick in-the-moment feedback | ✅ Yes   | Keep it brief but structured         |
+| Positive recognition         | ✅ Yes   | Makes praise specific and meaningful |
+| Annual reviews               | ✅ Yes   | Have multiple examples ready         |
+| Giving yourself feedback     | ✅ Yes   | Use for self-reflection              |
+| Venting frustration          | ❌ No    | Get calm first, then use SBI         |
 
 ## Practice Exercise
 
 Take a recent situation where you wanted to give feedback. Fill in:
 
-**Situation:** ________________________________________________
+**Situation:** **********************\_\_\_\_**********************
 
-**Behavior:** ________________________________________________
+**Behavior:** **********************\_\_\_\_**********************
 
-**Impact:** ________________________________________________
+**Impact:** **********************\_\_\_\_**********************
 
 Now check:
 

@@ -22,6 +22,7 @@ Activate this skill when you:
 - Have course notes and want to **start practicing immediately**
 
 **Trigger phrases**:
+
 - "Turn this into a plan"
 - "Make this actionable"
 - "I watched this video, now what?"
@@ -53,6 +54,7 @@ This cycle repeats, with each "rep" building on the previous one.
 ### What Makes a Good Rep
 
 Each rep should be:
+
 - **Concrete and specific** - "Ship one landing page by Friday" not "Learn web development"
 - **Completable in 1-7 days** - Small enough to not be intimidating
 - **Produces real evidence** - An artifact you can show
@@ -130,11 +132,13 @@ Ship-Learn-Next Plan - [Your Quest Title].md
 # Your Ship-Learn-Next Quest: [Title]
 
 ## Quest Overview
+
 - Goal (4-8 week target)
 - Source (content that inspired this)
 - Core Lessons (3-5 actionable takeaways)
 
 ## Rep 1: [Specific, Shippable Goal]
+
 - Ship Goal
 - Timeline (this week)
 - Success Criteria (checkboxes)
@@ -144,10 +148,12 @@ Ship-Learn-Next Plan - [Your Quest Title].md
 - After Shipping - Reflection Questions
 
 ## Rep 2-5: Future Path
+
 - Progressive iterations with increasing challenge
 - Each rep adds ONE new element
 
 ## Remember
+
 - Focus on doing, not studying
 - Aim for 100 reps (not perfection on rep 1)
 - You learn by shipping, not consuming

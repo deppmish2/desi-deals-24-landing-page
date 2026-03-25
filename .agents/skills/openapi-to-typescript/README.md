@@ -5,6 +5,7 @@ A Claude Code skill that converts OpenAPI 3.0 specifications (JSON or YAML) into
 ## Purpose
 
 This skill automates the process of generating type-safe TypeScript code from OpenAPI API specifications. It creates:
+
 - TypeScript interfaces for all schema definitions
 - Request/Response type definitions for API endpoints
 - Runtime type guards for validation
@@ -13,6 +14,7 @@ This skill automates the process of generating type-safe TypeScript code from Op
 ## When to Use
 
 Use this skill when you need to:
+
 - Generate TypeScript types from an OpenAPI specification
 - Create type-safe API client interfaces
 - Convert API documentation into TypeScript code
@@ -49,19 +51,22 @@ Use this skill when you need to:
 ### Type Mapping
 
 **Primitives**:
+
 - `string` → `string`
 - `number` / `integer` → `number`
 - `boolean` → `boolean`
 - `null` → `null`
 
 **Format Modifiers** (with JSDoc comments):
-- `uuid` → `string` (/** UUID */)
-- `date` → `string` (/** Date */)
-- `date-time` → `string` (/** ISO DateTime */)
-- `email` → `string` (/** Email */)
-- `uri` → `string` (/** URI */)
+
+- `uuid` → `string` (/\*_ UUID _/)
+- `date` → `string` (/\*_ Date _/)
+- `date-time` → `string` (/\*_ ISO DateTime _/)
+- `email` → `string` (/\*_ Email _/)
+- `uri` → `string` (/\*_ URI _/)
 
 **Complex Types**:
+
 - **Objects** → TypeScript interfaces with optional/required fields
 - **Arrays** → TypeScript array types (`Type[]`)
 - **Enums** → TypeScript union types (`"value1" | "value2"`)
@@ -98,6 +103,7 @@ export function isApiError(value: unknown): value is ApiError { ... }
 ### Type Guards
 
 Runtime validation functions for each interface:
+
 - Check object structure
 - Validate required fields
 - Type-check primitives
@@ -126,6 +132,7 @@ Claude: I'll generate TypeScript types from your OpenAPI spec.
 ### Example Input/Output
 
 **Input** (openapi.json):
+
 ```json
 {
   "openapi": "3.0.0",
@@ -134,10 +141,10 @@ Claude: I'll generate TypeScript types from your OpenAPI spec.
       "Product": {
         "type": "object",
         "properties": {
-          "id": {"type": "string", "format": "uuid"},
-          "name": {"type": "string"},
-          "price": {"type": "number"},
-          "status": {"type": "string", "enum": ["active", "draft"]}
+          "id": { "type": "string", "format": "uuid" },
+          "name": { "type": "string" },
+          "price": { "type": "number" },
+          "status": { "type": "string", "enum": ["active", "draft"] }
         },
         "required": ["id", "name", "price", "status"]
       }
@@ -147,8 +154,8 @@ Claude: I'll generate TypeScript types from your OpenAPI spec.
     "/products": {
       "get": {
         "parameters": [
-          {"name": "page", "in": "query", "schema": {"type": "integer"}},
-          {"name": "limit", "in": "query", "schema": {"type": "integer"}}
+          { "name": "page", "in": "query", "schema": { "type": "integer" } },
+          { "name": "limit", "in": "query", "schema": { "type": "integer" } }
         ],
         "responses": {
           "200": {
@@ -156,7 +163,7 @@ Claude: I'll generate TypeScript types from your OpenAPI spec.
               "application/json": {
                 "schema": {
                   "type": "array",
-                  "items": {"$ref": "#/components/schemas/Product"}
+                  "items": { "$ref": "#/components/schemas/Product" }
                 }
               }
             }
@@ -169,6 +176,7 @@ Claude: I'll generate TypeScript types from your OpenAPI spec.
 ```
 
 **Output** (types/api.ts):
+
 ```typescript
 /**
  * Auto-generated from: openapi.json
@@ -211,16 +219,16 @@ export type GetProductsResponse = Product[];
 
 export function isProduct(value: unknown): value is Product {
   return (
-    typeof value === 'object' &&
+    typeof value === "object" &&
     value !== null &&
-    'id' in value &&
-    typeof (value as any).id === 'string' &&
-    'name' in value &&
-    typeof (value as any).name === 'string' &&
-    'price' in value &&
-    typeof (value as any).price === 'number' &&
-    'status' in value &&
-    ['active', 'draft'].includes((value as any).status)
+    "id" in value &&
+    typeof (value as any).id === "string" &&
+    "name" in value &&
+    typeof (value as any).name === "string" &&
+    "price" in value &&
+    typeof (value as any).price === "number" &&
+    "status" in value &&
+    ["active", "draft"].includes((value as any).status)
   );
 }
 
@@ -236,12 +244,12 @@ export interface ApiError {
 
 export function isApiError(value: unknown): value is ApiError {
   return (
-    typeof value === 'object' &&
+    typeof value === "object" &&
     value !== null &&
-    'status' in value &&
-    typeof (value as any).status === 'number' &&
-    'error' in value &&
-    typeof (value as any).error === 'string'
+    "status" in value &&
+    typeof (value as any).status === "number" &&
+    "error" in value &&
+    typeof (value as any).error === "string"
   );
 }
 ```
@@ -265,6 +273,7 @@ export function isApiError(value: unknown): value is ApiError {
 ## Related Tools
 
 This skill complements:
+
 - **openapi-validator**: Validate OpenAPI specs before conversion
 - **api-client-generator**: Generate full API clients using these types
 - **schema-diff**: Compare OpenAPI versions to track type changes
@@ -289,6 +298,7 @@ This skill complements:
 ### Error Handling
 
 The skill validates and reports:
+
 - Invalid OpenAPI version
 - Missing required fields (`openapi`, `paths`, `components`)
 - Unresolved `$ref` references

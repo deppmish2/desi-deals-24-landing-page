@@ -54,7 +54,7 @@ Again, the object is to aid the reader. The practice here recommended enables hi
 
 Ending with a digression, or with an unimportant detail, is particularly to be avoided.
 
-If the paragraph forms part of a larger composition, its relation to what precedes, or its function as a part of the whole, may need to be expressed. This can sometimes be done by a mere word or phrase (*again*; *therefore*; *for the same reason*) in the topic sentence. Sometimes, however, it is expedient to precede the topic sentence by one or more sentences of introduction or transition. If more than one such sentence is required, it is generally better to set apart the transitional sentences as a separate paragraph.
+If the paragraph forms part of a larger composition, its relation to what precedes, or its function as a part of the whole, may need to be expressed. This can sometimes be done by a mere word or phrase (_again_; _therefore_; _for the same reason_) in the topic sentence. Sometimes, however, it is expedient to precede the topic sentence by one or more sentences of introduction or transition. If more than one such sentence is required, it is generally better to set apart the transitional sentences as a separate paragraph.
 
 According to the writer's purpose, he may, as indicated above, relate the body of the paragraph to the topic sentence in one or more of several different ways. He may make the meaning of the topic sentence clearer by restating it in other forms, by defining its terms, by denying the contrary, by giving illustrations or specific instances; he may establish it by proofs; or he may develop it by showing its implications and consequences. In a long paragraph, he may carry out several of these processes.
 
@@ -110,52 +110,52 @@ The first would be the right form in a paragraph on the dramatists of the Restor
 
 As a rule, avoid making one passive depend directly upon another.
 
-| Original | Revision |
-| --- | --- |
-| Gold was not allowed to be exported. | It was forbidden to export gold (The export of gold was prohibited). |
-| He has been proved to have been seen entering the building. | It has been proved that he was seen to enter the building. |
+| Original                                                    | Revision                                                             |
+| ----------------------------------------------------------- | -------------------------------------------------------------------- |
+| Gold was not allowed to be exported.                        | It was forbidden to export gold (The export of gold was prohibited). |
+| He has been proved to have been seen entering the building. | It has been proved that he was seen to enter the building.           |
 
 In both the examples above, before correction, the word properly related to the second passive is made the subject of the first.
 
 A common fault is to use as the subject of a passive construction a noun which expresses the entire action, leaving to the verb no function beyond that of completing the sentence.
 
-| Original | Revision |
-| --- | --- |
-| A survey of this region was made in 1900. | This region was surveyed in 1900. |
-| Mobilization of the army was rapidly effected. | The army was rapidly mobilized. |
+| Original                                          | Revision                           |
+| ------------------------------------------------- | ---------------------------------- |
+| A survey of this region was made in 1900.         | This region was surveyed in 1900.  |
+| Mobilization of the army was rapidly effected.    | The army was rapidly mobilized.    |
 | Confirmation of these reports cannot be obtained. | These reports cannot be confirmed. |
 
 Compare the _sentence,_ “The export of gold was prohibited,” in which the predicate “was prohibited” expresses something not implied in “export.”
 
-The habitual use of the active voice makes for forcible writing. This is true not only in narrative principally concerned with action, but in writing of any kind. Many a tame sentence of description or exposition can be made lively and emphatic by substituting a verb in the active voice for some such perfunctory expression as *there is*, or *could be heard*.
+The habitual use of the active voice makes for forcible writing. This is true not only in narrative principally concerned with action, but in writing of any kind. Many a tame sentence of description or exposition can be made lively and emphatic by substituting a verb in the active voice for some such perfunctory expression as _there is_, or _could be heard_.
 
-| Original | Revision |
-| --- | --- |
-| There were a great number of dead leaves lying on the ground. | Dead leaves covered the ground. |
-| The sound of a guitar somewhere in the house could be heard. | Somewhere in the house a guitar hummed sleepily. |
-| The reason that he left college was that his health became impaired. | Failing health compelled him to leave college. |
-| It was not long before he was very sorry that he had said what he had. | He soon repented his words. |
+| Original                                                               | Revision                                         |
+| ---------------------------------------------------------------------- | ------------------------------------------------ |
+| There were a great number of dead leaves lying on the ground.          | Dead leaves covered the ground.                  |
+| The sound of a guitar somewhere in the house could be heard.           | Somewhere in the house a guitar hummed sleepily. |
+| The reason that he left college was that his health became impaired.   | Failing health compelled him to leave college.   |
+| It was not long before he was very sorry that he had said what he had. | He soon repented his words.                      |
 
 ### Rule 11. Put statements in positive form.
 
-Make definite assertions. Avoid tame, colorless, hesitating, non-committal language. Use the word *not* as a means of denial or in antithesis, never as a means of evasion.
+Make definite assertions. Avoid tame, colorless, hesitating, non-committal language. Use the word _not_ as a means of denial or in antithesis, never as a means of evasion.
 
-| Original | Revision |
-| --- | --- |
-| He was not very often on time. | He usually came late. |
-| He did not think that studying Latin was much use. | He thought the study of Latin useless. |
+| Original                                                                                                                                                                                                       | Revision                                                                                                |
+| -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------- |
+| He was not very often on time.                                                                                                                                                                                 | He usually came late.                                                                                   |
+| He did not think that studying Latin was much use.                                                                                                                                                             | He thought the study of Latin useless.                                                                  |
 | The Taming of the Shrew is rather weak in spots. Shakespeare does not portray Katharine as a very admirable character, nor does Bianca remain long in memory as an important character in Shakespeare's works. | The women in The Taming of the Shrew are unattractive. Katharine is disagreeable, Bianca insignificant. |
 
 The last example, before correction, is indefinite as well as negative. The corrected version, consequently, is simply a guess at the writer's intention.
 
-All three examples show the weakness inherent in the word *not*. Consciously or unconsciously, the reader is dissatisfied with being told only what is not; he wishes to be told what is. Hence, as a rule, it is better to express even a negative in positive form.
+All three examples show the weakness inherent in the word _not_. Consciously or unconsciously, the reader is dissatisfied with being told only what is not; he wishes to be told what is. Hence, as a rule, it is better to express even a negative in positive form.
 
-| Original | Revision |
-| --- | --- |
-| not honest | dishonest |
-| not important | trifling |
-| did not remember | forgot |
-| did not pay any attention to | ignored |
+| Original                        | Revision   |
+| ------------------------------- | ---------- |
+| not honest                      | dishonest  |
+| not important                   | trifling   |
+| did not remember                | forgot     |
+| did not pay any attention to    | ignored    |
 | did not have much confidence in | distrusted |
 
 The antithesis of negative and positive is strong:
@@ -164,7 +164,7 @@ Not charity, but simple justice.
 
 Not that I loved Caesar less, but Rome the more.
 
-Negative words other than *not* are usually strong:
+Negative words other than _not_ are usually strong:
 
 The sun never sets upon the British flag.
 
@@ -172,10 +172,10 @@ The sun never sets upon the British flag.
 
 Prefer the specific to the general, the definite to the vague, the concrete to the abstract.
 
-| Original | Revision |
-| --- | --- |
-| A period of unfavorable weather set in. | It rained every day for a week. |
-| He showed satisfaction as he took possession of his well-earned reward. | He grinned as he pocketed the coin. |
+| Original                                                                                                                       | Revision                                                           |
+| ------------------------------------------------------------------------------------------------------------------------------ | ------------------------------------------------------------------ |
+| A period of unfavorable weather set in.                                                                                        | It rained every day for a week.                                    |
+| He showed satisfaction as he took possession of his well-earned reward.                                                        | He grinned as he pocketed the coin.                                |
 | There is a general agreement among those who have enjoyed the experience that surf-riding is productive of great exhilaration. | All who have tried surf-riding agree that it is most exhilarating. |
 
 If those who have studied the art of writing are in accord on any one point, it is on this, that the surest method of arousing and holding the attention of the reader is by being specific, definite, and concrete. Critics have pointed out how much of the effectiveness of the greatest writers, Homer, Dante, Shakespeare, results from their constant definiteness and concreteness. Browning, to cite a more modern author, affords many striking examples. Take, for instance, the lines from My Last Duchess,
@@ -212,8 +212,8 @@ In exposition and in argument, the writer must likewise never lose his hold upon
 
 Herbert Spencer, from whose Philosophy of Style the preceding paragraph is quoted, illustrates the principle by the sentences:
 
-| Original | Revision |
-| --- | --- |
+| Original                                                                                                                                       | Revision                                                                                                                             |
+| ---------------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------ |
 | In proportion as the manners, customs, and amusements of a nation are cruel and barbarous, the regulations of their penal code will be severe. | In proportion as men delight in battles, bull-fights, and combats of gladiators, will they punish by hanging, burning, and the rack. |
 
 ### Rule 13. Omit needless words.
@@ -222,50 +222,50 @@ Vigorous writing is concise. A sentence should contain no unnecessary words, a p
 
 Many expressions in common use violate this principle:
 
-| Original | Revision |
-| --- | --- |
-| the question as to whether | whether (the question whether) |
-| there is no doubt but that | no doubt (doubtless) |
-| used for fuel purposes | used for fuel |
-| he is a man who | he |
-| in a hasty manner | hastily |
-| this is a subject which | this subject |
-| His story is a strange one. | His story is strange. |
+| Original                    | Revision                       |
+| --------------------------- | ------------------------------ |
+| the question as to whether  | whether (the question whether) |
+| there is no doubt but that  | no doubt (doubtless)           |
+| used for fuel purposes      | used for fuel                  |
+| he is a man who             | he                             |
+| in a hasty manner           | hastily                        |
+| this is a subject which     | this subject                   |
+| His story is a strange one. | His story is strange.          |
 
-In especial the expression *the fact that* should be revised out of every sentence in which it occurs.
+In especial the expression _the fact that_ should be revised out of every sentence in which it occurs.
 
-| Original | Revision |
-| --- | --- |
-| owing to the fact that | since (because) |
-| in spite of the fact that | though (although) |
-| call your attention to the fact that | remind you (notify you) |
-| I was unaware of the fact that | I was unaware that (did not know) |
-| the fact that he had not succeeded | his failure |
-| the fact that I had arrived | my arrival |
+| Original                             | Revision                          |
+| ------------------------------------ | --------------------------------- |
+| owing to the fact that               | since (because)                   |
+| in spite of the fact that            | though (although)                 |
+| call your attention to the fact that | remind you (notify you)           |
+| I was unaware of the fact that       | I was unaware that (did not know) |
+| the fact that he had not succeeded   | his failure                       |
+| the fact that I had arrived          | my arrival                        |
 
-See also under *case*, *character*, *nature*, *system* in Chapter V.
+See also under _case_, _character_, _nature_, _system_ in Chapter V.
 
-*Who is*, *which was*, and the like are often superfluous.
+_Who is_, _which was_, and the like are often superfluous.
 
-| Original | Revision |
-| --- | --- |
+| Original                                      | Revision                               |
+| --------------------------------------------- | -------------------------------------- |
 | His brother, who is a member of the same firm | His brother, a member of the same firm |
-| Trafalgar, which was Nelson's last battle | Trafalgar, Nelson's last battle |
+| Trafalgar, which was Nelson's last battle     | Trafalgar, Nelson's last battle        |
 
 As positive statement is more concise than negative, and the active voice more concise than the passive, many of the examples given under Rules 11 and 12 illustrate this rule as well.
 
 A common violation of conciseness is the presentation of a single complex idea, step by step, in a series of sentences or independent clauses which might to advantage be combined into one.
 
-| Original | Revision |
-| --- | --- |
+| Original                                                                                                                                                                                                                                                                                           | Revision                                                                                                                                                                     |
+| -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | Macbeth was very ambitious. This led him to wish to become king of Scotland. The witches told him that this wish of his would come true. The king of Scotland at this time was Duncan. Encouraged by his wife, Macbeth murdered Duncan. He was thus enabled to succeed Duncan as king. (51 words.) | Encouraged by his wife, Macbeth achieved his ambition and realized the prediction of the witches by murdering Duncan and becoming king of Scotland in his place. (26 words.) |
-| There were several less important courses, but these were the most important, and although they did not come every day, they came often enough to keep you in such a state of mind that you never knew what your next move would be. (43 words.) | These, the most important courses of all, came, if not daily, at least often enough to keep one under constant strain. (21 words.) |
+| There were several less important courses, but these were the most important, and although they did not come every day, they came often enough to keep you in such a state of mind that you never knew what your next move would be. (43 words.)                                                   | These, the most important courses of all, came, if not daily, at least often enough to keep one under constant strain. (21 words.)                                           |
 
 ### Rule 14. Avoid a succession of loose sentences
 
 This rule refers especially to loose sentences of a particular type, those consisting of two co-ordinate clauses, the second introduced by a conjunction or relative. Although single sentences of this type may be unexceptionable (see under Rule 4), a series soon becomes monotonous and tedious.
 
-An unskilful writer will sometimes construct a whole paragraph of sentences of this kind, using as connectives *and*, *but*, *so*, and less frequently, *who*, *which*, *when*, *where*, and *while*, these last in non-restrictive senses (see under Rule 3).
+An unskilful writer will sometimes construct a whole paragraph of sentences of this kind, using as connectives _and_, _but_, _so_, and less frequently, _who_, _which_, _when_, _where_, and _while_, these last in non-restrictive senses (see under Rule 3).
 
 The third concert of the subscription series was given last evening, and a large audience was in attendance. Mr. Edward Appleton was the soloist, and the Boston Symphony Orchestra furnished the instrumental music. The former showed himself to be an artist of the first rank, while the latter proved itself fully deserving of its high reputation. The interest aroused by the series has been very gratifying to the Committee, and it is planned to give a similar series annually hereafter. The fourth concert will be given on Tuesday, May 10, when an equally attractive programme will be presented.
 
@@ -279,26 +279,26 @@ This principle, that of parallel construction, requires that expressions of simi
 
 The unskillful writer often violates this principle, from a mistaken belief that he should constantly vary the form of his expressions. It is true that in repeating a statement in order to emphasize it he may have need to vary its form. For illustration, see the paragraph from Stevenson quoted under Rule _9_. But apart from this, he should follow the principle of parallel construction.
 
-| Original | Revision |
-| --- | --- |
+| Original                                                                                          | Revision                                                                                        |
+| ------------------------------------------------------------------------------------------------- | ----------------------------------------------------------------------------------------------- |
 | Formerly, science was taught by the textbook method, while now the laboratory method is employed. | Formerly, science was taught by the textbook method; now it is taught by the laboratory method. |
 
 The left-hand version gives the impression that the writer is undecided or timid; he seems unable or afraid to choose one form of expression and hold to it. The right-hand version shows that the writer has at least made his choice and abided by it.
 
 By this principle, an article or a preposition applying to all the members of a series must either be used only before the first term or else be repeated before each term.
 
-| Original | Revision |
-| --- | --- |
-| The French, the Italians, Spanish, and Portuguese | The French, the Italians, the Spanish, and the Portuguese |
-| In spring, summer, or in winter | In spring, summer, or winter (In spring, in summer, or in winter) |
+| Original                                          | Revision                                                          |
+| ------------------------------------------------- | ----------------------------------------------------------------- |
+| The French, the Italians, Spanish, and Portuguese | The French, the Italians, the Spanish, and the Portuguese         |
+| In spring, summer, or in winter                   | In spring, summer, or winter (In spring, in summer, or in winter) |
 
-Correlative expressions (*both, and*; *not, but*; *not only, but also*; *either, or*; *first, second, third*; and the like) should be followed by the same grammatical construction, that is, virtually, by the same part of speech. (Such combinations as “both Henry and I,” “not silk, but a cheap substitute,” are obviously within the rule.) Many violations of this rule (as the first three below) arise from faulty arrangement; others (as the last) from the use of unlike constructions.
+Correlative expressions (_both, and_; _not, but_; _not only, but also_; _either, or_; _first, second, third_; and the like) should be followed by the same grammatical construction, that is, virtually, by the same part of speech. (Such combinations as “both Henry and I,” “not silk, but a cheap substitute,” are obviously within the rule.) Many violations of this rule (as the first three below) arise from faulty arrangement; others (as the last) from the use of unlike constructions.
 
-| Original | Revision |
-| --- | --- |
-| It was both a long ceremony and very tedious. | The ceremony was both long and tedious. |
-| A time not for words, but action. | A time not for words, but for action. |
-| Either you must grant his request or incur his ill will. | You must either grant his request or incur his ill will. |
+| Original                                                                                     | Revision                                                                                   |
+| -------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------ |
+| It was both a long ceremony and very tedious.                                                | The ceremony was both long and tedious.                                                    |
+| A time not for words, but action.                                                            | A time not for words, but for action.                                                      |
+| Either you must grant his request or incur his ill will.                                     | You must either grant his request or incur his ill will.                                   |
 | My objections are, first, the injustice of the measure; second, that it is unconstitutional. | My objections are, first, that the measure is unjust; second, that it is unconstitutional. |
 
 See also the third example under Rule 12 and the last under Rule 13.
@@ -311,30 +311,30 @@ The position of the words in a sentence is the principal means of showing their 
 
 The subject of a sentence and the principal verb should not, as a rule, be separated by a phrase or clause that can be transferred to the beginning.
 
-| Original | Revision |
-| --- | --- |
+| Original                                                                                   | Revision                                                                                  |
+| ------------------------------------------------------------------------------------------ | ----------------------------------------------------------------------------------------- |
 | Wordsworth, in the fifth book of The Excursion, gives a minute description of this church. | In the fifth book of The Excursion, Wordsworth gives a minute description of this church. |
-| Cast iron, when treated in a Bessemer converter, is changed into steel. | By treatment in a Bessemer converter, cast iron is changed into steel. |
+| Cast iron, when treated in a Bessemer converter, is changed into steel.                    | By treatment in a Bessemer converter, cast iron is changed into steel.                    |
 
 The objection is that the interposed phrase or clause needlessly interrupts the natural order of the main clause. Usually, however, this objection does not hold when the order is interrupted only by a relative clause or by an expression in apposition. Nor does it hold in periodic sentences in which the interruption is a deliberately used means of creating suspense (see examples under Rule 18).
 
 The relative pronoun should come, as a rule, immediately after its antecedent.
 
-| Original | Revision |
-| --- | --- |
-| There was a look in his eye that boded mischief. | In his eye was a look that boded mischief. |
-| He wrote three articles about his adventures in Spain, which were published in Harper's Magazine. | He published in Harper's Magazine three articles about his adventures in Spain. |
+| Original                                                                                                   | Revision                                                                                                  |
+| ---------------------------------------------------------------------------------------------------------- | --------------------------------------------------------------------------------------------------------- |
+| There was a look in his eye that boded mischief.                                                           | In his eye was a look that boded mischief.                                                                |
+| He wrote three articles about his adventures in Spain, which were published in Harper's Magazine.          | He published in Harper's Magazine three articles about his adventures in Spain.                           |
 | This is a portrait of Benjamin Harrison, grandson of William Henry Harrison, who became President in 1889. | This is a portrait of Benjamin Harrison, grandson of William Henry Harrison. He became President in 1889. |
 
 If the antecedent consists of a group of words, the relative comes at the end of the group, unless this would cause ambiguity.
 
 The Superintendent of the Chicago Division, who
 
-| Original | Revision |
-| --- | --- |
+| Original                                                              | Revision                                                               |
+| --------------------------------------------------------------------- | ---------------------------------------------------------------------- |
 | A proposal to amend the Sherman Act, which has been variously judged. | A proposal, which has been variously judged, to amend the Sherman Act. |
-| — | A proposal to amend the much-debated Sherman Act. |
-| The grandson of William Henry Harrison, who | William Henry Harrison's grandson, who |
+| —                                                                     | A proposal to amend the much-debated Sherman Act.                      |
+| The grandson of William Henry Harrison, who                           | William Henry Harrison's grandson, who                                 |
 
 A noun in apposition may come between antecedent and relative, because in such a combination no real ambiguity can arise.
 
@@ -342,10 +342,10 @@ The Duke of York, his brother, who was regarded with hostility by the Whigs
 
 Modifiers should come, if possible, next to the word they modify. If several expressions modify the same word, they should be so arranged that no wrong relation is suggested.
 
-| Original | Revision |
-| --- | --- |
-| All the members were not present. | Not all the members were present. |
-| He only found two mistakes. | He found only two mistakes. |
+| Original                                                                                                                                                   | Revision                                                                                                                                           |
+| ---------------------------------------------------------------------------------------------------------------------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------- |
+| All the members were not present.                                                                                                                          | Not all the members were present.                                                                                                                  |
+| He only found two mistakes.                                                                                                                                | He found only two mistakes.                                                                                                                        |
 | Major R. E. Joyce will give a lecture on Tuesday evening in Bailey Hall, to which the public is invited, on “My Experiences in Mesopotamia” at eight P. M. | On Tuesday evening at eight P. M., Major R. E. Joyce will give in Bailey Hall a lecture on “My Experiences in Mesopotamia.” The public is invited. |
 
 ### Rule 17. In summaries, keep to one tense.
@@ -368,12 +368,12 @@ In notebooks, in newspapers, in handbooks of literature, summaries of one kind o
 
 The proper place in the sentence for the word, or group of words, which the writer desires to make most prominent is usually the end.
 
-| Original | Revision |
-| --- | --- |
+| Original                                                                                              | Revision                                                                                             |
+| ----------------------------------------------------------------------------------------------------- | ---------------------------------------------------------------------------------------------------- |
 | Humanity has hardly advanced in fortitude since that time, though it has advanced in many other ways. | Humanity, since that time, has advanced in many other ways, but it has hardly advanced in fortitude. |
-| This steel is principally used for making razors, because of its hardness. | Because of its hardness, this steel is principally used in making razors. |
+| This steel is principally used for making razors, because of its hardness.                            | Because of its hardness, this steel is principally used in making razors.                            |
 
-The word or group of words entitled to this position of prominence is usually the logical predicate, that is, the *new* element in the sentence, as it is in the second example.
+The word or group of words entitled to this position of prominence is usually the logical predicate, that is, the _new_ element in the sentence, as it is in the second example.
 
 The effectiveness of the periodic sentence arises from the prominence which it gives to the main statement.
 
@@ -391,7 +391,7 @@ A subject coming first in its sentence may be emphatic, but hardly by its positi
 
 Great kings worshipped at his shrine,
 
-the emphasis upon *kings* arises largely from its meaning and from the context. To receive special emphasis, the subject of a sentence must take the position of the predicate.
+the emphasis upon _kings_ arises largely from its meaning and from the context. To receive special emphasis, the subject of a sentence must take the position of the predicate.
 
 Through the middle of the valley flowed a winding stream.
 

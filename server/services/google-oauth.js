@@ -63,7 +63,9 @@ function devMockClientUrl(state, clientOriginOverride) {
   const clientOrigin =
     normalizeClientOrigin(clientOriginOverride) ||
     normalizeClientOrigin(
-      process.env.CLIENT_APP_URL || process.env.APP_URL || process.env.FRONTEND_URL,
+      process.env.CLIENT_APP_URL ||
+        process.env.APP_URL ||
+        process.env.FRONTEND_URL,
     ) ||
     "http://localhost:3000";
   const url = new URL(`${clientOrigin}/oauth/google/callback`);

@@ -16,9 +16,14 @@ const {
 const DAILY_POOL_LIMIT = 24;
 const DAILY_POOL_MIN_STORES = 10;
 const DAILY_POOL_MAX_PER_STORE = 3;
-const DAILY_POOL_REPEAT_WINDOW_DAYS = parseInt(process.env.DAILY_POOL_REPEAT_WINDOW_DAYS || "4", 10);
+const DAILY_POOL_REPEAT_WINDOW_DAYS = parseInt(
+  process.env.DAILY_POOL_REPEAT_WINDOW_DAYS || "4",
+  10,
+);
 const DAILY_POOL_CATEGORY_RATIO = 0.8;
-const DAILY_POOL_MIN_DISCOUNT = Number(process.env.DAILY_POOL_MIN_DISCOUNT_PCT || 20);
+const DAILY_POOL_MIN_DISCOUNT = Number(
+  process.env.DAILY_POOL_MIN_DISCOUNT_PCT || 20,
+);
 const REFRESH_TIME_ZONE = BERLIN_TIME_ZONE;
 const REFRESH_HOUR = 7;
 
@@ -96,9 +101,7 @@ function computeDiscountValue(row) {
 }
 
 function normalizeProductSignature(productName) {
-  return normalizeCatalogText(productName)
-    .replace(/\s+/g, " ")
-    .trim();
+  return normalizeCatalogText(productName).replace(/\s+/g, " ").trim();
 }
 
 function compareCandidateRank(a, b) {
@@ -154,10 +157,12 @@ async function persistPoolEntries(db, poolDate, entries) {
     ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)`,
   );
 
-  await db.prepare(
-    `DELETE FROM daily_deal_pool_entries
+  await db
+    .prepare(
+      `DELETE FROM daily_deal_pool_entries
      WHERE pool_date = ?`,
-  ).run(normalizedDate);
+    )
+    .run(normalizedDate);
 
   const now = new Date().toISOString();
   for (const row of entries) {
@@ -175,9 +180,9 @@ async function persistPoolEntries(db, poolDate, entries) {
     );
     if (row.deal_id) {
       // eslint-disable-next-line no-await-in-loop
-      await db.prepare(
-        `UPDATE deals SET last_pool_used_at = ? WHERE id = ?`,
-      ).run(now, row.deal_id);
+      await db
+        .prepare(`UPDATE deals SET last_pool_used_at = ? WHERE id = ?`)
+        .run(now, row.deal_id);
     }
   }
 }
@@ -205,8 +210,12 @@ function buildEligibleCandidates(rows, poolDate) {
     const resolved = resolveBaseProduct(row?.product_name);
 
     // Fallback: if catalog doesn't recognise the product, derive base_key from URL
-    const baseKey = resolved?.base_key ||
-      `url:${require("crypto").createHash("md5").update(String(row.product_url || row.id)).digest("hex")}`;
+    const baseKey =
+      resolved?.base_key ||
+      `url:${require("crypto")
+        .createHash("md5")
+        .update(String(row.product_url || row.id))
+        .digest("hex")}`;
 
     const productSignature = normalizeProductSignature(row.product_name);
     if (!productSignature) continue;
@@ -215,7 +224,8 @@ function buildEligibleCandidates(rows, poolDate) {
       ...row,
       base_key: baseKey,
       resolved_category:
-        String(resolved?.category || row.product_category || "").trim() || "Other",
+        String(resolved?.category || row.product_category || "").trim() ||
+        "Other",
       product_signature: productSignature,
       discount_value: computeDiscountValue(row),
       seed_rank: stableSeedRank(
@@ -244,14 +254,16 @@ async function getRecentProductSignatures(db, poolDate) {
     -(DAILY_POOL_REPEAT_WINDOW_DAYS - 1),
   );
   return new Set(
-    (await db
-      .prepare(
-        `SELECT DISTINCT product_signature
+    (
+      await db
+        .prepare(
+          `SELECT DISTINCT product_signature
          FROM daily_deal_pool_entries
          WHERE pool_date >= ?
            AND pool_date < ?`,
-      )
-      .all(startDate, normalizedDate))
+        )
+        .all(startDate, normalizedDate)
+    )
       .map((row) => String(row?.product_signature || "").trim())
       .filter(Boolean),
   );
@@ -274,7 +286,8 @@ function separateStores(arr) {
   const remaining = arr.slice();
   const result = [];
   while (remaining.length > 0) {
-    const lastStore = result.length > 0 ? result[result.length - 1].store_id : null;
+    const lastStore =
+      result.length > 0 ? result[result.length - 1].store_id : null;
     const idx = remaining.findIndex((item) => item.store_id !== lastStore);
     result.push(remaining.splice(idx === -1 ? 0 : idx, 1)[0]);
   }
@@ -282,7 +295,9 @@ function separateStores(arr) {
 }
 
 function buildPoolEntriesFromSelection(selection, poolDate) {
-  const shuffled = separateStores(shuffleWithSeed(selection, poolDate || "default"));
+  const shuffled = separateStores(
+    shuffleWithSeed(selection, poolDate || "default"),
+  );
   return shuffled.map((candidate, index) => ({
     pool_date: null,
     slot_index: index,
@@ -302,14 +317,19 @@ function addSelectionCandidate(selectionState, candidate) {
     return false;
   }
   const storeId = String(candidate.store_id || "").trim();
-  if ((selectionState.storeCount.get(storeId) || 0) >= DAILY_POOL_MAX_PER_STORE) {
+  if (
+    (selectionState.storeCount.get(storeId) || 0) >= DAILY_POOL_MAX_PER_STORE
+  ) {
     return false;
   }
 
   selectionState.selected.push(candidate);
   selectionState.usedProducts.add(candidate.product_signature);
   selectionState.usedStores.add(storeId);
-  selectionState.storeCount.set(storeId, (selectionState.storeCount.get(storeId) || 0) + 1);
+  selectionState.storeCount.set(
+    storeId,
+    (selectionState.storeCount.get(storeId) || 0) + 1,
+  );
   selectionState.usedCategories.add(
     String(candidate.resolved_category || "").trim() || "Other",
   );
@@ -439,8 +459,12 @@ async function filterDeadUrls(candidates) {
   for (let i = 0; i < candidates.length; i += URL_CHECK_BATCH) {
     const batch = candidates.slice(i, i + URL_CHECK_BATCH);
     // eslint-disable-next-line no-await-in-loop
-    const checks = await Promise.all(batch.map((c) => isUrlAlive(c?.product_url)));
-    batch.forEach((c, j) => { if (checks[j]) live.push(c); });
+    const checks = await Promise.all(
+      batch.map((c) => isUrlAlive(c?.product_url)),
+    );
+    batch.forEach((c, j) => {
+      if (checks[j]) live.push(c);
+    });
   }
   return live;
 }
@@ -448,13 +472,15 @@ async function filterDeadUrls(candidates) {
 async function isCrawlRunning(db) {
   return (
     Number(
-      (await db
-        .prepare(
-          `SELECT COUNT(*) AS cnt
+      (
+        await db
+          .prepare(
+            `SELECT COUNT(*) AS cnt
            FROM crawl_runs
            WHERE status = 'running'`,
-        )
-        .get())?.cnt || 0,
+          )
+          .get()
+      )?.cnt || 0,
     ) > 0
   );
 }

@@ -18,18 +18,23 @@ Use this when you don't have much time but need to prepare.
 ---
 
 ### The Situation (Facts Only)
+
 [What happened? Observable behavior, no judgment]
 
 ### The Impact
+
 [How did this affect you, the team, or the work?]
 
 ### My Goal
+
 [What specific outcome do I want?]
 
 ### Their Perspective
+
 [How might they see this differently?]
 
 ### My Opening Line
+
 [Write the first thing you'll say]
 ```
 
@@ -54,21 +59,22 @@ Use this for high-stakes conversations or when you need to process your emotions
 
 ### What Happened (Facts)
 
-Describe only what a video camera would have recorded:
--
+## Describe only what a video camera would have recorded:
+
 -
 -
 
 ### The Story I'm Telling Myself
 
-What assumptions or interpretations have I added?
--
+## What assumptions or interpretations have I added?
+
 -
 -
 
 ### My Emotional State
 
 What am I feeling about this? (Check all that apply)
+
 - [ ] Angry
 - [ ] Hurt
 - [ ] Frustrated
@@ -76,13 +82,14 @@ What am I feeling about this? (Check all that apply)
 - [ ] Disappointed
 - [ ] Confused
 - [ ] Concerned
-- [ ] Other: _______
+- [ ] Other: **\_\_\_**
 
-Intensity (1-10): ____
+Intensity (1-10): \_\_\_\_
 
 Am I calm enough to have this conversation productively?
+
 - [ ] Yes - proceed
-- [ ] No - wait until: _______
+- [ ] No - wait until: **\_\_\_**
 
 ### The Impact
 
@@ -104,8 +111,8 @@ If I asked them to describe this situation, they might say:
 
 ### Their Possible Constraints
 
-What pressures, limitations, or challenges might they be facing?
--
+## What pressures, limitations, or challenges might they be facing?
+
 -
 -
 
@@ -123,8 +130,8 @@ What do they value that I should acknowledge?
 
 ### What I Did (or Didn't Do)
 
-Be honest - even if it's small:
--
+## Be honest - even if it's small:
+
 -
 
 ### What I Could Have Done Differently
@@ -145,6 +152,7 @@ What responsibility will I acknowledge in the conversation?
 **Primary outcome:** [Most important thing]
 
 **Secondary outcomes:**
+
 1.
 2.
 
@@ -235,14 +243,14 @@ My plan to stay calm:
 
 - [ ] Scheduled time that works for both
 - [ ] Private location identified
-- [ ] Enough time allocated (__ minutes)
+- [ ] Enough time allocated (\_\_ minutes)
 - [ ] Backup plan if interrupted
 - [ ] My emotional state is ready
 
 ### Post-Conversation Plan
 
 - [ ] Will send follow-up email within 24 hours
-- [ ] Check-in scheduled for: _______
+- [ ] Check-in scheduled for: **\_\_\_**
 - [ ] Documentation needed: [ ] Yes [ ] No
 ```
 

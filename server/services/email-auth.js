@@ -11,9 +11,7 @@ function productionLikeRuntime() {
 
 function smtpConfigured() {
   return Boolean(
-    process.env.SMTP_HOST &&
-      process.env.SMTP_USER &&
-      process.env.SMTP_PASS,
+    process.env.SMTP_HOST && process.env.SMTP_USER && process.env.SMTP_PASS,
   );
 }
 
@@ -51,18 +49,12 @@ function buildEmailCopy({ purpose, name, linkUrl, expiresMinutes }) {
 
   if (purpose !== "login") {
     const greeting = name ? `Hey ${name},` : "Hey,";
-    const intro = "Tap below to confirm your email. Once confirmed, you'll get access to the daily deals section. We'll also send you super grocery deals from time to time, straight to your inbox.";
-    const footer = "DesiDeals24 · desideals24.com\nIf that wasn't you, ignore this email.";
+    const intro =
+      "Tap below to confirm your email. Once confirmed, you'll get access to the daily deals section. We'll also send you super grocery deals from time to time, straight to your inbox.";
+    const footer =
+      "DesiDeals24 · desideals24.com\nIf that wasn't you, ignore this email.";
 
-    const text = [
-      greeting,
-      "",
-      intro,
-      "",
-      linkUrl,
-      "",
-      footer,
-    ].join("\n");
+    const text = [greeting, "", intro, "", linkUrl, "", footer].join("\n");
 
     const html = `
       <div style="font-family:Arial,sans-serif;background:#f7faf7;padding:32px;color:#0f172a">
@@ -108,7 +100,13 @@ function buildEmailCopy({ purpose, name, linkUrl, expiresMinutes }) {
   return { subject, text, html };
 }
 
-async function sendEmailAuthLink({ email, name, purpose, linkUrl, expiresMinutes }) {
+async function sendEmailAuthLink({
+  email,
+  name,
+  purpose,
+  linkUrl,
+  expiresMinutes,
+}) {
   const copy = buildEmailCopy({ purpose, name, linkUrl, expiresMinutes });
 
   if (!smtpConfigured()) {

@@ -5,6 +5,7 @@ This step sends `claude-plan.md` to external LLMs (Gemini and Codex) for indepen
 ## Overview
 
 Launch TWO parallel Bash commands to get external reviews:
+
 1. **Gemini CLI** - Google's Gemini 3 Pro
 2. **Codex CLI** - OpenAI's GPT-5.2
 
@@ -48,6 +49,7 @@ plan_content=$(cat "<planning_dir>/claude-plan.md")
 Use TWO Bash tool calls in a single message:
 
 **Gemini Review:**
+
 ```bash
 gemini -m gemini-3-pro-preview --approval-mode yolo "You are a senior software architect reviewing an implementation plan.
 
@@ -70,6 +72,7 @@ $(cat '<planning_dir>/claude-plan.md')"
 ```
 
 **Codex Review:**
+
 ```bash
 echo "You are a senior software architect reviewing an implementation plan.
 
@@ -94,10 +97,12 @@ $(cat '<planning_dir>/claude-plan.md')" | codex exec -m gpt-5.2 --sandbox read-o
 ### Step 3: Write Review Files
 
 Create `<planning_dir>/reviews/` directory and write:
+
 - `gemini-review.md` - Gemini's analysis
 - `codex-review.md` - Codex's analysis
 
 Format each file:
+
 ```markdown
 # {Provider} Review
 
@@ -111,12 +116,12 @@ Format each file:
 
 ## Handling Failures
 
-| Scenario | Action |
-|----------|--------|
-| Gemini fails, Codex succeeds | Write only codex-review.md, note Gemini failure |
-| Codex fails, Gemini succeeds | Write only gemini-review.md, note Codex failure |
-| Both fail | Ask user if they want to retry or skip external review |
-| CLI not installed | Skip that reviewer, note in output |
+| Scenario                     | Action                                                 |
+| ---------------------------- | ------------------------------------------------------ |
+| Gemini fails, Codex succeeds | Write only codex-review.md, note Gemini failure        |
+| Codex fails, Gemini succeeds | Write only gemini-review.md, note Codex failure        |
+| Both fail                    | Ask user if they want to retry or skip external review |
+| CLI not installed            | Skip that reviewer, note in output                     |
 
 ## Notes
 

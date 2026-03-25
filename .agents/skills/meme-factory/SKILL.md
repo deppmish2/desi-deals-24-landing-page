@@ -11,25 +11,26 @@ Create memes using the free memegen.link API and textual meme formats.
 
 ## Triggers
 
-| Trigger | Description |
-|---------|-------------|
-| `/meme-factory` | Manual invocation |
-| `/meme-factory {template} {top} {bottom}` | Direct meme generation |
-| `meme-factory: create a meme about X` | Natural language request |
+| Trigger                                   | Description              |
+| ----------------------------------------- | ------------------------ |
+| `/meme-factory`                           | Manual invocation        |
+| `/meme-factory {template} {top} {bottom}` | Direct meme generation   |
+| `meme-factory: create a meme about X`     | Natural language request |
 
 ---
 
 ## Quick Reference
 
-| Action | Format |
-|--------|--------|
-| Basic meme | `https://api.memegen.link/images/{template}/{top}/{bottom}.png` |
-| With sizing | `?width=1200&height=630` |
-| Custom background | `?style=https://example.com/image.jpg` |
-| All templates | https://api.memegen.link/templates/ |
-| Interactive docs | https://api.memegen.link/docs/ |
+| Action            | Format                                                          |
+| ----------------- | --------------------------------------------------------------- |
+| Basic meme        | `https://api.memegen.link/images/{template}/{top}/{bottom}.png` |
+| With sizing       | `?width=1200&height=630`                                        |
+| Custom background | `?style=https://example.com/image.jpg`                          |
+| All templates     | https://api.memegen.link/templates/                             |
+| Interactive docs  | https://api.memegen.link/docs/                                  |
 
 **Additional Resources:**
+
 - [Markdown Memes Guide](references/markdown-memes-guide.md) - 15+ textual meme formats
 - [Examples](references/examples.md) - Practical usage examples
 - [meme_generator.py](scripts/meme_generator.py) - Python helper script
@@ -45,6 +46,7 @@ https://api.memegen.link/images/{template}/{top_text}/{bottom_text}.{extension}
 ```
 
 **Example:**
+
 ```
 https://api.memegen.link/images/buzz/memes/memes_everywhere.png
 ```
@@ -53,45 +55,45 @@ Result: Buzz Lightyear meme with "memes" at top and "memes everywhere" at bottom
 
 ### Text Formatting
 
-| Character | Encoding |
-|-----------|----------|
-| Space | `_` or `-` |
-| Newline | `~n` |
-| Question mark | `~q` |
-| Percent | `~p` |
-| Slash | `~s` |
-| Hash | `~h` |
-| Single quote | `''` |
-| Double quote | `""` |
+| Character     | Encoding   |
+| ------------- | ---------- |
+| Space         | `_` or `-` |
+| Newline       | `~n`       |
+| Question mark | `~q`       |
+| Percent       | `~p`       |
+| Slash         | `~s`       |
+| Hash          | `~h`       |
+| Single quote  | `''`       |
+| Double quote  | `""`       |
 
 ---
 
 ## Popular Templates
 
-| Template | Use Case | Example |
-|----------|----------|---------|
-| `buzz` | X, X everywhere | bugs/bugs_everywhere |
-| `drake` | Comparisons | manual_testing/automated_testing |
-| `success` | Victories | deployed/no_errors |
-| `fine` | Things going wrong | server_on_fire/this_is_fine |
-| `fry` | Uncertainty | not_sure_if_bug/or_feature |
-| `changemind` | Hot takes | tabs_are_better_than_spaces |
-| `distracted` | Priorities | my_code/new_framework/current_project |
-| `mordor` | One does not simply | one_does_not_simply/deploy_on_friday |
+| Template     | Use Case            | Example                               |
+| ------------ | ------------------- | ------------------------------------- |
+| `buzz`       | X, X everywhere     | bugs/bugs_everywhere                  |
+| `drake`      | Comparisons         | manual_testing/automated_testing      |
+| `success`    | Victories           | deployed/no_errors                    |
+| `fine`       | Things going wrong  | server_on_fire/this_is_fine           |
+| `fry`        | Uncertainty         | not_sure_if_bug/or_feature            |
+| `changemind` | Hot takes           | tabs_are_better_than_spaces           |
+| `distracted` | Priorities          | my_code/new_framework/current_project |
+| `mordor`     | One does not simply | one_does_not_simply/deploy_on_friday  |
 
 ---
 
 ## Template Selection Guide
 
-| Context | Template | Why |
-|---------|----------|-----|
-| Comparing options | `drake` | Two-panel reject/approve format |
-| Celebrating wins | `success` | Positive outcome emphasis |
-| Problems ignored | `fine` | Ironic "everything is fine" |
-| Uncertainty | `fry` | "Not sure if X or Y" format |
-| Controversial opinion | `changemind` | Statement + challenge |
-| Ubiquitous things | `buzz` | "X, X everywhere" |
-| Bad ideas | `mordor` | "One does not simply..." |
+| Context               | Template     | Why                             |
+| --------------------- | ------------ | ------------------------------- |
+| Comparing options     | `drake`      | Two-panel reject/approve format |
+| Celebrating wins      | `success`    | Positive outcome emphasis       |
+| Problems ignored      | `fine`       | Ironic "everything is fine"     |
+| Uncertainty           | `fry`        | "Not sure if X or Y" format     |
+| Controversial opinion | `changemind` | Statement + challenge           |
+| Ubiquitous things     | `buzz`       | "X, X everywhere"               |
+| Bad ideas             | `mordor`     | "One does not simply..."        |
 
 ---
 
@@ -107,24 +109,24 @@ After generating a meme:
 
 ### Platform Dimensions
 
-| Platform | Dimensions |
-|----------|------------|
-| Social media (Open Graph) | 1200x630 |
-| Slack/Discord | 800x600 |
-| GitHub | Default |
+| Platform                  | Dimensions |
+| ------------------------- | ---------- |
+| Social media (Open Graph) | 1200x630   |
+| Slack/Discord             | 800x600    |
+| GitHub                    | Default    |
 
 ---
 
 ## Anti-Patterns
 
-| Avoid | Why | Instead |
-|-------|-----|---------|
-| Spaces without encoding | URL breaks | Use `_` or `-` |
-| Too much text | Unreadable | 2-6 words per line |
-| Wrong template | Message mismatch | Match template to context |
-| Missing extension | Invalid URL | Always include `.png`, `.jpg`, etc. |
-| Unencoded special chars | URL breaks | Use `~q`, `~s`, `~p`, etc. |
-| Assuming template exists | 404 error | Check templates list first |
+| Avoid                    | Why              | Instead                             |
+| ------------------------ | ---------------- | ----------------------------------- |
+| Spaces without encoding  | URL breaks       | Use `_` or `-`                      |
+| Too much text            | Unreadable       | 2-6 words per line                  |
+| Wrong template           | Message mismatch | Match template to context           |
+| Missing extension        | Invalid URL      | Always include `.png`, `.jpg`, etc. |
+| Unencoded special chars  | URL breaks       | Use `~q`, `~s`, `~p`, etc.          |
+| Assuming template exists | 404 error        | Check templates list first          |
 
 ---
 
@@ -138,6 +140,7 @@ Meme generation is successful when:
 4. **Context matches** - Template fits the message
 
 **Test command:**
+
 ```bash
 curl -I "https://api.memegen.link/images/buzz/test/test.png"
 # Should return: HTTP/2 200
@@ -150,12 +153,12 @@ curl -I "https://api.memegen.link/images/buzz/test/test.png"
 
 ### Image Formats
 
-| Extension | Use Case |
-|-----------|----------|
-| `.png` | Best quality, default |
-| `.jpg` | Smaller file size |
-| `.webp` | Modern, good compression |
-| `.gif` | Animated templates |
+| Extension | Use Case                 |
+| --------- | ------------------------ |
+| `.png`    | Best quality, default    |
+| `.jpg`    | Smaller file size        |
+| `.webp`   | Modern, good compression |
+| `.gif`    | Animated templates       |
 
 ### Dimensions
 
@@ -278,12 +281,12 @@ print(url)
 
 ### Endpoints
 
-| Endpoint | Purpose |
-|----------|---------|
-| `/templates/` | List all templates |
-| `/templates/{id}` | Template details |
-| `/fonts/` | Available fonts |
-| `/images/{template}/{top}/{bottom}.{ext}` | Generate meme |
+| Endpoint                                  | Purpose            |
+| ----------------------------------------- | ------------------ |
+| `/templates/`                             | List all templates |
+| `/templates/{id}`                         | Template details   |
+| `/fonts/`                                 | Available fonts    |
+| `/images/{template}/{top}/{bottom}.{ext}` | Generate meme      |
 
 ### API Characteristics
 
@@ -307,15 +310,15 @@ print(url)
 
 ## References
 
-| Document | Content |
-|----------|---------|
+| Document                                                      | Content                                                      |
+| ------------------------------------------------------------- | ------------------------------------------------------------ |
 | [markdown-memes-guide.md](references/markdown-memes-guide.md) | 15+ textual meme formats (greentext, copypasta, ASCII, etc.) |
-| [examples.md](references/examples.md) | Practical usage examples |
+| [examples.md](references/examples.md)                         | Practical usage examples                                     |
 
 ### Scripts
 
-| Script | Purpose |
-|--------|---------|
+| Script                                         | Purpose                           |
+| ---------------------------------------------- | --------------------------------- |
 | [meme_generator.py](scripts/meme_generator.py) | Python helper for meme generation |
 
 ---
@@ -323,6 +326,7 @@ print(url)
 ## Summary
 
 Generate contextual memes to:
+
 - Add humor to conversations
 - Create social media visuals
 - Make code reviews engaging

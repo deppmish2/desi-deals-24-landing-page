@@ -27,37 +27,41 @@ Use this skill when you need to:
 
 ### Trigger Phrases
 
-| Trigger | Example |
-|---------|---------|
-| `design schema` | "design a schema for user authentication" |
-| `database design` | "database design for multi-tenant SaaS" |
-| `create tables` | "create tables for a blog system" |
-| `schema for` | "schema for inventory management" |
-| `model data` | "model data for real-time analytics" |
-| `I need a database` | "I need a database for tracking orders" |
-| `design NoSQL` | "design NoSQL schema for product catalog" |
+| Trigger             | Example                                   |
+| ------------------- | ----------------------------------------- |
+| `design schema`     | "design a schema for user authentication" |
+| `database design`   | "database design for multi-tenant SaaS"   |
+| `create tables`     | "create tables for a blog system"         |
+| `schema for`        | "schema for inventory management"         |
+| `model data`        | "model data for real-time analytics"      |
+| `I need a database` | "I need a database for tracking orders"   |
+| `design NoSQL`      | "design NoSQL schema for product catalog" |
 
 ## How It Works
 
 The skill follows a four-phase process:
 
 ### Phase 1: Analysis
+
 - Identify entities and their relationships
 - Determine access patterns (read-heavy vs write-heavy)
 - Choose SQL or NoSQL based on requirements
 
 ### Phase 2: Design
+
 - Normalize to 3NF for SQL or determine embed/reference strategy for NoSQL
 - Define primary keys and foreign keys
 - Choose appropriate data types
 - Add constraints (UNIQUE, CHECK, NOT NULL)
 
 ### Phase 3: Optimize
+
 - Plan indexing strategy based on query patterns
 - Consider denormalization for read-heavy queries
 - Add audit timestamps (created_at, updated_at)
 
 ### Phase 4: Migrate
+
 - Generate reversible migration scripts (up + down)
 - Ensure backward compatibility
 - Plan for zero-downtime deployment
@@ -65,23 +69,27 @@ The skill follows a four-phase process:
 ## Key Features
 
 ### SQL Schema Design
+
 - **Normalization** - Automatic application of 1NF, 2NF, and 3NF rules
 - **Data Types** - Appropriate type selection (DECIMAL for money, proper VARCHAR sizing)
 - **Constraints** - Foreign keys with ON DELETE strategies, CHECK constraints, UNIQUE constraints
 - **Indexes** - B-Tree, Hash, Full-text, and Partial index recommendations
 
 ### NoSQL Schema Design (MongoDB)
+
 - **Embedding vs Referencing** - Guidance on when to embed documents vs use references
 - **Index Strategies** - Single field, composite, text search, and geospatial indexes
 - **Document Structure** - Optimal document design based on access patterns
 
 ### Relationship Patterns
+
 - One-to-Many relationships
 - Many-to-Many with junction tables
 - Self-referencing hierarchies
 - Polymorphic associations
 
 ### Migration Support
+
 - Zero-downtime migration patterns
 - Reversible migration templates
 - Safe column addition/rename strategies
@@ -114,13 +122,13 @@ CREATE TABLE orders (
 
 ### Available Commands
 
-| Command | Purpose |
-|---------|---------|
-| `design schema for {domain}` | Generate a complete schema from scratch |
-| `normalize {table}` | Apply normalization rules to fix an existing table |
-| `add indexes for {table}` | Generate an index strategy for performance |
-| `migration for {change}` | Create reversible migration scripts |
-| `review schema` | Audit an existing schema for issues |
+| Command                      | Purpose                                            |
+| ---------------------------- | -------------------------------------------------- |
+| `design schema for {domain}` | Generate a complete schema from scratch            |
+| `normalize {table}`          | Apply normalization rules to fix an existing table |
+| `add indexes for {table}`    | Generate an index strategy for performance         |
+| `migration for {change}`     | Create reversible migration scripts                |
+| `review schema`              | Audit an existing schema for issues                |
 
 ### Request Tips
 
@@ -185,27 +193,27 @@ After designing a schema, verify:
 
 ### Avoid
 
-| Anti-Pattern | Problem | Solution |
-|--------------|---------|----------|
-| VARCHAR(255) everywhere | Wastes storage, hides intent | Size appropriately per field |
-| FLOAT for money | Rounding errors | DECIMAL(10,2) |
-| Missing FK constraints | Orphaned data | Always define foreign keys |
-| No indexes on FKs | Slow JOINs | Index every foreign key |
-| Storing dates as strings | Cannot compare/sort properly | Use DATE/TIMESTAMP types |
-| Non-reversible migrations | Cannot rollback safely | Always write DOWN migration |
+| Anti-Pattern              | Problem                      | Solution                     |
+| ------------------------- | ---------------------------- | ---------------------------- |
+| VARCHAR(255) everywhere   | Wastes storage, hides intent | Size appropriately per field |
+| FLOAT for money           | Rounding errors              | DECIMAL(10,2)                |
+| Missing FK constraints    | Orphaned data                | Always define foreign keys   |
+| No indexes on FKs         | Slow JOINs                   | Index every foreign key      |
+| Storing dates as strings  | Cannot compare/sort properly | Use DATE/TIMESTAMP types     |
+| Non-reversible migrations | Cannot rollback safely       | Always write DOWN migration  |
 
 ## Key Terminology
 
-| Term | Definition |
-|------|------------|
-| **Normalization** | Organizing data to reduce redundancy (1NF to 2NF to 3NF) |
-| **3NF** | Third Normal Form - no transitive dependencies between columns |
-| **OLTP** | Online Transaction Processing - write-heavy, needs normalization |
-| **OLAP** | Online Analytical Processing - read-heavy, benefits from denormalization |
-| **Foreign Key (FK)** | Column that references another table's primary key |
-| **Index** | Data structure that speeds up queries (at cost of slower writes) |
-| **Access Pattern** | How your app reads/writes data (queries, joins, filters) |
-| **Denormalization** | Intentionally duplicating data to speed up reads |
+| Term                 | Definition                                                               |
+| -------------------- | ------------------------------------------------------------------------ |
+| **Normalization**    | Organizing data to reduce redundancy (1NF to 2NF to 3NF)                 |
+| **3NF**              | Third Normal Form - no transitive dependencies between columns           |
+| **OLTP**             | Online Transaction Processing - write-heavy, needs normalization         |
+| **OLAP**             | Online Analytical Processing - read-heavy, benefits from denormalization |
+| **Foreign Key (FK)** | Column that references another table's primary key                       |
+| **Index**            | Data structure that speeds up queries (at cost of slower writes)         |
+| **Access Pattern**   | How your app reads/writes data (queries, joins, filters)                 |
+| **Denormalization**  | Intentionally duplicating data to speed up reads                         |
 
 ## License
 

@@ -28,11 +28,11 @@ Notice your interpretations:
 
 ##### Exercise: Separate Facts from Interpretations
 
-| Fact (Observable) | Interpretation (Story) |
-| ----------------- | ---------------------- |
-| "John submitted the report 3 days late" | "John doesn't care about deadlines" |
-| "Sarah interrupted me twice in the meeting" | "Sarah doesn't respect my opinions" |
-| "Alex didn't respond to my email for a week" | "Alex is avoiding me" |
+| Fact (Observable)                            | Interpretation (Story)              |
+| -------------------------------------------- | ----------------------------------- |
+| "John submitted the report 3 days late"      | "John doesn't care about deadlines" |
+| "Sarah interrupted me twice in the meeting"  | "Sarah doesn't respect my opinions" |
+| "Alex didn't respond to my email for a week" | "Alex is avoiding me"               |
 
 #### Step 2: Identify Your Contribution
 
@@ -75,11 +75,11 @@ Complete these sentences:
 
 **Goal Framing:**
 
-| Ineffective Goal | Effective Goal |
-| ---------------- | -------------- |
+| Ineffective Goal      | Effective Goal                                     |
+| --------------------- | -------------------------------------------------- |
 | "Make them apologize" | "Understand what happened and agree on prevention" |
-| "Prove I'm right" | "Share my perspective and understand theirs" |
-| "Get them to change" | "Explore how we can work together differently" |
+| "Prove I'm right"     | "Share my perspective and understand theirs"       |
+| "Get them to change"  | "Explore how we can work together differently"     |
 
 #### Step 5: Choose Time and Place
 
@@ -120,12 +120,15 @@ The opening sets the tone for everything. Get it right.
 **Opening Templates:**
 
 For Performance:
+
 > "I'd like to talk about the project timeline. My goal is to understand what's happening and figure out how I can better support you. Can you share your perspective on how things are going?"
 
 For Conflict:
+
 > "I wanted to discuss what happened in yesterday's meeting. I'd like to understand your viewpoint and share mine so we can work together more effectively. Is now a good time?"
 
 For Feedback:
+
 > "I have some feedback about the presentation. My intention is to help you succeed, and I'd also like to hear your thoughts on how it went."
 
 #### The Conversation Body
@@ -143,6 +146,7 @@ Use this formula:
 - **I'd like to understand** [invitation to respond]
 
 Example:
+
 > "When the client presentation was last week, I noticed the slides weren't ready until the morning of. The impact was that I didn't have time to review them, and I felt anxious going in unprepared. I'd like to understand what happened on your end."
 
 ##### 2. Listen to Understand (5-10 minutes)
@@ -195,13 +199,16 @@ Get specific:
 ## What We Agreed
 
 **Actions:**
+
 - [Person A] will [action] by [date]
 - [Person B] will [action] by [date]
 
 **Check-in:**
+
 - We'll touch base on [date] to see how it's going
 
 **If issues continue:**
+
 - We'll [next step]
 ```
 

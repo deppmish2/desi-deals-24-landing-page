@@ -15,7 +15,11 @@
 const nodemailer = require("nodemailer");
 
 const fetch = (() => {
-  try { return require("node-fetch"); } catch { return null; }
+  try {
+    return require("node-fetch");
+  } catch {
+    return null;
+  }
 })();
 
 function slackConfigured() {
@@ -78,10 +82,12 @@ async function sendEmail(subject, body) {
 async function notifyCrawlFailure(options = {}) {
   const step = options.failedStep || "unknown";
   const runUrl = options.runUrl || process.env.RUN_URL || "";
-  const errorMessage = options.errorMessage || process.env.FAILED_STEP_ERROR || "";
-  const storesInfo = (options.storesAttempted != null)
-    ? ` (${options.storesSucceeded}/${options.storesAttempted} stores succeeded)`
-    : "";
+  const errorMessage =
+    options.errorMessage || process.env.FAILED_STEP_ERROR || "";
+  const storesInfo =
+    options.storesAttempted != null
+      ? ` (${options.storesSucceeded}/${options.storesAttempted} stores succeeded)`
+      : "";
 
   const subject = `[DesiDeals24] Crawl failure — step: ${step}`;
   const body = [
@@ -124,7 +130,9 @@ async function notifyThinPool(options = {}) {
 
   console.warn(`[ops-notifier] ${severity} — ${subject}`);
   await Promise.all([
-    sendSlack(`${options.poolSize === 0 ? "🔴" : "🟡"} *${subject}*\n\`\`\`${body}\`\`\``),
+    sendSlack(
+      `${options.poolSize === 0 ? "🔴" : "🟡"} *${subject}*\n\`\`\`${body}\`\`\``,
+    ),
     sendEmail(subject, body),
   ]);
 }

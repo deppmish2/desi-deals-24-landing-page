@@ -31,11 +31,11 @@ Use this skill when:
 
 Use this universal framework to organize any professional message:
 
-| Component | Purpose | Example |
-| --- | --- | --- |
-| **What** | State the topic/request clearly | "We need to delay the release by one week" |
-| **Why** | Explain the reasoning | "Critical bug found in payment processing" |
-| **How** | Outline next steps/action items | "QA will retest by Thursday; I'll update stakeholders Friday" |
+| Component | Purpose                         | Example                                                       |
+| --------- | ------------------------------- | ------------------------------------------------------------- |
+| **What**  | State the topic/request clearly | "We need to delay the release by one week"                    |
+| **Why**   | Explain the reasoning           | "Critical bug found in payment processing"                    |
+| **How**   | Outline next steps/action items | "QA will retest by Thursday; I'll update stakeholders Friday" |
 
 **Apply to**: Emails, status updates, meeting talking points, technical explanations
 
@@ -57,11 +57,11 @@ Before communicating, ask yourself:
 
 ### Subject Line Formula
 
-| Instead of | Try |
-| --- | --- |
-| "Project updates" | "Project X: Status Update and Next Steps" |
-| "Question" | "Quick question: API rate limiting approach" |
-| "FYI" | "FYI: Deployment scheduled for Tuesday 3pm" |
+| Instead of        | Try                                          |
+| ----------------- | -------------------------------------------- |
+| "Project updates" | "Project X: Status Update and Next Steps"    |
+| "Question"        | "Quick question: API rate limiting approach" |
+| "FYI"             | "FYI: Deployment scheduled for Tuesday 3pm"  |
 
 ### Email Structure Template
 
@@ -73,10 +73,12 @@ Hi [Name],
 [1-2 sentences stating the key point or request upfront]
 
 **Context/Background:**
+
 - [Bullet point 1]
 - [Bullet point 2]
 
 **What I need from you:**
+
 - [Specific action or decision needed]
 - [Timeline if applicable]
 
@@ -88,12 +90,12 @@ Best,
 
 ### Common Email Types
 
-| Type | Key Elements |
-| --- | --- |
-| **Status Update** | Progress summary, blockers, next steps, timeline |
-| **Request** | Clear ask, context, deadline, why it matters |
-| **Escalation** | Issue summary, impact, attempted solutions, needed decision |
-| **FYI/Announcement** | What changed, who's affected, any required action |
+| Type                 | Key Elements                                                |
+| -------------------- | ----------------------------------------------------------- |
+| **Status Update**    | Progress summary, blockers, next steps, timeline            |
+| **Request**          | Clear ask, context, deadline, why it matters                |
+| **Escalation**       | Issue summary, impact, attempted solutions, needed decision |
+| **FYI/Announcement** | What changed, who's affected, any required action           |
 
 **For templates**: See `references/email-templates.md`
 
@@ -103,12 +105,12 @@ Best,
 
 ### When to Use Chat vs Email
 
-| Use Chat | Use Email |
-| --- | --- |
-| Quick questions with short answers | Detailed documentation needing records |
-| Real-time coordination | Formal communications to stakeholders |
-| Informal team discussions | Messages requiring careful review |
-| Time-sensitive updates | Complex explanations with multiple parts |
+| Use Chat                           | Use Email                                |
+| ---------------------------------- | ---------------------------------------- |
+| Quick questions with short answers | Detailed documentation needing records   |
+| Real-time coordination             | Formal communications to stakeholders    |
+| Informal team discussions          | Messages requiring careful review        |
+| Time-sensitive updates             | Complex explanations with multiple parts |
 
 ### Team Messaging Best Practices
 
@@ -141,12 +143,12 @@ You: Hi Sarah - quick question about the deployment script.
 
 ### When to Be Technical vs Accessible
 
-| Audience | Approach |
-| --- | --- |
-| **Engineering peers** | Technical details, code examples, architecture specifics |
-| **Technical managers** | Balance of detail and high-level impact |
+| Audience                       | Approach                                                 |
+| ------------------------------ | -------------------------------------------------------- |
+| **Engineering peers**          | Technical details, code examples, architecture specifics |
+| **Technical managers**         | Balance of detail and high-level impact                  |
 | **Non-technical stakeholders** | Business impact, analogies, outcomes over implementation |
-| **Customers** | Plain language, what it means for them, avoid jargon |
+| **Customers**                  | Plain language, what it means for them, avoid jargon     |
 
 ### Three Strategies for Simplification
 
@@ -156,12 +158,12 @@ You: Hi Sarah - quick question about the deployment script.
 
 ### Jargon Translation Examples
 
-| Technical | Plain Language |
-| --- | --- |
-| "Microservices architecture" | "Our system is split into smaller, independent pieces that can scale separately" |
-| "Asynchronous message processing" | "Tasks are queued and processed in the background" |
-| "CI/CD pipeline" | "Automated process that tests and deploys our code" |
-| "Database migration" | "Updating how our data is organized and stored" |
+| Technical                         | Plain Language                                                                   |
+| --------------------------------- | -------------------------------------------------------------------------------- |
+| "Microservices architecture"      | "Our system is split into smaller, independent pieces that can scale separately" |
+| "Asynchronous message processing" | "Tasks are queued and processed in the background"                               |
+| "CI/CD pipeline"                  | "Automated process that tests and deploys our code"                              |
+| "Database migration"              | "Updating how our data is organized and stored"                                  |
 
 **For more examples**: See `references/jargon-simplification.md`
 
@@ -171,20 +173,20 @@ You: Hi Sarah - quick question about the deployment script.
 
 Active voice is clearer, more direct, and conveys authority:
 
-| Passive (avoid) | Active (prefer) |
-| --- | --- |
-| "A bug was identified by the team" | "The team identified a bug" |
-| "The feature will be implemented" | "We will implement the feature" |
-| "Errors were found during testing" | "Testing revealed errors" |
+| Passive (avoid)                    | Active (prefer)                 |
+| ---------------------------------- | ------------------------------- |
+| "A bug was identified by the team" | "The team identified a bug"     |
+| "The feature will be implemented"  | "We will implement the feature" |
+| "Errors were found during testing" | "Testing revealed errors"       |
 
 ### Eliminate Filler Words
 
-| Instead of | Use |
-| --- | --- |
-| "At this point in time" | "Now" |
-| "In the event that" | "If" |
-| "Due to the fact that" | "Because" |
-| "In order to" | "To" |
+| Instead of                  | Use       |
+| --------------------------- | --------- |
+| "At this point in time"     | "Now"     |
+| "In the event that"         | "If"      |
+| "Due to the fact that"      | "Because" |
+| "In order to"               | "To"      |
 | "I just wanted to check if" | "Can you" |
 
 ### The "So What?" Test
@@ -218,14 +220,17 @@ Every meeting invite should include:
 **Attendees:** [Names]
 
 **Key Decisions:**
+
 - [Decision 1]
 - [Decision 2]
 
 **Action Items:**
+
 - [ ] [Person]: [Task] - Due [Date]
 - [ ] [Person]: [Task] - Due [Date]
 
 **Next Steps:**
+
 - [Follow-up meeting if needed]
 - [Documents to share]
 ```

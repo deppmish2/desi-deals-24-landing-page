@@ -97,11 +97,13 @@ async function evaluateAlertsAfterCrawl(db, { runId }) {
       context: `crawl_run:${runId}`,
     });
 
-    await db.prepare(
-      `UPDATE price_alerts
+    await db
+      .prepare(
+        `UPDATE price_alerts
        SET triggered = 1, last_triggered_at = ?
        WHERE id = ?`,
-    ).run(new Date().toISOString(), alert.id);
+      )
+      .run(new Date().toISOString(), alert.id);
 
     triggeredCount += 1;
   }

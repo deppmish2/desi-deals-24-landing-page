@@ -36,6 +36,7 @@ CREATE TABLE orders (
 ```
 
 **What to include in your request:**
+
 - Entities (users, products, orders)
 - Key relationships (users have orders, orders have items)
 - Scale hints (high-traffic, millions of records)
@@ -45,43 +46,43 @@ CREATE TABLE orders (
 
 ## Triggers
 
-| Trigger | Example |
-|---------|---------|
-| `design schema` | "design a schema for user authentication" |
-| `database design` | "database design for multi-tenant SaaS" |
-| `create tables` | "create tables for a blog system" |
-| `schema for` | "schema for inventory management" |
-| `model data` | "model data for real-time analytics" |
-| `I need a database` | "I need a database for tracking orders" |
-| `design NoSQL` | "design NoSQL schema for product catalog" |
+| Trigger             | Example                                   |
+| ------------------- | ----------------------------------------- |
+| `design schema`     | "design a schema for user authentication" |
+| `database design`   | "database design for multi-tenant SaaS"   |
+| `create tables`     | "create tables for a blog system"         |
+| `schema for`        | "schema for inventory management"         |
+| `model data`        | "model data for real-time analytics"      |
+| `I need a database` | "I need a database for tracking orders"   |
+| `design NoSQL`      | "design NoSQL schema for product catalog" |
 
 ---
 
 ## Key Terms
 
-| Term | Definition |
-|------|------------|
-| **Normalization** | Organizing data to reduce redundancy (1NF → 2NF → 3NF) |
-| **3NF** | Third Normal Form - no transitive dependencies between columns |
-| **OLTP** | Online Transaction Processing - write-heavy, needs normalization |
-| **OLAP** | Online Analytical Processing - read-heavy, benefits from denormalization |
-| **Foreign Key (FK)** | Column that references another table's primary key |
-| **Index** | Data structure that speeds up queries (at cost of slower writes) |
-| **Access Pattern** | How your app reads/writes data (queries, joins, filters) |
-| **Denormalization** | Intentionally duplicating data to speed up reads |
+| Term                 | Definition                                                               |
+| -------------------- | ------------------------------------------------------------------------ |
+| **Normalization**    | Organizing data to reduce redundancy (1NF → 2NF → 3NF)                   |
+| **3NF**              | Third Normal Form - no transitive dependencies between columns           |
+| **OLTP**             | Online Transaction Processing - write-heavy, needs normalization         |
+| **OLAP**             | Online Analytical Processing - read-heavy, benefits from denormalization |
+| **Foreign Key (FK)** | Column that references another table's primary key                       |
+| **Index**            | Data structure that speeds up queries (at cost of slower writes)         |
+| **Access Pattern**   | How your app reads/writes data (queries, joins, filters)                 |
+| **Denormalization**  | Intentionally duplicating data to speed up reads                         |
 
 ---
 
 ## Quick Reference
 
-| Task | Approach | Key Consideration |
-|------|----------|-------------------|
-| New schema | Normalize to 3NF first | Domain modeling over UI |
-| SQL vs NoSQL | Access patterns decide | Read/write ratio matters |
-| Primary keys | INT or UUID | UUID for distributed systems |
-| Foreign keys | Always constrain | ON DELETE strategy critical |
-| Indexes | FKs + WHERE columns | Column order matters |
-| Migrations | Always reversible | Backward compatible first |
+| Task         | Approach               | Key Consideration            |
+| ------------ | ---------------------- | ---------------------------- |
+| New schema   | Normalize to 3NF first | Domain modeling over UI      |
+| SQL vs NoSQL | Access patterns decide | Read/write ratio matters     |
+| Primary keys | INT or UUID            | UUID for distributed systems |
+| Foreign keys | Always constrain       | ON DELETE strategy critical  |
+| Indexes      | FKs + WHERE columns    | Column order matters         |
+| Migrations   | Always reversible      | Backward compatible first    |
 
 ---
 
@@ -131,13 +132,13 @@ Production-Ready Schema
 
 ## Commands
 
-| Command | When to Use | Action |
-|---------|-------------|--------|
-| `design schema for {domain}` | Starting fresh | Full schema generation |
-| `normalize {table}` | Fixing existing table | Apply normalization rules |
-| `add indexes for {table}` | Performance issues | Generate index strategy |
-| `migration for {change}` | Schema evolution | Create reversible migration |
-| `review schema` | Code review | Audit existing schema |
+| Command                      | When to Use           | Action                      |
+| ---------------------------- | --------------------- | --------------------------- |
+| `design schema for {domain}` | Starting fresh        | Full schema generation      |
+| `normalize {table}`          | Fixing existing table | Apply normalization rules   |
+| `add indexes for {table}`    | Performance issues    | Generate index strategy     |
+| `migration for {change}`     | Schema evolution      | Create reversible migration |
+| `review schema`              | Code review           | Audit existing schema       |
 
 **Workflow:** Start with `design schema` → iterate with `normalize` → optimize with `add indexes` → evolve with `migration`
 
@@ -145,27 +146,27 @@ Production-Ready Schema
 
 ## Core Principles
 
-| Principle | WHY | Implementation |
-|-----------|-----|----------------|
-| Model the Domain | UI changes, domain doesn't | Entity names reflect business concepts |
-| Data Integrity First | Corruption is costly to fix | Constraints at database level |
-| Optimize for Access Pattern | Can't optimize for both | OLTP: normalized, OLAP: denormalized |
-| Plan for Scale | Retrofitting is painful | Index strategy + partitioning plan |
+| Principle                   | WHY                         | Implementation                         |
+| --------------------------- | --------------------------- | -------------------------------------- |
+| Model the Domain            | UI changes, domain doesn't  | Entity names reflect business concepts |
+| Data Integrity First        | Corruption is costly to fix | Constraints at database level          |
+| Optimize for Access Pattern | Can't optimize for both     | OLTP: normalized, OLAP: denormalized   |
+| Plan for Scale              | Retrofitting is painful     | Index strategy + partitioning plan     |
 
 ---
 
 ## Anti-Patterns
 
-| Avoid | Why | Instead |
-|-------|-----|---------|
-| VARCHAR(255) everywhere | Wastes storage, hides intent | Size appropriately per field |
-| FLOAT for money | Rounding errors | DECIMAL(10,2) |
-| Missing FK constraints | Orphaned data | Always define foreign keys |
-| No indexes on FKs | Slow JOINs | Index every foreign key |
-| Storing dates as strings | Can't compare/sort | DATE, TIMESTAMP types |
-| SELECT * in queries | Fetches unnecessary data | Explicit column lists |
-| Non-reversible migrations | Can't rollback | Always write DOWN migration |
-| Adding NOT NULL without default | Breaks existing rows | Add nullable, backfill, then constrain |
+| Avoid                           | Why                          | Instead                                |
+| ------------------------------- | ---------------------------- | -------------------------------------- |
+| VARCHAR(255) everywhere         | Wastes storage, hides intent | Size appropriately per field           |
+| FLOAT for money                 | Rounding errors              | DECIMAL(10,2)                          |
+| Missing FK constraints          | Orphaned data                | Always define foreign keys             |
+| No indexes on FKs               | Slow JOINs                   | Index every foreign key                |
+| Storing dates as strings        | Can't compare/sort           | DATE, TIMESTAMP types                  |
+| SELECT \* in queries            | Fetches unnecessary data     | Explicit column lists                  |
+| Non-reversible migrations       | Can't rollback               | Always write DOWN migration            |
+| Adding NOT NULL without default | Breaks existing rows         | Add nullable, backfill, then constrain |
 
 ---
 
@@ -193,11 +194,11 @@ After designing a schema:
 
 ### Normal Forms
 
-| Form | Rule | Violation Example |
-|------|------|-------------------|
-| **1NF** | Atomic values, no repeating groups | `product_ids = '1,2,3'` |
-| **2NF** | 1NF + no partial dependencies | customer_name in order_items |
-| **3NF** | 2NF + no transitive dependencies | country derived from postal_code |
+| Form    | Rule                               | Violation Example                |
+| ------- | ---------------------------------- | -------------------------------- |
+| **1NF** | Atomic values, no repeating groups | `product_ids = '1,2,3'`          |
+| **2NF** | 1NF + no partial dependencies      | customer_name in order_items     |
+| **3NF** | 2NF + no transitive dependencies   | country derived from postal_code |
 
 ### 1st Normal Form (1NF)
 
@@ -258,11 +259,11 @@ CREATE TABLE postal_codes (
 
 ### When to Denormalize
 
-| Scenario | Denormalization Strategy |
-|----------|-------------------------|
+| Scenario             | Denormalization Strategy  |
+| -------------------- | ------------------------- |
 | Read-heavy reporting | Pre-calculated aggregates |
-| Expensive JOINs | Cached derived columns |
-| Analytics dashboards | Materialized views |
+| Expensive JOINs      | Cached derived columns    |
+| Analytics dashboards | Materialized views        |
 
 ```sql
 -- Denormalized for performance
@@ -281,11 +282,11 @@ CREATE TABLE orders (
 
 ### String Types
 
-| Type | Use Case | Example |
-|------|----------|---------|
-| CHAR(n) | Fixed length | State codes, ISO dates |
-| VARCHAR(n) | Variable length | Names, emails |
-| TEXT | Long content | Articles, descriptions |
+| Type       | Use Case        | Example                |
+| ---------- | --------------- | ---------------------- |
+| CHAR(n)    | Fixed length    | State codes, ISO dates |
+| VARCHAR(n) | Variable length | Names, emails          |
+| TEXT       | Long content    | Articles, descriptions |
 
 ```sql
 -- Good sizing
@@ -296,14 +297,14 @@ country_code CHAR(2)
 
 ### Numeric Types
 
-| Type | Range | Use Case |
-|------|-------|----------|
-| TINYINT | -128 to 127 | Age, status codes |
-| SMALLINT | -32K to 32K | Quantities |
-| INT | -2.1B to 2.1B | IDs, counts |
-| BIGINT | Very large | Large IDs, timestamps |
-| DECIMAL(p,s) | Exact precision | Money |
-| FLOAT/DOUBLE | Approximate | Scientific data |
+| Type         | Range           | Use Case              |
+| ------------ | --------------- | --------------------- |
+| TINYINT      | -128 to 127     | Age, status codes     |
+| SMALLINT     | -32K to 32K     | Quantities            |
+| INT          | -2.1B to 2.1B   | IDs, counts           |
+| BIGINT       | Very large      | Large IDs, timestamps |
+| DECIMAL(p,s) | Exact precision | Money                 |
+| FLOAT/DOUBLE | Approximate     | Scientific data       |
 
 ```sql
 -- ALWAYS use DECIMAL for money
@@ -343,12 +344,12 @@ is_active TINYINT(1) DEFAULT 1
 
 ### When to Create Indexes
 
-| Always Index | Reason |
-|--------------|--------|
-| Foreign keys | Speed up JOINs |
-| WHERE clause columns | Speed up filtering |
-| ORDER BY columns | Speed up sorting |
-| Unique constraints | Enforced uniqueness |
+| Always Index         | Reason              |
+| -------------------- | ------------------- |
+| Foreign keys         | Speed up JOINs      |
+| WHERE clause columns | Speed up filtering  |
+| ORDER BY columns     | Speed up sorting    |
+| Unique constraints   | Enforced uniqueness |
 
 ```sql
 -- Foreign key index
@@ -360,12 +361,12 @@ CREATE INDEX idx_orders_status_date ON orders(status, created_at);
 
 ### Index Types
 
-| Type | Best For | Example |
-|------|----------|---------|
-| B-Tree | Ranges, equality | `price > 100` |
-| Hash | Exact matches only | `email = 'x@y.com'` |
-| Full-text | Text search | `MATCH AGAINST` |
-| Partial | Subset of rows | `WHERE is_active = true` |
+| Type      | Best For           | Example                  |
+| --------- | ------------------ | ------------------------ |
+| B-Tree    | Ranges, equality   | `price > 100`            |
+| Hash      | Exact matches only | `email = 'x@y.com'`      |
+| Full-text | Text search        | `MATCH AGAINST`          |
+| Partial   | Subset of rows     | `WHERE is_active = true` |
 
 ### Composite Index Order
 
@@ -384,11 +385,11 @@ SELECT * FROM orders WHERE status = 'pending';
 
 ### Index Pitfalls
 
-| Pitfall | Problem | Solution |
-|---------|---------|----------|
-| Over-indexing | Slow writes | Only index what's queried |
-| Wrong column order | Unused index | Match query patterns |
-| Missing FK indexes | Slow JOINs | Always index FKs |
+| Pitfall            | Problem      | Solution                  |
+| ------------------ | ------------ | ------------------------- |
+| Over-indexing      | Slow writes  | Only index what's queried |
+| Wrong column order | Unused index | Match query patterns      |
+| Missing FK indexes | Slow JOINs   | Always index FKs          |
 
 </details>
 
@@ -418,11 +419,11 @@ FOREIGN KEY (customer_id) REFERENCES customers(id)
   ON UPDATE CASCADE     -- Update children when parent changes
 ```
 
-| Strategy | Use When |
-|----------|----------|
-| CASCADE | Dependent data (order_items) |
+| Strategy | Use When                                 |
+| -------- | ---------------------------------------- |
+| CASCADE  | Dependent data (order_items)             |
 | RESTRICT | Important references (prevent accidents) |
-| SET NULL | Optional relationships |
+| SET NULL | Optional relationships                   |
 
 ### Other Constraints
 
@@ -515,12 +516,12 @@ CREATE TABLE comments (
 
 ### Embedding vs Referencing
 
-| Factor | Embed | Reference |
-|--------|-------|-----------|
-| Access pattern | Read together | Read separately |
-| Relationship | 1:few | 1:many |
-| Document size | Small | Approaching 16MB |
-| Update frequency | Rarely | Frequently |
+| Factor           | Embed         | Reference        |
+| ---------------- | ------------- | ---------------- |
+| Access pattern   | Read together | Read separately  |
+| Relationship     | 1:few         | 1:many           |
+| Document size    | Small         | Approaching 16MB |
+| Update frequency | Rarely        | Frequently       |
 
 ### Embedded Document
 
@@ -532,9 +533,7 @@ CREATE TABLE comments (
     "name": "Jane Smith",
     "email": "jane@example.com"
   },
-  "items": [
-    { "product_id": "prod_789", "quantity": 2, "price": 29.99 }
-  ],
+  "items": [{ "product_id": "prod_789", "quantity": 2, "price": 29.99 }],
   "total": 109.97
 }
 ```
@@ -573,12 +572,12 @@ db.stores.createIndex({ location: "2dsphere" });
 
 ### Migration Best Practices
 
-| Practice | WHY |
-|----------|-----|
-| Always reversible | Need to rollback |
+| Practice            | WHY                   |
+| ------------------- | --------------------- |
+| Always reversible   | Need to rollback      |
 | Backward compatible | Zero-downtime deploys |
-| Schema before data | Separate concerns |
-| Test on staging | Catch issues early |
+| Schema before data  | Separate concerns     |
+| Test on staging     | Catch issues early    |
 
 ### Adding a Column (Zero-Downtime)
 
@@ -641,12 +640,12 @@ EXPLAIN SELECT * FROM orders
 WHERE customer_id = 123 AND status = 'pending';
 ```
 
-| Look For | Meaning |
-|----------|---------|
-| type: ALL | Full table scan (bad) |
-| type: ref | Index used (good) |
-| key: NULL | No index used |
-| rows: high | Many rows scanned |
+| Look For   | Meaning               |
+| ---------- | --------------------- |
+| type: ALL  | Full table scan (bad) |
+| type: ref  | Index used (good)     |
+| key: NULL  | No index used         |
+| rows: high | Many rows scanned     |
 
 ### N+1 Query Problem
 
@@ -666,14 +665,14 @@ results = db.query("""
 
 ### Optimization Techniques
 
-| Technique | When to Use |
-|-----------|-------------|
-| Add indexes | Slow WHERE/ORDER BY |
-| Denormalize | Expensive JOINs |
-| Pagination | Large result sets |
-| Caching | Repeated queries |
-| Read replicas | Read-heavy load |
-| Partitioning | Very large tables |
+| Technique     | When to Use         |
+| ------------- | ------------------- |
+| Add indexes   | Slow WHERE/ORDER BY |
+| Denormalize   | Expensive JOINs     |
+| Pagination    | Large result sets   |
+| Caching       | Repeated queries    |
+| Read replicas | Read-heavy load     |
+| Partitioning  | Very large tables   |
 
 </details>
 

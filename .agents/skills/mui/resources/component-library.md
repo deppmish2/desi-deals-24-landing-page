@@ -3,6 +3,7 @@
 ## Layout Components
 
 ### Box
+
 The fundamental building block:
 
 ```typescript
@@ -23,6 +24,7 @@ The fundamental building block:
 ```
 
 ### Container
+
 Centers content with max-width:
 
 ```typescript
@@ -32,6 +34,7 @@ Centers content with max-width:
 ```
 
 ### Grid (v2)
+
 Responsive grid layout:
 
 ```typescript
@@ -51,6 +54,7 @@ import Grid from '@mui/material/Grid2';
 ```
 
 ### Stack
+
 One-dimensional layout with spacing:
 
 ```typescript
@@ -64,6 +68,7 @@ One-dimensional layout with spacing:
 ## Data Display
 
 ### Typography
+
 Text with theme variants:
 
 ```typescript
@@ -79,6 +84,7 @@ Text with theme variants:
 ```
 
 ### Card
+
 Content container:
 
 ```typescript
@@ -105,6 +111,7 @@ Content container:
 ```
 
 ### List
+
 Structured content lists:
 
 ```typescript
@@ -134,6 +141,7 @@ Structured content lists:
 ```
 
 ### Table
+
 Data tables:
 
 ```typescript
@@ -166,6 +174,7 @@ Data tables:
 ## Input Components
 
 ### TextField
+
 Text input with validation:
 
 ```typescript
@@ -182,6 +191,7 @@ Text input with validation:
 ```
 
 ### Select
+
 Dropdown selection:
 
 ```typescript
@@ -200,6 +210,7 @@ Dropdown selection:
 ```
 
 ### Checkbox & Switch
+
 Boolean inputs:
 
 ```typescript
@@ -215,6 +226,7 @@ Boolean inputs:
 ```
 
 ### Radio Group
+
 Single selection:
 
 ```typescript
@@ -229,6 +241,7 @@ Single selection:
 ```
 
 ### Autocomplete
+
 Searchable select:
 
 ```typescript
@@ -246,6 +259,7 @@ Searchable select:
 ## Buttons
 
 ### Button Variants
+
 ```typescript
 <Stack direction="row" spacing={2}>
   <Button variant="contained">Contained</Button>
@@ -255,6 +269,7 @@ Searchable select:
 ```
 
 ### Button with Icons
+
 ```typescript
 <Button
   variant="contained"
@@ -276,6 +291,7 @@ Searchable select:
 ## Feedback Components
 
 ### Alert
+
 Status messages:
 
 ```typescript
@@ -289,6 +305,7 @@ Status messages:
 ```
 
 ### Snackbar
+
 Toast notifications:
 
 ```typescript
@@ -305,6 +322,7 @@ Toast notifications:
 ```
 
 ### Dialog
+
 Modal dialogs:
 
 ```typescript
@@ -325,6 +343,7 @@ Modal dialogs:
 ```
 
 ### CircularProgress & LinearProgress
+
 Loading indicators:
 
 ```typescript
@@ -338,6 +357,7 @@ Loading indicators:
 ```
 
 ### Skeleton
+
 Content placeholders:
 
 ```typescript
@@ -351,6 +371,7 @@ Content placeholders:
 ## Navigation
 
 ### AppBar & Toolbar
+
 Application header:
 
 ```typescript
@@ -370,6 +391,7 @@ Application header:
 ```
 
 ### Drawer
+
 Side navigation:
 
 ```typescript
@@ -394,6 +416,7 @@ Side navigation:
 ```
 
 ### Tabs
+
 Tabbed navigation:
 
 ```typescript
@@ -410,6 +433,7 @@ Tabbed navigation:
 ```
 
 ### Breadcrumbs
+
 Navigation trail:
 
 ```typescript
@@ -427,6 +451,7 @@ Navigation trail:
 ## Utility Components
 
 ### Tooltip
+
 Helpful hints:
 
 ```typescript
@@ -438,6 +463,7 @@ Helpful hints:
 ```
 
 ### Popover
+
 Floating content:
 
 ```typescript
@@ -454,6 +480,7 @@ Floating content:
 ```
 
 ### Menu
+
 Context menus:
 
 ```typescript
@@ -474,6 +501,7 @@ Context menus:
 ```
 
 ### Chip
+
 Compact information:
 
 ```typescript
@@ -489,6 +517,7 @@ Compact information:
 ```
 
 ### Badge
+
 Notification indicators:
 
 ```typescript
@@ -502,6 +531,7 @@ Notification indicators:
 ```
 
 ### Avatar
+
 User images:
 
 ```typescript

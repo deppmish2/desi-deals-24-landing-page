@@ -31,7 +31,9 @@ function startScheduler(db) {
       try {
         const crawling = await isCrawlLocked(db).catch(() => false);
         if (crawling) {
-          console.log("[scheduler] Skipped daily pool refresh because crawl is still running.");
+          console.log(
+            "[scheduler] Skipped daily pool refresh because crawl is still running.",
+          );
           return;
         }
         await ensureDailyDealsPool(db, {

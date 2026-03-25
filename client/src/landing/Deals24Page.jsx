@@ -104,10 +104,16 @@ function WhatsAppIcon({ className }) {
 }
 
 function inferShareHeadline(productName) {
-  const name = String(productName || "").trim().toLowerCase();
+  const name = String(productName || "")
+    .trim()
+    .toLowerCase();
   if (/\batta\b/.test(name)) return "Atta Deal";
   if (/\brice\b|\bbasmati\b/.test(name)) return "Rice Deal";
-  if (/\bspice\b|\bspices\b|\bmasala\b|\bmirch\b|\bchili\b|\bchilli\b|\bhaldi\b|\bturmeric\b|\bjeera\b|\bcumin\b|\bdhaniya\b|\bcoriander\b/.test(name)) {
+  if (
+    /\bspice\b|\bspices\b|\bmasala\b|\bmirch\b|\bchili\b|\bchilli\b|\bhaldi\b|\bturmeric\b|\bjeera\b|\bcumin\b|\bdhaniya\b|\bcoriander\b/.test(
+      name,
+    )
+  ) {
     return "Spices Deal";
   }
   return "Deal";
@@ -133,7 +139,10 @@ function RefreshCountdown({ countdownLabel }) {
         </div>
       </div>
 
-      <div className="h-8 sm:h-10 w-px bg-slate-200 shrink-0" aria-hidden="true" />
+      <div
+        className="h-8 sm:h-10 w-px bg-slate-200 shrink-0"
+        aria-hidden="true"
+      />
 
       <div className="flex items-center gap-3 sm:gap-6 flex-1 justify-between sm:justify-start">
         {[
@@ -191,7 +200,6 @@ function HeroImage() {
   );
 }
 
-
 function proxyImageUrl(imageUrl) {
   if (!imageUrl) return null;
   return `/api/v1/admin/proxy/image?url=${encodeURIComponent(imageUrl)}`;
@@ -239,9 +247,10 @@ function Deals24Card({ deal, number, showBestBefore = true }) {
   const discountPct = deal?.discount_percent
     ? Math.round(deal.discount_percent)
     : null;
-  const bestBeforeText = showBestBefore && deal?.best_before
-    ? formatBestBefore(deal.best_before)
-    : null;
+  const bestBeforeText =
+    showBestBefore && deal?.best_before
+      ? formatBestBefore(deal.best_before)
+      : null;
 
   const priceText = formatPrice(deal.sale_price, deal.currency);
   const originalPriceText = deal.original_price
@@ -275,7 +284,9 @@ function Deals24Card({ deal, number, showBestBefore = true }) {
     if (!raw) return "";
     if (/^https?:\/\//i.test(raw)) return raw;
     const storeBase = String(deal?.store?.url || "").replace(/\/+$/, "");
-    return storeBase ? `${storeBase}${raw.startsWith("/") ? "" : "/"}${raw}` : raw;
+    return storeBase
+      ? `${storeBase}${raw.startsWith("/") ? "" : "/"}${raw}`
+      : raw;
   }
 
   function goToRedirect(event) {
@@ -310,20 +321,26 @@ function Deals24Card({ deal, number, showBestBefore = true }) {
             className="absolute top-3 right-3 rounded-[8px] px-2.5 py-1"
             style={{
               backgroundColor:
-                discountPct > 50 ? "#ffe4e8" :
-                discountPct >= 30 ? "#fff3e0" :
-                discountPct >= 20 ? "#e8f0fe" :
-                "#f1f5f9",
+                discountPct > 50
+                  ? "#ffe4e8"
+                  : discountPct >= 30
+                    ? "#fff3e0"
+                    : discountPct >= 20
+                      ? "#e8f0fe"
+                      : "#f1f5f9",
             }}
           >
             <span
               className="font-bold text-[13px] leading-none"
               style={{
                 color:
-                  discountPct > 50 ? "#e53e3e" :
-                  discountPct >= 30 ? "#c05200" :
-                  discountPct >= 20 ? "#1a56db" :
-                  "#1e293b",
+                  discountPct > 50
+                    ? "#e53e3e"
+                    : discountPct >= 30
+                      ? "#c05200"
+                      : discountPct >= 20
+                        ? "#1a56db"
+                        : "#1e293b",
               }}
             >
               -{discountPct}%
@@ -439,7 +456,6 @@ export default function Deals24Page() {
     return () => window.clearInterval(id);
   }, []);
 
-
   useEffect(() => {
     // Page starts in "preview" immediately — membership check runs in background
     // and silently upgrades to "allowed" if the user is a basic/premium member.
@@ -465,7 +481,9 @@ export default function Deals24Page() {
       .catch((err) => {
         if (cancelled) return;
         const message = err?.message || "";
-        if (/missing access token|expired access token|invalid/i.test(message)) {
+        if (
+          /missing access token|expired access token|invalid/i.test(message)
+        ) {
           navigate("/waitlist", { replace: true });
         }
         // On other errors, stay in preview — don't block the user
@@ -483,17 +501,17 @@ export default function Deals24Page() {
     return list.filter((deal) => deal && deal.product_url && deal.product_name);
   }, [deals]);
 
-  const visibleDeals = accessState === "preview"
-    ? shownDeals.slice(0, PREVIEW_LIMIT)
-    : shownDeals;
-  const peekDeals = accessState === "preview"
-    ? shownDeals.slice(PREVIEW_LIMIT, PREVIEW_LIMIT + 12)
-    : [];
+  const visibleDeals =
+    accessState === "preview" ? shownDeals.slice(0, PREVIEW_LIMIT) : shownDeals;
+  const peekDeals =
+    accessState === "preview"
+      ? shownDeals.slice(PREVIEW_LIMIT, PREVIEW_LIMIT + 12)
+      : [];
   // On mobile the lock wall appears after the first 2 blurred cards;
   // the remaining blurred cards scroll below it.
   const MOBILE_PEEK_ABOVE = 2;
-  const peekAbove = peekDeals.slice(0, MOBILE_PEEK_ABOVE);   // shown above lock wall on mobile
-  const peekBelow = peekDeals.slice(MOBILE_PEEK_ABOVE);      // shown below lock wall on mobile
+  const peekAbove = peekDeals.slice(0, MOBILE_PEEK_ABOVE); // shown above lock wall on mobile
+  const peekBelow = peekDeals.slice(MOBILE_PEEK_ABOVE); // shown below lock wall on mobile
   const curatedMeta = meta?.curated || null;
 
   async function handleFeedbackSubmit(event) {
@@ -508,7 +526,9 @@ export default function Deals24Page() {
     const email = String(authUser?.email || "").trim();
     if (!email) {
       setFeedbackState("error");
-      setFeedbackError("We couldn't find your account email for this feedback.");
+      setFeedbackError(
+        "We couldn't find your account email for this feedback.",
+      );
       return;
     }
 
@@ -535,16 +555,22 @@ export default function Deals24Page() {
     dealsRef.current?.scrollIntoView({ behavior: "smooth", block: "start" });
   }
 
-
   return (
     <div className="min-h-screen bg-[#f8f6f6]">
-      <Deals24Header onLogout={async () => { await logoutUser(); window.location.replace("/waitlist"); }} />
+      <Deals24Header
+        onLogout={async () => {
+          await logoutUser();
+          window.location.replace("/waitlist");
+        }}
+      />
 
       {/* Sticky deals-refresh bar */}
       <div className="sticky top-0 z-[9] bg-[#16a34a]">
         <div className="max-w-[1280px] mx-auto px-6 sm:px-10 h-11 flex items-center justify-between gap-3">
           <span className="text-white text-[12px] sm:text-[13px] font-bold leading-tight min-w-0">
-            <span className="hidden sm:inline">Today&apos;s deals expire tonight. </span>
+            <span className="hidden sm:inline">
+              Today&apos;s deals expire tonight.{" "}
+            </span>
             24 new deals every morning.
           </span>
           <div className="shrink-0 flex items-center bg-white rounded-full px-3 py-1">
@@ -653,11 +679,16 @@ export default function Deals24Page() {
                     const [y, m] = yyyyMm.split("-").map(Number);
                     if (!y || !m) return false;
                     const now = new Date();
-                    return y > now.getFullYear() || (y === now.getFullYear() && m >= now.getMonth() + 1);
+                    return (
+                      y > now.getFullYear() ||
+                      (y === now.getFullYear() && m >= now.getMonth() + 1)
+                    );
                   };
                   let bestBeforeShown = 0;
                   return visibleDeals.map((deal, idx) => {
-                    const canShow = isBestBeforeValid(deal?.best_before) && bestBeforeShown < 4;
+                    const canShow =
+                      isBestBeforeValid(deal?.best_before) &&
+                      bestBeforeShown < 4;
                     if (canShow) bestBeforeShown += 1;
                     return (
                       <Deals24Card
@@ -680,7 +711,12 @@ export default function Deals24Page() {
                       {/* Mobile: only first 2 blurred cards above lock wall */}
                       <div
                         className="grid grid-cols-1 gap-6 sm:hidden"
-                        style={{ filter: "blur(5px)", pointerEvents: "none", userSelect: "none", opacity: 0.45 }}
+                        style={{
+                          filter: "blur(5px)",
+                          pointerEvents: "none",
+                          userSelect: "none",
+                          opacity: 0.45,
+                        }}
                         aria-hidden="true"
                       >
                         {peekAbove.map((deal, idx) => (
@@ -695,7 +731,12 @@ export default function Deals24Page() {
                       {/* Desktop: all blurred cards above lock wall */}
                       <div
                         className="hidden sm:grid sm:grid-cols-2 lg:grid-cols-3 gap-6"
-                        style={{ filter: "blur(5px)", pointerEvents: "none", userSelect: "none", opacity: 0.45 }}
+                        style={{
+                          filter: "blur(5px)",
+                          pointerEvents: "none",
+                          userSelect: "none",
+                          opacity: 0.45,
+                        }}
                         aria-hidden="true"
                       >
                         {peekDeals.map((deal, idx) => (
@@ -713,15 +754,27 @@ export default function Deals24Page() {
                   {/* Gradient fade */}
                   <div
                     className="absolute inset-x-0 top-0 h-24 pointer-events-none"
-                    style={{ background: "linear-gradient(to bottom, #f8f6f6, transparent)" }}
+                    style={{
+                      background:
+                        "linear-gradient(to bottom, #f8f6f6, transparent)",
+                    }}
                   />
 
                   {/* CTA card */}
                   <div className="relative flex justify-center -mt-6">
                     <div className="w-full max-w-lg bg-white border border-[#dcfce7] rounded-[28px] shadow-[0px_20px_60px_rgba(22,163,74,0.12),0px_2px_8px_rgba(0,0,0,0.06)] px-8 py-8 text-center">
                       <div className="flex items-center justify-center w-14 h-14 rounded-full bg-[#f0fdf4] border border-[#dcfce7] mx-auto mb-4">
-                        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" aria-hidden="true">
-                          <path d="M12 2C9.243 2 7 4.243 7 7v2H5a1 1 0 00-1 1v10a2 2 0 002 2h12a2 2 0 002-2V10a1 1 0 00-1-1h-2V7c0-2.757-2.243-5-5-5zm0 2a3 3 0 013 3v2H9V7a3 3 0 013-3zm0 9a2 2 0 110 4 2 2 0 010-4z" fill="#16a34a" />
+                        <svg
+                          width="24"
+                          height="24"
+                          viewBox="0 0 24 24"
+                          fill="none"
+                          aria-hidden="true"
+                        >
+                          <path
+                            d="M12 2C9.243 2 7 4.243 7 7v2H5a1 1 0 00-1 1v10a2 2 0 002 2h12a2 2 0 002-2V10a1 1 0 00-1-1h-2V7c0-2.757-2.243-5-5-5zm0 2a3 3 0 013 3v2H9V7a3 3 0 013-3zm0 9a2 2 0 110 4 2 2 0 010-4z"
+                            fill="#16a34a"
+                          />
                         </svg>
                       </div>
 
@@ -733,7 +786,9 @@ export default function Deals24Page() {
                       </h3>
                       <p className="mt-2 text-[#64748b] text-[15px] leading-6">
                         Invite 1 friend to unlock all{" "}
-                        <span className="font-bold text-[#1e293b]">{shownDeals.length} deals</span>{" "}
+                        <span className="font-bold text-[#1e293b]">
+                          {shownDeals.length} deals
+                        </span>{" "}
                         — free, every day.
                       </p>
 
@@ -749,7 +804,11 @@ export default function Deals24Page() {
                                   : "bg-slate-50 border-slate-200 text-slate-400"
                               }`}
                             >
-                              <span>{i < (waitlistStatus.confirmed_count || 0) ? "✓" : "○"}</span>
+                              <span>
+                                {i < (waitlistStatus.confirmed_count || 0)
+                                  ? "✓"
+                                  : "○"}
+                              </span>
                               <span>Friend {i + 1}</span>
                             </div>
                           ))}
@@ -758,7 +817,9 @@ export default function Deals24Page() {
 
                       {waitlistStatus?.referral_code ? (
                         <div className="mt-6 flex flex-col gap-3">
-                          <p className="text-[13px] text-[#64748b] font-medium">Your invite link:</p>
+                          <p className="text-[13px] text-[#64748b] font-medium">
+                            Your invite link:
+                          </p>
                           <div className="flex items-center gap-2">
                             <input
                               readOnly
@@ -769,7 +830,9 @@ export default function Deals24Page() {
                             <button
                               type="button"
                               onClick={() => {
-                                navigator.clipboard?.writeText(`${window.location.origin}/waitlist?ref=${waitlistStatus.referral_code}`);
+                                navigator.clipboard?.writeText(
+                                  `${window.location.origin}/waitlist?ref=${waitlistStatus.referral_code}`,
+                                );
                               }}
                               className="shrink-0 px-3 py-2 rounded-[10px] border border-slate-200 bg-white hover:bg-slate-50 text-[13px] font-bold text-slate-600 transition-colors"
                             >
@@ -781,14 +844,19 @@ export default function Deals24Page() {
                             target="_blank"
                             rel="noopener noreferrer"
                             className="w-full bg-[#16a34a] hover:bg-[#15803d] text-white font-extrabold rounded-[14px] px-6 py-4 text-[16px] leading-6 transition-colors flex items-center justify-center gap-2 no-underline hover:no-underline"
-                            style={{ boxShadow: "0px 8px 20px rgba(22,163,74,0.25)" }}
+                            style={{
+                              boxShadow: "0px 8px 20px rgba(22,163,74,0.25)",
+                            }}
                           >
                             <WhatsAppIcon />
                             Invite on WhatsApp
                           </a>
                         </div>
                       ) : (
-                        <p className="mt-6 text-[13px] text-[#64748b]">Invite 1 friend using your unique link to unlock all deals.</p>
+                        <p className="mt-6 text-[13px] text-[#64748b]">
+                          Invite 1 friend using your unique link to unlock all
+                          deals.
+                        </p>
                       )}
                     </div>
                   </div>
@@ -797,7 +865,12 @@ export default function Deals24Page() {
                   {peekBelow.length > 0 && (
                     <div
                       className="grid grid-cols-1 gap-6 mt-6 sm:hidden"
-                      style={{ filter: "blur(5px)", pointerEvents: "none", userSelect: "none", opacity: 0.45 }}
+                      style={{
+                        filter: "blur(5px)",
+                        pointerEvents: "none",
+                        userSelect: "none",
+                        opacity: 0.45,
+                      }}
                       aria-hidden="true"
                     >
                       {peekBelow.map((deal, idx) => (
@@ -828,8 +901,8 @@ export default function Deals24Page() {
               Tell us what to improve
             </h3>
             <p className="text-[#64748b] text-[15px] leading-7 max-w-[720px]">
-              Found a bad deal, a category gap, or a better way to browse? Send it
-              straight from this page.
+              Found a bad deal, a category gap, or a better way to browse? Send
+              it straight from this page.
             </p>
           </div>
 
@@ -849,14 +922,17 @@ export default function Deals24Page() {
             />
             <div className="flex flex-wrap items-center justify-between gap-4">
               <p className="text-[13px] leading-6 text-[#64748b]">
-                We&apos;ll send this from {authUser?.email || "your account email"}.
+                We&apos;ll send this from{" "}
+                {authUser?.email || "your account email"}.
               </p>
               <button
                 type="submit"
                 disabled={feedbackState === "submitting"}
                 className="bg-[#16a34a] hover:bg-[#15803d] disabled:bg-[#86efac] text-white font-extrabold rounded-[12px] px-6 py-3 text-[15px] leading-6 transition-colors"
               >
-                {feedbackState === "submitting" ? "Sending..." : "Send feedback"}
+                {feedbackState === "submitting"
+                  ? "Sending..."
+                  : "Send feedback"}
               </button>
             </div>
             {feedbackState === "sent" ? (

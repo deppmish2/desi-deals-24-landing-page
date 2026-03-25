@@ -5,26 +5,33 @@ Guidelines for creating "cool" high-quality slides.
 ## Slide Titles (h2)
 
 ### ✅ Good Examples
+
 - **Concise**: About 5-7 characters
 - **Clear**: Content is immediately understandable
 - **Consistent**: Use the same style at the same hierarchy level
 
 ```markdown
 ## Introduction
+
 ## Problem
+
 ## Solution
+
 ## Results
 ```
 
 ### ❌ Bad Examples
+
 ```markdown
 ## In this section we will explain the introduction
+
 ## What are the challenges we are facing
 ```
 
 ## Bullet Points
 
 ### ✅ Good Examples
+
 - **3-5 items**: Not too many
 - **Concise**: About 15-25 characters per line
 - **Parallel**: Same grammatical structure at the same level
@@ -36,6 +43,7 @@ Guidelines for creating "cool" high-quality slides.
 ```
 
 ### ❌ Bad Examples
+
 ```markdown
 - This is a very long explanation that doesn't fit on one line and becomes difficult to read
 - Short
@@ -88,9 +96,10 @@ Guidelines for creating "cool" high-quality slides.
 
 This product was developed using the latest technology.
 The main features include the following 7 points:
+
 - Feature 1: Detailed explanation continues at length...
 - Feature 2: Even more detailed explanation...
-(Continued)
+  (Continued)
 ```
 
 ## Using Whitespace
@@ -102,6 +111,7 @@ The main features include the following 7 points:
 ## Using Colors
 
 Leverage colors defined in the theme:
+
 - **Background color**: `#f8f8f4` (light beige)
 - **Text color**: `#3a3b5a` (dark navy)
 - **Heading color**: `#4f86c6` (blue)
@@ -127,6 +137,7 @@ Use sparingly and avoid excessive decoration.
 
 ```markdown
 # Text on left, image on right
+
 ![bg right:40%](image.png)
 
 - Point 1
@@ -136,6 +147,7 @@ Use sparingly and avoid excessive decoration.
 ## Font Size Guidelines
 
 Defined in the theme:
+
 - h1: 56px (title slide only)
 - h2: 40px (regular slide titles)
 - h3: 28px (subheadings)

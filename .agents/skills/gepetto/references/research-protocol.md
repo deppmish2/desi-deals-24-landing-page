@@ -33,11 +33,13 @@ Read the spec file and extract potential research topics by identifying:
 - **Integration points** (third-party APIs, OAuth providers, payment gateways, etc.)
 
 Generate 3-5 research topic suggestions based on what you find. Format them as searchable queries with year for recency:
+
 - "React authentication patterns 2025"
 - "PostgreSQL full-text search best practices"
 - "Redis session storage patterns"
 
 If the spec is vague, fall back to generic options:
+
 - "General best practices for {detected_language/framework}"
 - "Security considerations for {feature_type}"
 
@@ -166,10 +168,10 @@ Structure the file however makes sense for the findings.
 
 ## Edge Cases
 
-| Case | Handling |
-|------|----------|
-| Spec file is vague | Present generic options based on detected language/framework |
-| User selects no research | Skip step 5, proceed to step 6 (interview) |
-| One subagent fails | Log warning, write file with only successful research |
-| Both subagents fail | Log error, ask user if they want to retry or proceed |
-| Only one research type | Run single subagent, write file with just that content |
+| Case                     | Handling                                                     |
+| ------------------------ | ------------------------------------------------------------ |
+| Spec file is vague       | Present generic options based on detected language/framework |
+| User selects no research | Skip step 5, proceed to step 6 (interview)                   |
+| One subagent fails       | Log warning, write file with only successful research        |
+| Both subagents fail      | Log error, ask user if they want to retry or proceed         |
+| Only one research type   | Run single subagent, write file with just that content       |

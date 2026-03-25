@@ -21,21 +21,31 @@ if (!email) {
 (async () => {
   await db.ready;
 
-  const user = await db.prepare("SELECT * FROM users WHERE email = ? LIMIT 1").get(email);
+  const user = await db
+    .prepare("SELECT * FROM users WHERE email = ? LIMIT 1")
+    .get(email);
   if (!user) {
     console.log(`No user found with email: ${email}`);
     process.exit(0);
   }
 
-  console.log(`Found user: id=${user.id} email=${user.email} google_id=${user.google_id || "none"}`);
+  console.log(
+    `Found user: id=${user.id} email=${user.email} google_id=${user.google_id || "none"}`,
+  );
 
   // Delete email auth tokens (not cascaded)
-  const tokensResult = await db.prepare("DELETE FROM email_auth_tokens WHERE email = ?").run(email);
-  console.log(`Deleted email_auth_tokens: ${tokensResult.rowsAffected ?? "?"} row(s)`);
+  const tokensResult = await db
+    .prepare("DELETE FROM email_auth_tokens WHERE email = ?")
+    .run(email);
+  console.log(
+    `Deleted email_auth_tokens: ${tokensResult.rowsAffected ?? "?"} row(s)`,
+  );
 
   // Delete user — cascades: refresh_tokens, waitlist_referrals, shopping_lists,
   //   price_alerts, alert_notifications; events.user_id set to NULL
-  const userResult = await db.prepare("DELETE FROM users WHERE id = ?").run(user.id);
+  const userResult = await db
+    .prepare("DELETE FROM users WHERE id = ?")
+    .run(user.id);
   console.log(`Deleted user: ${userResult.rowsAffected ?? "?"} row(s)`);
 
   console.log(`Done. User ${email} fully removed.`);

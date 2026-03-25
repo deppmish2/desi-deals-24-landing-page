@@ -13,6 +13,7 @@ Generic operations on generic data structures beat specialized operations on spe
 ## Why Custom Abstractions Hurt
 
 Every custom type, wrapper class, or specialized structure:
+
 - Adds a concept to understand
 - Requires its own operations
 - Limits composition with other code
@@ -33,6 +34,7 @@ Then use generic structures (maps, vectors, sets) to represent that information.
 ## Practical Application
 
 Before creating a new class/type, ask:
+
 - Could this be a map/dict with well-known keys?
 - Could this be a simple tuple/record?
 - Do I need custom behavior, or just data?

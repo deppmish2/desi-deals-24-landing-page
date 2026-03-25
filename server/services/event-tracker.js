@@ -28,11 +28,13 @@ async function trackEvent(db, eventName, options = {}) {
     options.userId == null ? null : String(options.userId).trim() || null;
 
   try {
-    await db.prepare(
-      `INSERT INTO events
+    await db
+      .prepare(
+        `INSERT INTO events
         (event_name, user_id, source, route, entity_type, entity_id, payload)
        VALUES (?, ?, ?, ?, ?, ?, ?)`,
-    ).run(name, userId, source, route, entityType, entityId, payload);
+      )
+      .run(name, userId, source, route, entityType, entityId, payload);
     return true;
   } catch (error) {
     console.warn("[events] track failed:", error.message);

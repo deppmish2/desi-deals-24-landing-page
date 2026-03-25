@@ -12,12 +12,15 @@ Creates comprehensive handoff documents that enable fresh AI agents to seamlessl
 Determine which mode applies:
 
 **Creating a handoff?** User wants to save current state, pause work, or context is getting full.
+
 - Follow: CREATE Workflow below
 
 **Resuming from a handoff?** User wants to continue previous work, load context, or mentions an existing handoff.
+
 - Follow: RESUME Workflow below
 
 **Proactive suggestion?** After substantial work (5+ file edits, complex debugging, major decisions), suggest:
+
 > "We've made significant progress. Consider creating a handoff document to preserve this context for future sessions. Say 'create handoff' when ready."
 
 ## CREATE Workflow
@@ -33,11 +36,13 @@ python scripts/create_handoff.py [task-slug]
 Example: `python scripts/create_handoff.py implementing-user-auth`
 
 **For continuation handoffs** (linking to previous work):
+
 ```bash
 python scripts/create_handoff.py "auth-part-2" --continues-from 2024-01-15-auth.md
 ```
 
 The script will:
+
 - Create `.claude/handoffs/` directory if needed
 - Generate timestamped filename
 - Pre-fill: timestamp, project path, git branch, recent commits, modified files
@@ -64,6 +69,7 @@ python scripts/validate_handoff.py <handoff-file>
 ```
 
 The validator checks:
+
 - [ ] No `[TODO: ...]` placeholders remaining
 - [ ] Required sections present and populated
 - [ ] No potential secrets detected (API keys, passwords, tokens)
@@ -75,6 +81,7 @@ The validator checks:
 ### Step 4: Confirm Handoff
 
 Report to user:
+
 - Handoff file location
 - Validation score and any warnings
 - Summary of captured context
@@ -101,12 +108,14 @@ python scripts/check_staleness.py <handoff-file>
 ```
 
 Staleness levels:
+
 - **FRESH**: Safe to resume - minimal changes since handoff
 - **SLIGHTLY_STALE**: Review changes, then resume
 - **STALE**: Verify context carefully before resuming
 - **VERY_STALE**: Consider creating a fresh handoff
 
 The script checks:
+
 - Time since handoff was created
 - Git commits since handoff
 - Files changed since handoff
@@ -134,6 +143,7 @@ Follow the checklist in [references/resume-checklist.md](references/resume-check
 Start with "Immediate Next Steps" item #1 from the handoff document.
 
 Reference these sections as you work:
+
 - "Critical Files" for important locations
 - "Key Patterns Discovered" for conventions to follow
 - "Potential Gotchas" to avoid known issues
@@ -141,6 +151,7 @@ Reference these sections as you work:
 ### Step 6: Update or Chain Handoffs
 
 As you work:
+
 - Mark completed items in "Pending Work"
 - Add new discoveries to relevant sections
 - For long sessions: create a new handoff with `--continues-from` to chain them
@@ -158,6 +169,7 @@ handoff-3.md --continues-from handoff-2.md
 ```
 
 Each handoff in the chain:
+
 - Links to its predecessor
 - Can mark older handoffs as superseded
 - Provides context breadcrumbs for new agents
@@ -176,12 +188,12 @@ Example: `2024-01-15-143022-implementing-auth.md`
 
 ### scripts/
 
-| Script | Purpose |
-|--------|---------|
+| Script                                               | Purpose                                     |
+| ---------------------------------------------------- | ------------------------------------------- |
 | `create_handoff.py [slug] [--continues-from <file>]` | Generate new handoff with smart scaffolding |
-| `list_handoffs.py [path]` | List available handoffs in a project |
-| `validate_handoff.py <file>` | Check completeness, quality, and security |
-| `check_staleness.py <file>` | Assess if handoff context is still current |
+| `list_handoffs.py [path]`                            | List available handoffs in a project        |
+| `validate_handoff.py <file>`                         | Check completeness, quality, and security   |
+| `check_staleness.py <file>`                          | Assess if handoff context is still current  |
 
 ### references/
 

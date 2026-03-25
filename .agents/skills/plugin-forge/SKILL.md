@@ -104,13 +104,13 @@ Update `.claude-plugin/marketplace.json`:
 
 Create in respective directories:
 
-| Component | Location | Format |
-|-----------|----------|--------|
-| Commands | `commands/` | Markdown with frontmatter |
-| Skills | `skills/<name>/` | Directory with `SKILL.md` |
-| Agents | `agents/` | Markdown definitions |
-| Hooks | `hooks/hooks.json` | Event handlers |
-| MCP Servers | `.mcp.json` | External integrations |
+| Component   | Location           | Format                    |
+| ----------- | ------------------ | ------------------------- |
+| Commands    | `commands/`        | Markdown with frontmatter |
+| Skills      | `skills/<name>/`   | Directory with `SKILL.md` |
+| Agents      | `agents/`          | Markdown definitions      |
+| Hooks       | `hooks/hooks.json` | Event handlers            |
+| MCP Servers | `.mcp.json`        | External integrations     |
 
 ### 5. Local Testing
 
@@ -210,15 +210,15 @@ git commit -m "feat!: breaking change"
 
 Detailed documentation included:
 
-| Reference | Content |
-|-----------|---------|
-| `references/plugin-structure.md` | Directory structure, manifest schema, components |
+| Reference                          | Content                                          |
+| ---------------------------------- | ------------------------------------------------ |
+| `references/plugin-structure.md`   | Directory structure, manifest schema, components |
 | `references/marketplace-schema.md` | Marketplace format, plugin entries, distribution |
-| `references/workflows.md` | Step-by-step workflows, patterns, publishing |
+| `references/workflows.md`          | Step-by-step workflows, patterns, publishing     |
 
 ### Scripts
 
-| Script | Purpose |
-|--------|---------|
+| Script                     | Purpose             |
+| -------------------------- | ------------------- |
 | `scripts/create_plugin.py` | Scaffold new plugin |
-| `scripts/bump_version.py` | Update versions |
+| `scripts/bump_version.py`  | Update versions     |

@@ -1,5 +1,5 @@
 /* Google Fontsから日本語フォントを読み込み */
-@import url('https://fonts.googleapis.com/css2?family=Noto+Sans+JP:wght@400;500;700&display=swap');
+@import url("https://fonts.googleapis.com/css2?family=Noto+Sans+JP:wght@400;500;700&display=swap");
 
 /* --- ビジネスライクテーマ --- */
 :root {
@@ -8,7 +8,8 @@
   --color-heading: #1e40af;
   --color-accent: #3b82f6;
   --color-border: #d1d5db;
-  --font-default: 'Noto Sans JP', 'Hiragino Kaku Gothic ProN', 'Meiryo', sans-serif;
+  --font-default:
+    "Noto Sans JP", "Hiragino Kaku Gothic ProN", "Meiryo", sans-serif;
 }
 
 section {
@@ -24,7 +25,12 @@ section {
   padding: 56px;
 }
 
-h1, h2, h3, h4, h5, h6 {
+h1,
+h2,
+h3,
+h4,
+h5,
+h6 {
   font-weight: 700;
   color: var(--color-heading);
   margin: 0;
@@ -62,7 +68,8 @@ h3 {
   font-weight: 600;
 }
 
-ul, ol {
+ul,
+ol {
   padding-left: 32px;
 }
 
@@ -85,7 +92,7 @@ footer {
 }
 
 footer::before {
-  content: '';
+  content: "";
   flex: 1;
   height: 2px;
   background-color: var(--color-border);
@@ -123,7 +130,8 @@ table {
   font-size: 18px;
 }
 
-th, td {
+th,
+td {
   border: 1px solid var(--color-border);
   padding: 12px;
   text-align: left;
@@ -204,6 +212,6 @@ code {
   color: var(--color-heading);
   padding: 2px 6px;
   border-radius: 3px;
-  font-family: 'Consolas', 'Monaco', monospace;
+  font-family: "Consolas", "Monaco", monospace;
   font-size: 0.9em;
 }

@@ -43,7 +43,8 @@ function getOffsetMinutesAtUtc(utcMs, timeZone = REFRESH_TIME_ZONE) {
     hour12: false,
   });
   const parts = formatter.formatToParts(new Date(utcMs));
-  const tzName = parts.find((part) => part.type === "timeZoneName")?.value || "GMT";
+  const tzName =
+    parts.find((part) => part.type === "timeZoneName")?.value || "GMT";
   const match = tzName.match(/GMT([+-])(\d{1,2})(?::(\d{2}))?/);
   if (!match) return 0;
   const sign = match[1] === "-" ? -1 : 1;

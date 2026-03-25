@@ -30,13 +30,13 @@ The skill follows a systematic workflow:
 
 ### C4 Diagram Levels
 
-| Level | Diagram Type | Audience | Shows | When to Create |
-|-------|-------------|----------|-------|----------------|
-| 1 | **C4Context** | Everyone | System + external actors | Always (required) |
-| 2 | **C4Container** | Technical | Apps, databases, services | Always (required) |
-| 3 | **C4Component** | Developers | Internal components | Only if adds value |
-| 4 | **C4Deployment** | DevOps | Infrastructure nodes | For production systems |
-| - | **C4Dynamic** | Technical | Request flows (numbered) | For complex workflows |
+| Level | Diagram Type     | Audience   | Shows                     | When to Create         |
+| ----- | ---------------- | ---------- | ------------------------- | ---------------------- |
+| 1     | **C4Context**    | Everyone   | System + external actors  | Always (required)      |
+| 2     | **C4Container**  | Technical  | Apps, databases, services | Always (required)      |
+| 3     | **C4Component**  | Developers | Internal components       | Only if adds value     |
+| 4     | **C4Deployment** | DevOps     | Infrastructure nodes      | For production systems |
+| -     | **C4Dynamic**    | Technical  | Request flows (numbered)  | For complex workflows  |
 
 **Key Insight**: "Context + Container diagrams are sufficient for most software development teams." Only create Component/Code diagrams when they genuinely add value.
 
@@ -56,6 +56,7 @@ The skill follows a systematic workflow:
 **Request**: "Create architecture diagrams for my workout tracker app"
 
 **Output**: Generates:
+
 - System Context diagram showing users and external systems
 - Container diagram showing the Vue.js SPA, state management (Pinia), and IndexedDB
 
@@ -76,6 +77,7 @@ C4Context
 **Request**: "Create a container diagram for our e-commerce microservices"
 
 **Output**: Generates a Container diagram showing:
+
 - Order Service with PostgreSQL
 - Inventory Service with MongoDB
 - Message queues for inter-service communication
@@ -120,6 +122,7 @@ C4Dynamic
 **Request**: "Create a deployment diagram for our AWS infrastructure"
 
 **Output**: Generates a Deployment diagram showing:
+
 - Browser deployment node
 - AWS Cloud with ECS and RDS nodes
 - Infrastructure relationships
@@ -154,13 +157,13 @@ Architecture documentation is written to `docs/architecture/` with this naming c
 
 ## Audience-Appropriate Detail
 
-| Audience | Recommended Diagrams |
-|----------|---------------------|
-| Executives | System Context only |
-| Product Managers | Context + Container |
-| Architects | Context + Container + key Components |
-| Developers | All levels as needed |
-| DevOps | Container + Deployment |
+| Audience         | Recommended Diagrams                 |
+| ---------------- | ------------------------------------ |
+| Executives       | System Context only                  |
+| Product Managers | Context + Container                  |
+| Architects       | Context + Container + key Components |
+| Developers       | All levels as needed                 |
+| DevOps           | Container + Deployment               |
 
 ## References
 
