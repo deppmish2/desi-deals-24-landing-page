@@ -25,6 +25,41 @@ function setMemCache(key, deals) {
   _memCache.set(key, { deals, expiresAt: Date.now() + MEM_CACHE_TTL_MS });
 }
 
+// Levenshtein distance — used for fuzzy token matching.
+function levenshtein(a, b) {
+  const m = a.length, n = b.length;
+  if (m === 0) return n;
+  if (n === 0) return m;
+  const dp = Array.from({ length: m + 1 }, (_, i) => [i]);
+  for (let j = 1; j <= n; j++) dp[0][j] = j;
+  for (let i = 1; i <= m; i++) {
+    for (let j = 1; j <= n; j++) {
+      dp[i][j] = a[i - 1] === b[j - 1]
+        ? dp[i - 1][j - 1]
+        : 1 + Math.min(dp[i - 1][j], dp[i][j - 1], dp[i - 1][j - 1]);
+    }
+  }
+  return dp[m][n];
+}
+
+// Returns true if any word in `text` fuzzy-matches `token`.
+// Exact substring match first; falls back to edit-distance tolerance
+// scaled by token length (1 error per 4 chars, min threshold 1).
+function fuzzyTokenMatch(text, token) {
+  if (!text || !token) return false;
+  if (text.includes(token)) return true;
+  const words = text.split(/\s+/);
+  const tolerance = Math.max(1, Math.floor(token.length / 4));
+  return words.some((w) => levenshtein(w, token) <= tolerance);
+}
+
+// Split query into tokens and require all to match somewhere in the target.
+function fuzzySearch(haystack, query) {
+  const tokens = query.toLowerCase().split(/\s+/).filter(Boolean);
+  const text = haystack.toLowerCase();
+  return tokens.every((tok) => fuzzyTokenMatch(text, tok));
+}
+
 // Seeded xorshift32 pseudo-random — deterministic per seed.
 function seededRandom(seed) {
   let s = (seed >>> 0) || 1;
@@ -121,15 +156,17 @@ router.get("/", async (req, res, next) => {
     }
 
     const filterCategory = String(req.query.category || "").trim();
+    const minDiscount = parseFloat(req.query.min_discount || "0") || 0;
+    const priceMin = parseFloat(req.query.price_min || "0") || 0;
+    const priceMax = parseFloat(req.query.price_max || "0") || 0;
+    const inStock = req.query.in_stock === "1";
+    const hideExpired = req.query.hide_expired === "1";
 
     // Apply filters (all gated in frontend, server supports freely)
     let filtered = allDeals;
     if (searchQuery) {
-      filtered = filtered.filter(
-        (d) =>
-          d.product_name?.toLowerCase().includes(searchQuery) ||
-          d.store?.name?.toLowerCase().includes(searchQuery) ||
-          d.product_category?.toLowerCase().includes(searchQuery),
+      filtered = filtered.filter((d) =>
+        fuzzySearch(`${d.product_name || ""} ${d.store?.name || ""} ${d.product_category || ""}`, searchQuery),
       );
     }
     if (filterStore) {
@@ -137,6 +174,22 @@ router.get("/", async (req, res, next) => {
     }
     if (filterCategory) {
       filtered = filtered.filter((d) => d.product_category === filterCategory);
+    }
+    if (minDiscount > 0) {
+      filtered = filtered.filter((d) => (d.discount_percent || 0) >= minDiscount);
+    }
+    if (priceMin > 0) {
+      filtered = filtered.filter((d) => (d.sale_price || 0) >= priceMin);
+    }
+    if (priceMax > 0) {
+      filtered = filtered.filter((d) => (d.sale_price || 0) <= priceMax);
+    }
+    if (inStock) {
+      filtered = filtered.filter((d) => d.availability === "in_stock");
+    }
+    if (hideExpired) {
+      const thisMonth = new Date().toISOString().slice(0, 7);
+      filtered = filtered.filter((d) => !d.best_before || d.best_before >= thisMonth);
     }
 
     // Sort override — gated in the frontend, server supports freely.

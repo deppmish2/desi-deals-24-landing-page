@@ -58,6 +58,12 @@ function LoginModal({ message, onClose }) {
         className="bg-white rounded-2xl p-7 max-w-sm w-full shadow-2xl flex flex-col gap-4"
         onClick={(e) => e.stopPropagation()}
       >
+        {message && (
+          <div className="rounded-xl bg-[#f0fdf4] border border-[#bbf7d0] px-4 py-3 text-center">
+            <p className="text-[14px] font-semibold text-[#15803d]">{message}</p>
+            <p className="text-[12px] text-[#4ade80] mt-0.5" style={{ color: "#16a34a", opacity: 0.75 }}>Sign up for free to unlock this.</p>
+          </div>
+        )}
         {authError && (
           <p className="text-[13px] text-red-600 bg-red-50 rounded-lg px-3 py-2">{authError}</p>
         )}
@@ -349,6 +355,88 @@ function FiltersModal({ storeNames, draft, onChange, onClear, onApply, onClose, 
               ))}
             </div>
           </div>
+
+          {/* Minimum Discount */}
+          <div>
+            <p className="text-[11px] font-extrabold tracking-[1.5px] uppercase text-slate-400 mb-3">Minimum Discount</p>
+            <div className="grid grid-cols-4 gap-2">
+              {["10", "25", "50", "75"].map((pct) => {
+                const active = draft.minDiscount === pct;
+                return (
+                  <button
+                    key={pct}
+                    type="button"
+                    onClick={() => onChange({ ...draft, minDiscount: active ? "" : pct })}
+                    className={`py-3 rounded-xl border-2 text-[14px] font-semibold transition-colors ${
+                      active ? "bg-[#0f172a] border-[#0f172a] text-white" : "bg-white border-slate-200 text-[#0f172a] hover:border-slate-400"
+                    }`}
+                  >
+                    {pct}%+
+                  </button>
+                );
+              })}
+            </div>
+          </div>
+
+          {/* Price Range */}
+          <div>
+            <p className="text-[11px] font-extrabold tracking-[1.5px] uppercase text-slate-400 mb-3">Price Range (€)</p>
+            <div className="flex items-center gap-3 mb-4">
+              <div className="flex-1 flex items-center gap-2 border-2 border-slate-200 rounded-xl px-3 py-2.5 focus-within:border-[#0f172a] transition-colors">
+                <span className="text-slate-400 text-[14px]">€</span>
+                <input
+                  type="number"
+                  min="0"
+                  placeholder="Min"
+                  value={draft.priceMin}
+                  onChange={(e) => onChange({ ...draft, priceMin: e.target.value })}
+                  className="flex-1 outline-none text-[14px] text-[#0f172a] bg-transparent w-0"
+                />
+              </div>
+              <span className="text-slate-300 text-[18px]">—</span>
+              <div className="flex-1 flex items-center gap-2 border-2 border-slate-200 rounded-xl px-3 py-2.5 focus-within:border-[#0f172a] transition-colors">
+                <span className="text-slate-400 text-[14px]">€</span>
+                <input
+                  type="number"
+                  min="0"
+                  placeholder="Max"
+                  value={draft.priceMax}
+                  onChange={(e) => onChange({ ...draft, priceMax: e.target.value })}
+                  className="flex-1 outline-none text-[14px] text-[#0f172a] bg-transparent w-0"
+                />
+              </div>
+            </div>
+            <input
+              type="range"
+              min="0"
+              max="200"
+              value={draft.priceMax || 200}
+              onChange={(e) => onChange({ ...draft, priceMax: e.target.value === "200" ? "" : e.target.value })}
+              className="w-full accent-[#0f172a] h-1 cursor-pointer"
+            />
+          </div>
+
+          {/* Toggles */}
+          <div className="flex flex-col gap-4 pb-2">
+            {[
+              { key: "hideOutOfStock", label: "Hide out of stock products", sub: "Remove products currently unavailable" },
+              { key: "hideExpired", label: "Hide expired products", sub: "Remove products past best before date" },
+            ].map(({ key, label, sub }) => (
+              <div key={key} className="flex items-start justify-between gap-4">
+                <div>
+                  <p className="text-[14px] font-bold text-[#0f172a]">{label}</p>
+                  <p className="text-[12px] text-slate-400 mt-0.5">{sub}</p>
+                </div>
+                <button
+                  type="button"
+                  onClick={() => onChange({ ...draft, [key]: !draft[key] })}
+                  className={`relative shrink-0 w-12 h-6 rounded-full transition-colors ${draft[key] ? "bg-[#16a34a]" : "bg-slate-200"}`}
+                >
+                  <span className={`absolute top-0.5 left-0.5 w-5 h-5 bg-white rounded-full shadow transition-transform ${draft[key] ? "translate-x-6" : "translate-x-0"}`} />
+                </button>
+              </div>
+            ))}
+          </div>
         </div>
 
         {/* Footer */}
@@ -454,8 +542,13 @@ export default function DealsPage() {
   const [filterStore, setFilterStore] = useState("");
   const [filterCategory, setFilterCategory] = useState("");
   const [filtersOpen, setFiltersOpen] = useState(false);
+  const [filterMinDiscount, setFilterMinDiscount] = useState("");
+  const [filterPriceMin, setFilterPriceMin] = useState("");
+  const [filterPriceMax, setFilterPriceMax] = useState("");
+  const [filterHideOutOfStock, setFilterHideOutOfStock] = useState(true);
+  const [filterHideExpired, setFilterHideExpired] = useState(false);
   // draft holds uncommitted filter state inside the modal
-  const [filterDraft, setFilterDraft] = useState({ store: "", category: "" });
+  const [filterDraft, setFilterDraft] = useState({ store: "", category: "", minDiscount: "", priceMin: "", priceMax: "", hideOutOfStock: true, hideExpired: false });
   const [loginModal, setLoginModal] = useState(null);
   const [bookmarkedIds, setBookmarkedIds] = useState(new Set());
 
@@ -476,6 +569,11 @@ export default function DealsPage() {
     sort: sortValue && isLoggedIn ? sortValue : undefined,
     store: filterStore && isLoggedIn ? filterStore : undefined,
     category: filterCategory && isLoggedIn ? filterCategory : undefined,
+    min_discount: filterMinDiscount && isLoggedIn ? filterMinDiscount : undefined,
+    price_min: filterPriceMin && isLoggedIn ? filterPriceMin : undefined,
+    price_max: filterPriceMax && isLoggedIn ? filterPriceMax : undefined,
+    in_stock: filterHideOutOfStock && isLoggedIn ? "1" : undefined,
+    hide_expired: filterHideExpired && isLoggedIn ? "1" : undefined,
   });
 
   // Load bookmarks if logged in
@@ -508,7 +606,7 @@ export default function DealsPage() {
   }
 
   function openFilters() {
-    setFilterDraft({ store: filterStore, category: filterCategory });
+    setFilterDraft({ store: filterStore, category: filterCategory, minDiscount: filterMinDiscount, priceMin: filterPriceMin, priceMax: filterPriceMax, hideOutOfStock: filterHideOutOfStock, hideExpired: filterHideExpired });
     setFiltersOpen(true);
   }
 
@@ -520,11 +618,16 @@ export default function DealsPage() {
   function applyFilters() {
     setFilterStore(filterDraft.store);
     setFilterCategory(filterDraft.category);
+    setFilterMinDiscount(filterDraft.minDiscount);
+    setFilterPriceMin(filterDraft.priceMin);
+    setFilterPriceMax(filterDraft.priceMax);
+    setFilterHideOutOfStock(filterDraft.hideOutOfStock);
+    setFilterHideExpired(filterDraft.hideExpired);
     setFiltersOpen(false);
   }
 
   function clearFilters() {
-    setFilterDraft({ store: "", category: "" });
+    setFilterDraft({ store: "", category: "", minDiscount: "", priceMin: "", priceMax: "", hideOutOfStock: false, hideExpired: false });
   }
 
   function handleSortChange(val) {
@@ -538,6 +641,10 @@ export default function DealsPage() {
     if (type === "store") setFilterStore("");
     if (type === "category") setFilterCategory("");
     if (type === "sort") setSortValue("");
+    if (type === "minDiscount") setFilterMinDiscount("");
+    if (type === "price" || type === "priceRange") { setFilterPriceMin(""); setFilterPriceMax(""); }
+    if (type === "hideOutOfStock") setFilterHideOutOfStock(false);
+    if (type === "hideExpired") setFilterHideExpired(false);
   }
 
   const handleBookmark = useCallback(
@@ -569,6 +676,15 @@ export default function DealsPage() {
   const activeChips = [
     filterStore && { type: "store", label: filterStore },
     filterCategory && { type: "category", label: filterCategory },
+    filterMinDiscount && { type: "minDiscount", label: `${filterMinDiscount}%+ off` },
+    (filterPriceMin || filterPriceMax) && {
+      type: "priceRange",
+      label: filterPriceMin && filterPriceMax
+        ? `\u20ac${filterPriceMin} \u2013 \u20ac${filterPriceMax}`
+        : filterPriceMin
+        ? `From \u20ac${filterPriceMin}`
+        : `Up to \u20ac${filterPriceMax}`,
+    },
   ].filter(Boolean);
 
   return (
@@ -585,7 +701,7 @@ export default function DealsPage() {
             {isLoggedIn ? (
               <button type="button" onClick={handleLogout} className="rounded-full border border-slate-200 bg-white hover:bg-slate-50 px-4 py-2 text-[12px] font-bold uppercase tracking-[1.4px] text-slate-600 transition-colors">Logout</button>
             ) : (
-              <button type="button" onClick={() => setLoginModal({ message: "Sign in to unlock filters, sorting, and bookmarks." })} className="rounded-full bg-[#16a34a] hover:bg-[#15803d] text-white px-4 py-2 text-[12px] font-bold uppercase tracking-[1.4px] transition-colors">Sign in</button>
+              <button type="button" onClick={() => setLoginModal({})} className="rounded-full bg-[#16a34a] hover:bg-[#15803d] text-white px-4 py-2 text-[12px] font-bold uppercase tracking-[1.4px] transition-colors">Sign in</button>
             )}
           </div>
         </div>
