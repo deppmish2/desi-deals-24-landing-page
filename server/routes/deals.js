@@ -3,22 +3,14 @@
 const express = require("express");
 
 const db = require("../db");
-const { isCrawlLocked } = require("../../crawler/utils/snapshot");
-const { restoreDealsFromSeed } = require("../services/deals-seed-loader");
 const { trackEvent } = require("../services/event-tracker");
-const {
-  DAILY_POOL_LIMIT,
-  getCurrentPoolDate,
-  getDailyDealsPool,
-} = require("../services/daily-deals-pool");
+const { getCurrentPoolDate } = require("../services/daily-deals-pool");
 
 const router = express.Router();
 
-// In-memory pool cache — safe because the daily pool is fixed until midnight Berlin.
-// On warm instances this trims repeated Turso reads, while Turso remains the only
-// persistent backing store.
+// In-memory cache keyed by date string — refreshes after 5 min or on next day.
 const MEM_CACHE_TTL_MS = 5 * 60 * 1000;
-const _memCache = new Map(); // key → { pool, expiresAt }
+const _memCache = new Map(); // date → { deals, expiresAt }
 
 function getMemCache(key) {
   const entry = _memCache.get(key);
@@ -26,22 +18,42 @@ function getMemCache(key) {
     _memCache.delete(key);
     return null;
   }
-  return entry.pool;
+  return entry.deals;
 }
 
-function setMemCache(key, pool) {
-  _memCache.set(key, { pool, expiresAt: Date.now() + MEM_CACHE_TTL_MS });
+function setMemCache(key, deals) {
+  _memCache.set(key, { deals, expiresAt: Date.now() + MEM_CACHE_TTL_MS });
 }
 
-function seedFallbackAllowed() {
-  return !String(process.env.TURSO_DATABASE_URL || "").trim();
+// Seeded xorshift32 pseudo-random — deterministic per seed.
+function seededRandom(seed) {
+  let s = (seed >>> 0) || 1;
+  return function () {
+    s ^= s << 13;
+    s ^= s >> 17;
+    s ^= s << 5;
+    return (s >>> 0) / 4294967296;
+  };
 }
 
-function fixedPoolReadOnlyRuntime() {
-  return Boolean(
-    String(process.env.VERCEL || "").trim() ||
-    String(process.env.TURSO_DATABASE_URL || "").trim(),
-  );
+// FNV-1a hash of a date string like "2026-03-27" → uint32 seed.
+function dateSeed(dateStr) {
+  let h = 2166136261;
+  for (let i = 0; i < dateStr.length; i++) {
+    h = Math.imul(h ^ dateStr.charCodeAt(i), 16777619);
+  }
+  return h >>> 0;
+}
+
+// Fisher-Yates shuffle with a seeded RNG.
+function seededShuffle(arr, seed) {
+  const copy = [...arr];
+  const rand = seededRandom(seed);
+  for (let i = copy.length - 1; i > 0; i--) {
+    const j = Math.floor(rand() * (i + 1));
+    [copy[i], copy[j]] = [copy[j], copy[i]];
+  }
+  return copy;
 }
 
 function serializeDeal(row) {
@@ -72,131 +84,67 @@ function serializeDeal(row) {
   };
 }
 
-async function ensureDealsAvailable() {
-  // In Turso/Vercel mode the seed fallback can never fire — skip the round-trip.
-  if (!seedFallbackAllowed()) return;
-  const activeCount = Number(
-    (
-      await db
-        .prepare("SELECT COUNT(*) AS cnt FROM deals WHERE is_active = 1")
-        .get()
-    )?.cnt || 0,
-  );
-  if (activeCount === 0) await restoreDealsFromSeed(db);
-}
+const DEALS_SQL = `
+  SELECT
+    d.id, d.canonical_id, d.crawl_timestamp, d.store_id,
+    s.name AS store_name, s.url  AS store_url,
+    d.product_name, d.product_category, d.product_url,
+    d.image_url, d.weight_raw, d.weight_value, d.weight_unit,
+    d.sale_price, d.original_price, d.discount_percent,
+    d.price_per_kg, d.currency, d.availability, d.bulk_pricing, d.best_before
+  FROM deals d
+  JOIN stores s ON s.id = d.store_id
+  WHERE d.is_active = 1
+`;
 
 router.get("/", async (req, res, next) => {
   const startedAt = Date.now();
 
   try {
-    // Only needed in local SQLite mode — no-op in Turso/Vercel.
-    await ensureDealsAvailable();
-
     const pageNum = Math.max(1, parseInt(req.query.page || "1", 10) || 1);
     const limitNum = Math.max(
       1,
-      Math.min(DAILY_POOL_LIMIT, parseInt(req.query.limit || "24", 10) || 24),
+      Math.min(100, parseInt(req.query.limit || "24", 10) || 24),
     );
+    const searchQuery = String(req.query.q || "")
+      .trim()
+      .toLowerCase();
+    const sortByDiscount = req.query.sort === "discount";
+    const filterStore = String(req.query.store || "").trim();
+    const today = getCurrentPoolDate();
+
+    // Load + shuffle active deals — cached per date so the order is stable within a day.
+    let allDeals = getMemCache(today);
+    if (!allDeals) {
+      const rows = await db.prepare(DEALS_SQL).all();
+      allDeals = seededShuffle(rows.map(serializeDeal), dateSeed(today));
+      if (allDeals.length > 0) setMemCache(today, allDeals);
+    }
+
+    // Apply search + store filter
+    let filtered = allDeals;
+    if (searchQuery) {
+      filtered = filtered.filter(
+        (d) =>
+          d.product_name?.toLowerCase().includes(searchQuery) ||
+          d.store?.name?.toLowerCase().includes(searchQuery) ||
+          d.product_category?.toLowerCase().includes(searchQuery),
+      );
+    }
+    if (filterStore) {
+      filtered = filtered.filter((d) => d.store?.name === filterStore);
+    }
+
+    // Sort override — gated in the frontend, but the server supports it freely.
+    if (sortByDiscount) {
+      filtered = [...filtered].sort(
+        (a, b) => (b.discount_percent || 0) - (a.discount_percent || 0),
+      );
+    }
+
+    const total = filtered.length;
     const offset = (pageNum - 1) * limitNum;
-    const curatedSeed =
-      String(req.query.seed || "").trim() || getCurrentPoolDate();
-    const isToday = curatedSeed === getCurrentPoolDate();
-
-    // ── Cache fast path (memory → Turso) ─────────────────────────────────────
-    // Memory: sub-millisecond, survives within same warm serverless instance.
-    // Turso:  persistent source of truth for fixed daily pools.
-    let pool = null;
-    let cacheHit = false;
-    if (pageNum === 1 && isToday) {
-      pool = getMemCache(curatedSeed);
-      if (!pool) {
-        cacheHit = false;
-      } else {
-        cacheHit = true;
-      }
-    }
-
-    // ── DB path — pool + meta queries fire in parallel ────────────────────────
-    // Previously: pool fetch → 4 sequential meta queries = ~600ms wasted waiting.
-    // Now: all 5 DB operations run concurrently, total latency = slowest single query.
-    if (!pool) {
-      const [
-        freshPool,
-        lastCrawlRow,
-        activeStoresRow,
-        localCrawlingRow,
-        globalCrawling,
-      ] = await Promise.all([
-        getDailyDealsPool(db, {
-          poolDate: curatedSeed,
-          limit: DAILY_POOL_LIMIT,
-          allowGenerate: !fixedPoolReadOnlyRuntime(),
-        }),
-        db
-          .prepare(
-            `SELECT finished_at FROM crawl_runs
-           WHERE status = 'completed'
-           ORDER BY finished_at DESC LIMIT 1`,
-          )
-          .get(),
-        db
-          .prepare(
-            `SELECT COUNT(*) AS cnt FROM stores WHERE crawl_status = 'active'`,
-          )
-          .get(),
-        db
-          .prepare(
-            `SELECT COUNT(*) AS cnt FROM crawl_runs WHERE status = 'running'`,
-          )
-          .get(),
-        isCrawlLocked(db).catch(() => false),
-      ]);
-
-      pool = freshPool;
-      pool._meta_ext = {
-        last_crawl: lastCrawlRow?.finished_at || null,
-        active_stores: Number(activeStoresRow?.cnt || 0),
-        crawling: Number(localCrawlingRow?.cnt || 0) > 0 || globalCrawling,
-      };
-
-      // Populate memory so subsequent warm-instance requests are instant.
-      if (isToday && pool.rows.length > 0) {
-        setMemCache(curatedSeed, pool);
-      }
-    }
-
-    // On memory hit the meta extension wasn't fetched — do it now.
-    if (!pool._meta_ext) {
-      const [lastCrawlRow, activeStoresRow, localCrawlingRow, globalCrawling] =
-        await Promise.all([
-          db
-            .prepare(
-              `SELECT finished_at FROM crawl_runs
-             WHERE status = 'completed'
-             ORDER BY finished_at DESC LIMIT 1`,
-            )
-            .get(),
-          db
-            .prepare(
-              `SELECT COUNT(*) AS cnt FROM stores WHERE crawl_status = 'active'`,
-            )
-            .get(),
-          db
-            .prepare(
-              `SELECT COUNT(*) AS cnt FROM crawl_runs WHERE status = 'running'`,
-            )
-            .get(),
-          isCrawlLocked(db).catch(() => false),
-        ]);
-      pool._meta_ext = {
-        last_crawl: lastCrawlRow?.finished_at || null,
-        active_stores: Number(activeStoresRow?.cnt || 0),
-        crawling: Number(localCrawlingRow?.cnt || 0) > 0 || globalCrawling,
-      };
-    }
-
-    const pageRows = pool.rows.slice(offset, offset + limitNum);
-    const data = pageRows.map(serializeDeal);
+    const data = filtered.slice(offset, offset + limitNum);
 
     // CDN caches for 5 min; serves stale up to 1h while revalidating.
     res.set(
@@ -209,30 +157,24 @@ router.get("/", async (req, res, next) => {
       pagination: {
         page: pageNum,
         limit: limitNum,
-        total: pool.rows.length,
-        total_pages: Math.max(1, Math.ceil(pool.rows.length / limitNum)),
+        total,
+        total_pages: Math.max(1, Math.ceil(total / limitNum)),
       },
       meta: {
-        last_crawl: pool._meta_ext.last_crawl,
-        active_stores: pool._meta_ext.active_stores,
-        crawling: pool._meta_ext.crawling,
-        curated: {
-          mode: "daily_live_pool",
-          seed: curatedSeed,
-          ...pool.meta,
-        },
+        sort: sortByDiscount ? "discount" : "random",
+        date: today,
       },
     });
 
-    trackEvent(db, "browse.deals24", {
+    trackEvent(db, "browse.deals", {
       route: req.originalUrl,
       payload: {
         duration_ms: Date.now() - startedAt,
         result_count: data.length,
         page: pageNum,
         limit: limitNum,
-        curated_mode: "daily_live_pool",
-        cache: cacheHit ? "memory_hit" : "db_read",
+        sort: sortByDiscount ? "discount" : "random",
+        search: searchQuery || null,
       },
     });
   } catch (error) {

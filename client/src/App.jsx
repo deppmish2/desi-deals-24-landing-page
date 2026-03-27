@@ -10,15 +10,16 @@ export default function App() {
   return (
     <BrowserRouter>
       <Routes>
-        <Route path="/" element={<Navigate to="/waitlist" replace />} />
-        <Route path="/waitlist" element={<WaitlistPage />} />
+        <Route path="/" element={<Navigate to="/deals" replace />} />
+        <Route path="/login" element={<WaitlistPage />} />
+        <Route path="/waitlist" element={<Navigate to="/login" replace />} />
         <Route path="/deals" element={<DealsPage />} />
         <Route path="/admin" element={<AdminPage />} />
         <Route
           path="/oauth/:provider/callback"
           element={<OAuthCallbackPage />}
         />
-        <Route path="*" element={<Navigate to="/waitlist" replace />} />
+        <Route path="*" element={<Navigate to="/deals" replace />} />
       </Routes>
       <FeedbackWidget />
     </BrowserRouter>

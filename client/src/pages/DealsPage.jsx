@@ -9,18 +9,13 @@ import {
 import {
   addBookmark,
   fetchBookmarks,
+  fetchDeals,
   getAuthSession,
   logoutUser,
   removeBookmark,
 } from "../utils/api";
-import {
-  computeNextRefreshUtcMs,
-  formatRefreshCountdown,
-  getCurrentPoolDateSeed,
-} from "../landing/dealsRefreshSchedule";
 
 const POST_AUTH_REDIRECT_STORAGE_KEY = "dd24_post_auth_redirect";
-const TODAY_COUNT = 24;
 
 // ── Login required modal ─────────────────────────────────────────────────────
 function LoginModal({ message, onClose, onGoLogin }) {
@@ -232,7 +227,6 @@ function DealCard({ deal, isBookmarked, onBookmark }) {
 // ── Main page ────────────────────────────────────────────────────────────────
 export default function DealsPage() {
   const navigate = useNavigate();
-  const [clockMs, setClockMs] = useState(() => Date.now());
   const [searchQuery, setSearchQuery] = useState("");
   const [sortByDiscount, setSortByDiscount] = useState(false);
   const [filterStore, setFilterStore] = useState("");
@@ -242,27 +236,13 @@ export default function DealsPage() {
   const session = useMemo(() => getAuthSession(), []);
   const isLoggedIn = Boolean(session?.accessToken);
 
-  const dailySeed = useMemo(() => getCurrentPoolDateSeed(clockMs), [clockMs]);
-  const nextRefreshLabel = useMemo(
-    () =>
-      formatRefreshCountdown(
-        Math.max(0, computeNextRefreshUtcMs(clockMs) - clockMs),
-      ),
-    [clockMs],
-  );
-
   const { deals, loading, error } = useDeals({
     enabled: true,
-    limit: TODAY_COUNT,
-    curated: "daily_live_pool",
-    seed: dailySeed,
+    limit: 24,
+    q: searchQuery || undefined,
+    sort: sortByDiscount && isLoggedIn ? "discount" : undefined,
+    store: filterStore && isLoggedIn ? filterStore : undefined,
   });
-
-  // Clock tick
-  useEffect(() => {
-    const id = window.setInterval(() => setClockMs(Date.now()), 1000);
-    return () => window.clearInterval(id);
-  }, []);
 
   // Load bookmarks if logged in
   useEffect(() => {
@@ -272,8 +252,7 @@ export default function DealsPage() {
       .catch(() => {});
   }, [isLoggedIn]);
 
-  // All valid deals
-  const allDeals = useMemo(
+  const displayDeals = useMemo(
     () =>
       (Array.isArray(deals) ? deals : []).filter(
         (d) => d?.product_url && d?.product_name,
@@ -281,37 +260,20 @@ export default function DealsPage() {
     [deals],
   );
 
-  // Unique stores for filter dropdown
-  const storeNames = useMemo(() => {
-    const names = new Set();
-    allDeals.forEach((d) => {
-      if (d.store?.name) names.add(d.store.name);
-    });
-    return Array.from(names).sort();
-  }, [allDeals]);
-
-  // Filtered + sorted deals
-  const displayDeals = useMemo(() => {
-    let list = allDeals;
-    if (searchQuery.trim()) {
-      const q = searchQuery.trim().toLowerCase();
-      list = list.filter(
-        (d) =>
-          d.product_name?.toLowerCase().includes(q) ||
-          d.store?.name?.toLowerCase().includes(q) ||
-          d.product_category?.toLowerCase().includes(q),
-      );
-    }
-    if (filterStore) {
-      list = list.filter((d) => d.store?.name === filterStore);
-    }
-    if (sortByDiscount) {
-      list = [...list].sort(
-        (a, b) => (b.discount_percent || 0) - (a.discount_percent || 0),
-      );
-    }
-    return list;
-  }, [allDeals, searchQuery, filterStore, sortByDiscount]);
+  // Store names for the dropdown — populated once from an unfiltered fetch so
+  // the list doesn't disappear when a store filter is active.
+  const [storeNames, setStoreNames] = useState([]);
+  useEffect(() => {
+    fetchDeals({ limit: 200 })
+      .then((res) => {
+        const names = new Set();
+        (res.data || []).forEach((d) => {
+          if (d.store?.name) names.add(d.store.name);
+        });
+        setStoreNames(Array.from(names).sort());
+      })
+      .catch(() => {});
+  }, []);
 
   function requireLogin(message, action) {
     if (!isLoggedIn) {
@@ -378,13 +340,13 @@ export default function DealsPage() {
 
   async function handleLogout() {
     await logoutUser();
-    navigate("/waitlist", { replace: true });
+    navigate("/deals", { replace: true });
   }
 
   function goToLogin() {
     sessionStorage.setItem(POST_AUTH_REDIRECT_STORAGE_KEY, "/deals");
     setLoginModal(null);
-    navigate("/waitlist");
+    navigate("/login");
   }
 
   return (
@@ -433,11 +395,10 @@ export default function DealsPage() {
         <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
           <div>
             <h1 className="text-[28px] sm:text-[36px] font-extrabold text-[#0f172a] leading-tight">
-              Today's Deals
+              Deals
             </h1>
             <p className="text-slate-500 text-[14px] mt-1">
-              Fresh deals from Indian grocery stores in Germany · refreshes in{" "}
-              {nextRefreshLabel}
+              Fresh deals from Indian grocery stores in Germany
             </p>
           </div>
         </div>

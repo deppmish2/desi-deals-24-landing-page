@@ -54,7 +54,7 @@ export default function OAuthCallbackPage() {
               result.masked_email,
             );
           }
-          navigate("/waitlist?confirm_email=1", { replace: true });
+          navigate("/login?confirm_email=1", { replace: true });
           return;
         }
         const redirectTo =
@@ -66,7 +66,7 @@ export default function OAuthCallbackPage() {
         const message = err?.message || "OAuth login failed";
         sessionStorage.setItem(AUTH_ERROR_STORAGE_KEY, message);
         setError(message);
-        navigate("/waitlist", { replace: true });
+        navigate("/login", { replace: true });
       });
   }, [navigate, provider, searchParams]);
 
@@ -113,10 +113,10 @@ export default function OAuthCallbackPage() {
             <p className="text-sm text-red-600 mb-4">{error}</p>
             <button
               type="button"
-              onClick={() => navigate("/waitlist", { replace: true })}
+              onClick={() => navigate("/login", { replace: true })}
               className="inline-flex items-center justify-center bg-[#16a34a] text-white font-bold text-sm px-4 py-2.5 rounded-lg hover:bg-[#15803d] transition-colors"
             >
-              Back to Waitlist
+              Back to Login
             </button>
           </>
         )}

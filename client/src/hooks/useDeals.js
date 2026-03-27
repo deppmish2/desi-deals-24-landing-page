@@ -53,7 +53,7 @@ export default function useDeals(filters = {}) {
           setLoading(false);
         }
       },
-      requestFilters.q ? 60 : 0,
+      requestFilters.q ? 400 : 0,
     );
 
     return () => {
