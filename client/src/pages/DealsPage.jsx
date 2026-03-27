@@ -10,46 +10,92 @@ import {
   addBookmark,
   fetchBookmarks,
   fetchDeals,
+  fetchOAuthAuthUrl,
   getAuthSession,
   logoutUser,
   removeBookmark,
 } from "../utils/api";
 
 const POST_AUTH_REDIRECT_STORAGE_KEY = "dd24_post_auth_redirect";
+const OAUTH_STATE_STORAGE_PREFIX = "dd24_oauth_state:";
 
-// ── Login required modal ─────────────────────────────────────────────────────
-function LoginModal({ message, onClose, onGoLogin }) {
+function createOAuthState() {
+  if (typeof window !== "undefined" && window.crypto?.randomUUID) {
+    return window.crypto.randomUUID();
+  }
+  return `dd24-${Math.random().toString(36).slice(2)}${Date.now().toString(36)}`;
+}
+
+// ── Login modal with Google OAuth ────────────────────────────────────────────
+function LoginModal({ message, onClose }) {
+  const [loading, setLoading] = React.useState(false);
+  const [authError, setAuthError] = React.useState("");
+
+  async function handleGoogle() {
+    setAuthError("");
+    setLoading(true);
+    try {
+      const state = createOAuthState();
+      sessionStorage.setItem(`${OAUTH_STATE_STORAGE_PREFIX}google`, state);
+      sessionStorage.setItem(POST_AUTH_REDIRECT_STORAGE_KEY, "/");
+      const payload = await fetchOAuthAuthUrl("google", state);
+      const authUrl = payload?.authUrl || payload?.url;
+      if (!authUrl) throw new Error("Google sign-in unavailable right now.");
+      window.location.assign(authUrl);
+    } catch (err) {
+      setLoading(false);
+      setAuthError(err?.message || "Unable to start Google sign-in.");
+    }
+  }
+
   return (
     <div
       className="fixed inset-0 z-50 flex items-center justify-center px-4"
-      style={{ background: "rgba(15,23,42,0.45)", backdropFilter: "blur(4px)" }}
+      style={{ background: "rgba(15,23,42,0.6)", backdropFilter: "blur(6px)" }}
       onClick={onClose}
     >
       <div
-        className="bg-white rounded-2xl p-8 max-w-sm w-full shadow-2xl flex flex-col gap-5"
+        className="bg-white rounded-2xl overflow-hidden max-w-sm w-full shadow-2xl flex flex-col"
         onClick={(e) => e.stopPropagation()}
       >
-        <div className="flex flex-col gap-2">
-          <h2 className="text-[20px] font-extrabold text-[#0f172a]">
-            Register to unlock
-          </h2>
-          <p className="text-[14px] text-slate-500 leading-relaxed">
-            {message || "Create a free account to access this feature."}
+        {/* Coloured top banner */}
+        <div className="bg-[#16a34a] px-7 pt-7 pb-6">
+          <div className="w-10 h-10 bg-white/20 rounded-full flex items-center justify-center mb-4">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+              <rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/>
+            </svg>
+          </div>
+          <h2 className="text-[22px] font-extrabold text-white leading-tight">Unlock this feature</h2>
+          <p className="text-[14px] text-green-100 mt-1 leading-relaxed">
+            {message
+              ? message
+              : "Create a free account to access this feature."}
           </p>
+          <p className="text-[13px] font-bold text-white mt-2">Sign up, it's free.</p>
         </div>
-        <div className="flex flex-col gap-3">
+
+        <div className="px-7 py-6 flex flex-col gap-4">
+          {authError && (
+            <p className="text-[13px] text-red-600 bg-red-50 rounded-lg px-3 py-2">{authError}</p>
+          )}
+
           <button
             type="button"
-            onClick={onGoLogin}
-            className="w-full bg-[#16a34a] hover:bg-[#15803d] text-white font-bold text-[14px] py-3 rounded-xl transition-colors"
+            onClick={handleGoogle}
+            disabled={loading}
+            className="w-full flex items-center justify-center gap-3 border border-slate-200 bg-white hover:bg-slate-50 rounded-xl py-3.5 px-4 text-[15px] font-semibold text-[#1e293b] transition-colors shadow-sm disabled:opacity-60"
           >
-            Register / Sign in
+            <svg width="20" height="20" viewBox="0 0 48 48">
+              <path fill="#EA4335" d="M24 9.5c3.54 0 6.71 1.22 9.21 3.6l6.85-6.85C35.9 2.38 30.47 0 24 0 14.62 0 6.51 5.38 2.56 13.22l7.98 6.19C12.43 13.72 17.74 9.5 24 9.5z"/>
+              <path fill="#4285F4" d="M46.98 24.55c0-1.57-.15-3.09-.38-4.55H24v9.02h12.94c-.58 2.96-2.26 5.48-4.78 7.18l7.73 6c4.51-4.18 7.09-10.36 7.09-17.65z"/>
+              <path fill="#FBBC05" d="M10.53 28.59c-.48-1.45-.76-2.99-.76-4.59s.27-3.14.76-4.59l-7.98-6.19C.92 16.46 0 20.12 0 24c0 3.88.92 7.54 2.56 10.78l7.97-6.19z"/>
+              <path fill="#34A853" d="M24 48c6.48 0 11.93-2.13 15.89-5.81l-7.73-6c-2.18 1.48-4.97 2.31-8.16 2.31-6.26 0-11.57-4.22-13.47-9.91l-7.98 6.19C6.51 42.62 14.62 48 24 48z"/>
+              <path fill="none" d="M0 0h48v48H0z"/>
+            </svg>
+            {loading ? "Redirecting…" : "Continue with Google"}
           </button>
-          <button
-            type="button"
-            onClick={onClose}
-            className="w-full border border-slate-200 text-slate-600 font-bold text-[14px] py-3 rounded-xl hover:bg-slate-50 transition-colors"
-          >
+
+          <button type="button" onClick={onClose} className="text-center text-[13px] text-slate-400 hover:text-slate-600 transition-colors">
             Maybe later
           </button>
         </div>
@@ -224,24 +270,198 @@ function DealCard({ deal, isBookmarked, onBookmark }) {
   );
 }
 
+const CATEGORIES = [
+  "Spices & Masalas", "Rice & Grains", "Sauces & Pastes", "Lentils & Pulses",
+  "Beverages", "Flours & Baking", "Snacks & Sweets", "Frozen Foods",
+  "Noodles & Pasta", "Oils & Ghee", "Fresh Produce", "Dairy & Paneer",
+  "Household", "Canned & Packaged", "Personal Care", "Other",
+];
+
+const SORT_OPTIONS = [
+  { value: "discount", label: "Sort: Max Discount" },
+  { value: "price_per_kg", label: "Sort: Lowest /Kg Price" },
+  { value: "price", label: "Sort: Lowest Price" },
+];
+
+// ── Filters modal ─────────────────────────────────────────────────────────────
+function FiltersModal({ storeNames, draft, onChange, onClear, onApply, onClose }) {
+  const { store, category } = draft;
+  return (
+    <div
+      className="fixed inset-0 z-50 flex items-end sm:items-center justify-center"
+      style={{ background: "rgba(15,23,42,0.45)", backdropFilter: "blur(4px)" }}
+      onClick={onClose}
+    >
+      <div
+        className="bg-white rounded-t-2xl sm:rounded-2xl w-full sm:max-w-lg max-h-[90vh] flex flex-col shadow-2xl"
+        onClick={(e) => e.stopPropagation()}
+      >
+        {/* Header */}
+        <div className="flex items-center justify-between px-6 py-5 border-b border-slate-100">
+          <div className="flex items-center gap-2">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round"><line x1="4" y1="6" x2="20" y2="6"/><line x1="8" y1="12" x2="20" y2="12"/><line x1="12" y1="18" x2="20" y2="18"/></svg>
+            <span className="text-[18px] font-extrabold text-[#0f172a]">Filters</span>
+          </div>
+          <button onClick={onClose} className="text-slate-400 hover:text-slate-700 transition-colors">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round"><path d="M18 6 6 18M6 6l12 12"/></svg>
+          </button>
+        </div>
+
+        {/* Body — scrollable */}
+        <div className="overflow-y-auto flex-1 px-6 py-5 flex flex-col gap-6">
+          {/* Store */}
+          <div>
+            <p className="text-[11px] font-extrabold tracking-[1.5px] uppercase text-slate-400 mb-3">Store</p>
+            <div className="flex flex-wrap gap-2">
+              {["All stores", ...storeNames].map((name) => {
+                const val = name === "All stores" ? "" : name;
+                const active = store === val;
+                return (
+                  <button
+                    key={name}
+                    type="button"
+                    onClick={() => onChange({ ...draft, store: val })}
+                    className={`px-4 py-2 rounded-full border text-[14px] font-medium transition-colors ${
+                      active
+                        ? "bg-[#0f172a] border-[#0f172a] text-white"
+                        : "bg-white border-slate-200 text-[#0f172a] hover:border-slate-400"
+                    }`}
+                  >
+                    {name}
+                  </button>
+                );
+              })}
+            </div>
+          </div>
+
+          {/* Category */}
+          <div>
+            <p className="text-[11px] font-extrabold tracking-[1.5px] uppercase text-slate-400 mb-3">Category</p>
+            <div className="grid grid-cols-2 gap-x-6 gap-y-3">
+              {/* All categories */}
+              <label className="flex items-center gap-3 cursor-pointer col-span-2">
+                <span
+                  className={`w-5 h-5 rounded flex items-center justify-center border-2 transition-colors ${
+                    category === "" ? "bg-[#0f172a] border-[#0f172a]" : "border-slate-300 bg-white"
+                  }`}
+                  onClick={() => onChange({ ...draft, category: "" })}
+                >
+                  {category === "" && (
+                    <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round"><polyline points="20 6 9 17 4 12"/></svg>
+                  )}
+                </span>
+                <span className="text-[14px] text-[#0f172a] font-medium" onClick={() => onChange({ ...draft, category: "" })}>All categories</span>
+              </label>
+              {CATEGORIES.map((cat) => (
+                <label key={cat} className="flex items-center gap-3 cursor-pointer">
+                  <span
+                    className={`w-5 h-5 rounded flex items-center justify-center border-2 transition-colors shrink-0 ${
+                      category === cat ? "bg-[#0f172a] border-[#0f172a]" : "border-slate-300 bg-white"
+                    }`}
+                    onClick={() => onChange({ ...draft, category: category === cat ? "" : cat })}
+                  >
+                    {category === cat && (
+                      <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round"><polyline points="20 6 9 17 4 12"/></svg>
+                    )}
+                  </span>
+                  <span className="text-[14px] text-[#0f172a]" onClick={() => onChange({ ...draft, category: category === cat ? "" : cat })}>{cat}</span>
+                </label>
+              ))}
+            </div>
+          </div>
+        </div>
+
+        {/* Footer */}
+        <div className="flex gap-3 px-6 py-4 border-t border-slate-100">
+          <button
+            type="button"
+            onClick={onClear}
+            className="flex-1 py-3 rounded-xl border-2 border-slate-200 text-[14px] font-bold text-[#0f172a] hover:bg-slate-50 transition-colors"
+          >
+            Clear All
+          </button>
+          <button
+            type="button"
+            onClick={onApply}
+            className="flex-[2] py-3 rounded-xl bg-[#16a34a] hover:bg-[#15803d] text-white text-[14px] font-bold transition-colors"
+          >
+            Apply Filters
+          </button>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+// ── Sort dropdown ─────────────────────────────────────────────────────────────
+function SortDropdown({ value, onChange }) {
+  const [open, setOpen] = useState(false);
+  const current = SORT_OPTIONS.find((o) => o.value === value);
+  return (
+    <div className="relative">
+      <button
+        type="button"
+        onClick={() => setOpen((v) => !v)}
+        className="flex items-center gap-2 px-4 py-2.5 bg-white border border-slate-200 rounded-xl text-[13px] font-semibold text-[#0f172a] hover:bg-slate-50 transition-colors"
+      >
+        {current ? current.label : "Sort"}
+        <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><path d="m6 9 6 6 6-6"/></svg>
+      </button>
+      {open && (
+        <div className="absolute right-0 top-full mt-1 w-52 bg-[#2d3748] rounded-xl shadow-xl overflow-hidden z-20">
+          {SORT_OPTIONS.map((opt) => (
+            <button
+              key={opt.value}
+              type="button"
+              onClick={() => { onChange(opt.value === value ? "" : opt.value); setOpen(false); }}
+              className={`w-full flex items-center gap-2 px-4 py-3 text-[13px] font-medium text-left transition-colors ${
+                opt.value === value ? "bg-[#4a5568] text-white" : "text-slate-200 hover:bg-[#3d4a5c]"
+              }`}
+            >
+              {opt.value === value && (
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round"><polyline points="20 6 9 17 4 12"/></svg>
+              )}
+              {opt.value !== value && <span className="w-[14px]" />}
+              {opt.label}
+            </button>
+          ))}
+        </div>
+      )}
+    </div>
+  );
+}
+
 // ── Main page ────────────────────────────────────────────────────────────────
 export default function DealsPage() {
   const navigate = useNavigate();
+  const [searchInput, setSearchInput] = useState("");
   const [searchQuery, setSearchQuery] = useState("");
-  const [sortByDiscount, setSortByDiscount] = useState(false);
+  const [sortValue, setSortValue] = useState("");
   const [filterStore, setFilterStore] = useState("");
-  const [loginModal, setLoginModal] = useState(null); // null | { message }
+  const [filterCategory, setFilterCategory] = useState("");
+  const [filtersOpen, setFiltersOpen] = useState(false);
+  // draft holds uncommitted filter state inside the modal
+  const [filterDraft, setFilterDraft] = useState({ store: "", category: "" });
+  const [loginModal, setLoginModal] = useState(null);
   const [bookmarkedIds, setBookmarkedIds] = useState(new Set());
 
-  const session = useMemo(() => getAuthSession(), []);
+  const [session, setSession] = useState(() => getAuthSession());
   const isLoggedIn = Boolean(session?.accessToken);
 
-  const { deals, loading, error } = useDeals({
+  // Keep session in sync when auth changes (login, logout, token refresh)
+  useEffect(() => {
+    function onAuthChange() { setSession(getAuthSession()); }
+    window.addEventListener("dd24-auth-changed", onAuthChange);
+    return () => window.removeEventListener("dd24-auth-changed", onAuthChange);
+  }, []);
+
+  const { deals, pagination, loading, error } = useDeals({
     enabled: true,
     limit: 24,
     q: searchQuery || undefined,
-    sort: sortByDiscount && isLoggedIn ? "discount" : undefined,
+    sort: sortValue && isLoggedIn ? sortValue : undefined,
     store: filterStore && isLoggedIn ? filterStore : undefined,
+    category: filterCategory && isLoggedIn ? filterCategory : undefined,
   });
 
   // Load bookmarks if logged in
@@ -252,87 +472,73 @@ export default function DealsPage() {
       .catch(() => {});
   }, [isLoggedIn]);
 
-  const displayDeals = useMemo(
-    () =>
-      (Array.isArray(deals) ? deals : []).filter(
-        (d) => d?.product_url && d?.product_name,
-      ),
-    [deals],
-  );
-
-  // Store names for the dropdown — populated once from an unfiltered fetch so
-  // the list doesn't disappear when a store filter is active.
+  // Store names — fetched once unfiltered so pills stay stable
   const [storeNames, setStoreNames] = useState([]);
   useEffect(() => {
     fetchDeals({ limit: 200 })
       .then((res) => {
         const names = new Set();
-        (res.data || []).forEach((d) => {
-          if (d.store?.name) names.add(d.store.name);
-        });
+        (res.data || []).forEach((d) => { if (d.store?.name) names.add(d.store.name); });
         setStoreNames(Array.from(names).sort());
       })
       .catch(() => {});
   }, []);
 
+  const displayDeals = useMemo(
+    () => (Array.isArray(deals) ? deals : []).filter((d) => d?.product_url && d?.product_name),
+    [deals],
+  );
+
   function requireLogin(message, action) {
-    if (!isLoggedIn) {
-      setLoginModal({ message });
-    } else {
-      action?.();
-    }
+    if (!isLoggedIn) { setLoginModal({ message }); } else { action?.(); }
   }
 
-  function handleSortToggle() {
+  function openFilters() {
     requireLogin(
-      "Sort by discount % is available to registered members. Sign up — it's free!",
-      () => setSortByDiscount((v) => !v),
+      "Filters are for registered members only.",
+      () => { setFilterDraft({ store: filterStore, category: filterCategory }); setFiltersOpen(true); },
     );
   }
 
-  function handleStoreFilter(value) {
-    if (value && !isLoggedIn) {
-      setLoginModal({
-        message:
-          "Filtering by store is available to registered members. Sign up — it's free!",
-      });
-      return;
-    }
-    setFilterStore(value);
+  function applyFilters() {
+    setFilterStore(filterDraft.store);
+    setFilterCategory(filterDraft.category);
+    setFiltersOpen(false);
+  }
+
+  function clearFilters() {
+    setFilterDraft({ store: "", category: "" });
+  }
+
+  function handleSortChange(val) {
+    requireLogin(
+      "Sorting is for registered members only.",
+      () => setSortValue(val),
+    );
+  }
+
+  function removeFilterChip(type) {
+    if (type === "store") setFilterStore("");
+    if (type === "category") setFilterCategory("");
+    if (type === "sort") setSortValue("");
   }
 
   const handleBookmark = useCallback(
     (dealId) => {
       if (!isLoggedIn) {
-        setLoginModal({
-          message:
-            "Bookmark deals to easily find them again. Sign up — it's free!",
-        });
+        setLoginModal({ message: "Bookmarks are for registered members only." });
         return;
       }
       const wasBookmarked = bookmarkedIds.has(dealId);
       setBookmarkedIds((prev) => {
         const next = new Set(prev);
-        if (wasBookmarked) next.delete(dealId);
-        else next.add(dealId);
+        if (wasBookmarked) next.delete(dealId); else next.add(dealId);
         return next;
       });
       if (wasBookmarked) {
-        removeBookmark(dealId).catch(() => {
-          setBookmarkedIds((prev) => {
-            const next = new Set(prev);
-            next.add(dealId);
-            return next;
-          });
-        });
+        removeBookmark(dealId).catch(() => setBookmarkedIds((prev) => { const n = new Set(prev); n.add(dealId); return n; }));
       } else {
-        addBookmark(dealId).catch(() => {
-          setBookmarkedIds((prev) => {
-            const next = new Set(prev);
-            next.delete(dealId);
-            return next;
-          });
-        });
+        addBookmark(dealId).catch(() => setBookmarkedIds((prev) => { const n = new Set(prev); n.delete(dealId); return n; }));
       }
     },
     [isLoggedIn, bookmarkedIds],
@@ -340,192 +546,150 @@ export default function DealsPage() {
 
   async function handleLogout() {
     await logoutUser();
-    navigate("/deals", { replace: true });
+    navigate("/", { replace: true });
   }
 
-  function goToLogin() {
-    sessionStorage.setItem(POST_AUTH_REDIRECT_STORAGE_KEY, "/deals");
-    setLoginModal(null);
-    navigate("/login");
-  }
+  const activeChips = [
+    filterStore && { type: "store", label: filterStore },
+    filterCategory && { type: "category", label: filterCategory },
+  ].filter(Boolean);
 
   return (
     <div className="min-h-screen bg-[#f7f7f7]">
       {/* Header */}
       <header className="backdrop-blur-md bg-white/80 border-b border-slate-200 sticky top-0 z-30">
         <div className="h-16 max-w-[1280px] mx-auto px-4 sm:px-8 flex items-center justify-between gap-4">
-          <Link to="/deals" className="flex items-center gap-2 no-underline">
-            <img
-              src="/landing/dd24-logo.svg"
-              alt="DesiDeals24"
-              className="w-5 h-6 object-contain"
-            />
-            <span className="font-extrabold tracking-[-0.5px] text-[20px] text-[#141414]">
-              DesiDeals24
-            </span>
-            <span className="text-[10px] font-extrabold tracking-[2px] uppercase text-slate-400 -translate-y-1">
-              · Beta
-            </span>
+          <Link to="/" className="flex items-center gap-2 no-underline">
+            <img src="/landing/dd24-logo.svg" alt="DesiDeals24" className="w-5 h-6 object-contain" />
+            <span className="font-extrabold tracking-[-0.5px] text-[20px] text-[#141414]">DesiDeals24</span>
+            <span className="text-[10px] font-extrabold tracking-[2px] uppercase text-slate-400 -translate-y-1">· Beta</span>
           </Link>
           <div className="flex items-center gap-3">
             {isLoggedIn ? (
-              <button
-                type="button"
-                onClick={handleLogout}
-                className="rounded-full border border-slate-200 bg-white hover:bg-slate-50 px-4 py-2 text-[12px] font-bold uppercase tracking-[1.4px] text-slate-600 transition-colors"
-              >
-                Logout
-              </button>
+              <button type="button" onClick={handleLogout} className="rounded-full border border-slate-200 bg-white hover:bg-slate-50 px-4 py-2 text-[12px] font-bold uppercase tracking-[1.4px] text-slate-600 transition-colors">Logout</button>
             ) : (
-              <button
-                type="button"
-                onClick={goToLogin}
-                className="rounded-full bg-[#16a34a] hover:bg-[#15803d] text-white px-4 py-2 text-[12px] font-bold uppercase tracking-[1.4px] transition-colors"
-              >
-                Sign in
-              </button>
+              <button type="button" onClick={() => setLoginModal({ message: "Sign in to unlock filters, sorting, and bookmarks." })} className="rounded-full bg-[#16a34a] hover:bg-[#15803d] text-white px-4 py-2 text-[12px] font-bold uppercase tracking-[1.4px] transition-colors">Sign in</button>
             )}
           </div>
         </div>
       </header>
 
       {/* Main content */}
-      <main className="max-w-[1280px] mx-auto px-4 sm:px-8 py-8 flex flex-col gap-8">
-        {/* Heading + countdown */}
-        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
-          <div>
-            <h1 className="text-[28px] sm:text-[36px] font-extrabold text-[#0f172a] leading-tight">
-              Deals
-            </h1>
-            <p className="text-slate-500 text-[14px] mt-1">
-              Fresh deals from Indian grocery stores in Germany
-            </p>
-          </div>
+      <main className="max-w-[1280px] mx-auto px-4 sm:px-8 py-8 flex flex-col gap-6">
+        {/* Title */}
+        <div>
+          <h1 className="text-[28px] sm:text-[36px] font-extrabold text-[#0f172a] leading-tight">Deals</h1>
+          <p className="text-slate-500 text-[14px] mt-1">Fresh deals from Indian grocery stores in Germany</p>
         </div>
 
-        {/* Search + filter bar */}
-        <div className="flex flex-col sm:flex-row gap-3">
-          {/* Search — always public */}
-          <div className="relative flex-1">
-            <svg
-              className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 pointer-events-none"
-              width="16"
-              height="16"
-              viewBox="0 0 24 24"
-              fill="none"
-              stroke="currentColor"
-              strokeWidth="2"
-              strokeLinecap="round"
-              strokeLinejoin="round"
-            >
-              <circle cx="11" cy="11" r="8" />
-              <path d="m21 21-4.35-4.35" />
-            </svg>
-            <input
-              type="search"
-              value={searchQuery}
-              onChange={(e) => setSearchQuery(e.target.value)}
-              placeholder="Search deals, products, categories…"
-              className="w-full pl-9 pr-4 py-3 border border-slate-200 rounded-xl bg-white text-[14px] text-slate-800 placeholder-slate-400 outline-none focus:border-[#16a34a] transition-colors"
-            />
+        {/* Search bar — open to all */}
+        <div className="flex gap-0 rounded-2xl border border-slate-200 bg-white overflow-hidden shadow-sm focus-within:border-[#16a34a] transition-colors">
+          <div className="flex items-center pl-4 text-slate-400 pointer-events-none">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/></svg>
           </div>
-
-          {/* Store filter — gated */}
-          <div className="relative">
-            <select
-              value={filterStore}
-              onChange={(e) => handleStoreFilter(e.target.value)}
-              className="appearance-none pl-4 pr-9 py-3 border border-slate-200 rounded-xl bg-white text-[14px] text-slate-600 outline-none focus:border-[#16a34a] transition-colors cursor-pointer"
-            >
-              <option value="">All stores {!isLoggedIn ? "🔒" : ""}</option>
-              {storeNames.map((name) => (
-                <option key={name} value={name}>
-                  {name}
-                </option>
-              ))}
-            </select>
-            <svg
-              className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 pointer-events-none"
-              width="12"
-              height="12"
-              viewBox="0 0 24 24"
-              fill="none"
-              stroke="currentColor"
-              strokeWidth="2"
-            >
-              <path d="m6 9 6 6 6-6" />
-            </svg>
-          </div>
-
-          {/* Sort by discount — gated */}
+          <input
+            type="search"
+            value={searchInput}
+            onChange={(e) => setSearchInput(e.target.value)}
+            onKeyDown={(e) => e.key === "Enter" && setSearchQuery(searchInput.trim())}
+            placeholder="Search deals, groceries, or stores..."
+            className="flex-1 px-3 py-3.5 text-[14px] text-slate-800 placeholder-slate-400 bg-transparent outline-none"
+          />
           <button
             type="button"
-            onClick={handleSortToggle}
-            className={`flex items-center gap-2 px-4 py-3 rounded-xl border text-[14px] font-bold transition-colors ${
-              sortByDiscount && isLoggedIn
-                ? "bg-[#16a34a] border-[#16a34a] text-white"
-                : "bg-white border-slate-200 text-slate-600 hover:bg-slate-50"
+            onClick={() => setSearchQuery(searchInput.trim())}
+            className="bg-[#16a34a] hover:bg-[#15803d] text-white text-[14px] font-bold px-6 py-3.5 transition-colors"
+          >
+            Search
+          </button>
+        </div>
+
+        {/* Filters bar: FILTERS button + active chips + results count + sort */}
+        <div className="flex flex-wrap items-center gap-3">
+          {/* Filters button */}
+          <button
+            type="button"
+            onClick={openFilters}
+            className={`flex items-center gap-2 px-4 py-2.5 rounded-xl border-2 text-[13px] font-bold transition-colors ${
+              activeChips.length > 0
+                ? "bg-[#0f172a] border-[#0f172a] text-white"
+                : "bg-[#0f172a] border-[#0f172a] text-white"
             }`}
           >
-            {!isLoggedIn && (
-              <svg
-                width="13"
-                height="13"
-                viewBox="0 0 24 24"
-                fill="none"
-                stroke="currentColor"
-                strokeWidth="2.5"
-              >
-                <rect x="3" y="11" width="18" height="11" rx="2" ry="2" />
-                <path d="M7 11V7a5 5 0 0 1 10 0v4" />
-              </svg>
-            )}
-            Sort by % off
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round"><line x1="4" y1="6" x2="20" y2="6"/><line x1="8" y1="12" x2="20" y2="12"/><line x1="12" y1="18" x2="20" y2="18"/></svg>
+            FILTERS
+            <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><path d="m6 9 6 6 6-6"/></svg>
           </button>
+
+          {/* Active filter chips */}
+          {activeChips.map((chip) => (
+            <span key={chip.type} className="flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-slate-100 border border-slate-200 text-[13px] font-medium text-slate-700">
+              {chip.label}
+              <button onClick={() => removeFilterChip(chip.type)} className="text-slate-400 hover:text-slate-700 transition-colors leading-none">×</button>
+            </span>
+          ))}
+
+          {/* Search query chip */}
+          {searchQuery && (
+            <span className="flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-slate-100 border border-slate-200 text-[13px] font-medium text-slate-700">
+              "{searchQuery}"
+              <button onClick={() => { setSearchQuery(""); setSearchInput(""); }} className="text-slate-400 hover:text-slate-700 transition-colors leading-none">×</button>
+            </span>
+          )}
+
+          {/* Results count */}
+          {!loading && (
+            <div className="ml-auto text-right">
+              <p className="text-[10px] font-bold tracking-[1px] uppercase text-slate-400">Results Found</p>
+              <p className="text-[18px] font-extrabold text-[#0f172a] leading-tight">{pagination?.total ?? displayDeals.length} Items</p>
+            </div>
+          )}
+
+          {/* Sort dropdown — gated */}
+          <SortDropdown
+            value={isLoggedIn ? sortValue : ""}
+            onChange={handleSortChange}
+          />
         </div>
 
         {/* Deals grid */}
         {loading && (
           <div className="flex justify-center py-20">
-            <div
-              className="w-10 h-10 rounded-full border-3 border-slate-200 border-t-[#16a34a] animate-spin"
-              style={{ borderTopColor: "#16a34a", borderWidth: 3 }}
-            />
+            <div className="w-10 h-10 rounded-full animate-spin" style={{ borderTopColor: "#16a34a", borderWidth: 3, borderStyle: "solid", borderColor: "#e2e8f0", borderTopColor: "#16a34a" }} />
           </div>
         )}
         {error && !loading && (
-          <div className="text-center py-16 text-slate-500 text-[15px]">
-            Could not load deals right now. Please try again later.
-          </div>
+          <div className="text-center py-16 text-slate-500 text-[15px]">Could not load deals right now. Please try again later.</div>
         )}
         {!loading && !error && displayDeals.length === 0 && (
           <div className="text-center py-16 text-slate-500 text-[15px]">
-            {searchQuery
-              ? "No deals match your search."
-              : "No deals found for today."}
+            {searchQuery ? `No deals found for "${searchQuery}".` : "No deals available right now."}
           </div>
         )}
         {!loading && displayDeals.length > 0 && (
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-5">
             {displayDeals.map((deal) => (
-              <DealCard
-                key={deal.id}
-                deal={deal}
-                isBookmarked={bookmarkedIds.has(deal.id)}
-                onBookmark={handleBookmark}
-              />
+              <DealCard key={deal.id} deal={deal} isBookmarked={bookmarkedIds.has(deal.id)} onBookmark={handleBookmark} />
             ))}
           </div>
         )}
       </main>
 
+      {/* Filters modal */}
+      {filtersOpen && (
+        <FiltersModal
+          storeNames={storeNames}
+          draft={filterDraft}
+          onChange={setFilterDraft}
+          onClear={clearFilters}
+          onApply={applyFilters}
+          onClose={() => setFiltersOpen(false)}
+        />
+      )}
+
       {/* Login modal */}
       {loginModal && (
-        <LoginModal
-          message={loginModal.message}
-          onClose={() => setLoginModal(null)}
-          onGoLogin={goToLogin}
-        />
+        <LoginModal message={loginModal.message} onClose={() => setLoginModal(null)} />
       )}
     </div>
   );

@@ -6,3 +6,5 @@ New plan with Kit
 4: Sort by % discount or filter by store are gated (one needs to register). There will be no “Stores” section.
 5: Users will be automatically subscribed to Monday weekly digest email. This means we also connect Kit (https://kit.com/) newsletter list with the registration.
 6: “Add to list” becomes “Bookmark it” for now so that user doesn’t need to search the products of interests again and again.
+7: In this "sign in", make the login nd continue to google as in image2. delete /login and /deals endpoint, root desideals.com or localhost:3000 should   
+entail deals and login together   

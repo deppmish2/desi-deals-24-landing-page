@@ -109,7 +109,6 @@ router.get("/", async (req, res, next) => {
     const searchQuery = String(req.query.q || "")
       .trim()
       .toLowerCase();
-    const sortByDiscount = req.query.sort === "discount";
     const filterStore = String(req.query.store || "").trim();
     const today = getCurrentPoolDate();
 
@@ -121,7 +120,9 @@ router.get("/", async (req, res, next) => {
       if (allDeals.length > 0) setMemCache(today, allDeals);
     }
 
-    // Apply search + store filter
+    const filterCategory = String(req.query.category || "").trim();
+
+    // Apply filters (all gated in frontend, server supports freely)
     let filtered = allDeals;
     if (searchQuery) {
       filtered = filtered.filter(
@@ -134,11 +135,23 @@ router.get("/", async (req, res, next) => {
     if (filterStore) {
       filtered = filtered.filter((d) => d.store?.name === filterStore);
     }
+    if (filterCategory) {
+      filtered = filtered.filter((d) => d.product_category === filterCategory);
+    }
 
-    // Sort override — gated in the frontend, but the server supports it freely.
-    if (sortByDiscount) {
+    // Sort override — gated in the frontend, server supports freely.
+    const sort = String(req.query.sort || "").trim();
+    if (sort === "discount") {
       filtered = [...filtered].sort(
         (a, b) => (b.discount_percent || 0) - (a.discount_percent || 0),
+      );
+    } else if (sort === "price_per_kg") {
+      filtered = [...filtered].sort(
+        (a, b) => (a.price_per_kg || Infinity) - (b.price_per_kg || Infinity),
+      );
+    } else if (sort === "price") {
+      filtered = [...filtered].sort(
+        (a, b) => (a.sale_price || 0) - (b.sale_price || 0),
       );
     }
 
@@ -161,7 +174,7 @@ router.get("/", async (req, res, next) => {
         total_pages: Math.max(1, Math.ceil(total / limitNum)),
       },
       meta: {
-        sort: sortByDiscount ? "discount" : "random",
+        sort: sort || "random",
         date: today,
       },
     });
@@ -173,7 +186,7 @@ router.get("/", async (req, res, next) => {
         result_count: data.length,
         page: pageNum,
         limit: limitNum,
-        sort: sortByDiscount ? "discount" : "random",
+        sort: sort || "random",
         search: searchQuery || null,
       },
     });
