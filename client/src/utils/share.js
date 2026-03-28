@@ -38,7 +38,18 @@ function getPublicSiteOrigin() {
 export function buildDealSharePath(dealId) {
   const safeId = String(dealId || "").trim();
   if (!safeId) return "/";
+  return `/share/deal/${encodeURIComponent(safeId)}`;
+}
+
+export function buildDealPagePath(dealId) {
+  const safeId = String(dealId || "").trim();
+  if (!safeId) return "/";
   return `/deal/${encodeURIComponent(safeId)}`;
+}
+
+export function buildDealPageUrl(dealId) {
+  const path = buildDealPagePath(dealId);
+  return new URL(path, getPublicSiteOrigin()).toString();
 }
 
 export function buildDealShareUrl(dealId) {
@@ -67,13 +78,13 @@ export function buildWhatsAppDealShareText({
   const cleanOriginalPrice = normalizeInlineText(originalPriceText);
   const cleanStore = normalizeInlineText(storeName);
 
-  const titleLine = "DesiDeals24 deal alert";
+  const titleLine = "DesiDeals24";
   const productLine = cleanName;
 
   const priceParts = [];
   if (cleanPrice) priceParts.push(`Now ${cleanPrice}`);
   if (cleanOriginalPrice) priceParts.push(`Was ${cleanOriginalPrice}`);
-  if (cleanStore) priceParts.push(`Store: ${cleanStore}`);
+  if (cleanStore) priceParts.push(cleanStore);
 
   const detailLine = priceParts.join("  |  ");
 
@@ -81,7 +92,6 @@ export function buildWhatsAppDealShareText({
     titleLine,
     productLine,
     detailLine,
-    "Tap to open the live deal:",
     shareUrl,
   ].filter(Boolean).join("\n");
 }

@@ -4,7 +4,7 @@ import { formatBestBefore, formatPrice, formatPricePerKg } from "../utils/format
 import {
   addBookmark, fetchBookmarks, fetchDealById, getAuthSession, logoutUser, removeBookmark,
 } from "../utils/api";
-import { buildDealShareUrl, buildWhatsAppDealShareUrl } from "../utils/share";
+import { buildDealPageUrl, buildWhatsAppDealShareUrl } from "../utils/share";
 
 function proxyImageUrl(imageUrl) {
   if (!imageUrl) return null;
@@ -20,7 +20,7 @@ function resolveUrl(deal, url) {
 }
 
 function dealPermalink(dealId) {
-  return buildDealShareUrl(dealId);
+  return buildDealPageUrl(dealId);
 }
 
 function DealCard({ deal, isBookmarked, onBookmark }) {

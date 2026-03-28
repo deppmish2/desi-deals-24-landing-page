@@ -6,7 +6,7 @@ import {
   addBookmark, fetchBookmarks, fetchDeals, fetchOAuthAuthUrl,
   getAuthSession, logoutUser, removeBookmark,
 } from "../utils/api";
-import { buildDealShareUrl, buildWhatsAppDealShareUrl } from "../utils/share";
+import { buildDealPageUrl, buildWhatsAppDealShareUrl } from "../utils/share";
 
 const POST_AUTH_REDIRECT_STORAGE_KEY = "dd24_post_auth_redirect";
 const OAUTH_STATE_STORAGE_PREFIX = "dd24_oauth_state:";
@@ -139,7 +139,7 @@ function resolveUrl(deal, url) {
 
 // ── Deal card ─────────────────────────────────────────────────────────────────
 function dealPermalink(dealId) {
-  return buildDealShareUrl(dealId);
+  return buildDealPageUrl(dealId);
 }
 
 function DealCard({ deal, isBookmarked, onBookmark, highlighted, highlightRef }) {

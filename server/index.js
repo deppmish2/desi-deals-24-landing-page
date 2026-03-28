@@ -158,6 +158,8 @@ async function getShareableDeal(dealId) {
          d.discount_percent,
          d.currency,
          d.image_url,
+         d.product_url,
+         s.url AS store_url,
          s.name AS store_name
        FROM deals d
        JOIN stores s ON s.id = d.store_id
@@ -167,13 +169,23 @@ async function getShareableDeal(dealId) {
     .get(safeId);
 }
 
-async function buildDealMeta(req, dealId) {
-  const deal = await getShareableDeal(dealId);
-  if (!deal) return null;
+function resolveDealProductUrl(deal) {
+  const raw = String(deal?.product_url || "").trim();
+  if (!raw) return "";
+  if (/^https?:\/\//i.test(raw)) return raw;
+  const storeBase = String(deal?.store_url || "").replace(/\/+$/, "");
+  return storeBase
+    ? `${storeBase}${raw.startsWith("/") ? "" : "/"}${raw}`
+    : raw;
+}
 
+async function buildDealMeta(req, dealId, options = {}) {
+  const deal = options.deal || await getShareableDeal(dealId);
+  if (!deal) return null;
   const baseUrl = getPublicBaseUrl(req);
-  const shareUrl = `${baseUrl}/deal/${encodeURIComponent(String(deal.id))}`;
-  const imageUrl = `${baseUrl}/landing/DesiDeals24-Basic-Hero.jpg`;
+  const sharePath = String(options.sharePath || `/deal/${encodeURIComponent(String(deal.id))}`);
+  const shareUrl = `${baseUrl}${sharePath.startsWith("/") ? "" : "/"}${sharePath}`;
+  const imageUrl = `${baseUrl}/landing/dd24-logo.png`;
   const salePrice = formatMoney(deal.sale_price, deal.currency) || "Live now";
   const originalPrice = formatMoney(deal.original_price, deal.currency);
   const discount = Number(deal.discount_percent || 0);
@@ -202,6 +214,104 @@ async function buildDealMeta(req, dealId) {
   };
 }
 
+function sendDealShareRedirect(res, meta, redirectUrl) {
+  const safeRedirectUrl = String(redirectUrl || "").trim();
+  const html = `<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>${escapeHtml(meta.title)}</title>
+    <meta name="description" content="${escapeHtml(meta.description)}" />
+    <meta property="og:title" content="${escapeHtml(meta.title)}" />
+    <meta property="og:description" content="${escapeHtml(meta.description)}" />
+    <meta property="og:url" content="${escapeHtml(meta.url)}" />
+    <meta property="og:image" content="${escapeHtml(meta.image)}" />
+    <meta property="og:image:alt" content="${escapeHtml(meta.imageAlt || meta.title)}" />
+    <meta property="og:type" content="${escapeHtml(meta.type || "website")}" />
+    <meta name="twitter:card" content="summary_large_image" />
+    <meta name="twitter:title" content="${escapeHtml(meta.title)}" />
+    <meta name="twitter:description" content="${escapeHtml(meta.description)}" />
+    <meta name="twitter:image" content="${escapeHtml(meta.image)}" />
+    <meta name="twitter:image:alt" content="${escapeHtml(meta.imageAlt || meta.title)}" />
+    ${safeRedirectUrl ? `<meta http-equiv="refresh" content="0; url=${escapeHtml(safeRedirectUrl)}" />` : ""}
+    ${safeRedirectUrl ? `<script>window.location.replace(${JSON.stringify(safeRedirectUrl)});</script>` : ""}
+    <style>
+      body {
+        margin: 0;
+        min-height: 100vh;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        background: #0f1711;
+        color: #f8fafc;
+        font-family: Inter, system-ui, sans-serif;
+      }
+      .card {
+        width: min(560px, calc(100vw - 32px));
+        padding: 28px;
+        border-radius: 24px;
+        background: linear-gradient(135deg, #102016, #173f27);
+        box-shadow: 0 18px 60px rgba(0, 0, 0, 0.35);
+      }
+      .brand {
+        display: flex;
+        align-items: center;
+        gap: 12px;
+        margin-bottom: 18px;
+      }
+      .brand img {
+        width: 44px;
+        height: 44px;
+        object-fit: contain;
+      }
+      .eyebrow {
+        color: #86efac;
+        font-size: 12px;
+        font-weight: 700;
+        letter-spacing: 0.12em;
+        text-transform: uppercase;
+      }
+      h1 {
+        margin: 0 0 10px;
+        font-size: 28px;
+        line-height: 1.1;
+      }
+      p {
+        margin: 0 0 10px;
+        color: #dbe7df;
+        line-height: 1.5;
+      }
+      a {
+        color: #22c55e;
+        font-weight: 700;
+        text-decoration: none;
+      }
+    </style>
+  </head>
+  <body>
+    <div class="card">
+      <div class="brand">
+        <img src="/landing/dd24-logo.png" alt="DesiDeals24" />
+        <div>
+          <div class="eyebrow">DesiDeals24</div>
+          <strong>Opening live product</strong>
+        </div>
+      </div>
+      <h1>${escapeHtml(meta.title)}</h1>
+      <p>${escapeHtml(meta.description)}</p>
+      ${
+        safeRedirectUrl
+          ? `<p>If you are not redirected automatically, <a href="${escapeHtml(safeRedirectUrl)}">open the live product here</a>.</p>`
+          : `<p><a href="${escapeHtml(meta.url)}">Open this deal on DesiDeals24</a>.</p>`
+      }
+    </div>
+  </body>
+</html>`;
+
+  return res.status(200).type("html").send(html);
+}
+
 function sendClientApp(res, options = {}) {
   if (clientBuildExists()) {
     if (options.meta) {
@@ -222,6 +332,24 @@ function sendClientApp(res, options = {}) {
 }
 
 app.use(express.static(CLIENT_DIST, { index: false }));
+app.get("/share/deal/:dealId", async (req, res, next) => {
+  try {
+    const deal = await getShareableDeal(req.params.dealId);
+    if (!deal) {
+      return sendClientApp(res);
+    }
+    const meta = await buildDealMeta(req, req.params.dealId, {
+      deal,
+      sharePath: `/share/deal/${encodeURIComponent(String(deal.id))}`,
+    });
+    const redirectUrl =
+      resolveDealProductUrl(deal) ||
+      `${getPublicBaseUrl(req)}/deal/${encodeURIComponent(String(deal.id))}`;
+    return sendDealShareRedirect(res, meta, redirectUrl);
+  } catch (error) {
+    return next(error);
+  }
+});
 app.get("/deal/:dealId", async (req, res, next) => {
   try {
     const meta = await buildDealMeta(req, req.params.dealId).catch((error) => {

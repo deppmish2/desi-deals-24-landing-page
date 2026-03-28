@@ -4,6 +4,8 @@
   "outputDirectory": "client/dist",
   "rewrites": [
     { "source": "/api/:path*", "destination": "/api/server" },
+    { "source": "/share/deal/:path*", "destination": "/api/server" },
+    { "source": "/deal/:path*", "destination": "/api/server" },
     { "source": "/:path*", "destination": "/index.html" }
   ],
   "functions": {
