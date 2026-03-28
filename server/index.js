@@ -125,7 +125,19 @@ function getPublicBaseUrl(req) {
     .trim()
     .replace(/\/+$/, "");
   if (configured) return configured;
-  return `${req.protocol}://${req.get("host")}`;
+
+  const forwardedProto = String(req.get("x-forwarded-proto") || "")
+    .split(",")[0]
+    .trim()
+    .toLowerCase();
+  const forwardedHost = String(req.get("x-forwarded-host") || "")
+    .split(",")[0]
+    .trim();
+  const host = forwardedHost || String(req.get("host") || "").trim();
+  const localHost = /^(localhost|127\.0\.0\.1)(:\d+)?$/i.test(host);
+  const protocol = forwardedProto || (localHost ? req.protocol : "https");
+
+  return `${protocol}://${host}`.replace(/\/+$/, "");
 }
 
 function formatMoney(value, currency) {
@@ -185,7 +197,7 @@ async function buildDealMeta(req, dealId, options = {}) {
   const baseUrl = getPublicBaseUrl(req);
   const sharePath = String(options.sharePath || `/deal/${encodeURIComponent(String(deal.id))}`);
   const shareUrl = `${baseUrl}${sharePath.startsWith("/") ? "" : "/"}${sharePath}`;
-  const imageUrl = `${baseUrl}/landing/dd24-logo.png`;
+  const imageUrl = `${baseUrl}/landing/share-logo-card.png`;
   const salePrice = formatMoney(deal.sale_price, deal.currency) || "Live now";
   const originalPrice = formatMoney(deal.original_price, deal.currency);
   const discount = Number(deal.discount_percent || 0);
@@ -260,10 +272,11 @@ function sendDealShareRedirect(res, meta, redirectUrl) {
         gap: 12px;
         margin-bottom: 18px;
       }
-      .brand img {
-        width: 44px;
-        height: 44px;
-        object-fit: contain;
+      .hero {
+        width: 100%;
+        margin-bottom: 18px;
+        border-radius: 18px;
+        display: block;
       }
       .eyebrow {
         color: #86efac;
@@ -291,18 +304,18 @@ function sendDealShareRedirect(res, meta, redirectUrl) {
   </head>
   <body>
     <div class="card">
+      <img class="hero" src="/landing/share-logo-card.png" alt="DesiDeals24" />
       <div class="brand">
-        <img src="/landing/dd24-logo.png" alt="DesiDeals24" />
         <div>
           <div class="eyebrow">DesiDeals24</div>
-          <strong>Opening live product</strong>
+          <strong>Opening on DesiDeals24</strong>
         </div>
       </div>
       <h1>${escapeHtml(meta.title)}</h1>
       <p>${escapeHtml(meta.description)}</p>
       ${
         safeRedirectUrl
-          ? `<p>If you are not redirected automatically, <a href="${escapeHtml(safeRedirectUrl)}">open the live product here</a>.</p>`
+          ? `<p>If you are not redirected automatically, <a href="${escapeHtml(safeRedirectUrl)}">open this deal on DesiDeals24</a>.</p>`
           : `<p><a href="${escapeHtml(meta.url)}">Open this deal on DesiDeals24</a>.</p>`
       }
     </div>
@@ -342,9 +355,7 @@ app.get("/share/deal/:dealId", async (req, res, next) => {
       deal,
       sharePath: `/share/deal/${encodeURIComponent(String(deal.id))}`,
     });
-    const redirectUrl =
-      resolveDealProductUrl(deal) ||
-      `${getPublicBaseUrl(req)}/deal/${encodeURIComponent(String(deal.id))}`;
+    const redirectUrl = `${getPublicBaseUrl(req)}/deal/${encodeURIComponent(String(deal.id))}`;
     return sendDealShareRedirect(res, meta, redirectUrl);
   } catch (error) {
     return next(error);
