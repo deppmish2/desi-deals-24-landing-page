@@ -1,5 +1,5 @@
 import React, { useCallback, useEffect, useMemo, useRef, useState } from "react";
-import { Link, useNavigate } from "react-router-dom";
+import { Link, useNavigate, useSearchParams } from "react-router-dom";
 import useDeals from "../hooks/useDeals";
 import { formatBestBefore, formatPrice, formatPricePerKg } from "../utils/formatters";
 import {
@@ -137,7 +137,11 @@ function resolveUrl(deal, url) {
 }
 
 // ── Deal card ─────────────────────────────────────────────────────────────────
-function DealCard({ deal, isBookmarked, onBookmark }) {
+function dealPermalink(dealId) {
+  return `${window.location.origin}/?deal=${dealId}`;
+}
+
+function DealCard({ deal, isBookmarked, onBookmark, highlighted, highlightRef }) {
   const [imgError, setImgError] = useState(false);
   const proxyImg = proxyImageUrl(deal?.image_url);
   const discountPct = deal?.discount_percent ? Math.round(deal.discount_percent) : null;
@@ -149,12 +153,26 @@ function DealCard({ deal, isBookmarked, onBookmark }) {
     deal.price_per_kg ? formatPricePerKg(deal.price_per_kg) : null,
   ].filter(Boolean).join(" | ");
 
+  const permalink = dealPermalink(deal.id);
+  const waText = [
+    `🛒 *${deal.product_name}*`,
+    `*${priceText}*${originalPriceText ? ` (was ${originalPriceText})` : ""}${discountPct ? ` — ${discountPct}% off` : ""}`,
+    `🏪 ${deal.store?.name || "DesiDeals24"}`,
+    ``,
+    `Find it on DesiDeals24 👇`,
+    permalink,
+  ].join("\n");
+
   return (
     <div
-      className="bg-white border border-[#f1f5f9] rounded-[20px] flex flex-col overflow-hidden"
-      style={{ boxShadow: "0px 2px 12px rgba(0,0,0,0.06)" }}
+      ref={highlightRef}
+      className={`bg-white rounded-[20px] flex flex-col overflow-hidden transition-shadow ${
+        highlighted ? "border-2 border-[#16a34a]" : "border border-[#f1f5f9]"
+      }`}
+      style={{ boxShadow: highlighted ? "0 0 0 4px rgba(22,163,74,0.15), 0px 2px 12px rgba(0,0,0,0.06)" : "0px 2px 12px rgba(0,0,0,0.06)" }}
     >
-      <div className="relative w-full h-[200px] bg-white flex items-center justify-center p-5">
+      {/* Image — clicking goes to DesiDeals24 permalink */}
+      <a href={permalink} className="relative block w-full h-[200px] bg-white flex items-center justify-center p-5 no-underline">
         <img
           src={imgError || !proxyImg
             ? 'data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" width="112" height="112" viewBox="0 0 112 112"><rect fill="%23ffffff" width="112" height="112"/><text fill="%2394a3b8" font-size="28" text-anchor="middle" dominant-baseline="middle" x="56" y="58">🛒</text></svg>'
@@ -182,16 +200,17 @@ function DealCard({ deal, isBookmarked, onBookmark }) {
             {bestBeforeText}
           </span>
         )}
-      </div>
+      </a>
 
       <div className="flex flex-col flex-1 px-5 pt-4 pb-5 gap-3">
         <div className="flex flex-col gap-1.5">
           <p className="text-[#94a3b8] text-[10px] leading-[15px] tracking-[1.5px] uppercase font-extrabold">
             {deal.store?.name || "Store"}
           </p>
-          <p className="text-[#1e293b] text-[15px] leading-[22px] font-bold line-clamp-2 min-h-[44px]">
+          {/* Product name links to DesiDeals24 permalink */}
+          <a href={permalink} className="text-[#1e293b] text-[15px] leading-[22px] font-bold line-clamp-2 min-h-[44px] no-underline hover:text-[#16a34a] transition-colors">
             {deal.product_name}
-          </p>
+          </a>
           <div className="flex items-baseline justify-between gap-2">
             <div className="flex items-baseline gap-2">
               <span className="text-[#1e293b] text-[22px] leading-[30px] font-extrabold">{priceText}</span>
@@ -214,9 +233,9 @@ function DealCard({ deal, isBookmarked, onBookmark }) {
           >
             <span className="text-[13px] leading-[16px] font-extrabold tracking-wide uppercase">Snatch Deal</span>
           </a>
-          {/* WhatsApp share */}
+          {/* WhatsApp share — shares DesiDeals24 permalink, WA shows branded OG preview */}
           <a
-            href={`https://wa.me/?text=${encodeURIComponent(`${deal.product_name} — ${formatPrice(deal.sale_price, deal.currency)} off at ${deal.store?.name || "DesiDeals24"}: ${resolveUrl(deal, deal.product_url)}`)}`}
+            href={`https://wa.me/?text=${encodeURIComponent(waText)}`}
             target="_blank"
             rel="noopener noreferrer"
             className="shrink-0 inline-flex items-center justify-center w-[46px] h-[46px] rounded-[14px] border border-slate-200 bg-white hover:bg-[#e7fbe9] hover:border-[#25D366] transition-colors"
@@ -637,6 +656,9 @@ function Pagination({ page, totalPages, onChange }) {
 // ── Main page ─────────────────────────────────────────────────────────────────
 export default function DealsPage() {
   const navigate = useNavigate();
+  const [searchParams] = useSearchParams();
+  const highlightDealId = searchParams.get("deal") || null;
+  const highlightRef = useRef(null);
   const [searchInput, setSearchInput] = useState("");
   const [searchQuery, setSearchQuery] = useState("");
   const [sortValue, setSortValue] = useState("");
@@ -679,6 +701,17 @@ export default function DealsPage() {
     hide_expired: filterHideExpired && isLoggedIn ? "1" : undefined,
   });
 
+  const displayDeals = useMemo(
+    () => (Array.isArray(deals) ? deals : []).filter((d) => d?.product_url && d?.product_name),
+    [deals],
+  );
+
+  // Scroll to highlighted deal when deals load
+  useEffect(() => {
+    if (!highlightDealId || !highlightRef.current) return;
+    setTimeout(() => highlightRef.current?.scrollIntoView({ behavior: "smooth", block: "center" }), 300);
+  }, [highlightDealId, displayDeals]);
+
   // Keep bookmarkedDeals map populated from deal pages
   useEffect(() => {
     if (!Array.isArray(deals) || deals.length === 0) return;
@@ -708,11 +741,6 @@ export default function DealsPage() {
       })
       .catch(() => {});
   }, []);
-
-  const displayDeals = useMemo(
-    () => (Array.isArray(deals) ? deals : []).filter((d) => d?.product_url && d?.product_name),
-    [deals],
-  );
 
   // Reset to page 1 whenever filters or search changes
   function resetPage() { setPage(1); }
@@ -810,7 +838,7 @@ export default function DealsPage() {
       {/* Header */}
       <header className="backdrop-blur-md bg-white/80 border-b border-slate-200 sticky top-0 z-30">
         <div className="h-16 max-w-[1280px] mx-auto px-4 sm:px-8 flex items-center justify-between gap-4">
-          <Link to="/" className="flex items-center gap-2 no-underline">
+          <Link to="/" className="flex items-center gap-2 no-underline" style={{ textDecoration: "none" }}>
             <img src="/landing/dd24-logo.svg" alt="DesiDeals24" className="w-5 h-6 object-contain" />
             <span className="font-extrabold tracking-[-0.5px] text-[20px] text-[#141414]">DesiDeals24</span>
             <span className="text-[10px] font-extrabold tracking-[2px] uppercase text-slate-400 -translate-y-1">· Beta</span>
@@ -818,32 +846,22 @@ export default function DealsPage() {
           <div className="flex items-center gap-3">
             {isLoggedIn ? (
               <>
-                {/* Bookmarks button */}
-                <div className="relative">
-                  <button
-                    type="button"
-                    onClick={() => setBookmarksPanelOpen((v) => !v)}
-                    className="relative rounded-full border border-slate-200 bg-white hover:bg-slate-50 px-4 py-2 text-[12px] font-bold uppercase tracking-[1.4px] text-slate-600 transition-colors flex items-center gap-2"
-                  >
-                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                      <path d="M19 21l-7-5-7 5V5a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2z"/>
-                    </svg>
-                    Saved
-                    {bookmarkedIds.size > 0 && (
-                      <span className="absolute -top-1 -right-1 w-4 h-4 rounded-full bg-[#16a34a] text-white text-[10px] font-bold flex items-center justify-center leading-none">
-                        {bookmarkedIds.size}
-                      </span>
-                    )}
-                  </button>
-                  {bookmarksPanelOpen && (
-                    <BookmarksPanel
-                      bookmarkedDeals={bookmarkedDeals}
-                      bookmarkedIds={bookmarkedIds}
-                      onRemove={(id) => handleBookmark(id)}
-                      onClose={() => setBookmarksPanelOpen(false)}
-                    />
+                {/* Bookmarks button — navigates to /saved page */}
+                <Link
+                  to="/saved"
+                  className="relative rounded-full border border-slate-200 bg-white hover:bg-slate-50 px-4 py-2 text-[12px] font-bold uppercase tracking-[1.4px] text-slate-600 transition-colors flex items-center gap-2"
+                  style={{ textDecoration: "none" }}
+                >
+                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                    <path d="M19 21l-7-5-7 5V5a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2z"/>
+                  </svg>
+                  Saved
+                  {bookmarkedIds.size > 0 && (
+                    <span className="absolute -top-1 -right-1 w-4 h-4 rounded-full bg-[#16a34a] text-white text-[10px] font-bold flex items-center justify-center leading-none">
+                      {bookmarkedIds.size}
+                    </span>
                   )}
-                </div>
+                </Link>
                 <button
                   type="button"
                   onClick={handleLogout}
@@ -957,7 +975,14 @@ export default function DealsPage() {
         {!loading && displayDeals.length > 0 && (
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-5">
             {displayDeals.map((deal) => (
-              <DealCard key={deal.id} deal={deal} isBookmarked={bookmarkedIds.has(deal.id)} onBookmark={handleBookmark} />
+              <DealCard
+                key={deal.id}
+                deal={deal}
+                isBookmarked={bookmarkedIds.has(deal.id)}
+                onBookmark={handleBookmark}
+                highlighted={highlightDealId === deal.id}
+                highlightRef={highlightDealId === deal.id ? highlightRef : null}
+              />
             ))}
           </div>
         )}

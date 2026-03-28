@@ -88,12 +88,11 @@ function sendClientApp(res) {
 }
 
 app.use(express.static(CLIENT_DIST, { index: false }));
-app.get("/", (req, res) => res.redirect(302, "/waitlist"));
 app.get(
-  ["/waitlist", "/deals", "/admin", "/oauth/:provider/callback"],
+  ["/", "/admin", "/oauth/:provider/callback"],
   (req, res) => sendClientApp(res),
 );
-app.get("*", (req, res) => res.redirect(302, "/waitlist"));
+app.get("*", (req, res) => sendClientApp(res));
 
 // ── Error handler ─────────────────────────────────────────────────────────────
 app.use((err, req, res, next) => {

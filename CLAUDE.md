@@ -121,3 +121,5 @@ Full product requirements are at:
 `/Users/rasha/Documents/Rahul/Deals24/crawler-spice-stores/DesiDeals24_PRD.md`
 
 The PRD covers all 27 target stores. This codebase implements the first 5.
+
+Code like you will be reviewed by Codex agent.
