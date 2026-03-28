@@ -551,16 +551,25 @@ function SortDropdown({ value, onChange, isLoggedIn, onRequireLogin }) {
   }, [open]);
 
   function handleOpen() {
-    if (!isLoggedIn) { onRequireLogin(); return; }
     setOpen((v) => !v);
   }
 
+  function handleSelect(nextValue) {
+    if (!isLoggedIn) {
+      setOpen(false);
+      onRequireLogin();
+      return;
+    }
+    onChange(nextValue === value ? "" : nextValue);
+    setOpen(false);
+  }
+
   return (
-    <div className="relative w-full lg:w-auto" ref={ref}>
+    <div className="relative w-auto max-w-full" ref={ref}>
       <button
         type="button"
         onClick={handleOpen}
-        className="inline-flex w-full items-center justify-between gap-3 rounded-full border border-[#d4deef] bg-white/60 px-4 py-3 text-left transition-colors hover:border-[#b6c7e2] hover:bg-white/80 focus:outline-none focus-visible:ring-2 focus-visible:ring-[#17874a]/25 focus-visible:ring-offset-2 focus-visible:ring-offset-[#edf3ff] lg:w-auto lg:bg-transparent lg:px-0 lg:py-0 lg:border-transparent lg:hover:border-transparent lg:hover:bg-transparent lg:focus-visible:ring-offset-0"
+        className="inline-flex max-w-full items-center justify-between gap-3 rounded-[24px] border border-[#dfe7f5] bg-white px-4 py-3.5 text-left shadow-sm transition-colors hover:border-[#b6c7e2] hover:bg-white focus:outline-none focus-visible:ring-2 focus-visible:ring-[#17874a]/25 focus-visible:ring-offset-2 focus-visible:ring-offset-[#edf3ff] lg:bg-transparent lg:px-0 lg:py-0 lg:border-transparent lg:shadow-none lg:hover:border-transparent lg:hover:bg-transparent lg:focus-visible:ring-offset-0"
       >
         <span className="flex min-w-0 items-center gap-2.5">
           {!isLoggedIn && (
@@ -572,31 +581,36 @@ function SortDropdown({ value, onChange, isLoggedIn, onRequireLogin }) {
             Sort By:
           </span>
           <span className="truncate text-[16px] font-extrabold text-[#17874a] sm:text-[18px]">
-            {current?.compactLabel || "Recommended"}
+            {current?.compactLabel || "Randomly"}
           </span>
         </span>
         <ChevronDownIcon size={16} color="#17874a" />
       </button>
-      {open && isLoggedIn && (
+      {open && (
         <div className="absolute left-0 right-0 top-full z-20 mt-3 overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-xl sm:left-auto sm:w-60">
           {SORT_OPTIONS.map((opt) => (
             <button
               key={opt.value}
               type="button"
-              onClick={() => { onChange(opt.value === value ? "" : opt.value); setOpen(false); }}
+              onClick={() => handleSelect(opt.value)}
               className={`flex w-full items-center gap-3 px-4 py-3 text-left text-[13px] font-medium transition-colors ${
-                opt.value === value
+                isLoggedIn && opt.value === value
                   ? "bg-[#edf7ef] text-[#0f172a]"
                   : "text-slate-600 hover:bg-slate-50"
               }`}
             >
-              {opt.value === value && (
+              {isLoggedIn && opt.value === value && (
                 <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#17874a" strokeWidth="2.5" strokeLinecap="round">
                   <polyline points="20 6 9 17 4 12"/>
                 </svg>
               )}
-              {opt.value !== value && <span className="w-[14px]" />}
+              {(opt.value !== value || !isLoggedIn) && <span className="w-[14px]" />}
               <span className="truncate">{opt.compactLabel}</span>
+              {!isLoggedIn && (
+                <span className="ml-auto inline-flex h-6 w-6 items-center justify-center rounded-full bg-[#eef4ff] text-slate-500">
+                  <LockIcon size={11} color="currentColor" />
+                </span>
+              )}
             </button>
           ))}
         </div>
@@ -1063,7 +1077,7 @@ export default function DealsPage() {
                 <button
                   type="button"
                   onClick={openFilters}
-                  className="relative inline-flex min-h-[58px] items-center justify-center gap-2 rounded-[22px] border border-white/80 bg-white px-4 py-3.5 text-[14px] font-bold text-slate-600 shadow-sm transition-colors hover:bg-slate-50 xl:min-w-[76px]"
+                  className="relative hidden min-h-[58px] items-center justify-center gap-2 rounded-[22px] border border-white/80 bg-white px-4 py-3.5 text-[14px] font-bold text-slate-600 shadow-sm transition-colors hover:bg-slate-50 sm:inline-flex xl:min-w-[76px]"
                 >
                   <FilterIcon size={18} color="currentColor" />
                   <span className="xl:hidden">Filters</span>
@@ -1075,19 +1089,51 @@ export default function DealsPage() {
                 </button>
               </div>
 
-              <div className="flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
-                <div className="flex flex-col gap-3">
-                  <div className="flex flex-wrap items-baseline gap-2 sm:gap-3">
+              <div className="sm:hidden flex items-stretch gap-3">
+                <button
+                  type="button"
+                  onClick={openFilters}
+                  className="relative inline-flex h-[82px] w-[82px] shrink-0 items-center justify-center rounded-[24px] border border-white/80 bg-white text-slate-600 shadow-sm transition-colors hover:bg-slate-50"
+                  aria-label="Open filters"
+                >
+                  <FilterIcon size={26} color="currentColor" />
+                  {filterCount > 0 && (
+                    <span className="absolute -top-1 -right-1 min-w-[24px] h-[24px] px-1 rounded-full bg-[#9a6500] text-white text-[12px] font-extrabold flex items-center justify-center leading-none">
+                      {filterCount}
+                    </span>
+                  )}
+                </button>
+
+                {hasActiveState ? (
+                  <button
+                    type="button"
+                    onClick={clearSearchAndFilters}
+                    className="flex min-h-[82px] flex-1 items-center rounded-[24px] border border-[#dae6fb] bg-[#e6efff] px-5 text-left shadow-sm transition-colors hover:bg-[#edf3ff]"
+                  >
+                    <span className="text-[15px] leading-[22px] font-extrabold text-[#17874a]">
+                      Remove filters
+                    </span>
+                    <span className="ml-2 text-[15px] leading-[22px] text-slate-400">
+                      and return to the full list
+                    </span>
+                  </button>
+                ) : null}
+              </div>
+
+              <div className="flex flex-col gap-4">
+                <div className="flex items-end justify-between gap-3">
+                  <div className="flex flex-1 flex-col gap-3">
+                    <div className="flex flex-wrap items-baseline gap-2 sm:gap-3">
                     <span className="text-[#111827] text-[14px] sm:text-[16px] font-black uppercase tracking-[1.7px]">
                       Matching Items {matchingCount}
                     </span>
-                  </div>
+                    </div>
 
-                  {hasActiveState ? (
-                    <button
-                      type="button"
-                      onClick={clearSearchAndFilters}
-                      className="inline-flex w-fit flex-wrap items-center gap-x-2 gap-y-1 rounded-[18px] border border-white/80 bg-white/70 px-4 py-3 text-left shadow-sm transition-colors hover:bg-white"
+                    {hasActiveState ? (
+                      <button
+                        type="button"
+                        onClick={clearSearchAndFilters}
+                        className="hidden w-fit flex-wrap items-center gap-x-2 gap-y-1 rounded-[18px] border border-white/80 bg-white/70 px-4 py-3 text-left shadow-sm transition-colors hover:bg-white sm:inline-flex"
                       >
                         <span className="text-[14px] sm:text-[15px] font-extrabold text-[#17874a]">
                           Remove filters
@@ -1096,50 +1142,51 @@ export default function DealsPage() {
                           and return to the full list
                         </span>
                       </button>
-                  ) : null}
+                    ) : null}
+                  </div>
 
-                  {(searchQuery || activeChips.length > 0) && (
-                    <div className="flex flex-wrap gap-2">
-                      {searchQuery && (
-                        <span className="flex items-center gap-1.5 rounded-full border border-[#d4deef] bg-white px-3 py-1.5 text-[13px] font-medium text-slate-700">
-                          "{searchQuery}"
-                          <button
-                            type="button"
-                            onClick={() => {
-                              setSearchQuery("");
-                              setSearchInput("");
-                              resetPage();
-                            }}
-                            className="text-slate-400 hover:text-slate-700 transition-colors leading-none"
-                          >
-                            ×
-                          </button>
-                        </span>
-                      )}
-                      {activeChips.map((chip) => (
-                        <span key={chip.type} className="flex items-center gap-1.5 rounded-full border border-[#d4deef] bg-white px-3 py-1.5 text-[13px] font-medium text-slate-700">
-                          {chip.label}
-                          <button
-                            type="button"
-                            onClick={() => removeFilterChip(chip.type)}
-                            className="text-slate-400 hover:text-slate-700 transition-colors leading-none"
-                          >
-                            ×
-                          </button>
-                        </span>
-                      ))}
-                    </div>
-                  )}
+                  <div className="shrink-0">
+                    <SortDropdown
+                      value={isLoggedIn ? sortValue : ""}
+                      onChange={handleSortChange}
+                      isLoggedIn={isLoggedIn}
+                      onRequireLogin={() => requireLogin("Sorting is for registered members only.")}
+                    />
+                  </div>
                 </div>
 
-                <div className="w-full lg:w-auto lg:flex-shrink-0 lg:pl-6">
-                  <SortDropdown
-                    value={isLoggedIn ? sortValue : ""}
-                    onChange={handleSortChange}
-                    isLoggedIn={isLoggedIn}
-                    onRequireLogin={() => requireLogin("Sorting is for registered members only.")}
-                  />
-                </div>
+                {(searchQuery || activeChips.length > 0) && (
+                  <div className="flex flex-wrap gap-2">
+                    {searchQuery && (
+                      <span className="flex items-center gap-1.5 rounded-full border border-[#d4deef] bg-white px-3 py-1.5 text-[13px] font-medium text-slate-700">
+                        "{searchQuery}"
+                        <button
+                          type="button"
+                          onClick={() => {
+                            setSearchQuery("");
+                            setSearchInput("");
+                            resetPage();
+                          }}
+                          className="text-slate-400 hover:text-slate-700 transition-colors leading-none"
+                        >
+                          ×
+                        </button>
+                      </span>
+                    )}
+                    {activeChips.map((chip) => (
+                      <span key={chip.type} className="flex items-center gap-1.5 rounded-full border border-[#d4deef] bg-white px-3 py-1.5 text-[13px] font-medium text-slate-700">
+                        {chip.label}
+                        <button
+                          type="button"
+                          onClick={() => removeFilterChip(chip.type)}
+                          className="text-slate-400 hover:text-slate-700 transition-colors leading-none"
+                        >
+                          ×
+                        </button>
+                      </span>
+                    ))}
+                  </div>
+                )}
               </div>
             </form>
           </div>
