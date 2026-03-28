@@ -986,8 +986,8 @@ export default function DealsPage() {
   return (
     <div className="min-h-screen bg-[radial-gradient(circle_at_top,_#ffffff_0%,_#f8fbff_32%,_#f3f6fb_100%)]">
       <main className="max-w-[1320px] mx-auto px-3 sm:px-6 lg:px-8 py-3 sm:py-6 flex flex-col gap-6">
-        <section className="relative z-20 rounded-[30px] border border-white/80 bg-white shadow-[0_30px_90px_rgba(15,23,42,0.08)]">
-          <div className="flex items-center justify-between gap-4 rounded-t-[30px] px-5 sm:px-7 lg:px-8 py-5 sm:py-6 bg-white">
+        <div className="sticky top-2 sm:top-3 z-50">
+          <div className="flex items-center justify-between gap-4 rounded-[28px] border border-white/80 bg-white/92 px-5 sm:px-7 lg:px-8 py-4 sm:py-5 shadow-[0_18px_45px_rgba(15,23,42,0.14)] backdrop-blur-xl">
             <Link to="/" className="flex items-center gap-2.5 no-underline" style={{ textDecoration: "none" }}>
               <img src="/landing/dd24-logo.svg" alt="DesiDeals24" className="w-6 h-7 sm:w-7 sm:h-8 object-contain" />
               <span className="font-extrabold tracking-[-0.8px] text-[24px] sm:text-[34px] text-[#17874a]">DesiDeals24</span>
@@ -1040,8 +1040,10 @@ export default function DealsPage() {
               )}
             </div>
           </div>
+        </div>
 
-          <div className="relative rounded-b-[30px] border-t border-slate-100 bg-[#edf3ff] px-4 sm:px-6 lg:px-8 py-4 sm:py-5 lg:py-6">
+        <section className="relative z-10 rounded-[30px] border border-white/80 bg-[#edf3ff] shadow-[0_30px_90px_rgba(15,23,42,0.08)]">
+          <div className="relative px-4 sm:px-6 lg:px-8 py-4 sm:py-5 lg:py-6">
             <form
               onSubmit={(e) => {
                 e.preventDefault();
