@@ -126,6 +126,8 @@ function buildDiversifiedPages(deals, pageSize, seed) {
     return {
       pages: [],
       enforcePageCap: false,
+      relaxedAdjacencyUsed: false,
+      relaxedCapUsed: false,
       maxPerStore: Math.max(1, Math.floor(pageSize * 0.2)),
       uniqueStoreCount: 0,
     };
@@ -147,6 +149,8 @@ function buildDiversifiedPages(deals, pageSize, seed) {
   );
   const perStoreLimit = enforcePageCap ? maxPerStore : Number.POSITIVE_INFINITY;
   const pages = [];
+  let relaxedAdjacencyUsed = false;
+  let relaxedCapUsed = false;
 
   while (Array.from(queues.values()).some((queue) => queue.length > 0)) {
     const page = [];
@@ -166,15 +170,30 @@ function buildDiversifiedPages(deals, pageSize, seed) {
       });
 
       if (candidates.length === 0) {
-        const fallback = storeIds.filter((storeId) => {
+        candidates = storeIds.filter((storeId) => {
           const queue = queues.get(storeId);
           return queue?.length > 0 && (pageCounts.get(storeId) || 0) < perStoreLimit;
         });
-
-        if (fallback.length === 0) break;
-        if (enforcePageCap && page.length > 0) break;
-        candidates = fallback;
+        if (candidates.length > 0) relaxedAdjacencyUsed = true;
       }
+
+      if (candidates.length === 0) {
+        candidates = storeIds.filter((storeId) => {
+          const queue = queues.get(storeId);
+          return queue?.length > 0 && storeId !== previousStoreId;
+        });
+        if (candidates.length > 0) relaxedCapUsed = true;
+      }
+
+      if (candidates.length === 0) {
+        candidates = storeIds.filter((storeId) => {
+          const queue = queues.get(storeId);
+          return queue?.length > 0;
+        });
+        if (candidates.length > 0) relaxedCapUsed = true;
+      }
+
+      if (candidates.length === 0) break;
 
       candidates.sort((a, b) =>
         compareStoreCandidates(a, b, pageCounts, queues, storePriority),
@@ -200,6 +219,8 @@ function buildDiversifiedPages(deals, pageSize, seed) {
   return {
     pages,
     enforcePageCap,
+    relaxedAdjacencyUsed,
+    relaxedCapUsed,
     maxPerStore,
     uniqueStoreCount: storeIds.length,
   };
@@ -390,9 +411,12 @@ router.get("/", async (req, res, next) => {
         sort: sort || "random",
         date: today,
         store_diversity: {
-          no_adjacent_same_store: true,
-          max_per_store: pageLayout.enforcePageCap ? pageLayout.maxPerStore : null,
-          cap_enforced: pageLayout.enforcePageCap,
+          no_adjacent_same_store: !pageLayout.relaxedAdjacencyUsed,
+          max_per_store:
+            pageLayout.enforcePageCap && !pageLayout.relaxedCapUsed
+              ? pageLayout.maxPerStore
+              : null,
+          cap_enforced: pageLayout.enforcePageCap && !pageLayout.relaxedCapUsed,
           unique_store_count: pageLayout.uniqueStoreCount,
         },
       },
