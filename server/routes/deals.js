@@ -11,6 +11,17 @@ const EXCLUDED_STORE_IDS = ["dookan"];
 const EXCLUDED_STORE_IDS_SQL = EXCLUDED_STORE_IDS
   .map((storeId) => `'${String(storeId).replace(/'/g, "''")}'`)
   .join(", ");
+const DISPLAYABLE_DISCOUNT_SQL = `
+  (
+    coalesce(d.discount_percent, 0) > 0
+    OR (
+      d.original_price IS NOT NULL
+      AND d.sale_price IS NOT NULL
+      AND d.original_price > d.sale_price
+      AND d.original_price > 0
+    )
+  )
+`;
 
 // In-memory cache keyed by date string — refreshes after 5 min or on next day.
 const MEM_CACHE_TTL_MS = 5 * 60 * 1000;
@@ -238,6 +249,7 @@ const ACTIVE_DEALS_SQL = `
   ${BASE_DEALS_SQL}
   WHERE d.is_active = 1
     AND lower(d.store_id) NOT IN (${EXCLUDED_STORE_IDS_SQL})
+    AND ${DISPLAYABLE_DISCOUNT_SQL}
 `;
 
 router.get("/", async (req, res, next) => {
@@ -262,6 +274,7 @@ router.get("/", async (req, res, next) => {
           `${BASE_DEALS_SQL}
            WHERE d.id = ?
              AND lower(d.store_id) NOT IN (${EXCLUDED_STORE_IDS_SQL})
+             AND ${DISPLAYABLE_DISCOUNT_SQL}
            LIMIT 1`,
         )
         .get(focusDealId);

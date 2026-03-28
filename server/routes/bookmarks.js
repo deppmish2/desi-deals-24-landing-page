@@ -10,6 +10,17 @@ const EXCLUDED_BOOKMARK_STORE_IDS = ["dookan"];
 const EXCLUDED_BOOKMARK_STORE_IDS_SQL = EXCLUDED_BOOKMARK_STORE_IDS
   .map((storeId) => `'${String(storeId).replace(/'/g, "''")}'`)
   .join(", ");
+const DISPLAYABLE_BOOKMARK_DISCOUNT_SQL = `
+  (
+    coalesce(d.discount_percent, 0) > 0
+    OR (
+      d.original_price IS NOT NULL
+      AND d.sale_price IS NOT NULL
+      AND d.original_price > d.sale_price
+      AND d.original_price > 0
+    )
+  )
+`;
 
 function accessSecret() {
   return (
@@ -44,6 +55,7 @@ router.get("/", async (req, res, next) => {
            AND lower(coalesce(d.availability, '')) = 'in_stock'
            AND trim(coalesce(d.product_name, '')) <> ''
            AND trim(coalesce(d.product_url, '')) <> ''
+           AND ${DISPLAYABLE_BOOKMARK_DISCOUNT_SQL}
            AND lower(coalesce(d.store_id, '')) NOT IN (${EXCLUDED_BOOKMARK_STORE_IDS_SQL})
          ORDER BY b.created_at DESC`,
       )

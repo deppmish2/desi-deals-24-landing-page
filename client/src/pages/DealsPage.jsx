@@ -39,6 +39,64 @@ function LockIcon({ size = 16, color = "white" }) {
   );
 }
 
+function SearchIcon({ size = 18, color = "currentColor" }) {
+  return (
+    <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke={color} strokeWidth="2.25" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+      <circle cx="11" cy="11" r="7.5" />
+      <path d="m20 20-3.5-3.5" />
+    </svg>
+  );
+}
+
+function FilterIcon({ size = 18, color = "currentColor" }) {
+  return (
+    <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke={color} strokeWidth="2.25" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+      <line x1="4" y1="6" x2="20" y2="6" />
+      <line x1="7" y1="12" x2="17" y2="12" />
+      <line x1="10" y1="18" x2="14" y2="18" />
+      <circle cx="17" cy="6" r="2" fill="white" stroke={color} />
+      <circle cx="9" cy="12" r="2" fill="white" stroke={color} />
+      <circle cx="12" cy="18" r="2" fill="white" stroke={color} />
+    </svg>
+  );
+}
+
+function UserCircleIcon({ size = 22, color = "currentColor" }) {
+  return (
+    <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke={color} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+      <circle cx="12" cy="12" r="9" />
+      <circle cx="12" cy="9" r="3" />
+      <path d="M7 18c1.2-2.15 3.03-3.22 5.5-3.22S16.8 15.85 18 18" />
+    </svg>
+  );
+}
+
+function BookmarkIcon({ size = 18, color = "currentColor" }) {
+  return (
+    <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke={color} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+      <path d="M19 21l-7-5-7 5V5a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2z" />
+    </svg>
+  );
+}
+
+function CartIcon({ size = 18, color = "currentColor" }) {
+  return (
+    <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke={color} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+      <circle cx="9" cy="20" r="1.75" />
+      <circle cx="18" cy="20" r="1.75" />
+      <path d="M3 4h2.5l2.1 10.1a1.2 1.2 0 0 0 1.18.95h8.72a1.2 1.2 0 0 0 1.18-.94L20.6 8H7.1" />
+    </svg>
+  );
+}
+
+function ChevronDownIcon({ size = 16, color = "currentColor" }) {
+  return (
+    <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke={color} strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+      <path d="m6 9 6 6 6-6" />
+    </svg>
+  );
+}
+
 // ── Green unlock card (Image 1 design) ────────────────────────────────────────
 function UnlockCard({ title, description, onSignIn }) {
   return (
@@ -271,9 +329,9 @@ const CATEGORIES = [
 ];
 
 const SORT_OPTIONS = [
-  { value: "discount", label: "Sort: Max Discount" },
-  { value: "price_per_kg", label: "Sort: Lowest /Kg Price" },
-  { value: "price", label: "Sort: Lowest Price" },
+  { value: "discount", label: "Sort: Max Discount", compactLabel: "Max Discount" },
+  { value: "price_per_kg", label: "Sort: Lowest /Kg Price", compactLabel: "Lowest Price / Kg" },
+  { value: "price", label: "Sort: Lowest Price", compactLabel: "Lowest Price" },
 ];
 
 // ── Filters modal ─────────────────────────────────────────────────────────────
@@ -419,7 +477,6 @@ function FiltersModal({ storeNames, draft, onChange, onClear, onApply, onClose, 
           {/* Toggles */}
           <div className="flex flex-col gap-4">
             {[
-              { key: "hideOutOfStock", label: "Hide out of stock products", sub: "Remove products currently unavailable" },
               { key: "hideExpired", label: "Hide expired products", sub: "Remove products past best before date" },
             ].map(({ key, label, sub }) => (
               <div key={key} className="flex items-start justify-between gap-4">
@@ -499,32 +556,47 @@ function SortDropdown({ value, onChange, isLoggedIn, onRequireLogin }) {
   }
 
   return (
-    <div className="relative" ref={ref}>
+    <div className="relative w-full lg:w-auto" ref={ref}>
       <button
         type="button"
         onClick={handleOpen}
-        className="flex items-center gap-2 px-4 py-2.5 bg-white border border-slate-200 rounded-xl text-[13px] font-semibold text-[#0f172a] hover:bg-slate-50 transition-colors"
+        className="inline-flex w-full items-center justify-between gap-3 rounded-full border border-[#d4deef] bg-white/60 px-4 py-3 text-left transition-colors hover:border-[#b6c7e2] hover:bg-white/80 focus:outline-none focus-visible:ring-2 focus-visible:ring-[#17874a]/25 focus-visible:ring-offset-2 focus-visible:ring-offset-[#edf3ff] lg:w-auto lg:bg-transparent lg:px-0 lg:py-0 lg:border-transparent lg:hover:border-transparent lg:hover:bg-transparent lg:focus-visible:ring-offset-0"
       >
-        {!isLoggedIn && <LockIcon size={13} color="#64748b" />}
-        {current ? current.label : "Sort"}
-        <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><path d="m6 9 6 6 6-6"/></svg>
+        <span className="flex min-w-0 items-center gap-2.5">
+          {!isLoggedIn && (
+            <span className="inline-flex h-6 w-6 items-center justify-center rounded-full bg-white text-slate-500 lg:bg-[#eef4ff]">
+              <LockIcon size={12} color="currentColor" />
+            </span>
+          )}
+          <span className="text-[11px] font-extrabold uppercase tracking-[1.6px] text-slate-400 sm:text-[12px]">
+            Sort By:
+          </span>
+          <span className="truncate text-[16px] font-extrabold text-[#17874a] sm:text-[18px]">
+            {current?.compactLabel || "Recommended"}
+          </span>
+        </span>
+        <ChevronDownIcon size={16} color="#17874a" />
       </button>
       {open && isLoggedIn && (
-        <div className="absolute right-0 top-full mt-1 w-52 bg-[#2d3748] rounded-xl shadow-xl overflow-hidden z-20">
+        <div className="absolute left-0 right-0 top-full z-20 mt-3 overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-xl sm:left-auto sm:w-60">
           {SORT_OPTIONS.map((opt) => (
             <button
               key={opt.value}
               type="button"
               onClick={() => { onChange(opt.value === value ? "" : opt.value); setOpen(false); }}
-              className={`w-full flex items-center gap-2 px-4 py-3 text-[13px] font-medium text-left transition-colors ${
-                opt.value === value ? "bg-[#4a5568] text-white" : "text-slate-200 hover:bg-[#3d4a5c]"
+              className={`flex w-full items-center gap-3 px-4 py-3 text-left text-[13px] font-medium transition-colors ${
+                opt.value === value
+                  ? "bg-[#edf7ef] text-[#0f172a]"
+                  : "text-slate-600 hover:bg-slate-50"
               }`}
             >
               {opt.value === value && (
-                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round"><polyline points="20 6 9 17 4 12"/></svg>
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#17874a" strokeWidth="2.5" strokeLinecap="round">
+                  <polyline points="20 6 9 17 4 12"/>
+                </svg>
               )}
               {opt.value !== value && <span className="w-[14px]" />}
-              {opt.label}
+              <span className="truncate">{opt.compactLabel}</span>
             </button>
           ))}
         </div>
@@ -668,9 +740,8 @@ export default function DealsPage() {
   const [filterMinDiscount, setFilterMinDiscount] = useState("");
   const [filterPriceMin, setFilterPriceMin] = useState("");
   const [filterPriceMax, setFilterPriceMax] = useState("");
-  const [filterHideOutOfStock, setFilterHideOutOfStock] = useState(true);
   const [filterHideExpired, setFilterHideExpired] = useState(false);
-  const [filterDraft, setFilterDraft] = useState({ store: "", category: "", minDiscount: "", priceMin: "", priceMax: "", hideOutOfStock: true, hideExpired: false });
+  const [filterDraft, setFilterDraft] = useState({ store: "", category: "", minDiscount: "", priceMin: "", priceMax: "", hideExpired: false });
   const [loginModal, setLoginModal] = useState(null);
   const [bookmarkedIds, setBookmarkedIds] = useState(new Set());
   const [bookmarkedDeals, setBookmarkedDeals] = useState({});
@@ -699,7 +770,7 @@ export default function DealsPage() {
     min_discount: filterMinDiscount && isLoggedIn ? filterMinDiscount : undefined,
     price_min: filterPriceMin && isLoggedIn ? filterPriceMin : undefined,
     price_max: filterPriceMax && isLoggedIn ? filterPriceMax : undefined,
-    in_stock: filterHideOutOfStock && isLoggedIn ? "1" : undefined,
+    in_stock: "1",
     hide_expired: filterHideExpired && isLoggedIn ? "1" : undefined,
   });
 
@@ -766,7 +837,7 @@ export default function DealsPage() {
   }
 
   function openFilters() {
-    setFilterDraft({ store: filterStore, category: filterCategory, minDiscount: filterMinDiscount, priceMin: filterPriceMin, priceMax: filterPriceMax, hideOutOfStock: filterHideOutOfStock, hideExpired: filterHideExpired });
+    setFilterDraft({ store: filterStore, category: filterCategory, minDiscount: filterMinDiscount, priceMin: filterPriceMin, priceMax: filterPriceMax, hideExpired: filterHideExpired });
     setFiltersOpen(true);
   }
 
@@ -781,14 +852,34 @@ export default function DealsPage() {
     setFilterMinDiscount(filterDraft.minDiscount);
     setFilterPriceMin(filterDraft.priceMin);
     setFilterPriceMax(filterDraft.priceMax);
-    setFilterHideOutOfStock(filterDraft.hideOutOfStock);
     setFilterHideExpired(filterDraft.hideExpired);
     resetPage();
     setFiltersOpen(false);
   }
 
   function clearFilters() {
-    setFilterDraft({ store: "", category: "", minDiscount: "", priceMin: "", priceMax: "", hideOutOfStock: false, hideExpired: false });
+    setFilterDraft({ store: "", category: "", minDiscount: "", priceMin: "", priceMax: "", hideExpired: false });
+  }
+
+  function clearSearchAndFilters() {
+    setSearchInput("");
+    setSearchQuery("");
+    setSortValue("");
+    setFilterStore("");
+    setFilterCategory("");
+    setFilterMinDiscount("");
+    setFilterPriceMin("");
+    setFilterPriceMax("");
+    setFilterHideExpired(false);
+    setFilterDraft({
+      store: "",
+      category: "",
+      minDiscount: "",
+      priceMin: "",
+      priceMax: "",
+      hideExpired: false,
+    });
+    resetPage();
   }
 
   function handleSortChange(val) {
@@ -866,132 +957,193 @@ export default function DealsPage() {
   ].filter(Boolean);
 
   const totalPages = pagination?.total_pages ?? 1;
+  const matchingCount = pagination?.total ?? displayDeals.length;
+  const filterCount =
+    activeChips.length +
+    Number(Boolean(searchQuery)) +
+    Number(Boolean(filterHideExpired && isLoggedIn));
+  const hasActiveState = Boolean(
+    searchQuery ||
+      sortValue ||
+      activeChips.length ||
+      (filterHideExpired && isLoggedIn),
+  );
 
   return (
-    <div className="min-h-screen bg-[#f7f7f7]">
-      {/* Header */}
-      <header className="backdrop-blur-md bg-white/80 border-b border-slate-200 sticky top-0 z-30">
-        <div className="h-16 max-w-[1280px] mx-auto px-4 sm:px-8 flex items-center justify-between gap-4">
-          <Link to="/" className="flex items-center gap-2 no-underline" style={{ textDecoration: "none" }}>
-            <img src="/landing/dd24-logo.svg" alt="DesiDeals24" className="w-5 h-6 object-contain" />
-            <span className="font-extrabold tracking-[-0.5px] text-[20px] text-[#141414]">DesiDeals24</span>
-            <span className="text-[10px] font-extrabold tracking-[2px] uppercase text-slate-400 -translate-y-1">· Beta</span>
-          </Link>
-          <div className="flex items-center gap-3">
-            {isLoggedIn ? (
-              <>
-                {/* Cart icon — navigates to /saved page */}
+    <div className="min-h-screen bg-[radial-gradient(circle_at_top,_#ffffff_0%,_#f8fbff_32%,_#f3f6fb_100%)]">
+      <main className="max-w-[1320px] mx-auto px-3 sm:px-6 lg:px-8 py-3 sm:py-6 flex flex-col gap-6">
+        <section className="relative z-20 rounded-[30px] border border-white/80 bg-white shadow-[0_30px_90px_rgba(15,23,42,0.08)]">
+          <div className="flex items-center justify-between gap-4 rounded-t-[30px] px-5 sm:px-7 lg:px-8 py-5 sm:py-6 bg-white">
+            <Link to="/" className="flex items-center gap-2.5 no-underline" style={{ textDecoration: "none" }}>
+              <img src="/landing/dd24-logo.svg" alt="DesiDeals24" className="w-6 h-7 sm:w-7 sm:h-8 object-contain" />
+              <span className="font-extrabold tracking-[-0.8px] text-[24px] sm:text-[34px] text-[#17874a]">DesiDeals24</span>
+            </Link>
+
+            <div className="flex items-center gap-2 sm:gap-3">
+              {isLoggedIn && (
                 <Link
                   to="/saved"
-                  className="relative inline-flex items-center justify-center w-10 h-10 rounded-full border border-slate-200 bg-white hover:bg-slate-50 transition-colors text-slate-600"
+                  className="relative inline-flex h-11 w-11 items-center justify-center rounded-full border border-slate-200 bg-white text-slate-600 shadow-sm transition-colors hover:bg-slate-50"
                   style={{ textDecoration: "none" }}
                   title="Saved deals"
                 >
-                  <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                    <circle cx="9" cy="21" r="1"/><circle cx="20" cy="21" r="1"/>
-                    <path d="M1 1h4l2.68 13.39a2 2 0 0 0 2 1.61h9.72a2 2 0 0 0 2-1.61L23 6H6"/>
-                  </svg>
+                  <CartIcon size={19} color="currentColor" />
                   {bookmarkedIds.size > 0 && (
-                    <span className="absolute -top-1 -right-1 min-w-[18px] h-[18px] px-1 rounded-full bg-[#16a34a] text-white text-[10px] font-bold flex items-center justify-center leading-none">
+                    <span className="absolute -top-1 -right-1 min-w-[20px] h-[20px] px-1 rounded-full bg-[#9a6500] text-white text-[11px] font-extrabold flex items-center justify-center leading-none">
                       {bookmarkedIds.size}
                     </span>
                   )}
                 </Link>
+              )}
+
+              {isLoggedIn ? (
+                <>
+                  <button
+                    type="button"
+                    onClick={handleLogout}
+                    className="hidden sm:inline-flex items-center gap-2 rounded-full border border-slate-200 bg-white px-4 py-2.5 text-[13px] font-bold text-slate-600 shadow-sm transition-colors hover:bg-slate-50"
+                  >
+                    Logout
+                  </button>
+                  <button
+                    type="button"
+                    onClick={handleLogout}
+                    className="sm:hidden inline-flex items-center justify-center w-11 h-11 rounded-full border border-slate-200 bg-white text-slate-600 shadow-sm transition-colors hover:bg-slate-50"
+                    title="Logout"
+                  >
+                    <UserCircleIcon size={22} color="currentColor" />
+                  </button>
+                </>
+              ) : (
                 <button
                   type="button"
-                  onClick={handleLogout}
-                  className="rounded-full border border-slate-200 bg-white hover:bg-slate-50 px-4 py-2 text-[12px] font-bold uppercase tracking-[1.4px] text-slate-600 transition-colors"
+                  onClick={() => setLoginModal({})}
+                  className="inline-flex h-11 w-11 items-center justify-center rounded-full border border-[#d8eadb] bg-[#eff8f1] text-[13px] font-bold text-[#17874a] shadow-sm transition-colors hover:bg-[#e7f5ea] sm:h-auto sm:w-auto sm:gap-2 sm:px-4 sm:py-2.5"
                 >
-                  Logout
+                  <UserCircleIcon size={20} color="#475569" />
+                  <span className="hidden sm:inline">Sign in</span>
                 </button>
-              </>
-            ) : (
-              <button
-                type="button"
-                onClick={() => setLoginModal({})}
-                className="rounded-full bg-[#16a34a] hover:bg-[#15803d] text-white px-4 py-2 text-[12px] font-bold uppercase tracking-[1.4px] transition-colors"
-              >
-                Sign in
-              </button>
-            )}
-          </div>
-        </div>
-      </header>
-
-      {/* Main content */}
-      <main className="max-w-[1280px] mx-auto px-4 sm:px-8 py-8 flex flex-col gap-6">
-        <div>
-          <h1 className="text-[28px] sm:text-[36px] font-extrabold text-[#0f172a] leading-tight">Deals</h1>
-          <p className="text-slate-500 text-[14px] mt-1">Fresh deals from Indian grocery stores in Germany</p>
-        </div>
-
-        {/* Search bar */}
-        <div className="flex gap-0 rounded-2xl border border-slate-200 bg-white overflow-hidden shadow-sm focus-within:border-[#16a34a] transition-colors">
-          <div className="flex items-center pl-4 text-slate-400 pointer-events-none">
-            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/></svg>
-          </div>
-          <input
-            type="search"
-            value={searchInput}
-            onChange={(e) => setSearchInput(e.target.value)}
-            onKeyDown={(e) => e.key === "Enter" && handleSearch()}
-            placeholder="Search deals, groceries, or stores..."
-            className="flex-1 px-3 py-3.5 text-[14px] text-slate-800 placeholder-slate-400 bg-transparent outline-none"
-          />
-          <button
-            type="button"
-            onClick={handleSearch}
-            className="bg-[#16a34a] hover:bg-[#15803d] text-white text-[14px] font-bold px-6 py-3.5 transition-colors"
-          >
-            Search
-          </button>
-        </div>
-
-        {/* Filters bar */}
-        <div className="flex flex-wrap items-center gap-3">
-          <button
-            type="button"
-            onClick={openFilters}
-            className="flex items-center gap-2 px-4 py-2.5 rounded-xl border-2 bg-[#0f172a] border-[#0f172a] text-white text-[13px] font-bold transition-colors"
-          >
-            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round"><line x1="4" y1="6" x2="20" y2="6"/><line x1="8" y1="12" x2="20" y2="12"/><line x1="12" y1="18" x2="20" y2="18"/></svg>
-            FILTERS
-            {activeChips.length > 0 && (
-              <span className="bg-white text-[#0f172a] text-[11px] font-extrabold rounded-full w-5 h-5 flex items-center justify-center leading-none">
-                {activeChips.length}
-              </span>
-            )}
-            <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><path d="m6 9 6 6 6-6"/></svg>
-          </button>
-
-          {activeChips.map((chip) => (
-            <span key={chip.type} className="flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-slate-100 border border-slate-200 text-[13px] font-medium text-slate-700">
-              {chip.label}
-              <button onClick={() => removeFilterChip(chip.type)} className="text-slate-400 hover:text-slate-700 transition-colors leading-none">×</button>
-            </span>
-          ))}
-
-          {searchQuery && (
-            <span className="flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-slate-100 border border-slate-200 text-[13px] font-medium text-slate-700">
-              "{searchQuery}"
-              <button onClick={() => { setSearchQuery(""); setSearchInput(""); resetPage(); }} className="text-slate-400 hover:text-slate-700 transition-colors leading-none">×</button>
-            </span>
-          )}
-
-          {!loading && (
-            <div className="ml-auto text-right">
-              <p className="text-[10px] font-bold tracking-[1px] uppercase text-slate-400">Results Found</p>
-              <p className="text-[18px] font-extrabold text-[#0f172a] leading-tight">{pagination?.total ?? displayDeals.length} Items</p>
+              )}
             </div>
-          )}
+          </div>
 
-          <SortDropdown
-            value={isLoggedIn ? sortValue : ""}
-            onChange={handleSortChange}
-            isLoggedIn={isLoggedIn}
-            onRequireLogin={() => requireLogin("Sorting is for registered members only.")}
-          />
-        </div>
+          <div className="relative rounded-b-[30px] border-t border-slate-100 bg-[#edf3ff] px-4 sm:px-6 lg:px-8 py-4 sm:py-5 lg:py-6">
+            <form
+              onSubmit={(e) => {
+                e.preventDefault();
+                handleSearch();
+              }}
+              className="flex flex-col gap-4"
+            >
+              <div className="flex flex-col xl:flex-row gap-3 xl:items-center">
+                <div className="flex-1 flex items-center gap-3 rounded-[24px] border border-white/80 bg-white px-4 sm:px-5 py-3.5 shadow-sm">
+                  <SearchIcon size={18} color="#94a3b8" />
+                  <input
+                    type="search"
+                    value={searchInput}
+                    onChange={(e) => setSearchInput(e.target.value)}
+                    placeholder="Search for ghee, rice, spices..."
+                    className="min-w-0 flex-1 bg-transparent text-[16px] sm:text-[18px] font-medium text-slate-700 placeholder:text-[#94a3b8] outline-none"
+                  />
+                  <button
+                    type="submit"
+                    className="hidden sm:inline-flex items-center justify-center rounded-full bg-[#17874a] px-5 py-2.5 text-[14px] font-bold text-white transition-colors hover:bg-[#136f3c]"
+                  >
+                    Search
+                  </button>
+                  <button
+                    type="submit"
+                    className="sm:hidden inline-flex items-center justify-center w-10 h-10 rounded-full bg-[#17874a] text-white transition-colors hover:bg-[#136f3c]"
+                    aria-label="Search deals"
+                  >
+                    <SearchIcon size={16} color="currentColor" />
+                  </button>
+                </div>
+
+                <button
+                  type="button"
+                  onClick={openFilters}
+                  className="relative inline-flex min-h-[58px] items-center justify-center gap-2 rounded-[22px] border border-white/80 bg-white px-4 py-3.5 text-[14px] font-bold text-slate-600 shadow-sm transition-colors hover:bg-slate-50 xl:min-w-[76px]"
+                >
+                  <FilterIcon size={18} color="currentColor" />
+                  <span className="xl:hidden">Filters</span>
+                  {filterCount > 0 && (
+                    <span className="absolute -top-1 -right-1 min-w-[22px] h-[22px] px-1 rounded-full bg-[#9a6500] text-white text-[11px] font-extrabold flex items-center justify-center leading-none">
+                      {filterCount}
+                    </span>
+                  )}
+                </button>
+              </div>
+
+              <div className="flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
+                <div className="flex flex-col gap-3">
+                  <div className="flex flex-wrap items-baseline gap-2 sm:gap-3">
+                    <span className="text-[#111827] text-[14px] sm:text-[16px] font-black uppercase tracking-[1.7px]">
+                      Matching Items {matchingCount}
+                    </span>
+                  </div>
+
+                  {hasActiveState ? (
+                    <button
+                      type="button"
+                      onClick={clearSearchAndFilters}
+                      className="inline-flex w-fit flex-wrap items-center gap-x-2 gap-y-1 rounded-[18px] border border-white/80 bg-white/70 px-4 py-3 text-left shadow-sm transition-colors hover:bg-white"
+                      >
+                        <span className="text-[14px] sm:text-[15px] font-extrabold text-[#17874a]">
+                          Remove filters
+                        </span>
+                        <span className="text-[14px] sm:text-[15px] text-slate-500">
+                          and return to the full list
+                        </span>
+                      </button>
+                  ) : null}
+
+                  {(searchQuery || activeChips.length > 0) && (
+                    <div className="flex flex-wrap gap-2">
+                      {searchQuery && (
+                        <span className="flex items-center gap-1.5 rounded-full border border-[#d4deef] bg-white px-3 py-1.5 text-[13px] font-medium text-slate-700">
+                          "{searchQuery}"
+                          <button
+                            type="button"
+                            onClick={() => {
+                              setSearchQuery("");
+                              setSearchInput("");
+                              resetPage();
+                            }}
+                            className="text-slate-400 hover:text-slate-700 transition-colors leading-none"
+                          >
+                            ×
+                          </button>
+                        </span>
+                      )}
+                      {activeChips.map((chip) => (
+                        <span key={chip.type} className="flex items-center gap-1.5 rounded-full border border-[#d4deef] bg-white px-3 py-1.5 text-[13px] font-medium text-slate-700">
+                          {chip.label}
+                          <button
+                            type="button"
+                            onClick={() => removeFilterChip(chip.type)}
+                            className="text-slate-400 hover:text-slate-700 transition-colors leading-none"
+                          >
+                            ×
+                          </button>
+                        </span>
+                      ))}
+                    </div>
+                  )}
+                </div>
+
+                <div className="w-full lg:w-auto lg:flex-shrink-0 lg:pl-6">
+                  <SortDropdown
+                    value={isLoggedIn ? sortValue : ""}
+                    onChange={handleSortChange}
+                    isLoggedIn={isLoggedIn}
+                    onRequireLogin={() => requireLogin("Sorting is for registered members only.")}
+                  />
+                </div>
+              </div>
+            </form>
+          </div>
+        </section>
 
         {/* Deals grid */}
         {loading && (

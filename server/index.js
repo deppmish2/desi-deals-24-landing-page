@@ -70,6 +70,17 @@ app.get("/api/v1/member-count", async (_req, res) => {
 // ── Serve React Frontend (production) ────────────────────────────────────────
 const CLIENT_DIST = path.join(__dirname, "../client/dist");
 const INDEX_PATH = path.join(CLIENT_DIST, "index.html");
+const DISPLAYABLE_SHARE_DISCOUNT_SQL = `
+  (
+    coalesce(d.discount_percent, 0) > 0
+    OR (
+      d.original_price IS NOT NULL
+      AND d.sale_price IS NOT NULL
+      AND d.original_price > d.sale_price
+      AND d.original_price > 0
+    )
+  )
+`;
 
 function clientBuildExists() {
   return fs.existsSync(INDEX_PATH);
@@ -176,6 +187,7 @@ async function getShareableDeal(dealId) {
        FROM deals d
        JOIN stores s ON s.id = d.store_id
        WHERE d.id = ?
+         AND ${DISPLAYABLE_SHARE_DISCOUNT_SQL}
        LIMIT 1`,
     )
     .get(safeId);
