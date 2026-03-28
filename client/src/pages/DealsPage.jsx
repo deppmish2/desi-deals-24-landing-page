@@ -1,11 +1,12 @@
 import React, { useCallback, useEffect, useMemo, useRef, useState } from "react";
-import { Link, useNavigate, useSearchParams } from "react-router-dom";
+import { Link, useNavigate, useParams, useSearchParams } from "react-router-dom";
 import useDeals from "../hooks/useDeals";
 import { formatBestBefore, formatPrice, formatPricePerKg } from "../utils/formatters";
 import {
   addBookmark, fetchBookmarks, fetchDeals, fetchOAuthAuthUrl,
   getAuthSession, logoutUser, removeBookmark,
 } from "../utils/api";
+import { buildDealShareUrl, buildWhatsAppDealShareUrl } from "../utils/share";
 
 const POST_AUTH_REDIRECT_STORAGE_KEY = "dd24_post_auth_redirect";
 const OAUTH_STATE_STORAGE_PREFIX = "dd24_oauth_state:";
@@ -138,7 +139,7 @@ function resolveUrl(deal, url) {
 
 // ── Deal card ─────────────────────────────────────────────────────────────────
 function dealPermalink(dealId) {
-  return `${window.location.origin}/?deal=${dealId}`;
+  return buildDealShareUrl(dealId);
 }
 
 function DealCard({ deal, isBookmarked, onBookmark, highlighted, highlightRef }) {
@@ -154,15 +155,6 @@ function DealCard({ deal, isBookmarked, onBookmark, highlighted, highlightRef })
   ].filter(Boolean).join(" | ");
 
   const permalink = dealPermalink(deal.id);
-  const waText = [
-    `🛒 *${deal.product_name}*`,
-    `*${priceText}*${originalPriceText ? ` (was ${originalPriceText})` : ""}${discountPct ? ` — ${discountPct}% off` : ""}`,
-    `🏪 ${deal.store?.name || "DesiDeals24"}`,
-    ``,
-    `Find it on DesiDeals24 👇`,
-    permalink,
-  ].join("\n");
-
   return (
     <div
       ref={highlightRef}
@@ -235,7 +227,13 @@ function DealCard({ deal, isBookmarked, onBookmark, highlighted, highlightRef })
           </a>
           {/* WhatsApp share — shares DesiDeals24 permalink, WA shows branded OG preview */}
           <a
-            href={`https://wa.me/?text=${encodeURIComponent(waText)}`}
+            href={buildWhatsAppDealShareUrl({
+              dealId: deal.id,
+              productName: deal.product_name,
+              priceText,
+              originalPriceText,
+              storeName: deal.store?.name,
+            })}
             target="_blank"
             rel="noopener noreferrer"
             className="shrink-0 inline-flex items-center justify-center w-[46px] h-[46px] rounded-[14px] border border-slate-200 bg-white hover:bg-[#e7fbe9] hover:border-[#25D366] transition-colors"
@@ -656,8 +654,9 @@ function Pagination({ page, totalPages, onChange }) {
 // ── Main page ─────────────────────────────────────────────────────────────────
 export default function DealsPage() {
   const navigate = useNavigate();
+  const { dealId: routeDealId } = useParams();
   const [searchParams] = useSearchParams();
-  const highlightDealId = searchParams.get("deal") || null;
+  const highlightDealId = routeDealId || searchParams.get("deal") || null;
   const highlightRef = useRef(null);
   const [searchInput, setSearchInput] = useState("");
   const [searchQuery, setSearchQuery] = useState("");
@@ -688,8 +687,9 @@ export default function DealsPage() {
 
   const { deals, pagination, loading, error } = useDeals({
     enabled: true,
-    page,
-    limit: 20,
+    page: highlightDealId ? 1 : page,
+    limit: highlightDealId ? 1 : 20,
+    deal_id: highlightDealId || undefined,
     q: searchQuery || undefined,
     sort: sortValue && isLoggedIn ? sortValue : undefined,
     store: filterStore && isLoggedIn ? filterStore : undefined,
@@ -722,13 +722,23 @@ export default function DealsPage() {
     });
   }, [deals]);
 
+  const syncBookmarks = useCallback(async () => {
+    if (!isLoggedIn) {
+      setBookmarkedIds(new Set());
+      return;
+    }
+    try {
+      const res = await fetchBookmarks();
+      setBookmarkedIds(new Set(res.data || []));
+    } catch {
+      setBookmarkedIds(new Set());
+    }
+  }, [isLoggedIn]);
+
   // Load bookmarks
   useEffect(() => {
-    if (!isLoggedIn) { setBookmarkedIds(new Set()); return; }
-    fetchBookmarks()
-      .then((res) => setBookmarkedIds(new Set(res.data || [])))
-      .catch(() => {});
-  }, [isLoggedIn]);
+    syncBookmarks();
+  }, [syncBookmarks]);
 
   // Store names — fetched once unfiltered so pills stay stable
   const [storeNames, setStoreNames] = useState([]);
@@ -736,7 +746,11 @@ export default function DealsPage() {
     fetchDeals({ limit: 200 })
       .then((res) => {
         const names = new Set();
-        (res.data || []).forEach((d) => { if (d.store?.name) names.add(d.store.name); });
+        (res.data || []).forEach((d) => {
+          if (!d?.store?.name) return;
+          if (String(d.store?.id || "").trim().toLowerCase() === "dookan") return;
+          names.add(d.store.name);
+        });
         setStoreNames(Array.from(names).sort());
       })
       .catch(() => {});
@@ -794,7 +808,7 @@ export default function DealsPage() {
   }
 
   const handleBookmark = useCallback(
-    (dealId) => {
+    async (dealId) => {
       if (!isLoggedIn) {
         setLoginModal({ message: "Bookmarks are for registered members only." });
         return;
@@ -805,13 +819,24 @@ export default function DealsPage() {
         if (wasBookmarked) next.delete(dealId); else next.add(dealId);
         return next;
       });
-      if (wasBookmarked) {
-        removeBookmark(dealId).catch(() => setBookmarkedIds((prev) => { const n = new Set(prev); n.add(dealId); return n; }));
-      } else {
-        addBookmark(dealId).catch(() => setBookmarkedIds((prev) => { const n = new Set(prev); n.delete(dealId); return n; }));
+      try {
+        if (wasBookmarked) {
+          await removeBookmark(dealId);
+        } else {
+          await addBookmark(dealId);
+        }
+      } catch {
+        setBookmarkedIds((prev) => {
+          const next = new Set(prev);
+          if (wasBookmarked) next.add(dealId);
+          else next.delete(dealId);
+          return next;
+        });
+      } finally {
+        syncBookmarks();
       }
     },
-    [isLoggedIn, bookmarkedIds],
+    [isLoggedIn, bookmarkedIds, syncBookmarks],
   );
 
   async function handleLogout() {

@@ -7,6 +7,10 @@ const { trackEvent } = require("../services/event-tracker");
 const { getCurrentPoolDate } = require("../services/daily-deals-pool");
 
 const router = express.Router();
+const EXCLUDED_STORE_IDS = ["dookan"];
+const EXCLUDED_STORE_IDS_SQL = EXCLUDED_STORE_IDS
+  .map((storeId) => `'${String(storeId).replace(/'/g, "''")}'`)
+  .join(", ");
 
 // In-memory cache keyed by date string — refreshes after 5 min or on next day.
 const MEM_CACHE_TTL_MS = 5 * 60 * 1000;
@@ -119,7 +123,7 @@ function serializeDeal(row) {
   };
 }
 
-const DEALS_SQL = `
+const BASE_DEALS_SQL = `
   SELECT
     d.id, d.canonical_id, d.crawl_timestamp, d.store_id,
     s.name AS store_name, s.url  AS store_url,
@@ -129,7 +133,12 @@ const DEALS_SQL = `
     d.price_per_kg, d.currency, d.availability, d.bulk_pricing, d.best_before
   FROM deals d
   JOIN stores s ON s.id = d.store_id
+`;
+
+const ACTIVE_DEALS_SQL = `
+  ${BASE_DEALS_SQL}
   WHERE d.is_active = 1
+    AND lower(d.store_id) NOT IN (${EXCLUDED_STORE_IDS_SQL})
 `;
 
 router.get("/", async (req, res, next) => {
@@ -145,12 +154,46 @@ router.get("/", async (req, res, next) => {
       .trim()
       .toLowerCase();
     const filterStore = String(req.query.store || "").trim();
+    const focusDealId = String(req.query.deal_id || "").trim();
     const today = getCurrentPoolDate();
+
+    if (focusDealId) {
+      const row = await db
+        .prepare(
+          `${BASE_DEALS_SQL}
+           WHERE d.id = ?
+             AND lower(d.store_id) NOT IN (${EXCLUDED_STORE_IDS_SQL})
+           LIMIT 1`,
+        )
+        .get(focusDealId);
+      const data = row ? [serializeDeal(row)] : [];
+
+      res.set(
+        "Cache-Control",
+        "public, s-maxage=300, stale-while-revalidate=3600",
+      );
+
+      res.json({
+        data,
+        pagination: {
+          page: 1,
+          limit: 1,
+          total: data.length,
+          total_pages: 1,
+        },
+        meta: {
+          sort: "focused_deal",
+          date: today,
+          focused_deal_id: focusDealId,
+        },
+      });
+      return;
+    }
 
     // Load + shuffle active deals — cached per date so the order is stable within a day.
     let allDeals = getMemCache(today);
     if (!allDeals) {
-      const rows = await db.prepare(DEALS_SQL).all();
+      const rows = await db.prepare(ACTIVE_DEALS_SQL).all();
       allDeals = seededShuffle(rows.map(serializeDeal), dateSeed(today));
       if (allDeals.length > 0) setMemCache(today, allDeals);
     }

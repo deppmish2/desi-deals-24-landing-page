@@ -8,6 +8,7 @@ import {
 } from "../utils/formatters";
 import { getAuthSession, logoutUser, postContact } from "../utils/api";
 import { fetchWaitlistMe } from "../utils/api";
+import { buildWhatsAppDealShareText, buildWhatsAppDealShareUrl } from "../utils/share";
 import {
   computeNextRefreshUtcMs,
   formatRefreshCountdown,
@@ -265,17 +266,27 @@ function Deals24Card({ deal, number, showBestBefore = true }) {
     .join(" | ");
 
   function buildShareMessage() {
-    const name = deal?.name || deal?.title || "this product";
-    const price = priceText || "";
-    const orig = originalPriceText ? ` (was ${originalPriceText})` : "";
-    return `how is ${name} only ${price}??${orig}\nfound it on DesiDeals24\nhttps://desideals24.com/24deals`;
+    return buildWhatsAppDealShareText({
+      dealId: deal?.id,
+      productName: deal?.product_name,
+      priceText,
+      originalPriceText,
+      storeName: deal?.store?.name,
+    });
   }
 
   function shareOnWhatsApp(event) {
     event?.preventDefault?.();
     event?.stopPropagation?.();
-    const text = buildShareMessage();
-    const url = `https://wa.me/?text=${encodeURIComponent(text)}`;
+    const url = deal?.id
+      ? buildWhatsAppDealShareUrl({
+          dealId: deal.id,
+          productName: deal?.product_name,
+          priceText,
+          originalPriceText,
+          storeName: deal?.store?.name,
+        })
+      : `https://wa.me/?text=${encodeURIComponent(buildShareMessage())}`;
     window.open(url, "_blank", "noopener,noreferrer");
   }
 

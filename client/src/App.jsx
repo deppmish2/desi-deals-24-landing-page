@@ -29,6 +29,7 @@ export default function App() {
       <BrowserRouter>
         <Routes>
           <Route path="/" element={<DealsPage />} />
+          <Route path="/deal/:dealId" element={<DealsPage />} />
           <Route path="/saved" element={<SavedDealsPage />} />
           <Route path="/admin" element={<AdminPage />} />
           <Route

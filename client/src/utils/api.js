@@ -103,6 +103,11 @@ export function fetchDeals(params) {
   return request("/deals", params);
 }
 
+export async function fetchDealById(dealId) {
+  const res = await request("/deals", { deal_id: dealId, limit: 1 });
+  return res?.data?.[0] || null;
+}
+
 export async function postContact(data) {
   const res = await fetch(buildUrl("/contact"), {
     method: "POST",
@@ -263,7 +268,7 @@ export function updateAuthSessionUser(user) {
 }
 
 export function fetchBookmarks() {
-  return authRequest("/bookmarks");
+  return authRequest("/bookmarks", { cache: "no-store" });
 }
 
 export function addBookmark(dealId) {

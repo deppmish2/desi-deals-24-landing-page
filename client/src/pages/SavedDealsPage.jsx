@@ -1,9 +1,10 @@
-import React, { useCallback, useEffect, useMemo, useState } from "react";
+import React, { useCallback, useEffect, useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { formatBestBefore, formatPrice, formatPricePerKg } from "../utils/formatters";
 import {
-  addBookmark, fetchBookmarks, fetchDeals, getAuthSession, logoutUser, removeBookmark,
+  addBookmark, fetchBookmarks, fetchDealById, getAuthSession, logoutUser, removeBookmark,
 } from "../utils/api";
+import { buildDealShareUrl, buildWhatsAppDealShareUrl } from "../utils/share";
 
 function proxyImageUrl(imageUrl) {
   if (!imageUrl) return null;
@@ -19,7 +20,7 @@ function resolveUrl(deal, url) {
 }
 
 function dealPermalink(dealId) {
-  return `${window.location.origin}/?deal=${dealId}`;
+  return buildDealShareUrl(dealId);
 }
 
 function DealCard({ deal, isBookmarked, onBookmark }) {
@@ -35,15 +36,6 @@ function DealCard({ deal, isBookmarked, onBookmark }) {
   ].filter(Boolean).join(" | ");
 
   const permalink = dealPermalink(deal.id);
-  const waText = [
-    `🛒 *${deal.product_name}*`,
-    `*${priceText}*${originalPriceText ? ` (was ${originalPriceText})` : ""}${discountPct ? ` — ${discountPct}% off` : ""}`,
-    `🏪 ${deal.store?.name || "DesiDeals24"}`,
-    ``,
-    `Find it on DesiDeals24 👇`,
-    permalink,
-  ].join("\n");
-
   return (
     <div
       className="bg-white border border-[#f1f5f9] rounded-[20px] flex flex-col overflow-hidden"
@@ -107,7 +99,13 @@ function DealCard({ deal, isBookmarked, onBookmark }) {
             <span className="text-[13px] leading-[16px] font-extrabold tracking-wide uppercase">Snatch Deal</span>
           </a>
           <a
-            href={`https://wa.me/?text=${encodeURIComponent(waText)}`}
+            href={buildWhatsAppDealShareUrl({
+              dealId: deal.id,
+              productName: deal.product_name,
+              priceText,
+              originalPriceText,
+              storeName: deal.store?.name,
+            })}
             target="_blank"
             rel="noopener noreferrer"
             className="shrink-0 inline-flex items-center justify-center w-[46px] h-[46px] rounded-[14px] border border-slate-200 bg-white hover:bg-[#e7fbe9] hover:border-[#25D366] transition-colors"
@@ -140,7 +138,7 @@ export default function SavedDealsPage() {
   const isLoggedIn = Boolean(session?.accessToken);
 
   const [bookmarkedIds, setBookmarkedIds] = useState(new Set());
-  const [allDeals, setAllDeals] = useState([]);
+  const [savedDeals, setSavedDeals] = useState([]);
   const [loadingDeals, setLoadingDeals] = useState(true);
   const [loadingBookmarks, setLoadingBookmarks] = useState(true);
 
@@ -155,45 +153,99 @@ export default function SavedDealsPage() {
     if (!isLoggedIn) navigate("/", { replace: true });
   }, [isLoggedIn, navigate]);
 
-  // Fetch bookmarked IDs
-  useEffect(() => {
-    if (!isLoggedIn) return;
+  const syncBookmarks = useCallback(async () => {
+    if (!isLoggedIn) {
+      setBookmarkedIds(new Set());
+      setLoadingBookmarks(false);
+      return;
+    }
     setLoadingBookmarks(true);
-    fetchBookmarks()
-      .then((res) => setBookmarkedIds(new Set(res.data || [])))
-      .catch(() => {})
-      .finally(() => setLoadingBookmarks(false));
+    try {
+      const res = await fetchBookmarks();
+      setBookmarkedIds(new Set(res.data || []));
+    } catch {
+      setBookmarkedIds(new Set());
+    } finally {
+      setLoadingBookmarks(false);
+    }
   }, [isLoggedIn]);
 
-  // Fetch all deals (high limit to cover all)
+  // Fetch bookmarked IDs
   useEffect(() => {
-    setLoadingDeals(true);
-    fetchDeals({ limit: 200 })
-      .then((res) => setAllDeals(res.data || []))
-      .catch(() => {})
-      .finally(() => setLoadingDeals(false));
-  }, []);
+    syncBookmarks();
+  }, [syncBookmarks]);
 
-  const savedDeals = useMemo(
-    () => allDeals.filter((d) => bookmarkedIds.has(d.id) && d?.product_url && d?.product_name),
-    [allDeals, bookmarkedIds],
-  );
+  // Fetch exact saved deals by bookmark IDs so count and list stay in sync.
+  useEffect(() => {
+    let cancelled = false;
+
+    if (!isLoggedIn) {
+      setSavedDeals([]);
+      setLoadingDeals(false);
+      return () => {
+        cancelled = true;
+      };
+    }
+
+    if (bookmarkedIds.size === 0) {
+      setSavedDeals([]);
+      setLoadingDeals(false);
+      return () => {
+        cancelled = true;
+      };
+    }
+
+    setLoadingDeals(true);
+    Promise.all(
+      Array.from(bookmarkedIds).map((dealId) =>
+        fetchDealById(dealId).catch(() => null),
+      ),
+    )
+      .then((rows) => {
+        if (cancelled) return;
+        setSavedDeals(
+          rows.filter((deal) => deal?.id && deal?.product_url && deal?.product_name),
+        );
+      })
+      .catch(() => {
+        if (cancelled) return;
+        setSavedDeals([]);
+      })
+      .finally(() => {
+        if (!cancelled) setLoadingDeals(false);
+      });
+
+    return () => {
+      cancelled = true;
+    };
+  }, [isLoggedIn, bookmarkedIds]);
 
   const handleBookmark = useCallback(
-    (dealId) => {
+    async (dealId) => {
       const wasBookmarked = bookmarkedIds.has(dealId);
       setBookmarkedIds((prev) => {
         const next = new Set(prev);
         if (wasBookmarked) next.delete(dealId); else next.add(dealId);
         return next;
       });
-      if (wasBookmarked) {
-        removeBookmark(dealId).catch(() => setBookmarkedIds((prev) => { const n = new Set(prev); n.add(dealId); return n; }));
-      } else {
-        addBookmark(dealId).catch(() => setBookmarkedIds((prev) => { const n = new Set(prev); n.delete(dealId); return n; }));
+      try {
+        if (wasBookmarked) {
+          await removeBookmark(dealId);
+        } else {
+          await addBookmark(dealId);
+        }
+      } catch {
+        setBookmarkedIds((prev) => {
+          const next = new Set(prev);
+          if (wasBookmarked) next.add(dealId);
+          else next.delete(dealId);
+          return next;
+        });
+      } finally {
+        syncBookmarks();
       }
     },
-    [bookmarkedIds],
+    [bookmarkedIds, syncBookmarks],
   );
 
   async function handleLogout() {

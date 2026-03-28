@@ -6,6 +6,10 @@ const db = require("../db");
 const { verifyJwt } = require("../utils/jwt");
 
 const router = express.Router();
+const EXCLUDED_BOOKMARK_STORE_IDS = ["dookan"];
+const EXCLUDED_BOOKMARK_STORE_IDS_SQL = EXCLUDED_BOOKMARK_STORE_IDS
+  .map((storeId) => `'${String(storeId).replace(/'/g, "''")}'`)
+  .join(", ");
 
 function accessSecret() {
   return (
@@ -32,7 +36,16 @@ router.get("/", async (req, res, next) => {
       return res.status(401).json({ error: "Authentication required" });
     const rows = await db
       .prepare(
-        "SELECT deal_id FROM bookmarks WHERE user_id = ? ORDER BY created_at DESC",
+        `SELECT b.deal_id
+         FROM bookmarks b
+         JOIN deals d ON d.id = b.deal_id
+         WHERE b.user_id = ?
+           AND d.is_active = 1
+           AND lower(coalesce(d.availability, '')) = 'in_stock'
+           AND trim(coalesce(d.product_name, '')) <> ''
+           AND trim(coalesce(d.product_url, '')) <> ''
+           AND lower(coalesce(d.store_id, '')) NOT IN (${EXCLUDED_BOOKMARK_STORE_IDS_SQL})
+         ORDER BY b.created_at DESC`,
       )
       .all(userId);
     res.json({ data: rows.map((r) => r.deal_id) });
