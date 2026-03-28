@@ -78,22 +78,14 @@ export function buildWhatsAppDealShareText({
   const cleanOriginalPrice = normalizeInlineText(originalPriceText);
   const cleanStore = normalizeInlineText(storeName);
 
-  const titleLine = "DesiDeals24";
-  const productLine = cleanName;
-
   const priceParts = [];
   if (cleanPrice) priceParts.push(`Now ${cleanPrice}`);
   if (cleanOriginalPrice) priceParts.push(`Was ${cleanOriginalPrice}`);
-  if (cleanStore) priceParts.push(cleanStore);
+  const priceDetail = priceParts.join(" | ");
 
-  const detailLine = priceParts.join("  |  ");
+  const firstLine = `Found on DesiDeals24: ${cleanName}${priceDetail ? ` ${priceDetail}` : ""}`;
 
-  return [
-    titleLine,
-    productLine,
-    detailLine,
-    shareUrl,
-  ].filter(Boolean).join("\n");
+  return [firstLine, shareUrl].filter(Boolean).join("\n");
 }
 
 export function buildWhatsAppDealShareUrl(payload) {

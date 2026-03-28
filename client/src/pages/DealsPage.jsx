@@ -675,6 +675,8 @@ export default function DealsPage() {
   const [bookmarkedIds, setBookmarkedIds] = useState(new Set());
   const [bookmarkedDeals, setBookmarkedDeals] = useState({});
   const [bookmarksPanelOpen, setBookmarksPanelOpen] = useState(false);
+  const [toast, setToast] = useState(null);
+  const toastTimer = useRef(null);
 
   const [session, setSession] = useState(() => getAuthSession());
   const isLoggedIn = Boolean(session?.accessToken);
@@ -807,6 +809,12 @@ export default function DealsPage() {
     if (type === "priceRange") { setFilterPriceMin(""); setFilterPriceMax(""); resetPage(); }
   }
 
+  function showToast(msg) {
+    setToast(msg);
+    clearTimeout(toastTimer.current);
+    toastTimer.current = setTimeout(() => setToast(null), 3000);
+  }
+
   const handleBookmark = useCallback(
     async (dealId) => {
       if (!isLoggedIn) {
@@ -819,6 +827,7 @@ export default function DealsPage() {
         if (wasBookmarked) next.delete(dealId); else next.add(dealId);
         return next;
       });
+      if (!wasBookmarked) showToast("Item saved to your basket");
       try {
         if (wasBookmarked) {
           await removeBookmark(dealId);
@@ -871,18 +880,19 @@ export default function DealsPage() {
           <div className="flex items-center gap-3">
             {isLoggedIn ? (
               <>
-                {/* Bookmarks button — navigates to /saved page */}
+                {/* Cart icon — navigates to /saved page */}
                 <Link
                   to="/saved"
-                  className="relative rounded-full border border-slate-200 bg-white hover:bg-slate-50 px-4 py-2 text-[12px] font-bold uppercase tracking-[1.4px] text-slate-600 transition-colors flex items-center gap-2"
+                  className="relative inline-flex items-center justify-center w-10 h-10 rounded-full border border-slate-200 bg-white hover:bg-slate-50 transition-colors text-slate-600"
                   style={{ textDecoration: "none" }}
+                  title="Saved deals"
                 >
-                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                    <path d="M19 21l-7-5-7 5V5a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2z"/>
+                  <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                    <circle cx="9" cy="21" r="1"/><circle cx="20" cy="21" r="1"/>
+                    <path d="M1 1h4l2.68 13.39a2 2 0 0 0 2 1.61h9.72a2 2 0 0 0 2-1.61L23 6H6"/>
                   </svg>
-                  Saved
                   {bookmarkedIds.size > 0 && (
-                    <span className="absolute -top-1 -right-1 w-4 h-4 rounded-full bg-[#16a34a] text-white text-[10px] font-bold flex items-center justify-center leading-none">
+                    <span className="absolute -top-1 -right-1 min-w-[18px] h-[18px] px-1 rounded-full bg-[#16a34a] text-white text-[10px] font-bold flex items-center justify-center leading-none">
                       {bookmarkedIds.size}
                     </span>
                   )}
@@ -1035,6 +1045,19 @@ export default function DealsPage() {
       {/* Login modal */}
       {loginModal && (
         <LoginModal message={loginModal.message} onClose={() => setLoginModal(null)} />
+      )}
+
+      {/* Toast */}
+      {toast && (
+        <div className="fixed bottom-6 left-1/2 -translate-x-1/2 z-50 pointer-events-none">
+          <div className="flex items-center gap-2.5 bg-[#0f172a] text-white text-[14px] font-semibold px-5 py-3.5 rounded-2xl shadow-xl">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+              <circle cx="9" cy="21" r="1"/><circle cx="20" cy="21" r="1"/>
+              <path d="M1 1h4l2.68 13.39a2 2 0 0 0 2 1.61h9.72a2 2 0 0 0 2-1.61L23 6H6"/>
+            </svg>
+            {toast}
+          </div>
+        </div>
       )}
     </div>
   );

@@ -9,3 +9,5 @@ New plan with Kit
 7: In this "sign in", make the login nd continue to google as in image2. delete /login and /deals endpoint, root desideals.com or localhost:3000 should   
 entail deals and login together   
 8. In filters show the filter, but only unlock for signed up users,
+9. the deals should be in random sorting order, no 2 deals together simulateneously from one shop, a single store should not have more than 20% of the     
+results on one page.  

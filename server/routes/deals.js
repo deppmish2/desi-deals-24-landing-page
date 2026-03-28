@@ -95,6 +95,105 @@ function seededShuffle(arr, seed) {
   return copy;
 }
 
+function getDealStoreId(deal) {
+  return String(deal?.store?.id || "").trim();
+}
+
+function compareStoreCandidates(a, b, pageCounts, queues, storePriority) {
+  const pageCountDiff = (pageCounts.get(a) || 0) - (pageCounts.get(b) || 0);
+  if (pageCountDiff !== 0) return pageCountDiff;
+
+  const priorityDiff = (storePriority.get(a) || 0) - (storePriority.get(b) || 0);
+  if (priorityDiff !== 0) return priorityDiff;
+
+  return (queues.get(b)?.length || 0) - (queues.get(a)?.length || 0);
+}
+
+function buildDiversifiedPages(deals, pageSize, seed) {
+  const safeDeals = Array.isArray(deals) ? deals.filter(Boolean) : [];
+  if (safeDeals.length === 0) {
+    return {
+      pages: [],
+      enforcePageCap: false,
+      maxPerStore: Math.max(1, Math.floor(pageSize * 0.2)),
+      uniqueStoreCount: 0,
+    };
+  }
+
+  const queues = new Map();
+  for (const deal of safeDeals) {
+    const storeId = getDealStoreId(deal) || "__unknown__";
+    if (!queues.has(storeId)) queues.set(storeId, []);
+    queues.get(storeId).push(deal);
+  }
+
+  const storeIds = Array.from(queues.keys());
+  const maxPerStore = Math.max(1, Math.floor(pageSize * 0.2));
+  const minStoresNeeded = Math.max(1, Math.ceil(pageSize / maxPerStore));
+  const enforcePageCap = storeIds.length >= minStoresNeeded;
+  const storePriority = new Map(
+    seededShuffle(storeIds, seed).map((storeId, index) => [storeId, index]),
+  );
+  const perStoreLimit = enforcePageCap ? maxPerStore : Number.POSITIVE_INFINITY;
+  const pages = [];
+
+  while (Array.from(queues.values()).some((queue) => queue.length > 0)) {
+    const page = [];
+    const pageCounts = new Map();
+
+    while (page.length < pageSize) {
+      const previousStoreId =
+        page.length > 0 ? getDealStoreId(page[page.length - 1]) || "__unknown__" : null;
+
+      let candidates = storeIds.filter((storeId) => {
+        const queue = queues.get(storeId);
+        return (
+          queue?.length > 0 &&
+          (pageCounts.get(storeId) || 0) < perStoreLimit &&
+          storeId !== previousStoreId
+        );
+      });
+
+      if (candidates.length === 0) {
+        const fallback = storeIds.filter((storeId) => {
+          const queue = queues.get(storeId);
+          return queue?.length > 0 && (pageCounts.get(storeId) || 0) < perStoreLimit;
+        });
+
+        if (fallback.length === 0) break;
+        if (enforcePageCap && page.length > 0) break;
+        candidates = fallback;
+      }
+
+      candidates.sort((a, b) =>
+        compareStoreCandidates(a, b, pageCounts, queues, storePriority),
+      );
+      const selectedStoreId = candidates[0];
+      const selectedDeal = queues.get(selectedStoreId)?.shift();
+      if (!selectedDeal) break;
+
+      page.push(selectedDeal);
+      pageCounts.set(selectedStoreId, (pageCounts.get(selectedStoreId) || 0) + 1);
+    }
+
+    if (page.length === 0) {
+      const emergencyStoreId = storeIds.find((storeId) => queues.get(storeId)?.length > 0);
+      const emergencyDeal = emergencyStoreId ? queues.get(emergencyStoreId)?.shift() : null;
+      if (!emergencyDeal) break;
+      page.push(emergencyDeal);
+    }
+
+    pages.push(page);
+  }
+
+  return {
+    pages,
+    enforcePageCap,
+    maxPerStore,
+    uniqueStoreCount: storeIds.length,
+  };
+}
+
 function serializeDeal(row) {
   return {
     id: row.id,
@@ -252,8 +351,13 @@ router.get("/", async (req, res, next) => {
     }
 
     const total = filtered.length;
-    const offset = (pageNum - 1) * limitNum;
-    const data = filtered.slice(offset, offset + limitNum);
+    const pageLayout = buildDiversifiedPages(
+      filtered,
+      limitNum,
+      dateSeed(`${today}:${sort || "random"}:${limitNum}`),
+    );
+    const totalPages = Math.max(1, pageLayout.pages.length);
+    const data = pageLayout.pages[pageNum - 1] || [];
 
     // CDN caches for 5 min; serves stale up to 1h while revalidating.
     res.set(
@@ -267,11 +371,17 @@ router.get("/", async (req, res, next) => {
         page: pageNum,
         limit: limitNum,
         total,
-        total_pages: Math.max(1, Math.ceil(total / limitNum)),
+        total_pages: totalPages,
       },
       meta: {
         sort: sort || "random",
         date: today,
+        store_diversity: {
+          no_adjacent_same_store: true,
+          max_per_store: pageLayout.enforcePageCap ? pageLayout.maxPerStore : null,
+          cap_enforced: pageLayout.enforcePageCap,
+          unique_store_count: pageLayout.uniqueStoreCount,
+        },
       },
     });
 
