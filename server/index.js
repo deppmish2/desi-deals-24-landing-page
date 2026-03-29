@@ -367,8 +367,7 @@ app.get("/share/deal/:dealId", async (req, res, next) => {
       deal,
       sharePath: `/share/deal/${encodeURIComponent(String(deal.id))}`,
     });
-    const redirectUrl = `${getPublicBaseUrl(req)}/deal/${encodeURIComponent(String(deal.id))}`;
-    return sendDealShareRedirect(res, meta, redirectUrl);
+    return sendClientApp(res, { meta });
   } catch (error) {
     return next(error);
   }
