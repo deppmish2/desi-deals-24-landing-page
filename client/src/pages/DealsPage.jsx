@@ -856,11 +856,14 @@ export default function DealsPage() {
     syncBookmarks();
   }, [syncBookmarks]);
 
-  // Store names — fetched once unfiltered so pills stay stable
   const [storeNames, setStoreNames] = useState([]);
   useEffect(() => {
+    if (!filtersOpen || storeNames.length > 0) return;
+
+    let cancelled = false;
     fetchDeals({ limit: 200 })
       .then((res) => {
+        if (cancelled) return;
         const names = new Set();
         (res.data || []).forEach((d) => {
           if (!d?.store?.name) return;
@@ -870,7 +873,11 @@ export default function DealsPage() {
         setStoreNames(Array.from(names).sort());
       })
       .catch(() => {});
-  }, []);
+
+    return () => {
+      cancelled = true;
+    };
+  }, [filtersOpen, storeNames.length]);
 
   // Reset to page 1 whenever filters or search changes
   function resetPage() { setPage(1); }

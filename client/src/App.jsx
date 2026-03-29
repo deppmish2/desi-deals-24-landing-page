@@ -1,11 +1,12 @@
-import React from "react";
+import React, { Suspense, lazy, useEffect, useState } from "react";
 import { BrowserRouter, Navigate, Route, Routes } from "react-router-dom";
-import OAuthCallbackPage from "./pages/OAuthCallbackPage";
 import DealsPage from "./pages/DealsPage";
-import SavedDealsPage from "./pages/SavedDealsPage";
-import DealSharePage from "./pages/DealSharePage";
-import AdminPage from "./landing/AdminPage";
-import FeedbackWidget from "./components/FeedbackWidget";
+
+const OAuthCallbackPage = lazy(() => import("./pages/OAuthCallbackPage"));
+const SavedDealsPage = lazy(() => import("./pages/SavedDealsPage"));
+const DealSharePage = lazy(() => import("./pages/DealSharePage"));
+const AdminPage = lazy(() => import("./landing/AdminPage"));
+const FeedbackWidget = lazy(() => import("./components/FeedbackWidget"));
 
 class ErrorBoundary extends React.Component {
   constructor(props) { super(props); this.state = { error: null }; }
@@ -24,10 +25,38 @@ class ErrorBoundary extends React.Component {
   }
 }
 
-export default function App() {
+function AppShell() {
+  const [showFeedback, setShowFeedback] = useState(false);
+
+  useEffect(() => {
+    let cancelled = false;
+    let timeoutId = null;
+    let idleId = null;
+
+    const enableFeedback = () => {
+      if (!cancelled) setShowFeedback(true);
+    };
+
+    if (typeof window !== "undefined" && "requestIdleCallback" in window) {
+      idleId = window.requestIdleCallback(enableFeedback, { timeout: 1800 });
+    } else {
+      timeoutId = window.setTimeout(enableFeedback, 1200);
+    }
+
+    return () => {
+      cancelled = true;
+      if (idleId !== null && typeof window !== "undefined" && "cancelIdleCallback" in window) {
+        window.cancelIdleCallback(idleId);
+      }
+      if (timeoutId !== null) {
+        window.clearTimeout(timeoutId);
+      }
+    };
+  }, []);
+
   return (
-    <ErrorBoundary>
-      <BrowserRouter>
+    <BrowserRouter>
+      <Suspense fallback={null}>
         <Routes>
           <Route path="/" element={<DealsPage />} />
           <Route path="/deal/:dealId" element={<DealsPage />} />
@@ -40,8 +69,16 @@ export default function App() {
           />
           <Route path="*" element={<Navigate to="/" replace />} />
         </Routes>
-        <FeedbackWidget />
-      </BrowserRouter>
+        {showFeedback ? <FeedbackWidget /> : null}
+      </Suspense>
+    </BrowserRouter>
+  );
+}
+
+export default function App() {
+  return (
+    <ErrorBoundary>
+      <AppShell />
     </ErrorBoundary>
   );
 }
