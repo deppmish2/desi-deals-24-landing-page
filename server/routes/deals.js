@@ -110,116 +110,23 @@ function getDealStoreId(deal) {
   return String(deal?.store?.id || "").trim();
 }
 
-function compareStoreCandidates(a, b, queues, storePriority) {
-  const remainingDiff = (queues.get(b)?.length || 0) - (queues.get(a)?.length || 0);
-  if (remainingDiff !== 0) return remainingDiff;
-
-  return (storePriority.get(a) || 0) - (storePriority.get(b) || 0);
-}
-
-function comparePageCandidates(a, b) {
-  if (a.distance !== b.distance) return a.distance - b.distance;
-  if (a.load !== b.load) return a.load - b.load;
-  if (a.storeCount !== b.storeCount) return a.storeCount - b.storeCount;
-  return a.priority - b.priority;
-}
-
-function pickBalancedPageIndex(
-  pages,
-  pageStoreCounts,
-  desiredPage,
+function scoreStoreCandidate(
   storeId,
-  pageSize,
-  perStoreLimit,
-  enforcePageCap,
-  pagePriority,
+  totalDeals,
+  position,
+  totalPerStore,
+  placedPerStore,
+  queues,
+  storePriority,
 ) {
-  function findCandidate(ignoreCap) {
-    let best = null;
-
-    for (let distance = 0; distance < pages.length; distance++) {
-      const candidates =
-        distance === 0
-          ? [desiredPage]
-          : [desiredPage - distance, desiredPage + distance];
-
-      for (const pageIndex of candidates) {
-        if (pageIndex < 0 || pageIndex >= pages.length) continue;
-        if (pages[pageIndex].length >= pageSize) continue;
-
-        const storeCount = pageStoreCounts[pageIndex].get(storeId) || 0;
-        if (!ignoreCap && enforcePageCap && storeCount >= perStoreLimit) continue;
-
-        const candidate = {
-          pageIndex,
-          distance,
-          load: pages[pageIndex].length,
-          storeCount,
-          priority: pagePriority.get(pageIndex) || 0,
-        };
-
-        if (!best || comparePageCandidates(candidate, best) < 0) {
-          best = candidate;
-        }
-      }
-
-      if (best) return best.pageIndex;
-    }
-
-    return -1;
-  }
-
-  const strictIndex = findCandidate(false);
-  if (strictIndex >= 0) {
-    return { pageIndex: strictIndex, relaxedCapUsed: false };
-  }
-
-  const relaxedIndex = findCandidate(true);
+  const expectedPlaced = ((totalPerStore.get(storeId) || 0) / totalDeals) * position;
+  const deficit = expectedPlaced - (placedPerStore.get(storeId) || 0);
   return {
-    pageIndex: relaxedIndex,
-    relaxedCapUsed: relaxedIndex >= 0 && enforcePageCap,
+    storeId,
+    deficit,
+    remaining: queues.get(storeId)?.length || 0,
+    priority: storePriority.get(storeId) || 0,
   };
-}
-
-function orderDealsWithinPage(deals, seed) {
-  const queues = new Map();
-  for (const deal of deals) {
-    const storeId = getDealStoreId(deal) || "__unknown__";
-    if (!queues.has(storeId)) queues.set(storeId, []);
-    queues.get(storeId).push(deal);
-  }
-
-  const storeIds = Array.from(queues.keys());
-  const storePriority = new Map(
-    seededShuffle(storeIds, seed).map((storeId, index) => [storeId, index]),
-  );
-  const ordered = [];
-  let relaxedAdjacencyUsed = false;
-
-  while (Array.from(queues.values()).some((queue) => queue.length > 0)) {
-    const previousStoreId =
-      ordered.length > 0 ? getDealStoreId(ordered[ordered.length - 1]) || "__unknown__" : null;
-
-    let candidates = storeIds.filter((storeId) => {
-      const queue = queues.get(storeId);
-      return queue?.length > 0 && storeId !== previousStoreId;
-    });
-
-    if (candidates.length === 0) {
-      candidates = storeIds.filter((storeId) => (queues.get(storeId)?.length || 0) > 0);
-      if (candidates.length > 0) relaxedAdjacencyUsed = true;
-    }
-
-    if (candidates.length === 0) break;
-
-    candidates.sort((a, b) => compareStoreCandidates(a, b, queues, storePriority));
-    const selectedStoreId = candidates[0];
-    const selectedDeal = queues.get(selectedStoreId)?.shift();
-    if (!selectedDeal) break;
-    ordered.push(selectedDeal);
-  }
-
-  return { ordered, relaxedAdjacencyUsed };
 }
 
 function buildDiversifiedPages(deals, pageSize, seed) {
@@ -236,14 +143,15 @@ function buildDiversifiedPages(deals, pageSize, seed) {
   }
 
   const queues = new Map();
+  const totalPerStore = new Map();
   for (const deal of safeDeals) {
     const storeId = getDealStoreId(deal) || "__unknown__";
     if (!queues.has(storeId)) queues.set(storeId, []);
     queues.get(storeId).push(deal);
+    totalPerStore.set(storeId, (totalPerStore.get(storeId) || 0) + 1);
   }
 
   const storeIds = Array.from(queues.keys());
-  const totalPages = Math.max(1, Math.ceil(safeDeals.length / pageSize));
   const maxPerStore = Math.max(1, Math.floor(pageSize * 0.2));
   const minStoresNeeded = Math.max(1, Math.ceil(pageSize / maxPerStore));
   const enforcePageCap = storeIds.length >= minStoresNeeded;
@@ -251,69 +159,88 @@ function buildDiversifiedPages(deals, pageSize, seed) {
     seededShuffle(storeIds, seed).map((storeId, index) => [storeId, index]),
   );
   const perStoreLimit = enforcePageCap ? maxPerStore : Number.POSITIVE_INFINITY;
-  const pagePriority = new Map(
-    seededShuffle(
-      Array.from({ length: totalPages }, (_, index) => index),
-      seed ^ 0x9e3779b9,
-    ).map((pageIndex, index) => [pageIndex, index]),
-  );
-  const pages = Array.from({ length: totalPages }, () => []);
-  const pageStoreCounts = Array.from({ length: totalPages }, () => new Map());
+  const placedPerStore = new Map();
+  const ordered = [];
+  let currentPageCounts = new Map();
   let relaxedAdjacencyUsed = false;
   let relaxedCapUsed = false;
 
-  const sortedStoreIds = [...storeIds].sort((a, b) => {
-    const countDiff = (queues.get(b)?.length || 0) - (queues.get(a)?.length || 0);
-    if (countDiff !== 0) return countDiff;
-    return (storePriority.get(a) || 0) - (storePriority.get(b) || 0);
-  });
-
-  for (const storeId of sortedStoreIds) {
-    const queue = queues.get(storeId) || [];
-    const count = queue.length;
-    if (count === 0) continue;
-
-    const offsetFraction =
-      ((storePriority.get(storeId) || 0) + 0.5) / Math.max(1, sortedStoreIds.length);
-
-    for (let itemIndex = 0; itemIndex < count; itemIndex++) {
-      const desiredPage = Math.min(
-        totalPages - 1,
-        Math.floor(((itemIndex + offsetFraction) * totalPages) / count),
-      );
-      const { pageIndex, relaxedCapUsed: usedRelaxedCap } = pickBalancedPageIndex(
-        pages,
-        pageStoreCounts,
-        desiredPage,
-        storeId,
-        pageSize,
-        perStoreLimit,
-        enforcePageCap,
-        pagePriority,
-      );
-
-      if (pageIndex < 0) continue;
-      if (usedRelaxedCap) relaxedCapUsed = true;
-
-      pages[pageIndex].push(queue[itemIndex]);
-      pageStoreCounts[pageIndex].set(
-        storeId,
-        (pageStoreCounts[pageIndex].get(storeId) || 0) + 1,
-      );
+  while (ordered.length < safeDeals.length) {
+    if (ordered.length > 0 && ordered.length % pageSize === 0) {
+      currentPageCounts = new Map();
     }
+
+    const previousStoreId =
+      ordered.length > 0 ? getDealStoreId(ordered[ordered.length - 1]) || "__unknown__" : null;
+    const position = ordered.length + 1;
+
+    let candidates = storeIds.filter((storeId) => {
+      const remaining = queues.get(storeId)?.length || 0;
+      const pageCount = currentPageCounts.get(storeId) || 0;
+      return remaining > 0 && storeId !== previousStoreId && pageCount < perStoreLimit;
+    });
+
+    if (candidates.length === 0) {
+      candidates = storeIds.filter((storeId) => {
+        const remaining = queues.get(storeId)?.length || 0;
+        const pageCount = currentPageCounts.get(storeId) || 0;
+        return remaining > 0 && pageCount < perStoreLimit;
+      });
+      if (candidates.length > 0) relaxedAdjacencyUsed = true;
+    }
+
+    if (candidates.length === 0) {
+      candidates = storeIds.filter((storeId) => {
+        const remaining = queues.get(storeId)?.length || 0;
+        return remaining > 0 && storeId !== previousStoreId;
+      });
+      if (candidates.length > 0) relaxedCapUsed = true;
+    }
+
+    if (candidates.length === 0) {
+      candidates = storeIds.filter((storeId) => (queues.get(storeId)?.length || 0) > 0);
+      if (candidates.length > 0) {
+        relaxedAdjacencyUsed = true;
+        relaxedCapUsed = true;
+      }
+    }
+
+    if (candidates.length === 0) break;
+
+    const scoredCandidates = candidates
+      .map((storeId) =>
+        scoreStoreCandidate(
+          storeId,
+          safeDeals.length,
+          position,
+          totalPerStore,
+          placedPerStore,
+          queues,
+          storePriority,
+        ),
+      )
+      .sort((a, b) => {
+        if (b.deficit !== a.deficit) return b.deficit - a.deficit;
+        if (b.remaining !== a.remaining) return b.remaining - a.remaining;
+        return a.priority - b.priority;
+      });
+
+    const selectedStoreId = scoredCandidates[0]?.storeId;
+
+    const selectedDeal = selectedStoreId ? queues.get(selectedStoreId)?.shift() : null;
+    if (!selectedDeal) break;
+
+    ordered.push(selectedDeal);
+    placedPerStore.set(selectedStoreId, (placedPerStore.get(selectedStoreId) || 0) + 1);
+    currentPageCounts.set(
+      selectedStoreId,
+      (currentPageCounts.get(selectedStoreId) || 0) + 1,
+    );
   }
 
-  const orderedPages = pages.map((pageDeals, index) => {
-    const { ordered, relaxedAdjacencyUsed: pageRelaxedAdjacency } =
-      orderDealsWithinPage(pageDeals, seed + index + 1);
-    if (pageRelaxedAdjacency) relaxedAdjacencyUsed = true;
-    return ordered;
-  });
-
-  for (let index = orderedPages.length - 1; index >= 0; index--) {
-    if (orderedPages[index].length === 0) {
-      orderedPages.splice(index, 1);
-    }
+  const orderedPages = [];
+  for (let index = 0; index < ordered.length; index += pageSize) {
+    orderedPages.push(ordered.slice(index, index + pageSize));
   }
 
   return {
