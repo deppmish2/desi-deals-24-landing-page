@@ -8,6 +8,10 @@ const {
 const { parseWeight } = require("../utils/weight-parser");
 const { mapCategory } = require("../utils/category-mapper");
 const {
+  parseBestBefore,
+  stripBestBeforePrefix,
+} = require("../utils/best-before-parser");
+const {
   fetchCollectionProducts,
   resolveCollectionHandles,
 } = require("../utils/shopify-catalog");
@@ -66,7 +70,9 @@ function mapProduct(p) {
   const originalPrice = origPrice && origPrice > salePrice ? origPrice : null;
   const discountPercent = calcDiscount(salePrice, originalPrice);
 
-  const weight = parseWeight(p.title) || parseWeight(variant.title);
+  const bestBefore = parseBestBefore(p.title);
+  const cleanTitle = stripBestBeforePrefix(p.title);
+  const weight = parseWeight(cleanTitle) || parseWeight(variant.title);
   const pricePerKg = weight
     ? calcPricePerKg(salePrice, weight.value, weight.unit)
     : null;
@@ -76,8 +82,8 @@ function mapProduct(p) {
     store_id: STORE_ID,
     store_name: STORE_NAME,
     store_url: STORE_URL,
-    product_name: p.title,
-    product_category: mapCategory(p.title),
+    product_name: cleanTitle,
+    product_category: mapCategory(cleanTitle),
     product_url: `${STORE_URL}/products/${p.handle}`,
     image_url: image,
     weight_raw: weight?.raw || null,
@@ -91,6 +97,7 @@ function mapProduct(p) {
     currency: "EUR",
     availability: variant.available ? "in_stock" : "out_of_stock",
     bulk_pricing: null,
+    best_before: bestBefore,
   };
 }
 

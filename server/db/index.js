@@ -179,6 +179,7 @@ const ready = (async () => {
     "ALTER TABLE users ADD COLUMN waitlist_referral_code TEXT",
     "ALTER TABLE users ADD COLUMN waitlist_referrer_user_id TEXT",
     "ALTER TABLE users ADD COLUMN waitlist_unlocked_at DATETIME",
+    "ALTER TABLE crawl_runs ADD COLUMN crawl_date TEXT",
     "ALTER TABLE shopping_lists ADD COLUMN raw_input TEXT",
     "ALTER TABLE shopping_lists ADD COLUMN input_method TEXT",
     "ALTER TABLE shopping_lists ADD COLUMN last_used_at DATETIME",
@@ -193,7 +194,6 @@ const ready = (async () => {
     "ALTER TABLE price_alerts ADD COLUMN triggered INTEGER DEFAULT 0",
     "ALTER TABLE price_alerts ADD COLUMN last_triggered_at DATETIME",
     "ALTER TABLE price_alerts ADD COLUMN is_active INTEGER DEFAULT 1",
-    "ALTER TABLE deals ADD COLUMN last_pool_used_at DATETIME",
     "ALTER TABLE waitlist_referrals DROP COLUMN invited_user_id_user_id",
     "ALTER TABLE waitlist_referrals DROP COLUMN inviter_user_id_user_id",
     "ALTER TABLE users ADD COLUMN is_admin INTEGER NOT NULL DEFAULT 0",
@@ -234,6 +234,39 @@ const ready = (async () => {
        ON job_runs(job_name, started_at)`,
     `CREATE INDEX IF NOT EXISTS idx_job_runs_status_started
        ON job_runs(status, started_at)`,
+    `CREATE TABLE IF NOT EXISTS deal_price_history (
+      id TEXT PRIMARY KEY,
+      crawl_date TEXT NOT NULL,
+      crawl_run_id TEXT NOT NULL REFERENCES crawl_runs(id),
+      crawl_timestamp DATETIME NOT NULL,
+      store_id TEXT NOT NULL REFERENCES stores(id),
+      product_name TEXT NOT NULL,
+      product_category TEXT NOT NULL,
+      product_url TEXT NOT NULL,
+      image_url TEXT,
+      weight_raw TEXT,
+      weight_value REAL,
+      weight_unit TEXT,
+      sale_price REAL NOT NULL,
+      original_price REAL,
+      discount_percent REAL,
+      price_per_kg REAL,
+      price_per_unit REAL,
+      currency TEXT DEFAULT 'EUR',
+      availability TEXT DEFAULT 'unknown',
+      bulk_pricing TEXT,
+      best_before TEXT,
+      created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+      UNIQUE (crawl_date, store_id, product_url)
+    )`,
+    `CREATE INDEX IF NOT EXISTS idx_crawl_runs_crawl_date
+       ON crawl_runs(crawl_date)`,
+    `CREATE INDEX IF NOT EXISTS idx_deal_price_history_crawl_date
+       ON deal_price_history(crawl_date)`,
+    `CREATE INDEX IF NOT EXISTS idx_deal_price_history_store_date
+       ON deal_price_history(store_id, crawl_date)`,
+    `CREATE INDEX IF NOT EXISTS idx_deal_price_history_product_url
+       ON deal_price_history(product_url)`,
   ];
 
   for (const sql of bootstrapStatements) {

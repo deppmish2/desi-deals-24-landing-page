@@ -436,7 +436,7 @@ if (require.main === module) {
     console.log(`API: http://localhost:${PORT}/api/v1/deals`);
     if (isServerless) {
       console.log(
-        "[scheduler] Skipped local scheduler in serverless mode (Vercel cron handles crawls).",
+        "[scheduler] Skipped local scheduler in serverless mode (GitHub Actions handles the 07:00 Europe/Berlin crawl).",
       );
     } else {
       startScheduler(db);

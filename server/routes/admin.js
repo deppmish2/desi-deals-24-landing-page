@@ -6,7 +6,6 @@ const requireAuth = require("../middleware/auth");
 const db = require("../db");
 const { runCrawl } = require("../../crawler");
 const { isCrawlLocked } = require("../../crawler/utils/snapshot");
-const { restoreDealsFromSeed } = require("../services/deals-seed-loader");
 const { trackEvent } = require("../services/event-tracker");
 
 const STALE_DELIVERY_DAYS = 45;
@@ -93,10 +92,6 @@ function hoursSince(isoTs) {
   return (Date.now() - ts) / (60 * 60 * 1000);
 }
 
-function seedFallbackAllowed() {
-  return !String(process.env.TURSO_DATABASE_URL || "").trim();
-}
-
 // GET /api/v1/admin/crawl/warmup (public — safe: idempotent, will not double-crawl)
 // Called by the frontend on page load to ensure deals are available.
 router.get("/crawl/warmup", async (req, res) => {
@@ -133,22 +128,8 @@ router.get("/crawl/warmup", async (req, res) => {
     return res.json({ deal_count: 0, crawling: true });
   }
 
-  if (seedFallbackAllowed()) {
-    const seeded = await restoreDealsFromSeed(db);
-    if (seeded.ok) {
-      const newCount = Number(
-        (
-          await db
-            .prepare(`SELECT COUNT(*) as cnt FROM deals WHERE is_active = 1`)
-            .get()
-        )?.cnt || 0,
-      );
-      return res.json({ deal_count: newCount, crawling: false });
-    }
-  }
-
   // No data is available yet — do NOT auto-crawl here.
-  // Crawls are scheduled centrally and materialize into Turso.
+  // Crawls are scheduled centrally and write directly into Turso.
   const localCrawling =
     Number(
       (

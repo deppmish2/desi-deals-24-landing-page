@@ -23,10 +23,10 @@ const SQLITE_MAX_BUFFER_BYTES = Math.max(
 const TABLE_IMPORT_ORDER = [
   "stores",
   "crawl_runs",
+  "deal_price_history",
   "users",
   "canonical_products",
   "deals",
-  "daily_deal_pool_entries",
   "deal_mappings",
   "entity_resolution_queue",
   "email_auth_tokens",
@@ -40,6 +40,7 @@ const TABLE_IMPORT_ORDER = [
   "alert_notifications",
   "events",
 ];
+const EXCLUDED_TABLES = new Set(["daily_deal_pool_entries"]);
 
 function normalizeEnvValue(value) {
   const text = String(value ?? "").trim();
@@ -87,7 +88,9 @@ function sortTablesForImport(tables) {
   const order = new Map(
     TABLE_IMPORT_ORDER.map((tableName, index) => [tableName, index]),
   );
-  return [...tables].sort((a, b) => {
+  return [...tables]
+    .filter((table) => !EXCLUDED_TABLES.has(String(table?.name || "")))
+    .sort((a, b) => {
     const aRank = order.has(a.name)
       ? order.get(a.name)
       : Number.MAX_SAFE_INTEGER;
@@ -96,7 +99,17 @@ function sortTablesForImport(tables) {
       : Number.MAX_SAFE_INTEGER;
     if (aRank !== bRank) return aRank - bRank;
     return String(a.name).localeCompare(String(b.name));
-  });
+    });
+}
+
+function referencesExcludedTable(entry) {
+  const sql = String(entry?.sql || "").toLowerCase();
+  for (const tableName of EXCLUDED_TABLES) {
+    if (sql.includes(String(tableName).toLowerCase())) {
+      return true;
+    }
+  }
+  return false;
 }
 
 async function executeBatch(client, statements) {
@@ -220,13 +233,13 @@ async function main() {
   );
   const viewDefs = sqliteJson(
     "SELECT name, sql FROM sqlite_master WHERE type = 'view' AND name NOT LIKE 'sqlite_%' AND sql IS NOT NULL ORDER BY name",
-  );
+  ).filter((entry) => !referencesExcludedTable(entry));
   const indexDefs = sqliteJson(
     "SELECT name, sql FROM sqlite_master WHERE type = 'index' AND name NOT LIKE 'sqlite_%' AND sql IS NOT NULL ORDER BY name",
-  );
+  ).filter((entry) => !referencesExcludedTable(entry));
   const triggerDefs = sqliteJson(
     "SELECT name, sql FROM sqlite_master WHERE type = 'trigger' AND name NOT LIKE 'sqlite_%' AND sql IS NOT NULL ORDER BY name",
-  );
+  ).filter((entry) => !referencesExcludedTable(entry));
 
   console.log(`Using local DB: ${LOCAL_DB_PATH}`);
   console.log(`Preparing remote Turso import for ${tableDefs.length} tables`);

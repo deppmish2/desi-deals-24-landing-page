@@ -10,6 +10,7 @@ import { buildDealPageUrl, buildWhatsAppDealShareUrl } from "../utils/share";
 
 const POST_AUTH_REDIRECT_STORAGE_KEY = "dd24_post_auth_redirect";
 const OAUTH_STATE_STORAGE_PREFIX = "dd24_oauth_state:";
+const POST_LOGIN_RESUME_STATE_STORAGE_KEY = "dd24_post_login_resume_state";
 
 function createOAuthState() {
   if (typeof window !== "undefined" && window.crypto?.randomUUID) return window.crypto.randomUUID();
@@ -135,7 +136,7 @@ function UnlockCard({ title, description, onSignIn }) {
 }
 
 // ── Login modal ───────────────────────────────────────────────────────────────
-function LoginModal({ message, onClose }) {
+function LoginModal({ message, resumeState, onClose }) {
   const [loading, setLoading] = useState(false);
   const [authError, setAuthError] = useState("");
 
@@ -144,8 +145,17 @@ function LoginModal({ message, onClose }) {
     setLoading(true);
     try {
       const state = createOAuthState();
+      const redirectTo = `${window.location.pathname}${window.location.search}${window.location.hash}` || "/";
       sessionStorage.setItem(`${OAUTH_STATE_STORAGE_PREFIX}google`, state);
-      sessionStorage.setItem(POST_AUTH_REDIRECT_STORAGE_KEY, "/");
+      sessionStorage.setItem(POST_AUTH_REDIRECT_STORAGE_KEY, redirectTo);
+      if (resumeState) {
+        sessionStorage.setItem(
+          POST_LOGIN_RESUME_STATE_STORAGE_KEY,
+          JSON.stringify(resumeState),
+        );
+      } else {
+        sessionStorage.removeItem(POST_LOGIN_RESUME_STATE_STORAGE_KEY);
+      }
       const payload = await fetchOAuthAuthUrl("google", state);
       const authUrl = payload?.authUrl || payload?.url;
       if (!authUrl) throw new Error("Google sign-in unavailable right now.");
@@ -567,7 +577,7 @@ function SortDropdown({ value, onChange, isLoggedIn, onRequireLogin }) {
   function handleSelect(nextValue) {
     if (!isLoggedIn && nextValue !== "") {
       setOpen(false);
-      onRequireLogin();
+      onRequireLogin(nextValue);
       return;
     }
     onChange(nextValue);
@@ -795,11 +805,95 @@ export default function DealsPage() {
   const [session, setSession] = useState(() => getAuthSession());
   const isLoggedIn = Boolean(session?.accessToken);
 
+  const createResumeState = useCallback(
+    (overrides = {}) => ({
+      searchInput,
+      searchQuery,
+      sortValue,
+      filterStore,
+      filterCategory,
+      filterMinDiscount,
+      filterPriceMin,
+      filterPriceMax,
+      filterHideExpired,
+      page,
+      ...overrides,
+    }),
+    [
+      filterCategory,
+      filterHideExpired,
+      filterMinDiscount,
+      filterPriceMax,
+      filterPriceMin,
+      filterStore,
+      page,
+      searchInput,
+      searchQuery,
+      sortValue,
+    ],
+  );
+
   useEffect(() => {
     function onAuthChange() { setSession(getAuthSession()); }
     window.addEventListener("dd24-auth-changed", onAuthChange);
     return () => window.removeEventListener("dd24-auth-changed", onAuthChange);
   }, []);
+
+  useEffect(() => {
+    if (!isLoggedIn) return;
+
+    const rawResumeState = sessionStorage.getItem(
+      POST_LOGIN_RESUME_STATE_STORAGE_KEY,
+    );
+    if (!rawResumeState) return;
+
+    sessionStorage.removeItem(POST_LOGIN_RESUME_STATE_STORAGE_KEY);
+
+    try {
+      const resumeState = JSON.parse(rawResumeState);
+      if (!resumeState || typeof resumeState !== "object") return;
+
+      const nextDraft = {
+        store: resumeState.filterStore || "",
+        category: resumeState.filterCategory || "",
+        minDiscount: resumeState.filterMinDiscount || "",
+        priceMin: resumeState.filterPriceMin || "",
+        priceMax: resumeState.filterPriceMax || "",
+        hideExpired: Boolean(resumeState.filterHideExpired),
+      };
+
+      setSearchInput(resumeState.searchInput || "");
+      setSearchQuery(resumeState.searchQuery || "");
+      setSortValue(resumeState.sortValue || "");
+      setFilterStore(nextDraft.store);
+      setFilterCategory(nextDraft.category);
+      setFilterMinDiscount(nextDraft.minDiscount);
+      setFilterPriceMin(nextDraft.priceMin);
+      setFilterPriceMax(nextDraft.priceMax);
+      setFilterHideExpired(nextDraft.hideExpired);
+      setFilterDraft(nextDraft);
+      setPage(
+        Number.isInteger(resumeState.page) && resumeState.page > 0
+          ? resumeState.page
+          : 1,
+      );
+      setFiltersOpen(false);
+      setLoginModal(null);
+
+      if (resumeState.bookmarkDealId) {
+        const bookmarkDealId = resumeState.bookmarkDealId;
+        setBookmarkedIds((prev) => new Set(prev).add(bookmarkDealId));
+        addBookmark(bookmarkDealId)
+          .catch(() => null)
+          .then(() => fetchBookmarks().catch(() => null))
+          .then((result) => {
+            if (result?.data) setBookmarkedIds(new Set(result.data));
+          });
+      }
+    } catch {
+      sessionStorage.removeItem(POST_LOGIN_RESUME_STATE_STORAGE_KEY);
+    }
+  }, [isLoggedIn]);
 
   const { deals, pagination, loading, error } = useDeals({
     enabled: true,
@@ -882,8 +976,12 @@ export default function DealsPage() {
   // Reset to page 1 whenever filters or search changes
   function resetPage() { setPage(1); }
 
-  function requireLogin(message, action) {
-    if (!isLoggedIn) { setLoginModal({ message }); } else { action?.(); }
+  function requireLogin(message, action, resumeState) {
+    if (!isLoggedIn) {
+      setLoginModal({ message, resumeState });
+    } else {
+      action?.();
+    }
   }
 
   function openFilters() {
@@ -893,7 +991,19 @@ export default function DealsPage() {
 
   function handleFiltersSignIn() {
     setFiltersOpen(false);
-    setLoginModal({ message: "Sign in to filter by store and category." });
+    requireLogin(
+      "Sign in to filter by store and category.",
+      undefined,
+      createResumeState({
+        filterStore: filterDraft.store,
+        filterCategory: filterDraft.category,
+        filterMinDiscount: filterDraft.minDiscount,
+        filterPriceMin: filterDraft.priceMin,
+        filterPriceMax: filterDraft.priceMax,
+        filterHideExpired: filterDraft.hideExpired,
+        page: 1,
+      }),
+    );
   }
 
   function applyFilters() {
@@ -959,7 +1069,10 @@ export default function DealsPage() {
   const handleBookmark = useCallback(
     async (dealId) => {
       if (!isLoggedIn) {
-        setLoginModal({ message: "Bookmarks are for registered members only." });
+        setLoginModal({
+          message: "Bookmarks are for registered members only.",
+          resumeState: createResumeState({ bookmarkDealId: dealId }),
+        });
         return;
       }
       const wasBookmarked = bookmarkedIds.has(dealId);
@@ -989,7 +1102,7 @@ export default function DealsPage() {
         syncBookmarks();
       }
     },
-    [isLoggedIn, bookmarkedIds, syncBookmarks],
+    [createResumeState, isLoggedIn, bookmarkedIds, syncBookmarks],
   );
 
   async function handleLogout() {
@@ -1274,7 +1387,13 @@ export default function DealsPage() {
                       value={isLoggedIn ? sortValue : ""}
                       onChange={handleSortChange}
                       isLoggedIn={isLoggedIn}
-                      onRequireLogin={() => requireLogin("Sorting is for registered members only.")}
+                      onRequireLogin={(nextValue) =>
+                        requireLogin(
+                          "Sorting is for registered members only.",
+                          undefined,
+                          createResumeState({ sortValue: nextValue, page: 1 }),
+                        )
+                      }
                     />
                   </div>
                 </div>
@@ -1364,7 +1483,11 @@ export default function DealsPage() {
 
       {/* Login modal */}
       {loginModal && (
-        <LoginModal message={loginModal.message} onClose={() => setLoginModal(null)} />
+        <LoginModal
+          message={loginModal.message}
+          resumeState={loginModal.resumeState}
+          onClose={() => setLoginModal(null)}
+        />
       )}
 
       {/* Confirm clear filters */}

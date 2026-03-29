@@ -47,6 +47,10 @@ const KEYWORD =
 const KW =
   "(?:mhd|bbe|b\\.b\\.e|best[\\s-]?before|bbd|bb|expiry[\\s-]?date|mhb|mindestens[\\s-]?haltbar[\\s-]?bis|mindesthaltbarkeitsdatum|haltbarkeitsdatum|mindesthaltbarkeit|ablauf)";
 
+const MONTH_PATTERN = Object.keys(MONTH_MAP)
+  .sort((a, b) => b.length - a.length)
+  .join("|");
+
 /**
  * Detects best-before / MHD / BBE date in a product name or description.
  * Recognised keywords: MHD, BBE, B.B.E, Best Before, BBD, BB, Expiry Date, MHB,
@@ -92,11 +96,10 @@ function parseBestBefore(text) {
   // Pattern D: (keyword) [optional day or "end"] MonthName Year
   // Handles: "MHD März 2025", "Best Before: 18 Aug 2025", "Best Before: End Feb 2026"
   //          "Best Before 31 May'25" (apostrophe-prefixed 2-digit year, used by globalfoodhub.com)
-  // [^a-z]* skips digits/punctuation (e.g. ": 18 "); (?:end\s+)? skips the word "end"
-  // [\s']+ allows a plain space, apostrophe, or "space + apostrophe" before the year digits
+  // [^a-z]* skips digits/punctuation (e.g. ": 18 "); optional day supports ordinal suffixes like 31st / 24th.
   for (const [name, num] of Object.entries(MONTH_MAP)) {
     const re = new RegExp(
-      `\\b${KW}[^a-z]*(?:end\\s+)?${name}[\\s']+(\\d{2,4})\\b`,
+      `\\b${KW}[^a-z]*(?:(?:\\d{1,2}(?:st|nd|rd|th)?)|end)?\\s*${name}\\s*['’]?\\s*(\\d{2,4})\\b`,
     );
     m = t.match(re);
     if (m) {
@@ -109,4 +112,30 @@ function parseBestBefore(text) {
   return null;
 }
 
-module.exports = { parseBestBefore };
+function stripBestBeforePrefix(text) {
+  const value = String(text || "").trim();
+  if (!value || !KEYWORD.test(value)) return value;
+
+  const patterns = [
+    new RegExp(
+      `^\\s*${KW}[^0-9a-z]*(?:\\d{1,2})[\\/\\.](\\d{1,2})[\\/\\.](\\d{2,4})\\b[\\s:;,\\-–—]*`,
+      "i",
+    ),
+    new RegExp(
+      `^\\s*${KW}[^0-9a-z]*(\\d{1,2})[\\/\\.](\\d{4}|\\d{2})\\b[\\s:;,\\-–—]*`,
+      "i",
+    ),
+    new RegExp(
+      `^\\s*${KW}[^a-z]*(?:(?:\\d{1,2}(?:st|nd|rd|th)?)|end)?\\s*(?:${MONTH_PATTERN})\\s*['’]?\\s*\\d{2,4}\\b[\\s:;,\\-–—]*`,
+      "i",
+    ),
+  ];
+
+  let cleaned = value;
+  for (const pattern of patterns) {
+    cleaned = cleaned.replace(pattern, "").trim();
+  }
+  return cleaned || value;
+}
+
+module.exports = { parseBestBefore, stripBestBeforePrefix };

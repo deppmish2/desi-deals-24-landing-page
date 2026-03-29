@@ -86,7 +86,7 @@ export default function AdminPage() {
   useEffect(() => {
     const session = getAuthSession();
     if (!session?.accessToken && import.meta.env.PROD) {
-      navigate("/waitlist", { replace: true });
+      navigate("/", { replace: true });
       return;
     }
 
@@ -99,7 +99,7 @@ export default function AdminPage() {
           msg.includes("Missing") ||
           msg.includes("expired")
         ) {
-          navigate("/waitlist", { replace: true });
+          navigate("/", { replace: true });
         } else {
           setError(msg || "Failed to load dashboard");
         }
@@ -109,7 +109,7 @@ export default function AdminPage() {
 
   async function handleLogout() {
     await logoutUser();
-    navigate("/waitlist", { replace: true });
+    navigate("/", { replace: true });
   }
 
   if (loading) {
@@ -129,7 +129,7 @@ export default function AdminPage() {
           </div>
           <div className="text-slate-500 text-sm mb-6">{error}</div>
           <button
-            onClick={() => navigate("/waitlist")}
+            onClick={() => navigate("/")}
             className="px-5 py-2.5 rounded-xl bg-slate-900 text-white text-sm font-bold"
           >
             Go back

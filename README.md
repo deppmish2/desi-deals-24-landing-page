@@ -108,24 +108,16 @@ This builds the React app into `client/dist/`. The Express server automatically 
 
 ### How availability is maintained
 
-1. At 06:00 Europe/Berlin, the full crawl writes directly into SQLite or Turso.
-2. The crawler updates only changed products, inserts new products, and deactivates removed ones.
-3. At 07:00 Europe/Berlin, the app fixes the daily 24-deal pool for that Berlin date.
-4. The landing page and unlocked deals page read directly from that daily pool.
-5. Products are excluded from the pool if they appeared in the prior rolling 7-day window.
-
-### Daily pool rules
-
-- The pool is fixed for the day once generated.
-- No intra-day re-curation happens after the pool is fixed.
-- Only currently active, in-stock deals are materialized for viewing.
+1. At 07:00 Europe/Berlin, the full crawl runs across all configured shops.
+2. The crawler writes the live active deals into the `deals` table and stores a daily snapshot for every crawled product in `deal_price_history`.
+3. The website reads directly from Turso using the latest completed crawl date.
+4. The API serves the live active deals for that latest completed crawl day.
 
 ### Production scheduling
 
-- The production scheduler lives in [`.github/workflows/daily-pipeline.yml`](./.github/workflows/daily-pipeline.yml).
-- GitHub Actions runs hourly and the app gates execution in code using Europe/Berlin time.
-- That keeps the `06:00` crawl and `07:00` daily-pool generation aligned across DST changes without relying on Vercel cold-start behavior for data freshness.
-- Vercel serves precomputed data only; it is no longer the source of truth for scheduled ingestion.
+- The production scheduler lives in [`.github/workflows/crawl.yml`](./.github/workflows/crawl.yml).
+- GitHub Actions triggers twice in UTC and gates execution in code so the crawl runs exactly once at `07:00 Europe/Berlin`, including DST changes.
+- Vercel serves Turso data only; it is not the scheduler for ingestion.
 
 ### Health / ops
 

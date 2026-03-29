@@ -4,7 +4,7 @@ const express = require("express");
 
 const db = require("../db");
 const { trackEvent } = require("../services/event-tracker");
-const { getCurrentPoolDate } = require("../services/daily-deals-pool");
+const { formatBerlinDateKey } = require("../services/berlin-time");
 
 const router = express.Router();
 const EXCLUDED_STORE_IDS = ["dookan"];
@@ -23,9 +23,9 @@ const DISPLAYABLE_DISCOUNT_SQL = `
   )
 `;
 
-// In-memory cache keyed by date string — refreshes after 5 min or on next day.
+// In-memory cache keyed by latest completed crawl — refreshes after 5 min.
 const MEM_CACHE_TTL_MS = 5 * 60 * 1000;
-const _memCache = new Map(); // date → { deals, expiresAt }
+const _memCache = new Map(); // cacheKey → { deals, expiresAt }
 
 function getMemCache(key) {
   const entry = _memCache.get(key);
@@ -38,6 +38,29 @@ function getMemCache(key) {
 
 function setMemCache(key, deals) {
   _memCache.set(key, { deals, expiresAt: Date.now() + MEM_CACHE_TTL_MS });
+}
+
+async function getCurrentDealsSnapshotContext() {
+  const latestCrawl = await db
+    .prepare(
+      `SELECT id, crawl_date, finished_at
+       FROM crawl_runs
+       WHERE status = 'completed'
+       ORDER BY finished_at DESC
+       LIMIT 1`,
+    )
+    .get();
+
+  const crawlDate =
+    latestCrawl?.crawl_date ||
+    (latestCrawl?.finished_at
+      ? formatBerlinDateKey(new Date(latestCrawl.finished_at))
+      : formatBerlinDateKey(new Date()));
+
+  return {
+    cacheKey: latestCrawl?.id ? `crawl:${latestCrawl.id}` : `date:${crawlDate}`,
+    crawlDate,
+  };
 }
 
 // Levenshtein distance — used for fuzzy token matching.
@@ -324,7 +347,7 @@ router.get("/", async (req, res, next) => {
       .toLowerCase();
     const filterStore = String(req.query.store || "").trim();
     const focusDealId = String(req.query.deal_id || "").trim();
-    const today = getCurrentPoolDate();
+    const { cacheKey, crawlDate } = await getCurrentDealsSnapshotContext();
 
     if (focusDealId) {
       const row = await db
@@ -353,19 +376,19 @@ router.get("/", async (req, res, next) => {
         },
         meta: {
           sort: "focused_deal",
-          date: today,
+          date: crawlDate,
           focused_deal_id: focusDealId,
         },
       });
       return;
     }
 
-    // Load + shuffle active deals — cached per date so the order is stable within a day.
-    let allDeals = getMemCache(today);
+    // Load + shuffle active deals — cached per latest completed crawl.
+    let allDeals = getMemCache(cacheKey);
     if (!allDeals) {
       const rows = await db.prepare(ACTIVE_DEALS_SQL).all();
-      allDeals = seededShuffle(rows.map(serializeDeal), dateSeed(today));
-      if (allDeals.length > 0) setMemCache(today, allDeals);
+      allDeals = seededShuffle(rows.map(serializeDeal), dateSeed(cacheKey));
+      if (allDeals.length > 0) setMemCache(cacheKey, allDeals);
     }
 
     const filterCategory = String(req.query.category || "").trim();
@@ -440,7 +463,7 @@ router.get("/", async (req, res, next) => {
       : buildDiversifiedPages(
         filtered,
         limitNum,
-        dateSeed(`${today}:${sort || "random"}:${limitNum}`),
+        dateSeed(`${cacheKey}:${sort || "random"}:${limitNum}`),
       );
     const orderedPage = usesExplicitOrdering
       ? paginateSequential(filtered, limitNum, pageNum)
@@ -468,7 +491,7 @@ router.get("/", async (req, res, next) => {
       },
       meta: {
         sort: sort || "random",
-        date: today,
+        date: crawlDate,
         store_diversity: {
           no_adjacent_same_store: usesExplicitOrdering
             ? false

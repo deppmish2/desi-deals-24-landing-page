@@ -241,18 +241,6 @@ export async function logoutUser() {
   writeAuthSession(null);
 }
 
-export function fetchWaitlistMe() {
-  return authRequest("/waitlist/me");
-}
-
-export function claimWaitlistReferral(referralCode) {
-  return authRequest("/waitlist/claim-referral", {
-    method: "POST",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({ referral_code: referralCode }),
-  });
-}
-
 export function fetchMe() {
   return authRequest("/auth/me");
 }
