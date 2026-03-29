@@ -203,13 +203,34 @@ function resolveDealProductUrl(deal) {
     : raw;
 }
 
+function resolveAbsoluteUrl(rawUrl, baseUrl) {
+  const raw = String(rawUrl || "").trim();
+  if (!raw) return "";
+  if (/^https?:\/\//i.test(raw)) return raw;
+  if (raw.startsWith("//")) return `https:${raw}`;
+  try {
+    return new URL(raw, String(baseUrl || "").trim() || undefined).toString();
+  } catch {
+    return "";
+  }
+}
+
+function buildDealOgImageUrl(baseUrl, deal) {
+  const fallbackUrl = `${baseUrl}/og-card.png`;
+  const upstreamImageUrl = resolveAbsoluteUrl(deal?.image_url, deal?.store_url);
+  if (!upstreamImageUrl || !/^https?:\/\//i.test(upstreamImageUrl)) {
+    return fallbackUrl;
+  }
+  return upstreamImageUrl;
+}
+
 async function buildDealMeta(req, dealId, options = {}) {
   const deal = options.deal || await getShareableDeal(dealId);
   if (!deal) return null;
   const baseUrl = getPublicBaseUrl(req);
   const sharePath = String(options.sharePath || `/deal/${encodeURIComponent(String(deal.id))}`);
   const shareUrl = `${baseUrl}${sharePath.startsWith("/") ? "" : "/"}${sharePath}`;
-  const imageUrl = `${baseUrl}/landing/share-logo-card.png`;
+  const imageUrl = buildDealOgImageUrl(baseUrl, deal);
   const salePrice = formatMoney(deal.sale_price, deal.currency) || "Live now";
   const originalPrice = formatMoney(deal.original_price, deal.currency);
   const discount = Number(deal.discount_percent || 0);
@@ -316,7 +337,7 @@ function sendDealShareRedirect(res, meta, redirectUrl) {
   </head>
   <body>
     <div class="card">
-      <img class="hero" src="/landing/share-logo-card.png" alt="DesiDeals24" />
+      <img class="hero" src="${escapeHtml(meta.image)}" alt="${escapeHtml(meta.imageAlt || meta.title)}" />
       <div class="brand">
         <div>
           <div class="eyebrow">DesiDeals24</div>
