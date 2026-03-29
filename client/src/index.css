@@ -1,6 +1,4 @@
-@import url("https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=Public+Sans:wght@400;500;600;700;800&display=swap");
-@import url("https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,900&display=swap");
-@import url("https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap");
+@import url("https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap");
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
@@ -9,8 +7,6 @@
   html {
     font-family:
       "Plus Jakarta Sans",
-      "Public Sans",
-      "Inter",
       -apple-system,
       BlinkMacSystemFont,
       "Segoe UI",
@@ -43,8 +39,6 @@
   h6 {
     font-family:
       "Plus Jakarta Sans",
-      "Public Sans",
-      "Inter",
       -apple-system,
       BlinkMacSystemFont,
       sans-serif;
@@ -170,6 +164,18 @@
   .aura-card {
     @apply bg-card rounded-xl border border-border p-5;
     box-shadow: 0 1px 2px rgba(0, 0, 0, 0.04);
+  }
+
+  .dd24-feedback-trigger {
+    right: max(1.5rem, calc(env(safe-area-inset-right) + 1.5rem));
+    bottom: max(1.5rem, calc(env(safe-area-inset-bottom) + 1.5rem));
+  }
+
+  @media (max-width: 640px) {
+    .dd24-feedback-trigger {
+      right: max(0.9rem, calc(env(safe-area-inset-right) + 0.9rem));
+      bottom: max(5.75rem, calc(env(safe-area-inset-bottom) + 5.75rem));
+    }
   }
 }
 

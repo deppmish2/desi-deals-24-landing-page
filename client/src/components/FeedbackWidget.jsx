@@ -60,7 +60,7 @@ export default function FeedbackWidget() {
           setError("");
           setOpen(true);
         }}
-        className="fixed bottom-6 right-6 z-40 bg-white/80 hover:bg-white text-slate-600 hover:text-slate-900 font-bold rounded-full px-4 py-2.5 border border-slate-200 backdrop-blur-md shadow-[0px_18px_40px_rgba(15,23,42,0.10)] transition-colors"
+        className="dd24-feedback-trigger fixed z-40 bg-white/80 hover:bg-white text-slate-600 hover:text-slate-900 font-bold rounded-full px-4 py-2.5 border border-slate-200 backdrop-blur-md shadow-[0px_18px_40px_rgba(15,23,42,0.10)] transition-colors"
         style={{ letterSpacing: 0.1 }}
       >
         Feedback

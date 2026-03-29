@@ -110,14 +110,23 @@ function getDealStoreId(deal) {
   return String(deal?.store?.id || "").trim();
 }
 
-function compareStoreCandidates(a, b, pageCounts, queues, storePriority) {
-  const pageCountDiff = (pageCounts.get(a) || 0) - (pageCounts.get(b) || 0);
-  if (pageCountDiff !== 0) return pageCountDiff;
-
-  const priorityDiff = (storePriority.get(a) || 0) - (storePriority.get(b) || 0);
-  if (priorityDiff !== 0) return priorityDiff;
-
-  return (queues.get(b)?.length || 0) - (queues.get(a)?.length || 0);
+function scoreStoreCandidate(
+  storeId,
+  totalDeals,
+  position,
+  totalPerStore,
+  placedPerStore,
+  queues,
+  storePriority,
+) {
+  const expectedPlaced = ((totalPerStore.get(storeId) || 0) / totalDeals) * position;
+  const deficit = expectedPlaced - (placedPerStore.get(storeId) || 0);
+  return {
+    storeId,
+    deficit,
+    remaining: queues.get(storeId)?.length || 0,
+    priority: storePriority.get(storeId) || 0,
+  };
 }
 
 function buildDiversifiedPages(deals, pageSize, seed) {
@@ -134,10 +143,12 @@ function buildDiversifiedPages(deals, pageSize, seed) {
   }
 
   const queues = new Map();
+  const totalPerStore = new Map();
   for (const deal of safeDeals) {
     const storeId = getDealStoreId(deal) || "__unknown__";
     if (!queues.has(storeId)) queues.set(storeId, []);
     queues.get(storeId).push(deal);
+    totalPerStore.set(storeId, (totalPerStore.get(storeId) || 0) + 1);
   }
 
   const storeIds = Array.from(queues.keys());
@@ -148,81 +159,107 @@ function buildDiversifiedPages(deals, pageSize, seed) {
     seededShuffle(storeIds, seed).map((storeId, index) => [storeId, index]),
   );
   const perStoreLimit = enforcePageCap ? maxPerStore : Number.POSITIVE_INFINITY;
-  const pages = [];
+  const placedPerStore = new Map();
+  const ordered = [];
+  let currentPageCounts = new Map();
   let relaxedAdjacencyUsed = false;
   let relaxedCapUsed = false;
 
-  while (Array.from(queues.values()).some((queue) => queue.length > 0)) {
-    const page = [];
-    const pageCounts = new Map();
+  while (ordered.length < safeDeals.length) {
+    if (ordered.length > 0 && ordered.length % pageSize === 0) {
+      currentPageCounts = new Map();
+    }
 
-    while (page.length < pageSize) {
-      const previousStoreId =
-        page.length > 0 ? getDealStoreId(page[page.length - 1]) || "__unknown__" : null;
+    const previousStoreId =
+      ordered.length > 0 ? getDealStoreId(ordered[ordered.length - 1]) || "__unknown__" : null;
+    const position = ordered.length + 1;
 
-      let candidates = storeIds.filter((storeId) => {
-        const queue = queues.get(storeId);
-        return (
-          queue?.length > 0 &&
-          (pageCounts.get(storeId) || 0) < perStoreLimit &&
-          storeId !== previousStoreId
-        );
+    let candidates = storeIds.filter((storeId) => {
+      const remaining = queues.get(storeId)?.length || 0;
+      const pageCount = currentPageCounts.get(storeId) || 0;
+      return remaining > 0 && storeId !== previousStoreId && pageCount < perStoreLimit;
+    });
+
+    if (candidates.length === 0) {
+      candidates = storeIds.filter((storeId) => {
+        const remaining = queues.get(storeId)?.length || 0;
+        const pageCount = currentPageCounts.get(storeId) || 0;
+        return remaining > 0 && pageCount < perStoreLimit;
+      });
+      if (candidates.length > 0) relaxedAdjacencyUsed = true;
+    }
+
+    if (candidates.length === 0) {
+      candidates = storeIds.filter((storeId) => {
+        const remaining = queues.get(storeId)?.length || 0;
+        return remaining > 0 && storeId !== previousStoreId;
+      });
+      if (candidates.length > 0) relaxedCapUsed = true;
+    }
+
+    if (candidates.length === 0) {
+      candidates = storeIds.filter((storeId) => (queues.get(storeId)?.length || 0) > 0);
+      if (candidates.length > 0) {
+        relaxedAdjacencyUsed = true;
+        relaxedCapUsed = true;
+      }
+    }
+
+    if (candidates.length === 0) break;
+
+    const scoredCandidates = candidates
+      .map((storeId) =>
+        scoreStoreCandidate(
+          storeId,
+          safeDeals.length,
+          position,
+          totalPerStore,
+          placedPerStore,
+          queues,
+          storePriority,
+        ),
+      )
+      .sort((a, b) => {
+        if (b.deficit !== a.deficit) return b.deficit - a.deficit;
+        if (b.remaining !== a.remaining) return b.remaining - a.remaining;
+        return a.priority - b.priority;
       });
 
-      if (candidates.length === 0) {
-        candidates = storeIds.filter((storeId) => {
-          const queue = queues.get(storeId);
-          return queue?.length > 0 && (pageCounts.get(storeId) || 0) < perStoreLimit;
-        });
-        if (candidates.length > 0) relaxedAdjacencyUsed = true;
-      }
+    const selectedStoreId = scoredCandidates[0]?.storeId;
 
-      if (candidates.length === 0) {
-        candidates = storeIds.filter((storeId) => {
-          const queue = queues.get(storeId);
-          return queue?.length > 0 && storeId !== previousStoreId;
-        });
-        if (candidates.length > 0) relaxedCapUsed = true;
-      }
+    const selectedDeal = selectedStoreId ? queues.get(selectedStoreId)?.shift() : null;
+    if (!selectedDeal) break;
 
-      if (candidates.length === 0) {
-        candidates = storeIds.filter((storeId) => {
-          const queue = queues.get(storeId);
-          return queue?.length > 0;
-        });
-        if (candidates.length > 0) relaxedCapUsed = true;
-      }
+    ordered.push(selectedDeal);
+    placedPerStore.set(selectedStoreId, (placedPerStore.get(selectedStoreId) || 0) + 1);
+    currentPageCounts.set(
+      selectedStoreId,
+      (currentPageCounts.get(selectedStoreId) || 0) + 1,
+    );
+  }
 
-      if (candidates.length === 0) break;
-
-      candidates.sort((a, b) =>
-        compareStoreCandidates(a, b, pageCounts, queues, storePriority),
-      );
-      const selectedStoreId = candidates[0];
-      const selectedDeal = queues.get(selectedStoreId)?.shift();
-      if (!selectedDeal) break;
-
-      page.push(selectedDeal);
-      pageCounts.set(selectedStoreId, (pageCounts.get(selectedStoreId) || 0) + 1);
-    }
-
-    if (page.length === 0) {
-      const emergencyStoreId = storeIds.find((storeId) => queues.get(storeId)?.length > 0);
-      const emergencyDeal = emergencyStoreId ? queues.get(emergencyStoreId)?.shift() : null;
-      if (!emergencyDeal) break;
-      page.push(emergencyDeal);
-    }
-
-    pages.push(page);
+  const orderedPages = [];
+  for (let index = 0; index < ordered.length; index += pageSize) {
+    orderedPages.push(ordered.slice(index, index + pageSize));
   }
 
   return {
-    pages,
+    pages: orderedPages,
     enforcePageCap,
     relaxedAdjacencyUsed,
     relaxedCapUsed,
     maxPerStore,
     uniqueStoreCount: storeIds.length,
+  };
+}
+
+function paginateSequential(deals, pageSize, pageNum) {
+  const safeDeals = Array.isArray(deals) ? deals.filter(Boolean) : [];
+  const totalPages = Math.max(1, Math.ceil(safeDeals.length / pageSize));
+  const startIndex = Math.max(0, (pageNum - 1) * pageSize);
+  return {
+    totalPages,
+    data: safeDeals.slice(startIndex, startIndex + pageSize),
   };
 }
 
@@ -370,28 +407,50 @@ router.get("/", async (req, res, next) => {
 
     // Sort override — gated in the frontend, server supports freely.
     const sort = String(req.query.sort || "").trim();
+    const usesExplicitOrdering =
+      sort === "discount" || sort === "price_per_kg" || sort === "price";
+
     if (sort === "discount") {
       filtered = [...filtered].sort(
-        (a, b) => (b.discount_percent || 0) - (a.discount_percent || 0),
+        (a, b) =>
+          (b.discount_percent || 0) - (a.discount_percent || 0) ||
+          (a.sale_price || 0) - (b.sale_price || 0) ||
+          String(a.product_name || "").localeCompare(String(b.product_name || "")),
       );
     } else if (sort === "price_per_kg") {
       filtered = [...filtered].sort(
-        (a, b) => (a.price_per_kg || Infinity) - (b.price_per_kg || Infinity),
+        (a, b) =>
+          (a.price_per_kg || Infinity) - (b.price_per_kg || Infinity) ||
+          (b.discount_percent || 0) - (a.discount_percent || 0) ||
+          String(a.product_name || "").localeCompare(String(b.product_name || "")),
       );
     } else if (sort === "price") {
       filtered = [...filtered].sort(
-        (a, b) => (a.sale_price || 0) - (b.sale_price || 0),
+        (a, b) =>
+          (a.sale_price || 0) - (b.sale_price || 0) ||
+          (b.discount_percent || 0) - (a.discount_percent || 0) ||
+          String(a.product_name || "").localeCompare(String(b.product_name || "")),
       );
     }
 
     const total = filtered.length;
-    const pageLayout = buildDiversifiedPages(
-      filtered,
-      limitNum,
-      dateSeed(`${today}:${sort || "random"}:${limitNum}`),
-    );
-    const totalPages = Math.max(1, pageLayout.pages.length);
-    const data = pageLayout.pages[pageNum - 1] || [];
+    const uniqueStoreCount = new Set(filtered.map((deal) => getDealStoreId(deal) || "__unknown__")).size;
+    const pageLayout = usesExplicitOrdering
+      ? null
+      : buildDiversifiedPages(
+        filtered,
+        limitNum,
+        dateSeed(`${today}:${sort || "random"}:${limitNum}`),
+      );
+    const orderedPage = usesExplicitOrdering
+      ? paginateSequential(filtered, limitNum, pageNum)
+      : null;
+    const totalPages = usesExplicitOrdering
+      ? orderedPage.totalPages
+      : Math.max(1, pageLayout.pages.length);
+    const data = usesExplicitOrdering
+      ? orderedPage.data
+      : pageLayout.pages[pageNum - 1] || [];
 
     // CDN caches for 5 min; serves stale up to 1h while revalidating.
     res.set(
@@ -411,13 +470,21 @@ router.get("/", async (req, res, next) => {
         sort: sort || "random",
         date: today,
         store_diversity: {
-          no_adjacent_same_store: !pageLayout.relaxedAdjacencyUsed,
-          max_per_store:
-            pageLayout.enforcePageCap && !pageLayout.relaxedCapUsed
+          no_adjacent_same_store: usesExplicitOrdering
+            ? false
+            : !pageLayout.relaxedAdjacencyUsed,
+          max_per_store: usesExplicitOrdering
+            ? null
+            : pageLayout.enforcePageCap && !pageLayout.relaxedCapUsed
               ? pageLayout.maxPerStore
               : null,
-          cap_enforced: pageLayout.enforcePageCap && !pageLayout.relaxedCapUsed,
-          unique_store_count: pageLayout.uniqueStoreCount,
+          cap_enforced: usesExplicitOrdering
+            ? false
+            : pageLayout.enforcePageCap && !pageLayout.relaxedCapUsed,
+          unique_store_count: usesExplicitOrdering
+            ? uniqueStoreCount
+            : pageLayout.uniqueStoreCount,
+          disabled_for_explicit_sort: usesExplicitOrdering,
         },
       },
     });
