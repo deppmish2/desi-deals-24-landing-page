@@ -50,13 +50,13 @@ function SearchIcon({ size = 18, color = "currentColor" }) {
 
 function FilterIcon({ size = 18, color = "currentColor" }) {
   return (
-    <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke={color} strokeWidth="2.25" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+    <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke={color} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
       <line x1="4" y1="6" x2="20" y2="6" />
-      <line x1="7" y1="12" x2="17" y2="12" />
-      <line x1="10" y1="18" x2="14" y2="18" />
-      <circle cx="17" cy="6" r="2" fill="white" stroke={color} />
-      <circle cx="9" cy="12" r="2" fill="white" stroke={color} />
-      <circle cx="12" cy="18" r="2" fill="white" stroke={color} />
+      <circle cx="14" cy="6" r="2.5" fill="white" stroke={color} strokeWidth="2" />
+      <line x1="4" y1="12" x2="20" y2="12" />
+      <circle cx="8" cy="12" r="2.5" fill="white" stroke={color} strokeWidth="2" />
+      <line x1="4" y1="18" x2="20" y2="18" />
+      <circle cx="16" cy="18" r="2.5" fill="white" stroke={color} strokeWidth="2" />
     </svg>
   );
 }
@@ -85,6 +85,14 @@ function CartIcon({ size = 18, color = "currentColor" }) {
       <circle cx="9" cy="20" r="1.75" />
       <circle cx="18" cy="20" r="1.75" />
       <path d="M3 4h2.5l2.1 10.1a1.2 1.2 0 0 0 1.18.95h8.72a1.2 1.2 0 0 0 1.18-.94L20.6 8H7.1" />
+    </svg>
+  );
+}
+
+function CloseIcon({ size = 10, color = "currentColor" }) {
+  return (
+    <svg width={size} height={size} viewBox="0 0 12 12" fill="none" stroke={color} strokeWidth="2" strokeLinecap="round" aria-hidden="true">
+      <path d="M1 1l10 10M11 1L1 11" />
     </svg>
   );
 }
@@ -221,8 +229,8 @@ function DealCard({ deal, isBookmarked, onBookmark, highlighted, highlightRef })
       }`}
       style={{ boxShadow: highlighted ? "0 0 0 4px rgba(22,163,74,0.15), 0px 2px 12px rgba(0,0,0,0.06)" : "0px 2px 12px rgba(0,0,0,0.06)" }}
     >
-      {/* Image — clicking goes to DesiDeals24 permalink */}
-      <a href={permalink} className="relative block w-full h-[200px] bg-white flex items-center justify-center p-5 no-underline">
+      {/* Image — not clickable */}
+      <div className="relative block w-full h-[200px] bg-white flex items-center justify-center p-5">
         <img
           src={imgError || !proxyImg
             ? 'data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" width="112" height="112" viewBox="0 0 112 112"><rect fill="%23ffffff" width="112" height="112"/><text fill="%2394a3b8" font-size="28" text-anchor="middle" dominant-baseline="middle" x="56" y="58">🛒</text></svg>'
@@ -250,17 +258,16 @@ function DealCard({ deal, isBookmarked, onBookmark, highlighted, highlightRef })
             {bestBeforeText}
           </span>
         )}
-      </a>
+      </div>
 
       <div className="flex flex-col flex-1 px-5 pt-4 pb-5 gap-3">
         <div className="flex flex-col gap-1.5">
           <p className="text-[#94a3b8] text-[10px] leading-[15px] tracking-[1.5px] uppercase font-extrabold">
             {deal.store?.name || "Store"}
           </p>
-          {/* Product name links to DesiDeals24 permalink */}
-          <a href={permalink} className="text-[#1e293b] text-[15px] leading-[22px] font-bold line-clamp-2 min-h-[44px] no-underline hover:text-[#16a34a] transition-colors">
+          <p className="text-[#1e293b] text-[15px] leading-[22px] font-bold line-clamp-2 min-h-[44px]">
             {deal.product_name}
-          </a>
+          </p>
           <div className="flex items-baseline justify-between gap-2">
             <div className="flex items-baseline gap-2">
               <span className="text-[#1e293b] text-[22px] leading-[30px] font-extrabold">{priceText}</span>
@@ -279,7 +286,8 @@ function DealCard({ deal, isBookmarked, onBookmark, highlighted, highlightRef })
             href={resolveUrl(deal, deal.product_url)}
             target="_blank"
             rel="noopener noreferrer"
-            className="flex-1 justify-center bg-[#16a34a] hover:bg-[#15803d] transition-colors rounded-[14px] py-3 inline-flex items-center gap-2 text-white no-underline"
+            className="flex-1 justify-center bg-[#16a34a] hover:bg-[#15803d] transition-colors rounded-[14px] py-3 inline-flex items-center gap-2 text-white no-underline hover:no-underline"
+            style={{ textDecoration: "none" }}
           >
             <span className="text-[13px] leading-[16px] font-extrabold tracking-wide uppercase">Snatch Deal</span>
           </a>
@@ -329,6 +337,7 @@ const CATEGORIES = [
 ];
 
 const SORT_OPTIONS = [
+  { value: "", label: "Random order", compactLabel: "Random order" },
   { value: "discount", label: "Sort: Max Discount", compactLabel: "Max Discount" },
   { value: "price_per_kg", label: "Sort: Lowest /Kg Price", compactLabel: "Lowest Price / Kg" },
   { value: "price", label: "Sort: Lowest Price", compactLabel: "Lowest Price" },
@@ -541,6 +550,7 @@ function SortDropdown({ value, onChange, isLoggedIn, onRequireLogin }) {
   const [open, setOpen] = useState(false);
   const ref = useRef(null);
   const current = SORT_OPTIONS.find((o) => o.value === value);
+  const isActive = Boolean(value);
 
   useEffect(() => {
     function handleClickOutside(e) {
@@ -555,12 +565,12 @@ function SortDropdown({ value, onChange, isLoggedIn, onRequireLogin }) {
   }
 
   function handleSelect(nextValue) {
-    if (!isLoggedIn) {
+    if (!isLoggedIn && nextValue !== "") {
       setOpen(false);
       onRequireLogin();
       return;
     }
-    onChange(nextValue === value ? "" : nextValue);
+    onChange(nextValue);
     setOpen(false);
   }
 
@@ -569,50 +579,60 @@ function SortDropdown({ value, onChange, isLoggedIn, onRequireLogin }) {
       <button
         type="button"
         onClick={handleOpen}
-        className="inline-flex max-w-full items-center justify-between gap-3 rounded-[24px] border border-[#dfe7f5] bg-white px-4 py-3.5 text-left shadow-sm transition-colors hover:border-[#b6c7e2] hover:bg-white focus:outline-none focus-visible:ring-2 focus-visible:ring-[#17874a]/25 focus-visible:ring-offset-2 focus-visible:ring-offset-[#edf3ff] lg:bg-transparent lg:px-0 lg:py-0 lg:border-transparent lg:shadow-none lg:hover:border-transparent lg:hover:bg-transparent lg:focus-visible:ring-offset-0"
+        className={`inline-flex max-w-full items-center justify-between gap-3 rounded-[24px] border px-4 py-3.5 text-left shadow-sm transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-[#17874a]/25 focus-visible:ring-offset-2 focus-visible:ring-offset-[#edf3ff] lg:bg-transparent lg:px-0 lg:py-0 lg:border-transparent lg:shadow-none lg:hover:border-transparent lg:hover:bg-transparent lg:focus-visible:ring-offset-0 ${
+          isActive
+            ? "border-[#17874a] bg-[#eff8f1] hover:bg-[#e6f4eb]"
+            : "border-[#dfe7f5] bg-white hover:border-[#b6c7e2] hover:bg-white"
+        }`}
       >
         <span className="flex min-w-0 items-center gap-2.5">
-          {!isLoggedIn && (
-            <span className="inline-flex h-6 w-6 items-center justify-center rounded-full bg-white text-slate-500 lg:bg-[#eef4ff]">
-              <LockIcon size={12} color="currentColor" />
+          <span className={`text-[11px] font-extrabold uppercase tracking-[1.6px] sm:text-[12px] ${isActive ? "text-[#17874a]" : "text-slate-400"}`}>
+            <span className="sm:hidden">Sort By</span>
+            <span className="hidden sm:inline">{isActive ? "Sort By:" : "Sort By"}</span>
+          </span>
+          {/* Mobile: just a dot when active */}
+          {isActive && (
+            <span className="sm:hidden inline-block w-[7px] h-[7px] rounded-full bg-[#17874a]" />
+          )}
+          {/* Desktop: show the active label */}
+          {isActive && (
+            <span className="hidden sm:inline text-[14px] font-extrabold text-[#17874a] sm:text-[16px]">
+              {current?.compactLabel}
             </span>
           )}
-          <span className="text-[11px] font-extrabold uppercase tracking-[1.6px] text-slate-400 sm:text-[12px]">
-            Sort By:
-          </span>
-          <span className="truncate text-[16px] font-extrabold text-[#17874a] sm:text-[18px]">
-            {current?.compactLabel || "Randomly"}
-          </span>
         </span>
-        <ChevronDownIcon size={16} color="#17874a" />
+        <ChevronDownIcon size={16} color={isActive ? "#17874a" : "#94a3b8"} />
       </button>
       {open && (
-        <div className="absolute left-0 right-0 top-full z-20 mt-3 overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-xl sm:left-auto sm:w-60">
-          {SORT_OPTIONS.map((opt) => (
-            <button
-              key={opt.value}
-              type="button"
-              onClick={() => handleSelect(opt.value)}
-              className={`flex w-full items-center gap-3 px-4 py-3 text-left text-[13px] font-medium transition-colors ${
-                isLoggedIn && opt.value === value
-                  ? "bg-[#edf7ef] text-[#0f172a]"
-                  : "text-slate-600 hover:bg-slate-50"
-              }`}
-            >
-              {isLoggedIn && opt.value === value && (
-                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#17874a" strokeWidth="2.5" strokeLinecap="round">
-                  <polyline points="20 6 9 17 4 12"/>
-                </svg>
-              )}
-              {(opt.value !== value || !isLoggedIn) && <span className="w-[14px]" />}
-              <span className="truncate">{opt.compactLabel}</span>
-              {!isLoggedIn && (
-                <span className="ml-auto inline-flex h-6 w-6 items-center justify-center rounded-full bg-[#eef4ff] text-slate-500">
-                  <LockIcon size={11} color="currentColor" />
-                </span>
-              )}
-            </button>
-          ))}
+        <div className="absolute right-0 top-full z-20 mt-3 overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-xl min-w-[180px] w-max">
+          {SORT_OPTIONS.map((opt) => {
+            const isSelected = opt.value === value;
+            const requiresLogin = opt.value !== "" && !isLoggedIn;
+            return (
+              <button
+                key={opt.value || "random"}
+                type="button"
+                onClick={() => handleSelect(opt.value)}
+                className={`flex w-full items-center gap-3 px-4 py-3 text-left text-[13px] font-medium transition-colors ${
+                  isSelected ? "bg-[#edf7ef] text-[#0f172a]" : "text-slate-600 hover:bg-slate-50"
+                }`}
+              >
+                {isSelected ? (
+                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#17874a" strokeWidth="2.5" strokeLinecap="round">
+                    <polyline points="20 6 9 17 4 12"/>
+                  </svg>
+                ) : (
+                  <span className="w-[14px]" />
+                )}
+                <span>{opt.compactLabel}</span>
+                {requiresLogin && (
+                  <span className="ml-auto inline-flex h-6 w-6 items-center justify-center rounded-full bg-[#eef4ff] text-slate-500">
+                    <LockIcon size={11} color="currentColor" />
+                  </span>
+                )}
+              </button>
+            );
+          })}
         </div>
       )}
     </div>
@@ -751,6 +771,8 @@ export default function DealsPage() {
   const [filterStore, setFilterStore] = useState("");
   const [filterCategory, setFilterCategory] = useState("");
   const [filtersOpen, setFiltersOpen] = useState(false);
+  const [confirmClearOpen, setConfirmClearOpen] = useState(false);
+  const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [filterMinDiscount, setFilterMinDiscount] = useState("");
   const [filterPriceMin, setFilterPriceMin] = useState("");
   const [filterPriceMax, setFilterPriceMax] = useState("");
@@ -762,6 +784,13 @@ export default function DealsPage() {
   const [bookmarksPanelOpen, setBookmarksPanelOpen] = useState(false);
   const [toast, setToast] = useState(null);
   const toastTimer = useRef(null);
+  const [totalCount, setTotalCount] = useState(null);
+
+  useEffect(() => {
+    fetchDeals({ limit: 1, in_stock: "1" })
+      .then((res) => { setTotalCount(res.pagination?.total ?? null); })
+      .catch(() => {});
+  }, []);
 
   const [session, setSession] = useState(() => getAuthSession());
   const isLoggedIn = Boolean(session?.accessToken);
@@ -985,9 +1014,80 @@ export default function DealsPage() {
 
   return (
     <div className="min-h-screen bg-[radial-gradient(circle_at_top,_#ffffff_0%,_#f8fbff_32%,_#f3f6fb_100%)]">
+      <div className="sticky top-0 z-50 sm:hidden">
+        <div className="flex h-[60px] items-center justify-between gap-4 backdrop-blur-[12px] bg-white/80 px-6 shadow-[0px_1px_2px_0px_rgba(0,0,0,0.05)]">
+          <Link to="/" className="flex items-center gap-2 no-underline" style={{ textDecoration: "none" }}>
+            <img src="/landing/dd24-logo.svg" alt="DesiDeals24" className="w-5 h-6 object-contain" />
+            <span className="font-bold tracking-[-1.2px] text-[24px] text-[#15803d]">DesiDeals24</span>
+          </Link>
+          <div className="flex items-center gap-2">
+            {isLoggedIn ? (
+              <>
+                <Link
+                  to="/saved"
+                  className="relative inline-flex h-10 w-10 items-center justify-center rounded-full border border-slate-200 bg-white text-slate-600 transition-colors hover:bg-slate-50"
+                  style={{ textDecoration: "none" }}
+                  title="Saved deals"
+                >
+                  <CartIcon size={18} color="currentColor" />
+                  {bookmarkedIds.size > 0 && (
+                    <span className="absolute -top-1 -right-1 min-w-[18px] h-[18px] px-1 rounded-full bg-[#9a6500] text-white text-[10px] font-extrabold flex items-center justify-center leading-none">
+                      {bookmarkedIds.size}
+                    </span>
+                  )}
+                </Link>
+                <div className="relative">
+                  <button
+                    type="button"
+                    onClick={() => setMobileMenuOpen((v) => !v)}
+                    className="inline-flex items-center justify-center w-10 h-10 rounded-full border border-slate-200 bg-white text-slate-600 transition-colors hover:bg-slate-50"
+                  >
+                    <UserCircleIcon size={20} color="currentColor" />
+                  </button>
+                  {mobileMenuOpen && (
+                    <>
+                      <div className="fixed inset-0 z-40" onClick={() => setMobileMenuOpen(false)} />
+                      <div className="absolute right-0 top-[calc(100%+8px)] z-50 w-44 overflow-hidden rounded-[16px] border border-slate-100 bg-white shadow-xl">
+                        <Link
+                          to="/saved"
+                          onClick={() => setMobileMenuOpen(false)}
+                          className="flex items-center gap-3 px-4 py-3 text-[14px] font-semibold text-slate-700 hover:bg-slate-50 transition-colors no-underline"
+                          style={{ textDecoration: "none" }}
+                        >
+                          <CartIcon size={16} color="currentColor" />
+                          Saved deals
+                        </Link>
+                        <div className="h-px bg-slate-100 mx-3" />
+                        <button
+                          type="button"
+                          onClick={() => { setMobileMenuOpen(false); handleLogout(); }}
+                          className="flex w-full items-center gap-3 px-4 py-3 text-[14px] font-semibold text-slate-700 hover:bg-slate-50 transition-colors"
+                        >
+                          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                            <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/>
+                          </svg>
+                          Logout
+                        </button>
+                      </div>
+                    </>
+                  )}
+                </div>
+              </>
+            ) : (
+              <button
+                type="button"
+                onClick={() => setLoginModal({})}
+                className="inline-flex h-10 w-10 items-center justify-center rounded-full border border-[#d8eadb] bg-[#eff8f1] text-[13px] font-bold text-[#17874a] transition-colors hover:bg-[#e7f5ea]"
+              >
+                <UserCircleIcon size={20} color="#475569" />
+              </button>
+            )}
+          </div>
+        </div>
+      </div>
       <main className="max-w-[1320px] mx-auto px-3 sm:px-6 lg:px-8 py-3 sm:py-6 flex flex-col gap-6">
-        <div className="sticky top-2 sm:top-3 z-50">
-          <div className="flex items-center justify-between gap-4 rounded-[28px] border border-white/80 bg-white/92 px-5 sm:px-7 lg:px-8 py-4 sm:py-5 shadow-[0_18px_45px_rgba(15,23,42,0.14)] backdrop-blur-xl">
+        <div className="sticky top-0 sm:top-3 z-50 hidden sm:block">
+          <div className="flex items-center justify-between gap-4 border-b border-slate-100 sm:rounded-[28px] sm:border sm:border-slate-200/60 bg-white px-4 sm:px-7 lg:px-8 py-4 sm:py-5 shadow-[0_4px_16px_rgba(15,23,42,0.07)] sm:shadow-[0_18px_45px_rgba(15,23,42,0.14)]">
             <Link to="/" className="flex items-center gap-2.5 no-underline" style={{ textDecoration: "none" }}>
               <img src="/landing/dd24-logo.svg" alt="DesiDeals24" className="w-6 h-7 sm:w-7 sm:h-8 object-contain" />
               <span className="font-extrabold tracking-[-0.8px] text-[24px] sm:text-[34px] text-[#17874a]">DesiDeals24</span>
@@ -1051,7 +1151,7 @@ export default function DealsPage() {
               }}
               className="flex flex-col gap-4"
             >
-              <div className="flex flex-col xl:flex-row gap-3 xl:items-center">
+              <div className="flex gap-3 items-center">
                 <div className="flex-1 flex items-center gap-3 rounded-[24px] border border-white/80 bg-white px-4 sm:px-5 py-3.5 shadow-sm">
                   <SearchIcon size={18} color="#94a3b8" />
                   <input
@@ -1067,15 +1167,26 @@ export default function DealsPage() {
                   >
                     Search
                   </button>
-                  <button
-                    type="submit"
-                    className="sm:hidden inline-flex items-center justify-center w-10 h-10 rounded-full bg-[#17874a] text-white transition-colors hover:bg-[#136f3c]"
-                    aria-label="Search deals"
-                  >
-                    <SearchIcon size={16} color="currentColor" />
-                  </button>
                 </div>
 
+                {/* Mobile: filter inline when no filters active */}
+                {!hasActiveState && (
+                  <button
+                    type="button"
+                    onClick={openFilters}
+                    className="sm:hidden relative inline-flex h-[44px] w-[44px] shrink-0 items-center justify-center rounded-[12px] border border-white/80 bg-white text-slate-600 shadow-sm transition-colors hover:bg-slate-50"
+                    aria-label="Open filters"
+                  >
+                    <FilterIcon size={18} color="currentColor" />
+                    {filterCount > 0 && (
+                      <span className="absolute -top-1 -right-1 min-w-[22px] h-[22px] px-1 rounded-full bg-[#9a6500] text-white text-[11px] font-extrabold flex items-center justify-center leading-none">
+                        {filterCount}
+                      </span>
+                    )}
+                  </button>
+                )}
+
+                {/* Desktop filter button */}
                 <button
                   type="button"
                   onClick={openFilters}
@@ -1091,60 +1202,61 @@ export default function DealsPage() {
                 </button>
               </div>
 
-              <div className="sm:hidden flex items-stretch gap-3">
-                <button
-                  type="button"
-                  onClick={openFilters}
-                  className="relative inline-flex h-[82px] w-[82px] shrink-0 items-center justify-center rounded-[24px] border border-white/80 bg-white text-slate-600 shadow-sm transition-colors hover:bg-slate-50"
-                  aria-label="Open filters"
-                >
-                  <FilterIcon size={26} color="currentColor" />
-                  {filterCount > 0 && (
-                    <span className="absolute -top-1 -right-1 min-w-[24px] h-[24px] px-1 rounded-full bg-[#9a6500] text-white text-[12px] font-extrabold flex items-center justify-center leading-none">
-                      {filterCount}
-                    </span>
-                  )}
-                </button>
-
-                {hasActiveState ? (
+              {/* Mobile: filter + remove filters row — only when filters active */}
+              {hasActiveState && (
+                <div className="sm:hidden flex items-center gap-3">
                   <button
                     type="button"
-                    onClick={clearSearchAndFilters}
-                    className="flex min-h-[82px] flex-1 items-center rounded-[24px] border border-[#dae6fb] bg-[#e6efff] px-5 text-left shadow-sm transition-colors hover:bg-[#edf3ff]"
+                    onClick={openFilters}
+                    className="relative inline-flex h-[44px] w-[44px] shrink-0 items-center justify-center rounded-[12px] border border-white/80 bg-white text-slate-600 shadow-sm transition-colors hover:bg-slate-50"
+                    aria-label="Open filters"
                   >
-                    <span className="text-[15px] leading-[22px] font-extrabold text-[#17874a]">
-                      Remove filters
-                    </span>
-                    <span className="ml-2 text-[15px] leading-[22px] text-slate-400">
-                      and return to the full list
+                    <FilterIcon size={18} color="currentColor" />
+                    {filterCount > 0 && (
+                      <span className="absolute -top-1 -right-1 min-w-[22px] h-[22px] px-1 rounded-full bg-[#9a6500] text-white text-[11px] font-extrabold flex items-center justify-center leading-none">
+                        {filterCount}
+                      </span>
+                    )}
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => setConfirmClearOpen(true)}
+                    className="flex h-[44px] flex-1 items-center rounded-[12px] border border-[#dae6fb] bg-[#e6efff] px-4 text-left shadow-sm transition-colors hover:bg-[#edf3ff]"
+                  >
+                    <span className="text-[14px] font-extrabold text-[#17874a]">Remove filters</span>
+                    <span className="ml-2 text-[14px] text-slate-400">
+                      {totalCount != null ? `to see all ${totalCount.toLocaleString()} items` : "to see all items"}
                     </span>
                   </button>
-                ) : null}
-              </div>
+                </div>
+              )}
 
               <div className="flex flex-col gap-4">
-                <div className="flex items-end justify-between gap-3">
-                  <div className="flex flex-1 flex-col gap-3">
-                    <div className="flex flex-wrap items-baseline gap-2 sm:gap-3">
-                    <span className="text-[#111827] text-[14px] sm:text-[16px] font-black uppercase tracking-[1.7px]">
-                      Matching Items {matchingCount}
+                <div className="flex items-center justify-between gap-3">
+                  <div className="flex flex-col min-w-0 gap-2">
+                    <span className="text-[10px] sm:text-[11px] font-extrabold uppercase tracking-[1.5px] text-slate-400 leading-none">
+                      Matching Deals
                     </span>
+                    <div className="flex items-baseline gap-1.5">
+                      <span className="text-[22px] sm:text-[26px] font-black text-[#111827] leading-none">
+                        {matchingCount.toLocaleString()}
+                      </span>
+                      {hasActiveState && totalCount != null && totalCount !== matchingCount && (
+                        <span className="flex items-center gap-1.5">
+                          <span className="text-[13px] sm:text-[14px] font-semibold text-slate-400 leading-none">
+                            / {totalCount.toLocaleString()}
+                          </span>
+                          <button
+                            type="button"
+                            onClick={() => setConfirmClearOpen(true)}
+                            className="hidden h-[18px] w-[18px] items-center justify-center rounded-full bg-slate-200 text-slate-500 transition-colors hover:bg-slate-300 hover:text-slate-700 sm:inline-flex"
+                            title="Remove all filters"
+                          >
+                            <CloseIcon size={8} />
+                          </button>
+                        </span>
+                      )}
                     </div>
-
-                    {hasActiveState ? (
-                      <button
-                        type="button"
-                        onClick={clearSearchAndFilters}
-                        className="hidden w-fit flex-wrap items-center gap-x-2 gap-y-1 rounded-[18px] border border-white/80 bg-white/70 px-4 py-3 text-left shadow-sm transition-colors hover:bg-white sm:inline-flex"
-                      >
-                        <span className="text-[14px] sm:text-[15px] font-extrabold text-[#17874a]">
-                          Remove filters
-                        </span>
-                        <span className="text-[14px] sm:text-[15px] text-slate-500">
-                          and return to the full list
-                        </span>
-                      </button>
-                    ) : null}
                   </div>
 
                   <div className="shrink-0">
@@ -1158,32 +1270,29 @@ export default function DealsPage() {
                 </div>
 
                 {(searchQuery || activeChips.length > 0) && (
-                  <div className="flex flex-wrap gap-2">
+                  <div className="hidden sm:flex flex-wrap gap-2">
                     {searchQuery && (
-                      <span className="flex items-center gap-1.5 rounded-full border border-[#d4deef] bg-white px-3 py-1.5 text-[13px] font-medium text-slate-700">
-                        "{searchQuery}"
+                      <span className="flex items-center gap-2 rounded-[10px] border border-[#dfe7f5] bg-white px-3 py-2 shadow-sm">
+                        <span className="text-[11px] font-extrabold uppercase tracking-[1px] text-slate-400">Search</span>
+                        <span className="text-[13px] font-semibold text-slate-700">"{searchQuery}"</span>
                         <button
                           type="button"
-                          onClick={() => {
-                            setSearchQuery("");
-                            setSearchInput("");
-                            resetPage();
-                          }}
-                          className="text-slate-400 hover:text-slate-700 transition-colors leading-none"
+                          onClick={() => { setSearchQuery(""); setSearchInput(""); resetPage(); }}
+                          className="flex items-center justify-center w-[18px] h-[18px] rounded-full bg-slate-100 text-slate-400 transition-colors hover:bg-slate-200 hover:text-slate-600"
                         >
-                          ×
+                          <CloseIcon size={8} />
                         </button>
                       </span>
                     )}
                     {activeChips.map((chip) => (
-                      <span key={chip.type} className="flex items-center gap-1.5 rounded-full border border-[#d4deef] bg-white px-3 py-1.5 text-[13px] font-medium text-slate-700">
-                        {chip.label}
+                      <span key={chip.type} className="flex items-center gap-2 rounded-[10px] border border-[#dfe7f5] bg-white px-3 py-2 shadow-sm">
+                        <span className="text-[13px] font-semibold text-slate-700">{chip.label}</span>
                         <button
                           type="button"
                           onClick={() => removeFilterChip(chip.type)}
-                          className="text-slate-400 hover:text-slate-700 transition-colors leading-none"
+                          className="flex items-center justify-center w-[18px] h-[18px] rounded-full bg-slate-100 text-slate-400 transition-colors hover:bg-slate-200 hover:text-slate-600"
                         >
-                          ×
+                          <CloseIcon size={8} />
                         </button>
                       </span>
                     ))}
@@ -1246,6 +1355,35 @@ export default function DealsPage() {
       {/* Login modal */}
       {loginModal && (
         <LoginModal message={loginModal.message} onClose={() => setLoginModal(null)} />
+      )}
+
+      {/* Confirm clear filters */}
+      {confirmClearOpen && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center px-4" onClick={() => setConfirmClearOpen(false)}>
+          <div className="absolute inset-0 bg-black/30 backdrop-blur-[2px]" />
+          <div className="relative w-full max-w-sm rounded-[24px] bg-white p-6 shadow-2xl flex flex-col gap-4" onClick={(e) => e.stopPropagation()}>
+            <h2 className="text-[18px] font-extrabold text-[#111827]">Remove all filters?</h2>
+            <p className="text-[14px] text-slate-500 leading-relaxed">
+              This will clear all active filters and display all available deals.
+            </p>
+            <div className="flex gap-3 pt-1">
+              <button
+                type="button"
+                onClick={() => setConfirmClearOpen(false)}
+                className="flex-1 rounded-[14px] border border-slate-200 bg-white py-3 text-[14px] font-bold text-slate-600 transition-colors hover:bg-slate-50"
+              >
+                Cancel
+              </button>
+              <button
+                type="button"
+                onClick={() => { clearSearchAndFilters(); setConfirmClearOpen(false); }}
+                className="flex-1 rounded-[14px] bg-[#17874a] py-3 text-[14px] font-bold text-white transition-colors hover:bg-[#136f3c]"
+              >
+                Remove filters
+              </button>
+            </div>
+          </div>
+        </div>
       )}
 
       {/* Toast */}

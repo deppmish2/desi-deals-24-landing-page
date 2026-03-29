@@ -3,6 +3,7 @@ import { BrowserRouter, Navigate, Route, Routes } from "react-router-dom";
 import OAuthCallbackPage from "./pages/OAuthCallbackPage";
 import DealsPage from "./pages/DealsPage";
 import SavedDealsPage from "./pages/SavedDealsPage";
+import DealSharePage from "./pages/DealSharePage";
 import AdminPage from "./landing/AdminPage";
 import FeedbackWidget from "./components/FeedbackWidget";
 
@@ -30,6 +31,7 @@ export default function App() {
         <Routes>
           <Route path="/" element={<DealsPage />} />
           <Route path="/deal/:dealId" element={<DealsPage />} />
+          <Route path="/share/deal/:dealId" element={<DealSharePage />} />
           <Route path="/saved" element={<SavedDealsPage />} />
           <Route path="/admin" element={<AdminPage />} />
           <Route
