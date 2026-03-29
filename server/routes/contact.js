@@ -4,6 +4,16 @@ const router = express.Router();
 
 const RECIPIENT = process.env.CONTACT_EMAIL || "itsjustrahul@gmail.com";
 
+function escapeHtml(value) {
+  return String(value || "").replace(/[&<>"']/g, (char) => ({
+    "&": "&amp;",
+    "<": "&lt;",
+    ">": "&gt;",
+    '"': "&quot;",
+    "'": "&#39;",
+  })[char]);
+}
+
 // POST /api/v1/contact
 router.post("/", async (req, res) => {
   const { name, email, subject, message } = req.body || {};
@@ -38,7 +48,7 @@ router.post("/", async (req, res) => {
       replyTo: `"${name}" <${email}>`,
       subject: `[DesiDeals24 Contact] ${subject}`,
       text: `From: ${name} <${email}>\n\n${message}`,
-      html: `<p><strong>From:</strong> ${name} &lt;${email}&gt;</p><hr/><p>${message.replace(/\n/g, "<br/>")}</p>`,
+      html: `<p><strong>From:</strong> ${escapeHtml(name)} &lt;${escapeHtml(email)}&gt;</p><hr/><p>${escapeHtml(message).replace(/\n/g, "<br/>")}</p>`,
     });
 
     res.json({ ok: true });

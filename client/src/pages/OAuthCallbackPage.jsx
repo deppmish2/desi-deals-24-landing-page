@@ -54,7 +54,7 @@ export default function OAuthCallbackPage() {
               result.masked_email,
             );
           }
-          navigate("/?confirm_email=1", { replace: true });
+          navigate("/waitlist?confirm_email=1", { replace: true });
           return;
         }
         const redirectTo =

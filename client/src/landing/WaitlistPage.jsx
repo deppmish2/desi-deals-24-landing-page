@@ -10,9 +10,14 @@ import {
   fetchWaitlistMe,
   getAuthSession,
   logoutUser,
+  postContact,
   startEmailAuth,
   updateAuthSessionUser,
 } from "../utils/api";
+import {
+  buildFeedbackMessage,
+  resolveFeedbackSender,
+} from "../utils/feedback";
 import {
   getCurrentPoolDateSeed,
   computeNextRefreshUtcMs,
@@ -3541,33 +3546,42 @@ function useCountdown() {
   return countdown;
 }
 
-function FeedbackModal({ onClose }) {
+function FeedbackModal({ identity, onClose }) {
+  const authUser =
+    identity && typeof identity === "object" ? identity : null;
+  const isLoggedIn = Boolean(authUser?.email);
   const [name, setName] = useState("");
   const [email, setEmail] = useState("");
   const [message, setMessage] = useState("");
   const [submitting, setSubmitting] = useState(false);
   const [done, setDone] = useState(false);
   const [error, setError] = useState("");
+  const sender = resolveFeedbackSender({ user: authUser, name, email });
 
   async function handleSubmit(e) {
     e.preventDefault();
     setSubmitting(true);
     setError("");
     try {
-      const res = await fetch("/api/v1/contact", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          name,
-          email,
-          subject: "Deals page feedback",
-          message,
-        }),
-      });
-      if (!res.ok) {
-        const data = await res.json().catch(() => ({}));
-        throw new Error(data?.error || "Failed to send feedback");
+      if (!sender.name.trim()) {
+        throw new Error("Please enter your name.");
       }
+      if (!sender.email.trim()) {
+        throw new Error("Please enter your email address.");
+      }
+
+      const payload = buildFeedbackMessage(message, {
+        source: window.location.pathname,
+        user: authUser,
+        name,
+        email,
+      });
+      await postContact({
+        name: payload.sender.name,
+        email: payload.sender.email,
+        subject: "Deals page feedback",
+        message: payload.message,
+      });
       setDone(true);
     } catch (err) {
       setError(err.message || "Something went wrong");
@@ -3682,33 +3696,37 @@ function FeedbackModal({ onClose }) {
                   marginBottom: 14,
                 }}
               >
-                <input
-                  required
-                  value={name}
-                  onChange={(e) => setName(e.target.value)}
-                  placeholder="Your name"
-                  style={{
-                    border: `1px solid ${T.border}`,
-                    borderRadius: 10,
-                    padding: "10px 12px",
-                    fontSize: 14,
-                    outline: "none",
-                  }}
-                />
-                <input
-                  required
-                  type="email"
-                  value={email}
-                  onChange={(e) => setEmail(e.target.value)}
-                  placeholder="Your email"
-                  style={{
-                    border: `1px solid ${T.border}`,
-                    borderRadius: 10,
-                    padding: "10px 12px",
-                    fontSize: 14,
-                    outline: "none",
-                  }}
-                />
+                {!isLoggedIn ? (
+                  <>
+                    <input
+                      required
+                      value={name}
+                      onChange={(e) => setName(e.target.value)}
+                      placeholder="Your name"
+                      style={{
+                        border: `1px solid ${T.border}`,
+                        borderRadius: 10,
+                        padding: "10px 12px",
+                        fontSize: 14,
+                        outline: "none",
+                      }}
+                    />
+                    <input
+                      required
+                      type="email"
+                      value={email}
+                      onChange={(e) => setEmail(e.target.value)}
+                      placeholder="Your email"
+                      style={{
+                        border: `1px solid ${T.border}`,
+                        borderRadius: 10,
+                        padding: "10px 12px",
+                        fontSize: 14,
+                        outline: "none",
+                      }}
+                    />
+                  </>
+                ) : null}
                 <textarea
                   required
                   value={message}
@@ -3972,7 +3990,12 @@ function DealsUnlocked({ identity, status }) {
           </div>
         </div>
       </nav>
-      {feedbackOpen && <FeedbackModal onClose={() => setFeedbackOpen(false)} />}
+      {feedbackOpen && (
+        <FeedbackModal
+          identity={identity}
+          onClose={() => setFeedbackOpen(false)}
+        />
+      )}
 
       {celebrated && (
         <div

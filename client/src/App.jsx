@@ -6,6 +6,7 @@ const OAuthCallbackPage = lazy(() => import("./pages/OAuthCallbackPage"));
 const SavedDealsPage = lazy(() => import("./pages/SavedDealsPage"));
 const DealSharePage = lazy(() => import("./pages/DealSharePage"));
 const AdminPage = lazy(() => import("./landing/AdminPage"));
+const WaitlistPage = lazy(() => import("./landing/WaitlistPage"));
 const FeedbackWidget = lazy(() => import("./components/FeedbackWidget"));
 
 class ErrorBoundary extends React.Component {
@@ -59,10 +60,12 @@ function AppShell() {
       <Suspense fallback={null}>
         <Routes>
           <Route path="/" element={<DealsPage />} />
+          <Route path="/deals" element={<DealsPage />} />
           <Route path="/deal/:dealId" element={<DealsPage />} />
           <Route path="/share/deal/:dealId" element={<DealSharePage />} />
           <Route path="/saved" element={<SavedDealsPage />} />
           <Route path="/admin" element={<AdminPage />} />
+          <Route path="/waitlist" element={<WaitlistPage />} />
           <Route
             path="/oauth/:provider/callback"
             element={<OAuthCallbackPage />}
