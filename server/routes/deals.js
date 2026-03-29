@@ -226,6 +226,16 @@ function buildDiversifiedPages(deals, pageSize, seed) {
   };
 }
 
+function paginateSequential(deals, pageSize, pageNum) {
+  const safeDeals = Array.isArray(deals) ? deals.filter(Boolean) : [];
+  const totalPages = Math.max(1, Math.ceil(safeDeals.length / pageSize));
+  const startIndex = Math.max(0, (pageNum - 1) * pageSize);
+  return {
+    totalPages,
+    data: safeDeals.slice(startIndex, startIndex + pageSize),
+  };
+}
+
 function serializeDeal(row) {
   return {
     id: row.id,
@@ -370,28 +380,50 @@ router.get("/", async (req, res, next) => {
 
     // Sort override — gated in the frontend, server supports freely.
     const sort = String(req.query.sort || "").trim();
+    const usesExplicitOrdering =
+      sort === "discount" || sort === "price_per_kg" || sort === "price";
+
     if (sort === "discount") {
       filtered = [...filtered].sort(
-        (a, b) => (b.discount_percent || 0) - (a.discount_percent || 0),
+        (a, b) =>
+          (b.discount_percent || 0) - (a.discount_percent || 0) ||
+          (a.sale_price || 0) - (b.sale_price || 0) ||
+          String(a.product_name || "").localeCompare(String(b.product_name || "")),
       );
     } else if (sort === "price_per_kg") {
       filtered = [...filtered].sort(
-        (a, b) => (a.price_per_kg || Infinity) - (b.price_per_kg || Infinity),
+        (a, b) =>
+          (a.price_per_kg || Infinity) - (b.price_per_kg || Infinity) ||
+          (b.discount_percent || 0) - (a.discount_percent || 0) ||
+          String(a.product_name || "").localeCompare(String(b.product_name || "")),
       );
     } else if (sort === "price") {
       filtered = [...filtered].sort(
-        (a, b) => (a.sale_price || 0) - (b.sale_price || 0),
+        (a, b) =>
+          (a.sale_price || 0) - (b.sale_price || 0) ||
+          (b.discount_percent || 0) - (a.discount_percent || 0) ||
+          String(a.product_name || "").localeCompare(String(b.product_name || "")),
       );
     }
 
     const total = filtered.length;
-    const pageLayout = buildDiversifiedPages(
-      filtered,
-      limitNum,
-      dateSeed(`${today}:${sort || "random"}:${limitNum}`),
-    );
-    const totalPages = Math.max(1, pageLayout.pages.length);
-    const data = pageLayout.pages[pageNum - 1] || [];
+    const uniqueStoreCount = new Set(filtered.map((deal) => getDealStoreId(deal) || "__unknown__")).size;
+    const pageLayout = usesExplicitOrdering
+      ? null
+      : buildDiversifiedPages(
+        filtered,
+        limitNum,
+        dateSeed(`${today}:${sort || "random"}:${limitNum}`),
+      );
+    const orderedPage = usesExplicitOrdering
+      ? paginateSequential(filtered, limitNum, pageNum)
+      : null;
+    const totalPages = usesExplicitOrdering
+      ? orderedPage.totalPages
+      : Math.max(1, pageLayout.pages.length);
+    const data = usesExplicitOrdering
+      ? orderedPage.data
+      : pageLayout.pages[pageNum - 1] || [];
 
     // CDN caches for 5 min; serves stale up to 1h while revalidating.
     res.set(
@@ -411,13 +443,21 @@ router.get("/", async (req, res, next) => {
         sort: sort || "random",
         date: today,
         store_diversity: {
-          no_adjacent_same_store: !pageLayout.relaxedAdjacencyUsed,
-          max_per_store:
-            pageLayout.enforcePageCap && !pageLayout.relaxedCapUsed
+          no_adjacent_same_store: usesExplicitOrdering
+            ? false
+            : !pageLayout.relaxedAdjacencyUsed,
+          max_per_store: usesExplicitOrdering
+            ? null
+            : pageLayout.enforcePageCap && !pageLayout.relaxedCapUsed
               ? pageLayout.maxPerStore
               : null,
-          cap_enforced: pageLayout.enforcePageCap && !pageLayout.relaxedCapUsed,
-          unique_store_count: pageLayout.uniqueStoreCount,
+          cap_enforced: usesExplicitOrdering
+            ? false
+            : pageLayout.enforcePageCap && !pageLayout.relaxedCapUsed,
+          unique_store_count: usesExplicitOrdering
+            ? uniqueStoreCount
+            : pageLayout.uniqueStoreCount,
+          disabled_for_explicit_sort: usesExplicitOrdering,
         },
       },
     });
