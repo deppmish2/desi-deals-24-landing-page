@@ -1,16 +1,34 @@
-import React, { useEffect, useMemo, useState } from "react";
+import React, { useEffect, useState } from "react";
 import { getAuthSession, postContact } from "../utils/api";
+import {
+  buildFeedbackMessage,
+  resolveFeedbackSender,
+} from "../utils/feedback";
+
+const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 
 export default function FeedbackWidget() {
+  const [authSession, setAuthSession] = useState(() => getAuthSession());
   const [open, setOpen] = useState(false);
+  const [guestName, setGuestName] = useState("");
+  const [guestEmail, setGuestEmail] = useState("");
   const [message, setMessage] = useState("");
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState("");
   const [sent, setSent] = useState(false);
 
-  const sessionEmail = useMemo(() => {
-    const session = getAuthSession?.();
-    return String(session?.user?.email || "").trim();
+  const authUser = authSession?.user || null;
+  const isLoggedIn = Boolean(authUser?.email);
+  const sender = resolveFeedbackSender({
+    user: authUser,
+    name: guestName,
+    email: guestEmail,
+  });
+
+  useEffect(() => {
+    const syncSession = () => setAuthSession(getAuthSession());
+    window.addEventListener("dd24-auth-changed", syncSession);
+    return () => window.removeEventListener("dd24-auth-changed", syncSession);
   }, []);
 
   useEffect(() => {
@@ -22,7 +40,11 @@ export default function FeedbackWidget() {
     return () => window.removeEventListener("keydown", onKeyDown);
   }, [open]);
 
-  const canSubmit = !submitting && message.trim().length > 3;
+  const canSubmit =
+    !submitting &&
+    message.trim().length > 3 &&
+    sender.name.trim().length > 0 &&
+    EMAIL_RE.test(sender.email);
 
   async function onSubmit(e) {
     e.preventDefault();
@@ -31,19 +53,30 @@ export default function FeedbackWidget() {
     setSubmitting(true);
 
     try {
-      const normalizedEmail = sessionEmail;
-      if (!normalizedEmail) {
-        throw new Error("Please log in to send feedback.");
+      if (!sender.name.trim()) {
+        throw new Error("Please enter your name.");
       }
-      const name = normalizedEmail.split("@")[0] || "DesiDeals24 user";
+      if (!EMAIL_RE.test(sender.email)) {
+        throw new Error("Please enter a valid email address.");
+      }
+      const payload = buildFeedbackMessage(message, {
+        source: window.location.pathname,
+        user: authUser,
+        name: guestName,
+        email: guestEmail,
+      });
       await postContact({
-        name,
-        email: normalizedEmail,
+        name: payload.sender.name,
+        email: payload.sender.email,
         subject: "Feedback (24deals)",
-        message: `${message.trim()}\n\nSource: ${window.location.pathname}`,
+        message: payload.message,
       });
       setSent(true);
       setMessage("");
+      if (!isLoggedIn) {
+        setGuestName("");
+        setGuestEmail("");
+      }
     } catch (err) {
       setError(err?.message || "Could not send feedback. Please try again.");
     } finally {
@@ -94,6 +127,37 @@ export default function FeedbackWidget() {
               </div>
 
               <form onSubmit={onSubmit} className="px-6 py-5">
+                {!isLoggedIn ? (
+                  <div className="grid gap-4 sm:grid-cols-2">
+                    <div>
+                      <label className="block text-[12px] font-bold text-slate-700 tracking-[1.2px] uppercase">
+                        Name
+                      </label>
+                      <input
+                        value={guestName}
+                        onChange={(e) => setGuestName(e.target.value)}
+                        placeholder="Your name"
+                        className="mt-2 w-full rounded-[12px] border border-slate-200 px-4 py-3 text-[16px] outline-none focus:border-[#16a34a]"
+                        autoComplete="name"
+                        autoFocus
+                      />
+                    </div>
+                    <div>
+                      <label className="block text-[12px] font-bold text-slate-700 tracking-[1.2px] uppercase">
+                        Email
+                      </label>
+                      <input
+                        type="email"
+                        value={guestEmail}
+                        onChange={(e) => setGuestEmail(e.target.value)}
+                        placeholder="you@example.com"
+                        className="mt-2 w-full rounded-[12px] border border-slate-200 px-4 py-3 text-[16px] outline-none focus:border-[#16a34a]"
+                        autoComplete="email"
+                      />
+                    </div>
+                  </div>
+                ) : null}
+
                 <label className="block text-[12px] font-bold text-slate-700 tracking-[1.2px] uppercase mt-5">
                   Feedback
                 </label>
@@ -103,7 +167,7 @@ export default function FeedbackWidget() {
                   placeholder="Tell us what to improve…"
                   rows={5}
                   className="mt-2 w-full rounded-[12px] border border-slate-200 px-4 py-3 text-[16px] outline-none focus:border-[#16a34a] resize-none"
-                  autoFocus
+                  autoFocus={!isLoggedIn}
                 />
 
                 {error ? (

@@ -9,6 +9,7 @@ import {
 import { getAuthSession, logoutUser, postContact } from "../utils/api";
 import { fetchWaitlistMe } from "../utils/api";
 import { buildWhatsAppDealShareText, buildWhatsAppDealShareUrl } from "../utils/share";
+import { buildFeedbackMessage, resolveFeedbackSender } from "../utils/feedback";
 import {
   computeNextRefreshUtcMs,
   formatRefreshCountdown,
@@ -30,14 +31,6 @@ function hasDealsMembership(status) {
     Boolean(status?.unlocked) &&
     (userType === "basic" || userType === "premium")
   );
-}
-
-function inferFeedbackName(user) {
-  const email = String(user?.email || "").trim();
-  const local = email.includes("@") ? email.split("@")[0] : email;
-  const normalized = local.replace(/[._-]+/g, " ").trim();
-  if (!normalized) return "DesiDeals24 member";
-  return normalized.replace(/\b\w/g, (char) => char.toUpperCase());
 }
 
 function formatPoolDate(poolDate) {
@@ -534,8 +527,12 @@ export default function Deals24Page() {
       return;
     }
 
-    const email = String(authUser?.email || "").trim();
-    if (!email) {
+    const payload = buildFeedbackMessage(message, {
+      source: window.location.pathname,
+      user: authUser,
+    });
+
+    if (!payload.sender.email) {
       setFeedbackState("error");
       setFeedbackError(
         "We couldn't find your account email for this feedback.",
@@ -547,10 +544,10 @@ export default function Deals24Page() {
     setFeedbackError("");
     try {
       await postContact({
-        name: inferFeedbackName(authUser),
-        email,
+        name: payload.sender.name,
+        email: payload.sender.email,
         subject: "24 Deals Page Feedback",
-        message,
+        message: payload.message,
       });
       setFeedbackMessage("");
       setFeedbackState("sent");
@@ -931,11 +928,7 @@ export default function Deals24Page() {
               placeholder="Share what felt off, what you expected, or what you'd like us to add."
               className="w-full rounded-[18px] border border-[#dbe4ee] px-5 py-4 text-[15px] leading-7 text-[#1e293b] focus:outline-none focus:ring-2 focus:ring-[#16a34a]/20 focus:border-[#16a34a] resize-y"
             />
-            <div className="flex flex-wrap items-center justify-between gap-4">
-              <p className="text-[13px] leading-6 text-[#64748b]">
-                We&apos;ll send this from{" "}
-                {authUser?.email || "your account email"}.
-              </p>
+            <div className="flex flex-wrap items-center justify-end gap-4">
               <button
                 type="submit"
                 disabled={feedbackState === "submitting"}
