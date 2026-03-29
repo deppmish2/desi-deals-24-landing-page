@@ -950,8 +950,8 @@ export default function DealsPage() {
     if (type === "priceRange") { setFilterPriceMin(""); setFilterPriceMax(""); resetPage(); }
   }
 
-  function showToast(msg) {
-    setToast(msg);
+  function showToast(message, tone = "success") {
+    setToast({ message, tone });
     clearTimeout(toastTimer.current);
     toastTimer.current = setTimeout(() => setToast(null), 3000);
   }
@@ -968,7 +968,10 @@ export default function DealsPage() {
         if (wasBookmarked) next.delete(dealId); else next.add(dealId);
         return next;
       });
-      if (!wasBookmarked) showToast("Item saved to your basket");
+      showToast(
+        wasBookmarked ? "Removed from basket" : "Saved to basket",
+        wasBookmarked ? "removed" : "success",
+      );
       try {
         if (wasBookmarked) {
           await removeBookmark(dealId);
@@ -1022,7 +1025,7 @@ export default function DealsPage() {
   return (
     <div className="min-h-screen bg-[radial-gradient(circle_at_top,_#ffffff_0%,_#f8fbff_32%,_#f3f6fb_100%)]">
       <div className="sticky top-0 z-50 sm:hidden">
-        <div className="flex h-[60px] items-center justify-between gap-4 backdrop-blur-[12px] bg-white/80 px-6 shadow-[0px_1px_2px_0px_rgba(0,0,0,0.05)]">
+        <div className="flex h-[60px] items-center justify-between gap-4 bg-white px-6 shadow-[0px_1px_2px_0px_rgba(0,0,0,0.05)]">
           <Link to="/" className="flex items-center gap-2 no-underline" style={{ textDecoration: "none" }}>
             <img src="/landing/dd24-logo.svg" alt="DesiDeals24" className="w-5 h-6 object-contain" />
             <span className="font-bold tracking-[-1.2px] text-[24px] text-[#15803d]">DesiDeals24</span>
@@ -1097,7 +1100,7 @@ export default function DealsPage() {
           <div className="flex items-center justify-between gap-4 border-b border-slate-100 sm:rounded-[28px] sm:border sm:border-slate-200/60 bg-white px-4 sm:px-7 lg:px-8 py-4 sm:py-5 shadow-[0_4px_16px_rgba(15,23,42,0.07)] sm:shadow-[0_18px_45px_rgba(15,23,42,0.14)]">
             <Link to="/" className="flex items-center gap-2.5 no-underline" style={{ textDecoration: "none" }}>
               <img src="/landing/dd24-logo.svg" alt="DesiDeals24" className="w-6 h-7 sm:w-7 sm:h-8 object-contain" />
-              <span className="font-extrabold tracking-[-0.8px] text-[24px] sm:text-[34px] text-[#17874a]">DesiDeals24</span>
+              <span className="font-extrabold tracking-[-0.8px] text-[26px] text-[#17874a]">DesiDeals24</span>
             </Link>
 
             <div className="flex items-center gap-2 sm:gap-3">
@@ -1396,12 +1399,18 @@ export default function DealsPage() {
       {/* Toast */}
       {toast && (
         <div className="fixed bottom-6 left-1/2 -translate-x-1/2 z-50 pointer-events-none">
-          <div className="flex items-center gap-2.5 bg-[#0f172a] text-white text-[14px] font-semibold px-5 py-3.5 rounded-2xl shadow-xl">
+          <div
+            className={`flex items-center gap-2.5 text-[14px] font-semibold px-5 py-3.5 rounded-2xl shadow-xl ${
+              toast.tone === "removed"
+                ? "bg-[#7c2d12] text-[#fff7ed]"
+                : "bg-[#166534] text-white"
+            }`}
+          >
             <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
               <circle cx="9" cy="21" r="1"/><circle cx="20" cy="21" r="1"/>
               <path d="M1 1h4l2.68 13.39a2 2 0 0 0 2 1.61h9.72a2 2 0 0 0 2-1.61L23 6H6"/>
             </svg>
-            {toast}
+            {toast.message}
           </div>
         </div>
       )}

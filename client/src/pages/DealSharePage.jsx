@@ -50,10 +50,10 @@ export default function DealSharePage() {
 
       {/* Header */}
       <div className="sticky top-0 z-50">
-        <div className="flex h-[60px] items-center justify-between gap-4 backdrop-blur-[12px] bg-white/80 px-6 shadow-[0px_1px_2px_0px_rgba(0,0,0,0.05)]">
+        <div className="flex h-[60px] items-center justify-between gap-4 bg-white px-6 shadow-[0px_1px_2px_0px_rgba(0,0,0,0.05)]">
           <Link to="/" className="flex items-center gap-2 no-underline" style={{ textDecoration: "none" }}>
             <img src="/landing/dd24-logo.svg" alt="DesiDeals24" className="w-5 h-6 object-contain" />
-            <span className="font-bold tracking-[-1.2px] text-[24px] text-[#15803d]">DesiDeals24</span>
+            <span className="font-bold tracking-[-1.2px] text-[24px] sm:text-[18px] text-[#15803d]">DesiDeals24</span>
           </Link>
           <Link
             to="/"

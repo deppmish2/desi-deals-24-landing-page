@@ -23,6 +23,12 @@
     margin: 0;
   }
 
+  @media (max-width: 640px) {
+    body {
+      padding-bottom: max(6.5rem, calc(env(safe-area-inset-bottom) + 6.5rem));
+    }
+  }
+
   @media (max-width: 768px) {
     input,
     select,
@@ -173,8 +179,8 @@
 
   @media (max-width: 640px) {
     .dd24-feedback-trigger {
-      right: max(0.9rem, calc(env(safe-area-inset-right) + 0.9rem));
-      bottom: max(5.75rem, calc(env(safe-area-inset-bottom) + 5.75rem));
+      right: max(0.75rem, calc(env(safe-area-inset-right) + 0.75rem));
+      bottom: max(1rem, calc(env(safe-area-inset-bottom) + 1rem));
     }
   }
 }

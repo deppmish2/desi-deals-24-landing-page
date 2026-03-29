@@ -3,7 +3,7 @@ import { Link } from "react-router-dom";
 
 export default function Deals24Header({ onLogout }) {
   return (
-    <header className="backdrop-blur-md bg-white/80 border-b border-slate-200">
+    <header className="bg-white border-b border-slate-200">
       <div className="h-16 max-w-[1280px] mx-auto px-6 sm:px-10 flex items-center justify-between gap-6">
         <Link to="/24deals" className="flex items-center gap-2 no-underline">
           <img
@@ -11,7 +11,7 @@ export default function Deals24Header({ onLogout }) {
             alt="DesiDeals24"
             className="w-5 h-6 object-contain"
           />
-          <span className="font-['Plus_Jakarta_Sans',sans-serif] font-extrabold tracking-[-0.5px] text-[20px] leading-[28px] text-[#141414]">
+          <span className="font-['Plus_Jakarta_Sans',sans-serif] font-extrabold tracking-[-0.5px] text-[20px] leading-[28px] sm:text-[15px] sm:leading-[21px] text-[#141414]">
             DesiDeals24
           </span>
           <span className="text-[10px] font-extrabold tracking-[2px] uppercase text-slate-400 -translate-y-1">

@@ -24,7 +24,11 @@ const {
   upsertWaitlistReferralRow,
   syncCachedUserById,
 } = require("../services/user-store");
-const { sendEmailAuthLink, smtpConfigured } = require("../services/email-auth");
+const {
+  productionLikeRuntime,
+  sendEmailAuthLink,
+  smtpConfigured,
+} = require("../services/email-auth");
 const {
   buildAuthUrl: buildGoogleAuthUrl,
   verifyIdToken: verifyGoogleIdToken,
@@ -157,9 +161,24 @@ function maskEmail(email) {
 }
 
 function isEmailVerified(user) {
-  return Boolean(
-    user?.email_verified_at || user?.google_id || user?.facebook_id,
-  );
+  return Boolean(user?.email_verified_at || user?.facebook_id);
+}
+
+function markSignupState(user, state = {}) {
+  if (!user || typeof user !== "object") return user;
+  return Object.assign(user, state);
+}
+
+function canSubscribeVerifiedSignup(user) {
+  if (!user) return false;
+  if (!isEmailVerified(user)) return false;
+  return Boolean(user._createdDuringSignup || user._justVerifiedEmail);
+}
+
+function subscribeVerifiedSignup(user) {
+  if (!canSubscribeVerifiedSignup(user)) return;
+  const firstName = user.first_name || extractFirstName(user.name, user.email);
+  subscribeToNewsletter(user.email, firstName).catch(() => {});
 }
 
 function clientAppOrigin(req) {
@@ -169,6 +188,13 @@ function clientAppOrigin(req) {
     process.env.APP_URL ||
     process.env.FRONTEND_URL ||
     "http://localhost:3000"
+  );
+}
+
+function googleDevAutoVerifyEnabled() {
+  return (
+    !productionLikeRuntime() &&
+    String(process.env.GOOGLE_AUTH_DEV_AUTO_VERIFY || "").trim() === "true"
   );
 }
 
@@ -323,8 +349,10 @@ async function insertGoogleUser({ profile, postcode }) {
     );
 
   incrementDisplayMemberCount().catch(() => {});
-  subscribeToNewsletter(profile.email, firstName).catch(() => {});
-  return await db.prepare("SELECT * FROM users WHERE id = ? LIMIT 1").get(id);
+  const createdUser = await db
+    .prepare("SELECT * FROM users WHERE id = ? LIMIT 1")
+    .get(id);
+  return markSignupState(createdUser, { _createdDuringSignup: true });
 }
 
 async function sendGoogleSignupConfirmation(user, req) {
@@ -369,6 +397,7 @@ async function upsertGoogleUser(profile, postcodeInput) {
   const postcode = asPostcode(postcodeInput);
   const fullName = normalizeProfileName(profile.name);
   const firstName = extractFirstName(profile.name, profile.email);
+  const wasVerified = isEmailVerified(user);
 
   if (user) {
     // Do NOT touch email_verified_at here — if it is still NULL the caller
@@ -383,7 +412,10 @@ async function upsertGoogleUser(profile, postcodeInput) {
        WHERE id = ?`,
       )
       .run(profile.email, fullName, firstName, now, user.id);
-    return await syncCachedUserById(db, user.id);
+    const updatedUser = await syncCachedUserById(db, user.id);
+    return markSignupState(updatedUser, {
+      _justVerifiedEmail: !wasVerified && isEmailVerified(updatedUser),
+    });
   }
 
   let byEmail = await resolveUserByEmail(profile.email);
@@ -401,6 +433,7 @@ async function upsertGoogleUser(profile, postcodeInput) {
   }
 
   const effectivePostcode = byEmail.postcode || postcode || "";
+  const emailWasVerified = isEmailVerified(byEmail);
   await db
     .prepare(
       `UPDATE users
@@ -422,7 +455,10 @@ async function upsertGoogleUser(profile, postcodeInput) {
       byEmail.id,
     );
 
-  return await syncCachedUserById(db, byEmail.id);
+  const updatedUser = await syncCachedUserById(db, byEmail.id);
+  return markSignupState(updatedUser, {
+    _justVerifiedEmail: !emailWasVerified && isEmailVerified(updatedUser),
+  });
 }
 
 async function insertFacebookUser({ profile, postcode }) {
@@ -456,7 +492,10 @@ async function insertFacebookUser({ profile, postcode }) {
     );
 
   incrementDisplayMemberCount().catch(() => {});
-  return await db.prepare("SELECT * FROM users WHERE id = ? LIMIT 1").get(id);
+  const createdUser = await db
+    .prepare("SELECT * FROM users WHERE id = ? LIMIT 1")
+    .get(id);
+  return markSignupState(createdUser, { _createdDuringSignup: true });
 }
 
 async function upsertFacebookUser(profile, postcodeInput) {
@@ -465,6 +504,7 @@ async function upsertFacebookUser(profile, postcodeInput) {
   const postcode = asPostcode(postcodeInput);
   const fullName = normalizeProfileName(profile.name);
   const firstName = extractFirstName(profile.name, profile.email);
+  const wasVerified = isEmailVerified(user);
 
   if (user) {
     await db
@@ -478,7 +518,10 @@ async function upsertFacebookUser(profile, postcodeInput) {
        WHERE id = ?`,
       )
       .run(profile.email, fullName, firstName, now, now, user.id);
-    return await syncCachedUserById(db, user.id);
+    const updatedUser = await syncCachedUserById(db, user.id);
+    return markSignupState(updatedUser, {
+      _justVerifiedEmail: !wasVerified && isEmailVerified(updatedUser),
+    });
   }
 
   let byEmail = await resolveUserByEmail(profile.email);
@@ -496,6 +539,7 @@ async function upsertFacebookUser(profile, postcodeInput) {
   }
 
   const effectivePostcode = byEmail.postcode || postcode || "";
+  const emailWasVerified = isEmailVerified(byEmail);
   await db
     .prepare(
       `UPDATE users
@@ -517,7 +561,10 @@ async function upsertFacebookUser(profile, postcodeInput) {
       byEmail.id,
     );
 
-  return await syncCachedUserById(db, byEmail.id);
+  const updatedUser = await syncCachedUserById(db, byEmail.id);
+  return markSignupState(updatedUser, {
+    _justVerifiedEmail: !emailWasVerified && isEmailVerified(updatedUser),
+  });
 }
 
 function emailAuthTokenExpiry() {
@@ -701,8 +748,13 @@ async function insertEmailLinkUser(email, verifiedAt) {
     );
 
   incrementDisplayMemberCount().catch(() => {});
-  subscribeToNewsletter(email).catch(() => {});
-  return await db.prepare("SELECT * FROM users WHERE id = ? LIMIT 1").get(id);
+  const createdUser = await db
+    .prepare("SELECT * FROM users WHERE id = ? LIMIT 1")
+    .get(id);
+  return markSignupState(createdUser, {
+    _createdDuringSignup: true,
+    _justVerifiedEmail: true,
+  });
 }
 
 async function handleEmailStatus(req, res) {
@@ -885,6 +937,7 @@ router.post("/email-link/complete", async (req, res) => {
   if (!user) {
     user = await insertEmailLinkUser(tokenRow.email, now);
   } else {
+    const wasVerified = isEmailVerified(user);
     await db
       .prepare(
         `UPDATE users
@@ -894,7 +947,11 @@ router.post("/email-link/complete", async (req, res) => {
       )
       .run(now, now, user.id);
     user = await syncCachedUserById(db, user.id, { strict: true });
+    user = markSignupState(user, {
+      _justVerifiedEmail: !wasVerified && isEmailVerified(user),
+    });
   }
+  const shouldSubscribeUser = canSubscribeVerifiedSignup(user);
 
   const referralOutcome = await applyReferralCodeToUser(
     user.id,
@@ -914,6 +971,11 @@ router.post("/email-link/complete", async (req, res) => {
     },
   });
 
+  if (shouldSubscribeUser) {
+    subscribeVerifiedSignup(
+      markSignupState(user, { _justVerifiedEmail: true }),
+    );
+  }
   res.json(await buildAuthResponse(user));
 });
 
@@ -980,7 +1042,6 @@ router.post("/register", async (req, res) => {
     },
   });
   incrementDisplayMemberCount().catch(() => {});
-  subscribeToNewsletter(email).catch(() => {});
   res.status(201).json(await buildAuthResponse(stored));
 });
 
@@ -1131,10 +1192,33 @@ router.post("/google", async (req, res) => {
     const profile = idToken
       ? await verifyGoogleIdToken(idToken)
       : await exchangeGoogleCodeForProfile(code);
-    const user = await upsertGoogleUser(profile, postcode);
+    let user = await upsertGoogleUser(profile, postcode);
 
     // New user — send email confirmation before issuing tokens
     if (!user.email_verified_at) {
+      if (googleDevAutoVerifyEnabled()) {
+        await db
+          .prepare("UPDATE users SET email_verified_at = ? WHERE id = ?")
+          .run(new Date().toISOString(), user.id);
+        user = await syncCachedUserById(db, user.id, {
+          strict: true,
+        });
+        trackEvent(db, "auth.google_register", {
+          userId: user.id,
+          route: req.originalUrl,
+          entityType: "user",
+          entityId: user.id,
+          payload: { email: user.email, dev_auto_verified: true },
+        });
+        subscribeVerifiedSignup(
+          markSignupState(user, {
+            _createdDuringSignup: true,
+            _justVerifiedEmail: true,
+          }),
+        );
+        return res.json(await buildAuthResponse(user));
+      }
+
       try {
         await sendGoogleSignupConfirmation(user, req);
       } catch (emailError) {
@@ -1202,27 +1286,40 @@ router.get("/google/callback", async (req, res) => {
 
   try {
     const profile = await exchangeGoogleCodeForProfile(code);
-    const user = await upsertGoogleUser(profile, postcode);
+    let user = await upsertGoogleUser(profile, postcode);
 
     if (!user.email_verified_at) {
+      if (googleDevAutoVerifyEnabled()) {
+        await db
+          .prepare("UPDATE users SET email_verified_at = ? WHERE id = ?")
+          .run(new Date().toISOString(), user.id);
+        user = await syncCachedUserById(db, user.id, {
+          strict: true,
+        });
+        trackEvent(db, "auth.google_register", {
+          userId: user.id,
+          route: req.originalUrl,
+          entityType: "user",
+          entityId: user.id,
+          payload: { email: user.email, dev_auto_verified: true },
+        });
+        subscribeVerifiedSignup(
+          markSignupState(user, {
+            _createdDuringSignup: true,
+            _justVerifiedEmail: true,
+          }),
+        );
+        return res.json(await buildAuthResponse(user));
+      }
+
       try {
         await sendGoogleSignupConfirmation(user, req);
       } catch (emailError) {
         if (emailError?.code === "EMAIL_AUTH_NOT_CONFIGURED") {
-          await db
-            .prepare("UPDATE users SET email_verified_at = ? WHERE id = ?")
-            .run(new Date().toISOString(), user.id);
-          const verifiedUser = await syncCachedUserById(db, user.id, {
-            strict: true,
+          return res.status(503).json({
+            error:
+              "Email confirmation is required to complete signup, but email sending is not configured on this deployment. Please contact support.",
           });
-          trackEvent(db, "auth.google_register", {
-            userId: verifiedUser.id,
-            route: req.originalUrl,
-            entityType: "user",
-            entityId: verifiedUser.id,
-            payload: { email: verifiedUser.email },
-          });
-          return res.json(await buildAuthResponse(verifiedUser));
         }
         throw emailError;
       }
@@ -1246,6 +1343,7 @@ router.get("/google/callback", async (req, res) => {
       entityId: user.id,
       payload: { email: user.email },
     });
+    subscribeVerifiedSignup(user);
     res.json(await buildAuthResponse(user));
   } catch (error) {
     const status =
@@ -1287,6 +1385,7 @@ router.post("/facebook", async (req, res) => {
       entityId: user.id,
       payload: { email: user.email },
     });
+    subscribeVerifiedSignup(user);
     res.json(await buildAuthResponse(user));
   } catch (error) {
     const status =
@@ -1336,6 +1435,7 @@ router.get("/facebook/callback", async (req, res) => {
       entityId: user.id,
       payload: { email: user.email },
     });
+    subscribeVerifiedSignup(user);
     res.json(await buildAuthResponse(user));
   } catch (error) {
     const status =
