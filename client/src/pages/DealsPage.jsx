@@ -213,6 +213,43 @@ function resolveUrl(deal, url) {
   return storeBase ? `${storeBase}${raw.startsWith("/") ? "" : "/"}${raw}` : raw;
 }
 
+function parsePageParam(value) {
+  const parsed = parseInt(String(value || "1"), 10);
+  return Number.isFinite(parsed) && parsed > 0 ? parsed : 1;
+}
+
+function readDealsViewState(searchParams) {
+  return {
+    searchQuery: String(searchParams.get("q") || "").trim(),
+    sortValue: String(searchParams.get("sort") || "").trim(),
+    page: parsePageParam(searchParams.get("page")),
+    filterStore: String(searchParams.get("store") || "").trim(),
+    filterCategory: String(searchParams.get("category") || "").trim(),
+    filterMinDiscount: String(searchParams.get("min_discount") || "").trim(),
+    filterPriceMin: String(searchParams.get("price_min") || "").trim(),
+    filterPriceMax: String(searchParams.get("price_max") || "").trim(),
+    filterHideExpired: searchParams.get("hide_expired") === "1",
+  };
+}
+
+function buildDealsSearchParams(searchParams, nextState, routeDealId) {
+  const nextParams = new URLSearchParams();
+  const highlightedDeal = !routeDealId ? String(searchParams.get("deal") || "").trim() : "";
+
+  if (highlightedDeal) nextParams.set("deal", highlightedDeal);
+  if (nextState.searchQuery) nextParams.set("q", nextState.searchQuery);
+  if (nextState.sortValue) nextParams.set("sort", nextState.sortValue);
+  if (nextState.page > 1) nextParams.set("page", String(nextState.page));
+  if (nextState.filterStore) nextParams.set("store", nextState.filterStore);
+  if (nextState.filterCategory) nextParams.set("category", nextState.filterCategory);
+  if (nextState.filterMinDiscount) nextParams.set("min_discount", nextState.filterMinDiscount);
+  if (nextState.filterPriceMin) nextParams.set("price_min", nextState.filterPriceMin);
+  if (nextState.filterPriceMax) nextParams.set("price_max", nextState.filterPriceMax);
+  if (nextState.filterHideExpired) nextParams.set("hide_expired", "1");
+
+  return nextParams;
+}
+
 // ── Deal card ─────────────────────────────────────────────────────────────────
 function dealPermalink(dealId) {
   return buildDealPageUrl(dealId);
@@ -771,22 +808,14 @@ function Pagination({ page, totalPages, onChange }) {
 export default function DealsPage() {
   const navigate = useNavigate();
   const { dealId: routeDealId } = useParams();
-  const [searchParams] = useSearchParams();
+  const [searchParams, setSearchParams] = useSearchParams();
+  const viewState = useMemo(() => readDealsViewState(searchParams), [searchParams]);
   const highlightDealId = routeDealId || searchParams.get("deal") || null;
   const highlightRef = useRef(null);
-  const [searchInput, setSearchInput] = useState("");
-  const [searchQuery, setSearchQuery] = useState("");
-  const [sortValue, setSortValue] = useState("");
-  const [page, setPage] = useState(1);
-  const [filterStore, setFilterStore] = useState("");
-  const [filterCategory, setFilterCategory] = useState("");
+  const [searchInput, setSearchInput] = useState(() => viewState.searchQuery);
   const [filtersOpen, setFiltersOpen] = useState(false);
   const [confirmClearOpen, setConfirmClearOpen] = useState(false);
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
-  const [filterMinDiscount, setFilterMinDiscount] = useState("");
-  const [filterPriceMin, setFilterPriceMin] = useState("");
-  const [filterPriceMax, setFilterPriceMax] = useState("");
-  const [filterHideExpired, setFilterHideExpired] = useState(false);
   const [filterDraft, setFilterDraft] = useState({ store: "", category: "", minDiscount: "", priceMin: "", priceMax: "", hideExpired: false });
   const [loginModal, setLoginModal] = useState(null);
   const [bookmarkedIds, setBookmarkedIds] = useState(new Set());
@@ -795,6 +824,17 @@ export default function DealsPage() {
   const [toast, setToast] = useState(null);
   const toastTimer = useRef(null);
   const [totalCount, setTotalCount] = useState(null);
+  const {
+    searchQuery,
+    sortValue,
+    page,
+    filterStore,
+    filterCategory,
+    filterMinDiscount,
+    filterPriceMin,
+    filterPriceMax,
+    filterHideExpired,
+  } = viewState;
 
   useEffect(() => {
     fetchDeals({ limit: 1, in_stock: "1" })
@@ -833,6 +873,45 @@ export default function DealsPage() {
     ],
   );
 
+  const updateAppliedState = useCallback(
+    (overrides = {}) => {
+      const nextState = {
+        searchQuery,
+        sortValue,
+        page,
+        filterStore,
+        filterCategory,
+        filterMinDiscount,
+        filterPriceMin,
+        filterPriceMax,
+        filterHideExpired,
+        ...overrides,
+      };
+
+      const nextParams = buildDealsSearchParams(searchParams, nextState, routeDealId);
+      if (nextParams.toString() === searchParams.toString()) return;
+      setSearchParams(nextParams);
+    },
+    [
+      filterCategory,
+      filterHideExpired,
+      filterMinDiscount,
+      filterPriceMax,
+      filterPriceMin,
+      filterStore,
+      page,
+      routeDealId,
+      searchParams,
+      searchQuery,
+      setSearchParams,
+      sortValue,
+    ],
+  );
+
+  useEffect(() => {
+    setSearchInput(searchQuery);
+  }, [searchQuery]);
+
   useEffect(() => {
     function onAuthChange() { setSession(getAuthSession()); }
     window.addEventListener("dd24-auth-changed", onAuthChange);
@@ -862,21 +941,28 @@ export default function DealsPage() {
         hideExpired: Boolean(resumeState.filterHideExpired),
       };
 
-      setSearchInput(resumeState.searchInput || "");
-      setSearchQuery(resumeState.searchQuery || "");
-      setSortValue(resumeState.sortValue || "");
-      setFilterStore(nextDraft.store);
-      setFilterCategory(nextDraft.category);
-      setFilterMinDiscount(nextDraft.minDiscount);
-      setFilterPriceMin(nextDraft.priceMin);
-      setFilterPriceMax(nextDraft.priceMax);
-      setFilterHideExpired(nextDraft.hideExpired);
-      setFilterDraft(nextDraft);
-      setPage(
-        Number.isInteger(resumeState.page) && resumeState.page > 0
-          ? resumeState.page
-          : 1,
+      setSearchInput(resumeState.searchInput || resumeState.searchQuery || "");
+      setSearchParams(
+        buildDealsSearchParams(
+          searchParams,
+          {
+            searchQuery: resumeState.searchQuery || "",
+            sortValue: resumeState.sortValue || "",
+            page:
+              Number.isInteger(resumeState.page) && resumeState.page > 0
+                ? resumeState.page
+                : 1,
+            filterStore: nextDraft.store,
+            filterCategory: nextDraft.category,
+            filterMinDiscount: nextDraft.minDiscount,
+            filterPriceMin: nextDraft.priceMin,
+            filterPriceMax: nextDraft.priceMax,
+            filterHideExpired: nextDraft.hideExpired,
+          },
+          routeDealId,
+        ),
       );
+      setFilterDraft(nextDraft);
       setFiltersOpen(false);
       setLoginModal(null);
 
@@ -893,7 +979,7 @@ export default function DealsPage() {
     } catch {
       sessionStorage.removeItem(POST_LOGIN_RESUME_STATE_STORAGE_KEY);
     }
-  }, [isLoggedIn]);
+  }, [isLoggedIn, routeDealId, searchParams, setSearchParams]);
 
   const { deals, pagination, loading, error } = useDeals({
     enabled: true,
@@ -973,9 +1059,6 @@ export default function DealsPage() {
     };
   }, [filtersOpen, storeNames.length]);
 
-  // Reset to page 1 whenever filters or search changes
-  function resetPage() { setPage(1); }
-
   function requireLogin(message, action, resumeState) {
     if (!isLoggedIn) {
       setLoginModal({ message, resumeState });
@@ -1007,13 +1090,15 @@ export default function DealsPage() {
   }
 
   function applyFilters() {
-    setFilterStore(filterDraft.store);
-    setFilterCategory(filterDraft.category);
-    setFilterMinDiscount(filterDraft.minDiscount);
-    setFilterPriceMin(filterDraft.priceMin);
-    setFilterPriceMax(filterDraft.priceMax);
-    setFilterHideExpired(filterDraft.hideExpired);
-    resetPage();
+    updateAppliedState({
+      filterStore: filterDraft.store,
+      filterCategory: filterDraft.category,
+      filterMinDiscount: filterDraft.minDiscount,
+      filterPriceMin: filterDraft.priceMin,
+      filterPriceMax: filterDraft.priceMax,
+      filterHideExpired: filterDraft.hideExpired,
+      page: 1,
+    });
     setFiltersOpen(false);
   }
 
@@ -1023,14 +1108,17 @@ export default function DealsPage() {
 
   function clearSearchAndFilters() {
     setSearchInput("");
-    setSearchQuery("");
-    setSortValue("");
-    setFilterStore("");
-    setFilterCategory("");
-    setFilterMinDiscount("");
-    setFilterPriceMin("");
-    setFilterPriceMax("");
-    setFilterHideExpired(false);
+    updateAppliedState({
+      searchQuery: "",
+      sortValue: "",
+      filterStore: "",
+      filterCategory: "",
+      filterMinDiscount: "",
+      filterPriceMin: "",
+      filterPriceMax: "",
+      filterHideExpired: false,
+      page: 1,
+    });
     setFilterDraft({
       store: "",
       category: "",
@@ -1039,25 +1127,24 @@ export default function DealsPage() {
       priceMax: "",
       hideExpired: false,
     });
-    resetPage();
   }
 
   function handleSortChange(val) {
-    setSortValue(val);
-    resetPage();
+    updateAppliedState({ sortValue: val, page: 1 });
   }
 
   function handleSearch() {
-    setSearchQuery(searchInput.trim());
-    resetPage();
+    updateAppliedState({ searchQuery: searchInput.trim(), page: 1 });
   }
 
   function removeFilterChip(type) {
-    if (type === "store") { setFilterStore(""); resetPage(); }
-    if (type === "category") { setFilterCategory(""); resetPage(); }
-    if (type === "sort") setSortValue("");
-    if (type === "minDiscount") { setFilterMinDiscount(""); resetPage(); }
-    if (type === "priceRange") { setFilterPriceMin(""); setFilterPriceMax(""); resetPage(); }
+    if (type === "store") updateAppliedState({ filterStore: "", page: 1 });
+    if (type === "category") updateAppliedState({ filterCategory: "", page: 1 });
+    if (type === "sort") updateAppliedState({ sortValue: "", page: 1 });
+    if (type === "minDiscount") updateAppliedState({ filterMinDiscount: "", page: 1 });
+    if (type === "priceRange") {
+      updateAppliedState({ filterPriceMin: "", filterPriceMax: "", page: 1 });
+    }
   }
 
   function showToast(message, tone = "success") {
@@ -1406,7 +1493,10 @@ export default function DealsPage() {
                         <span className="text-[13px] font-semibold text-slate-700">"{searchQuery}"</span>
                         <button
                           type="button"
-                          onClick={() => { setSearchQuery(""); setSearchInput(""); resetPage(); }}
+                          onClick={() => {
+                            setSearchInput("");
+                            updateAppliedState({ searchQuery: "", page: 1 });
+                          }}
                           className="flex items-center justify-center w-[18px] h-[18px] rounded-full bg-slate-100 text-slate-400 transition-colors hover:bg-slate-200 hover:text-slate-600"
                         >
                           <CloseIcon size={8} />
@@ -1463,7 +1553,14 @@ export default function DealsPage() {
 
         {/* Pagination */}
         {!loading && totalPages > 1 && (
-          <Pagination page={page} totalPages={totalPages} onChange={(p) => { setPage(p); window.scrollTo({ top: 0, behavior: "smooth" }); }} />
+          <Pagination
+            page={page}
+            totalPages={totalPages}
+            onChange={(p) => {
+              updateAppliedState({ page: p });
+              window.scrollTo({ top: 0, behavior: "smooth" });
+            }}
+          />
         )}
       </main>
 
