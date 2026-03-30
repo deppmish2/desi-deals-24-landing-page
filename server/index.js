@@ -376,6 +376,12 @@ function sendClientApp(res, options = {}) {
   });
 }
 
+// Hashed assets get a 1-year immutable cache — no revalidation round-trips
+app.use("/assets", express.static(path.join(CLIENT_DIST, "assets"), {
+  maxAge: "1y",
+  immutable: true,
+  index: false,
+}));
 app.use(express.static(CLIENT_DIST, { index: false }));
 app.get("/share/deal/:dealId", async (req, res, next) => {
   try {
@@ -433,6 +439,12 @@ if (require.main === module) {
   app.listen(PORT, () => {
     console.log(`\nDesiDeals24 server running on http://localhost:${PORT}`);
     console.log(`API: http://localhost:${PORT}/api/v1/deals`);
+
+    // Pre-warm SQLite page cache so the first real request is fast
+    db.ready
+      .then(() => db.prepare("SELECT COUNT(*) FROM deals WHERE is_active = 1").get())
+      .catch(() => {});
+
     if (isServerless) {
       console.log(
         "[scheduler] Skipped local scheduler in serverless mode (GitHub Actions handles the 07:00 Europe/Berlin crawl).",

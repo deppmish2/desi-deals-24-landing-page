@@ -206,6 +206,8 @@ function LoginModal({ message, resumeState, onClose }) {
 // ── Helpers ───────────────────────────────────────────────────────────────────
 function proxyImageUrl(imageUrl) {
   if (!imageUrl) return null;
+  // Absolute HTTPS URLs (Shopify CDN, etc.) — serve directly, no relay needed
+  if (/^https?:\/\//i.test(imageUrl)) return imageUrl;
   return `/api/v1/admin/proxy/image?url=${encodeURIComponent(imageUrl)}`;
 }
 
@@ -1523,8 +1525,17 @@ export default function DealsPage() {
 
         {/* Deals grid */}
         {loading && (
-          <div className="flex justify-center py-20">
-            <div className="w-10 h-10 rounded-full animate-spin" style={{ borderWidth: 3, borderStyle: "solid", borderColor: "#e2e8f0", borderTopColor: "#16a34a" }} />
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-5">
+            {Array.from({ length: 20 }).map((_, i) => (
+              <div key={i} className="bg-white rounded-[20px] border border-[#f1f5f9] overflow-hidden" style={{ boxShadow: "0px 2px 12px rgba(0,0,0,0.06)" }}>
+                <div className="w-full h-[200px] bg-slate-100 animate-pulse" />
+                <div className="p-4 flex flex-col gap-3">
+                  <div className="h-4 bg-slate-100 rounded animate-pulse w-3/4" />
+                  <div className="h-3 bg-slate-100 rounded animate-pulse w-1/2" />
+                  <div className="h-5 bg-slate-100 rounded animate-pulse w-1/3" />
+                </div>
+              </div>
+            ))}
           </div>
         )}
         {error && !loading && (

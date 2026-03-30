@@ -271,6 +271,8 @@ const ready = (async () => {
        ON deal_price_history(product_url)`,
     `CREATE INDEX IF NOT EXISTS idx_deals_display_date_order
        ON deals(display_date, display_order)`,
+    `CREATE INDEX IF NOT EXISTS idx_deals_active_display
+       ON deals(is_active, display_date, display_order)`,
   ];
 
   for (const sql of bootstrapStatements) {

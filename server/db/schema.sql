@@ -86,6 +86,9 @@ CREATE TABLE IF NOT EXISTS deal_price_history (
 CREATE INDEX IF NOT EXISTS idx_deals_display_date_order
   ON deals(display_date, display_order);
 
+CREATE INDEX IF NOT EXISTS idx_deals_active_display
+  ON deals(is_active, display_date, display_order);
+
 -- Generic scheduled/ops job ledger
 CREATE TABLE IF NOT EXISTS job_runs (
   id                TEXT PRIMARY KEY,
