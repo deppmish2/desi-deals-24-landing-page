@@ -206,8 +206,14 @@ function LoginModal({ message, resumeState, onClose }) {
 // ── Helpers ───────────────────────────────────────────────────────────────────
 function proxyImageUrl(imageUrl) {
   if (!imageUrl) return null;
-  // Absolute HTTPS URLs (Shopify CDN, etc.) — serve directly, no relay needed
-  if (/^https?:\/\//i.test(imageUrl)) return imageUrl;
+  if (/^https?:\/\//i.test(imageUrl)) {
+    // Shopify CDN supports native resizing via ?width= — avoids downloading 2000x2000 images
+    if (/cdn\.shopify\.com/i.test(imageUrl)) {
+      const sep = imageUrl.includes("?") ? "&" : "?";
+      return `${imageUrl}${sep}width=400`;
+    }
+    return imageUrl;
+  }
   return `/api/v1/admin/proxy/image?url=${encodeURIComponent(imageUrl)}`;
 }
 
@@ -224,7 +230,7 @@ function dealPermalink(dealId) {
   return buildDealPageUrl(dealId);
 }
 
-function DealCard({ deal, isBookmarked, onBookmark, highlighted, highlightRef }) {
+function DealCard({ deal, isBookmarked, onBookmark, highlighted, highlightRef, priority }) {
   const [imgError, setImgError] = useState(false);
   const proxyImg = proxyImageUrl(deal?.image_url);
   const discountPct = deal?.discount_percent ? Math.round(deal.discount_percent) : null;
@@ -252,7 +258,8 @@ function DealCard({ deal, isBookmarked, onBookmark, highlighted, highlightRef })
             ? 'data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" width="112" height="112" viewBox="0 0 112 112"><rect fill="%23ffffff" width="112" height="112"/><text fill="%2394a3b8" font-size="28" text-anchor="middle" dominant-baseline="middle" x="56" y="58">🛒</text></svg>'
             : proxyImg}
           alt={deal.product_name}
-          loading="lazy"
+          loading={priority ? "eager" : "lazy"}
+          fetchpriority={priority ? "high" : "auto"}
           className="w-full h-full object-contain"
           onError={() => setImgError(true)}
         />
@@ -1548,7 +1555,7 @@ export default function DealsPage() {
         )}
         {!loading && displayDeals.length > 0 && (
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-5">
-            {displayDeals.map((deal) => (
+            {displayDeals.map((deal, index) => (
               <DealCard
                 key={deal.id}
                 deal={deal}
@@ -1556,6 +1563,7 @@ export default function DealsPage() {
                 onBookmark={handleBookmark}
                 highlighted={highlightDealId === deal.id}
                 highlightRef={highlightDealId === deal.id ? highlightRef : null}
+                priority={index < 4}
               />
             ))}
           </div>
