@@ -3,6 +3,12 @@
 const express = require("express");
 
 const db = require("../db");
+const {
+  buildDiversifiedPages,
+  dateSeed,
+  getDealStoreId,
+  seededShuffle,
+} = require("../services/deal-order");
 const { trackEvent } = require("../services/event-tracker");
 const { formatBerlinDateKey } = require("../services/berlin-time");
 
@@ -98,184 +104,6 @@ function fuzzySearch(haystack, query) {
   return tokens.every((tok) => fuzzyTokenMatch(text, tok));
 }
 
-// Seeded xorshift32 pseudo-random — deterministic per seed.
-function seededRandom(seed) {
-  let s = (seed >>> 0) || 1;
-  return function () {
-    s ^= s << 13;
-    s ^= s >> 17;
-    s ^= s << 5;
-    return (s >>> 0) / 4294967296;
-  };
-}
-
-// FNV-1a hash of a date string like "2026-03-27" → uint32 seed.
-function dateSeed(dateStr) {
-  let h = 2166136261;
-  for (let i = 0; i < dateStr.length; i++) {
-    h = Math.imul(h ^ dateStr.charCodeAt(i), 16777619);
-  }
-  return h >>> 0;
-}
-
-// Fisher-Yates shuffle with a seeded RNG.
-function seededShuffle(arr, seed) {
-  const copy = [...arr];
-  const rand = seededRandom(seed);
-  for (let i = copy.length - 1; i > 0; i--) {
-    const j = Math.floor(rand() * (i + 1));
-    [copy[i], copy[j]] = [copy[j], copy[i]];
-  }
-  return copy;
-}
-
-function getDealStoreId(deal) {
-  return String(deal?.store?.id || "").trim();
-}
-
-function scoreStoreCandidate(
-  storeId,
-  totalDeals,
-  position,
-  totalPerStore,
-  placedPerStore,
-  queues,
-  storePriority,
-) {
-  const expectedPlaced = ((totalPerStore.get(storeId) || 0) / totalDeals) * position;
-  const deficit = expectedPlaced - (placedPerStore.get(storeId) || 0);
-  return {
-    storeId,
-    deficit,
-    remaining: queues.get(storeId)?.length || 0,
-    priority: storePriority.get(storeId) || 0,
-  };
-}
-
-function buildDiversifiedPages(deals, pageSize, seed) {
-  const safeDeals = Array.isArray(deals) ? deals.filter(Boolean) : [];
-  if (safeDeals.length === 0) {
-    return {
-      pages: [],
-      enforcePageCap: false,
-      relaxedAdjacencyUsed: false,
-      relaxedCapUsed: false,
-      maxPerStore: Math.max(1, Math.floor(pageSize * 0.2)),
-      uniqueStoreCount: 0,
-    };
-  }
-
-  const queues = new Map();
-  const totalPerStore = new Map();
-  for (const deal of safeDeals) {
-    const storeId = getDealStoreId(deal) || "__unknown__";
-    if (!queues.has(storeId)) queues.set(storeId, []);
-    queues.get(storeId).push(deal);
-    totalPerStore.set(storeId, (totalPerStore.get(storeId) || 0) + 1);
-  }
-
-  const storeIds = Array.from(queues.keys());
-  const maxPerStore = Math.max(1, Math.floor(pageSize * 0.2));
-  const minStoresNeeded = Math.max(1, Math.ceil(pageSize / maxPerStore));
-  const enforcePageCap = storeIds.length >= minStoresNeeded;
-  const storePriority = new Map(
-    seededShuffle(storeIds, seed).map((storeId, index) => [storeId, index]),
-  );
-  const perStoreLimit = enforcePageCap ? maxPerStore : Number.POSITIVE_INFINITY;
-  const placedPerStore = new Map();
-  const ordered = [];
-  let currentPageCounts = new Map();
-  let relaxedAdjacencyUsed = false;
-  let relaxedCapUsed = false;
-
-  while (ordered.length < safeDeals.length) {
-    if (ordered.length > 0 && ordered.length % pageSize === 0) {
-      currentPageCounts = new Map();
-    }
-
-    const previousStoreId =
-      ordered.length > 0 ? getDealStoreId(ordered[ordered.length - 1]) || "__unknown__" : null;
-    const position = ordered.length + 1;
-
-    let candidates = storeIds.filter((storeId) => {
-      const remaining = queues.get(storeId)?.length || 0;
-      const pageCount = currentPageCounts.get(storeId) || 0;
-      return remaining > 0 && storeId !== previousStoreId && pageCount < perStoreLimit;
-    });
-
-    if (candidates.length === 0) {
-      candidates = storeIds.filter((storeId) => {
-        const remaining = queues.get(storeId)?.length || 0;
-        const pageCount = currentPageCounts.get(storeId) || 0;
-        return remaining > 0 && pageCount < perStoreLimit;
-      });
-      if (candidates.length > 0) relaxedAdjacencyUsed = true;
-    }
-
-    if (candidates.length === 0) {
-      candidates = storeIds.filter((storeId) => {
-        const remaining = queues.get(storeId)?.length || 0;
-        return remaining > 0 && storeId !== previousStoreId;
-      });
-      if (candidates.length > 0) relaxedCapUsed = true;
-    }
-
-    if (candidates.length === 0) {
-      candidates = storeIds.filter((storeId) => (queues.get(storeId)?.length || 0) > 0);
-      if (candidates.length > 0) {
-        relaxedAdjacencyUsed = true;
-        relaxedCapUsed = true;
-      }
-    }
-
-    if (candidates.length === 0) break;
-
-    const scoredCandidates = candidates
-      .map((storeId) =>
-        scoreStoreCandidate(
-          storeId,
-          safeDeals.length,
-          position,
-          totalPerStore,
-          placedPerStore,
-          queues,
-          storePriority,
-        ),
-      )
-      .sort((a, b) => {
-        if (b.deficit !== a.deficit) return b.deficit - a.deficit;
-        if (b.remaining !== a.remaining) return b.remaining - a.remaining;
-        return a.priority - b.priority;
-      });
-
-    const selectedStoreId = scoredCandidates[0]?.storeId;
-
-    const selectedDeal = selectedStoreId ? queues.get(selectedStoreId)?.shift() : null;
-    if (!selectedDeal) break;
-
-    ordered.push(selectedDeal);
-    placedPerStore.set(selectedStoreId, (placedPerStore.get(selectedStoreId) || 0) + 1);
-    currentPageCounts.set(
-      selectedStoreId,
-      (currentPageCounts.get(selectedStoreId) || 0) + 1,
-    );
-  }
-
-  const orderedPages = [];
-  for (let index = 0; index < ordered.length; index += pageSize) {
-    orderedPages.push(ordered.slice(index, index + pageSize));
-  }
-
-  return {
-    pages: orderedPages,
-    enforcePageCap,
-    relaxedAdjacencyUsed,
-    relaxedCapUsed,
-    maxPerStore,
-    uniqueStoreCount: storeIds.length,
-  };
-}
-
 function paginateSequential(deals, pageSize, pageNum) {
   const safeDeals = Array.isArray(deals) ? deals.filter(Boolean) : [];
   const totalPages = Math.max(1, Math.ceil(safeDeals.length / pageSize));
@@ -332,6 +160,14 @@ const ACTIVE_DEALS_SQL = `
     AND lower(d.store_id) NOT IN (${EXCLUDED_STORE_IDS_SQL})
     AND ${DISPLAYABLE_DISCOUNT_SQL}
 `;
+const FAST_CURRENT_DEALS_WHERE_SQL = `
+  d.is_active = 1
+  AND d.display_date = ?
+  AND d.display_order IS NOT NULL
+  AND lower(coalesce(d.availability, '')) = 'in_stock'
+  AND lower(d.store_id) NOT IN (${EXCLUDED_STORE_IDS_SQL})
+  AND ${DISPLAYABLE_DISCOUNT_SQL}
+`;
 
 router.get("/", async (req, res, next) => {
   const startedAt = Date.now();
@@ -383,6 +219,84 @@ router.get("/", async (req, res, next) => {
       return;
     }
 
+    const filterCategory = String(req.query.category || "").trim();
+    const minDiscount = parseFloat(req.query.min_discount || "0") || 0;
+    const priceMin = parseFloat(req.query.price_min || "0") || 0;
+    const priceMax = parseFloat(req.query.price_max || "0") || 0;
+    const inStock = req.query.in_stock === "1";
+    const hideExpired = req.query.hide_expired === "1";
+    const sort = String(req.query.sort || "").trim();
+    const usesExplicitOrdering =
+      sort === "discount" || sort === "price_per_kg" || sort === "price";
+    const canUseFastPath = Boolean(
+      !focusDealId &&
+      !searchQuery &&
+      !filterStore &&
+      !filterCategory &&
+      minDiscount <= 0 &&
+      priceMin <= 0 &&
+      priceMax <= 0 &&
+      inStock &&
+      !hideExpired &&
+      !usesExplicitOrdering,
+    );
+
+    if (canUseFastPath) {
+      const offset = Math.max(0, (pageNum - 1) * limitNum);
+      const [countRow, rows] = await Promise.all([
+        db
+          .prepare(
+            `SELECT COUNT(*) AS total
+             FROM deals d
+             WHERE ${FAST_CURRENT_DEALS_WHERE_SQL}`,
+          )
+          .get(crawlDate),
+        db
+          .prepare(
+            `${BASE_DEALS_SQL}
+             WHERE ${FAST_CURRENT_DEALS_WHERE_SQL}
+             ORDER BY d.display_order ASC
+             LIMIT ?
+             OFFSET ?`,
+          )
+          .all(crawlDate, limitNum, offset),
+      ]);
+
+      const total = Number(countRow?.total || 0);
+      if (total > 0) {
+        const totalPages = Math.max(1, Math.ceil(total / limitNum));
+        const data = rows.map(serializeDeal);
+
+        res.set(
+          "Cache-Control",
+          "public, s-maxage=300, stale-while-revalidate=3600",
+        );
+
+        res.json({
+          data,
+          pagination: {
+            page: pageNum,
+            limit: limitNum,
+            total,
+            total_pages: totalPages,
+          },
+          meta: {
+            sort: "random",
+            date: crawlDate,
+            fast_path: true,
+            store_diversity: {
+              no_adjacent_same_store: true,
+              max_per_store: Math.max(1, Math.floor(limitNum * 0.2)),
+              cap_enforced: true,
+              unique_store_count: new Set(data.map((deal) => getDealStoreId(deal) || "__unknown__")).size,
+              disabled_for_explicit_sort: false,
+            },
+          },
+        });
+        return;
+      }
+    }
+
     // Load + shuffle active deals — cached per latest completed crawl.
     let allDeals = getMemCache(cacheKey);
     if (!allDeals) {
@@ -390,13 +304,6 @@ router.get("/", async (req, res, next) => {
       allDeals = seededShuffle(rows.map(serializeDeal), dateSeed(cacheKey));
       if (allDeals.length > 0) setMemCache(cacheKey, allDeals);
     }
-
-    const filterCategory = String(req.query.category || "").trim();
-    const minDiscount = parseFloat(req.query.min_discount || "0") || 0;
-    const priceMin = parseFloat(req.query.price_min || "0") || 0;
-    const priceMax = parseFloat(req.query.price_max || "0") || 0;
-    const inStock = req.query.in_stock === "1";
-    const hideExpired = req.query.hide_expired === "1";
 
     // Apply filters (all gated in frontend, server supports freely)
     let filtered = allDeals;
@@ -427,11 +334,6 @@ router.get("/", async (req, res, next) => {
       const thisMonth = new Date().toISOString().slice(0, 7);
       filtered = filtered.filter((d) => !d.best_before || d.best_before >= thisMonth);
     }
-
-    // Sort override — gated in the frontend, server supports freely.
-    const sort = String(req.query.sort || "").trim();
-    const usesExplicitOrdering =
-      sort === "discount" || sort === "price_per_kg" || sort === "price";
 
     if (sort === "discount") {
       filtered = [...filtered].sort(

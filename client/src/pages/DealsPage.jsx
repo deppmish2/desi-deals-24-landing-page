@@ -6,6 +6,10 @@ import {
   addBookmark, fetchBookmarks, fetchDeals, fetchOAuthAuthUrl,
   getAuthSession, logoutUser, removeBookmark,
 } from "../utils/api";
+import {
+  buildDealsSearchParams,
+  readDealsViewState,
+} from "../utils/dealsViewState.mjs";
 import { buildDealPageUrl, buildWhatsAppDealShareUrl } from "../utils/share";
 
 const POST_AUTH_REDIRECT_STORAGE_KEY = "dd24_post_auth_redirect";
@@ -211,43 +215,6 @@ function resolveUrl(deal, url) {
   if (/^https?:\/\//i.test(raw)) return raw;
   const storeBase = String(deal?.store?.url || "").replace(/\/+$/, "");
   return storeBase ? `${storeBase}${raw.startsWith("/") ? "" : "/"}${raw}` : raw;
-}
-
-function parsePageParam(value) {
-  const parsed = parseInt(String(value || "1"), 10);
-  return Number.isFinite(parsed) && parsed > 0 ? parsed : 1;
-}
-
-function readDealsViewState(searchParams) {
-  return {
-    searchQuery: String(searchParams.get("q") || "").trim(),
-    sortValue: String(searchParams.get("sort") || "").trim(),
-    page: parsePageParam(searchParams.get("page")),
-    filterStore: String(searchParams.get("store") || "").trim(),
-    filterCategory: String(searchParams.get("category") || "").trim(),
-    filterMinDiscount: String(searchParams.get("min_discount") || "").trim(),
-    filterPriceMin: String(searchParams.get("price_min") || "").trim(),
-    filterPriceMax: String(searchParams.get("price_max") || "").trim(),
-    filterHideExpired: searchParams.get("hide_expired") === "1",
-  };
-}
-
-function buildDealsSearchParams(searchParams, nextState, routeDealId) {
-  const nextParams = new URLSearchParams();
-  const highlightedDeal = !routeDealId ? String(searchParams.get("deal") || "").trim() : "";
-
-  if (highlightedDeal) nextParams.set("deal", highlightedDeal);
-  if (nextState.searchQuery) nextParams.set("q", nextState.searchQuery);
-  if (nextState.sortValue) nextParams.set("sort", nextState.sortValue);
-  if (nextState.page > 1) nextParams.set("page", String(nextState.page));
-  if (nextState.filterStore) nextParams.set("store", nextState.filterStore);
-  if (nextState.filterCategory) nextParams.set("category", nextState.filterCategory);
-  if (nextState.filterMinDiscount) nextParams.set("min_discount", nextState.filterMinDiscount);
-  if (nextState.filterPriceMin) nextParams.set("price_min", nextState.filterPriceMin);
-  if (nextState.filterPriceMax) nextParams.set("price_max", nextState.filterPriceMax);
-  if (nextState.filterHideExpired) nextParams.set("hide_expired", "1");
-
-  return nextParams;
 }
 
 // ── Deal card ─────────────────────────────────────────────────────────────────
@@ -836,12 +803,6 @@ export default function DealsPage() {
     filterHideExpired,
   } = viewState;
 
-  useEffect(() => {
-    fetchDeals({ limit: 1, in_stock: "1" })
-      .then((res) => { setTotalCount(res.pagination?.total ?? null); })
-      .catch(() => {});
-  }, []);
-
   const [session, setSession] = useState(() => getAuthSession());
   const isLoggedIn = Boolean(session?.accessToken);
 
@@ -1221,6 +1182,13 @@ export default function DealsPage() {
       activeChips.length ||
       (filterHideExpired && isLoggedIn),
   );
+
+  useEffect(() => {
+    if (hasActiveState || loading || pagination?.total == null) return;
+    setTotalCount((current) =>
+      current === pagination.total ? current : pagination.total,
+    );
+  }, [hasActiveState, loading, pagination?.total]);
 
   return (
     <div className="min-h-screen bg-[radial-gradient(circle_at_top,_#ffffff_0%,_#f8fbff_32%,_#f3f6fb_100%)]">

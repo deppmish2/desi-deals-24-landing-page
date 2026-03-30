@@ -11,6 +11,7 @@
     "fixture:er": "node scripts/generate-er-fixture.js",
     "build:client": "npm --prefix client run build",
     "build": "npm run build:client",
+    "test:regression": "node --test tests/regression/*.test.mjs",
     "test:er-accuracy": "node scripts/entity-resolution-accuracy.js",
     "perf:smoke": "node scripts/perf-smoke.js",
     "test:integration": "node --test tests/integration/*.test.js",

@@ -37,6 +37,8 @@ CREATE TABLE IF NOT EXISTS deals (
   availability      TEXT DEFAULT 'unknown',
   bulk_pricing      TEXT,
   best_before       TEXT,
+  display_date      TEXT,
+  display_order     INTEGER,
   is_active         INTEGER DEFAULT 1,
   created_at        DATETIME DEFAULT CURRENT_TIMESTAMP
 );
@@ -80,6 +82,9 @@ CREATE TABLE IF NOT EXISTS deal_price_history (
   created_at        DATETIME DEFAULT CURRENT_TIMESTAMP,
   UNIQUE (crawl_date, store_id, product_url)
 );
+
+CREATE INDEX IF NOT EXISTS idx_deals_display_date_order
+  ON deals(display_date, display_order);
 
 -- Generic scheduled/ops job ledger
 CREATE TABLE IF NOT EXISTS job_runs (

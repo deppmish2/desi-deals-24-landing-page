@@ -156,6 +156,8 @@ const ready = (async () => {
   const migrations = [
     "ALTER TABLE deals ADD COLUMN best_before TEXT",
     "ALTER TABLE deals ADD COLUMN canonical_id TEXT",
+    "ALTER TABLE deals ADD COLUMN display_date TEXT",
+    "ALTER TABLE deals ADD COLUMN display_order INTEGER",
     "ALTER TABLE stores ADD COLUMN free_shipping_min REAL",
     "ALTER TABLE stores ADD COLUMN address TEXT",
     "ALTER TABLE stores ADD COLUMN contact_phone TEXT",
@@ -267,6 +269,8 @@ const ready = (async () => {
        ON deal_price_history(store_id, crawl_date)`,
     `CREATE INDEX IF NOT EXISTS idx_deal_price_history_product_url
        ON deal_price_history(product_url)`,
+    `CREATE INDEX IF NOT EXISTS idx_deals_display_date_order
+       ON deals(display_date, display_order)`,
   ];
 
   for (const sql of bootstrapStatements) {
