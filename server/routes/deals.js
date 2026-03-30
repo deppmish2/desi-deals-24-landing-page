@@ -32,6 +32,8 @@ const DISPLAYABLE_DISCOUNT_SQL = `
 // In-memory cache keyed by latest completed crawl — refreshes after 5 min.
 const MEM_CACHE_TTL_MS = 5 * 60 * 1000;
 const _memCache = new Map(); // cacheKey → { deals, expiresAt }
+const SNAPSHOT_CONTEXT_TTL_MS = 60 * 1000;
+let _snapshotContextCache = null;
 
 function getMemCache(key) {
   const entry = _memCache.get(key);
@@ -47,6 +49,13 @@ function setMemCache(key, deals) {
 }
 
 async function getCurrentDealsSnapshotContext() {
+  if (
+    _snapshotContextCache &&
+    Date.now() < _snapshotContextCache.expiresAt
+  ) {
+    return _snapshotContextCache.value;
+  }
+
   const latestCrawl = await db
     .prepare(
       `SELECT id, crawl_date, finished_at
@@ -63,10 +72,15 @@ async function getCurrentDealsSnapshotContext() {
       ? formatBerlinDateKey(new Date(latestCrawl.finished_at))
       : formatBerlinDateKey(new Date()));
 
-  return {
+  const snapshotContext = {
     cacheKey: latestCrawl?.id ? `crawl:${latestCrawl.id}` : `date:${crawlDate}`,
     crawlDate,
   };
+  _snapshotContextCache = {
+    value: snapshotContext,
+    expiresAt: Date.now() + SNAPSHOT_CONTEXT_TTL_MS,
+  };
+  return snapshotContext;
 }
 
 // Levenshtein distance — used for fuzzy token matching.
@@ -243,26 +257,38 @@ router.get("/", async (req, res, next) => {
 
     if (canUseFastPath) {
       const offset = Math.max(0, (pageNum - 1) * limitNum);
-      const [countRow, rows] = await Promise.all([
-        db
-          .prepare(
-            `SELECT COUNT(*) AS total
-             FROM deals d
-             WHERE ${FAST_CURRENT_DEALS_WHERE_SQL}`,
-          )
-          .get(crawlDate),
-        db
-          .prepare(
-            `${BASE_DEALS_SQL}
-             WHERE ${FAST_CURRENT_DEALS_WHERE_SQL}
-             ORDER BY d.display_order ASC
-             LIMIT ?
-             OFFSET ?`,
-          )
-          .all(crawlDate, limitNum, offset),
-      ]);
+      const rows = await db
+        .prepare(
+          `SELECT
+             d.id, d.canonical_id, d.crawl_timestamp, d.store_id,
+             s.name AS store_name, s.url AS store_url,
+             d.product_name, d.product_category, d.product_url,
+             d.image_url, d.weight_raw, d.weight_value, d.weight_unit,
+             d.sale_price, d.original_price, d.discount_percent,
+             d.price_per_kg, d.currency, d.availability, d.bulk_pricing, d.best_before,
+             COUNT(*) OVER() AS total_count
+           FROM deals d
+           JOIN stores s ON s.id = d.store_id
+           WHERE ${FAST_CURRENT_DEALS_WHERE_SQL}
+           ORDER BY d.display_order ASC
+           LIMIT ?
+           OFFSET ?`,
+        )
+        .all(crawlDate, limitNum, offset);
 
-      const total = Number(countRow?.total || 0);
+      const total = rows.length
+        ? Number(rows[0]?.total_count || 0)
+        : Number(
+          (
+            await db
+              .prepare(
+                `SELECT COUNT(*) AS total
+                 FROM deals d
+                 WHERE ${FAST_CURRENT_DEALS_WHERE_SQL}`,
+              )
+              .get(crawlDate)
+          )?.total || 0,
+        );
       if (total > 0) {
         const totalPages = Math.max(1, Math.ceil(total / limitNum));
         const data = rows.map(serializeDeal);

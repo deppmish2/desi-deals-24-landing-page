@@ -21,7 +21,6 @@ const {
   smtpConfigured,
 } = require("./services/email-auth");
 const { getDisplayMemberCount } = require("./services/member-count");
-const { startScheduler } = require("../crawler/scheduler");
 const isServerless = Boolean(process.env.VERCEL);
 
 const app = express();
@@ -439,6 +438,7 @@ if (require.main === module) {
         "[scheduler] Skipped local scheduler in serverless mode (GitHub Actions handles the 07:00 Europe/Berlin crawl).",
       );
     } else {
+      const { startScheduler } = require("../crawler/scheduler");
       startScheduler(db);
     }
   });

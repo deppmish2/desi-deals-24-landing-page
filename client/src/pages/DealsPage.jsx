@@ -994,8 +994,39 @@ export default function DealsPage() {
 
   // Load bookmarks
   useEffect(() => {
-    syncBookmarks();
-  }, [syncBookmarks]);
+    if (!isLoggedIn) {
+      setBookmarkedIds(new Set());
+      return undefined;
+    }
+
+    let cancelled = false;
+    let idleId = null;
+    let timeoutId = null;
+
+    const runSync = () => {
+      if (!cancelled) syncBookmarks();
+    };
+
+    if (typeof window !== "undefined" && "requestIdleCallback" in window) {
+      idleId = window.requestIdleCallback(runSync, { timeout: 1500 });
+    } else {
+      timeoutId = window.setTimeout(runSync, 900);
+    }
+
+    return () => {
+      cancelled = true;
+      if (
+        idleId !== null &&
+        typeof window !== "undefined" &&
+        "cancelIdleCallback" in window
+      ) {
+        window.cancelIdleCallback(idleId);
+      }
+      if (timeoutId !== null) {
+        window.clearTimeout(timeoutId);
+      }
+    };
+  }, [isLoggedIn, syncBookmarks]);
 
   const [storeNames, setStoreNames] = useState([]);
   useEffect(() => {

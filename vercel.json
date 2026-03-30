@@ -11,7 +11,7 @@
   "functions": {
     "api/server.js": {
       "maxDuration": 300,
-      "includeFiles": "server/**/*,crawler/**/*"
+      "includeFiles": "server/**/*"
     }
   }
 }
