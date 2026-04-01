@@ -12,18 +12,45 @@ router.get("/stats", async (req, res) => {
   try {
     const [
       totalUsersRow,
-      totalInvitesRow,
-      unlockedRow,
+      newUsers30dRow,
+      searchesTodayRow,
+      searches30dRow,
+      uniqueSearchers30dRow,
       signupsByDay,
-      invitesByDay,
-      topInviters,
-      recentSignups,
+      searchesByDay,
+      topSearchTerms,
+      recentSearches,
+      recentUsers,
     ] = await Promise.all([
       db.prepare("SELECT COUNT(*) as count FROM users").get(),
-      db.prepare("SELECT COUNT(*) as count FROM waitlist_referrals").get(),
       db
         .prepare(
-          "SELECT COUNT(*) as count FROM users WHERE waitlist_unlocked_at IS NOT NULL",
+          "SELECT COUNT(*) as count FROM users WHERE created_at >= datetime('now', '-30 days')",
+        )
+        .get(),
+      db
+        .prepare(
+          "SELECT COUNT(*) as count FROM search_queries WHERE created_at >= datetime('now', 'start of day')",
+        )
+        .get(),
+      db
+        .prepare(
+          "SELECT COUNT(*) as count FROM search_queries WHERE created_at >= datetime('now', '-30 days')",
+        )
+        .get(),
+      db
+        .prepare(
+          `
+        SELECT COUNT(DISTINCT
+          CASE
+            WHEN user_email IS NOT NULL AND trim(user_email) <> '' THEN lower(trim(user_email))
+            WHEN session_id IS NOT NULL AND trim(session_id) <> '' THEN 'anon:' || trim(session_id)
+            ELSE NULL
+          END
+        ) as count
+        FROM search_queries
+        WHERE created_at >= datetime('now', '-30 days')
+      `,
         )
         .get(),
       db
@@ -40,10 +67,10 @@ router.get("/stats", async (req, res) => {
       db
         .prepare(
           `
-        SELECT date(claimed_at) as day, COUNT(*) as count
-        FROM waitlist_referrals
-        WHERE claimed_at >= date('now', '-30 days')
-        GROUP BY date(claimed_at)
+        SELECT date(created_at) as day, COUNT(*) as count
+        FROM search_queries
+        WHERE created_at >= date('now', '-30 days')
+        GROUP BY date(created_at)
         ORDER BY day ASC
       `,
         )
@@ -51,70 +78,84 @@ router.get("/stats", async (req, res) => {
       db
         .prepare(
           `
-        SELECT u.email, u.first_name, u.name, COUNT(wr.id) as invite_count
-        FROM users u
-        JOIN waitlist_referrals wr ON wr.inviter_user_id = u.id
-        GROUP BY u.id
-        ORDER BY invite_count DESC
-        LIMIT 10
+        SELECT
+          normalized_query,
+          MIN(query) as display_query,
+          COUNT(*) as search_count,
+          COUNT(DISTINCT
+            CASE
+              WHEN user_email IS NOT NULL AND trim(user_email) <> '' THEN lower(trim(user_email))
+              WHEN session_id IS NOT NULL AND trim(session_id) <> '' THEN 'anon:' || trim(session_id)
+              ELSE NULL
+            END
+          ) as unique_searchers
+        FROM search_queries
+        WHERE created_at >= datetime('now', '-30 days')
+        GROUP BY normalized_query
+        ORDER BY search_count DESC, normalized_query ASC
+        LIMIT 15
       `,
         )
         .all(),
       db
         .prepare(
           `
-        SELECT u.email, u.first_name, u.name, u.created_at, u.waitlist_unlocked_at,
-               inv.email      AS inviter_email,
-               inv.first_name AS inviter_first_name,
-               inv.name       AS inviter_name
-        FROM users u
-        LEFT JOIN waitlist_referrals wr ON wr.invited_user_id = u.id
-        LEFT JOIN users inv             ON inv.id = wr.inviter_user_id
-        ORDER BY u.created_at DESC
+        SELECT query, normalized_query, user_email, session_id, result_count, created_at
+        FROM search_queries
+        ORDER BY created_at DESC
+        LIMIT 30
+      `,
+        )
+        .all(),
+      db
+        .prepare(
+          `
+        SELECT email, first_name, name, created_at, last_login_at, email_verified_at
+        FROM users
+        ORDER BY created_at DESC
         LIMIT 20
       `,
         )
         .all(),
     ]);
 
-    const totalUsers = Number(totalUsersRow?.count ?? 0);
-    const totalInvites = Number(totalInvitesRow?.count ?? 0);
-    const unlockedUsers = Number(unlockedRow?.count ?? 0);
-
     res.json({
       kpis: {
-        total_users: totalUsers,
-        total_invites: totalInvites,
-        unlocked_users: unlockedUsers,
-        waiting_users: totalUsers - unlockedUsers,
+        total_users: Number(totalUsersRow?.count ?? 0),
+        new_users_30d: Number(newUsers30dRow?.count ?? 0),
+        searches_today: Number(searchesTodayRow?.count ?? 0),
+        searches_30d: Number(searches30dRow?.count ?? 0),
+        unique_searchers_30d: Number(uniqueSearchers30dRow?.count ?? 0),
       },
       signups_by_day: signupsByDay.map((r) => ({
         day: r.day,
         count: Number(r.count),
       })),
-      invites_by_day: invitesByDay.map((r) => ({
+      searches_by_day: searchesByDay.map((r) => ({
         day: r.day,
         count: Number(r.count),
       })),
-      top_inviters: topInviters.map((r) => ({
-        email: r.email,
-        name: r.first_name || r.name || r.email.split("@")[0],
-        invite_count: Number(r.invite_count),
+      top_search_terms: topSearchTerms.map((r) => ({
+        query: r.display_query || r.normalized_query,
+        normalized_query: r.normalized_query,
+        search_count: Number(r.search_count),
+        unique_searchers: Number(r.unique_searchers),
       })),
-      recent_signups: recentSignups.map((r) => ({
+      recent_searches: recentSearches.map((r) => ({
+        query: r.query,
+        normalized_query: r.normalized_query,
+        user_email: r.user_email || null,
+        session_id: r.session_id || null,
+        result_count:
+          r.result_count == null ? null : Number(r.result_count),
+        created_at: r.created_at,
+      })),
+      recent_users: recentUsers.map((r) => ({
         email: r.email,
         name: r.first_name || r.name || null,
         created_at: r.created_at,
-        unlocked: !!r.waitlist_unlocked_at,
-        invited_by: r.inviter_email
-          ? {
-              email: r.inviter_email,
-              name:
-                r.inviter_first_name ||
-                r.inviter_name ||
-                r.inviter_email.split("@")[0],
-            }
-          : null,
+        last_login_at: r.last_login_at || null,
+        email_verified: !!r.email_verified_at,
       })),
     });
   } catch (err) {

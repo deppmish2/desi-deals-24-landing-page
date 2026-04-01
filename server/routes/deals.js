@@ -11,6 +11,8 @@ const {
 } = require("../services/deal-order");
 const { trackEvent } = require("../services/event-tracker");
 const { formatBerlinDateKey } = require("../services/berlin-time");
+const { trackSearchQuery } = require("../services/search-tracker");
+const { verifyJwt } = require("../utils/jwt");
 
 const router = express.Router();
 const EXCLUDED_STORE_IDS = ["dookan"];
@@ -183,6 +185,53 @@ const FAST_CURRENT_DEALS_WHERE_SQL = `
   AND ${DISPLAYABLE_DISCOUNT_SQL}
 `;
 
+function resolveAccessSecret() {
+  return (
+    process.env.JWT_SECRET ||
+    process.env.ADMIN_SECRET ||
+    "changeme-in-production"
+  );
+}
+
+async function getOptionalRequestIdentity(req) {
+  const sessionId = String(req.headers["x-dd24-session-id"] || "")
+    .trim()
+    .slice(0, 128) || null;
+  const auth = String(req.headers.authorization || "");
+  const token = auth.startsWith("Bearer ") ? auth.slice(7) : null;
+
+  if (!token) {
+    return { userId: null, userEmail: null, sessionId };
+  }
+
+  const result = verifyJwt(token, resolveAccessSecret());
+  if (!result.ok || result.payload?.type !== "access") {
+    return { userId: null, userEmail: null, sessionId };
+  }
+
+  const userId = result.payload?.sub || null;
+  const userEmailFromToken =
+    result.payload?.email == null
+      ? null
+      : String(result.payload.email).trim().toLowerCase() || null;
+
+  if (userEmailFromToken || !userId) {
+    return { userId, userEmail: userEmailFromToken, sessionId };
+  }
+
+  const userRow = await db
+    .prepare("SELECT email FROM users WHERE id = ? LIMIT 1")
+    .get(userId);
+  return {
+    userId,
+    userEmail:
+      userRow?.email == null
+        ? null
+        : String(userRow.email).trim().toLowerCase() || null,
+    sessionId,
+  };
+}
+
 router.get("/", async (req, res, next) => {
   const startedAt = Date.now();
 
@@ -192,9 +241,14 @@ router.get("/", async (req, res, next) => {
       1,
       Math.min(100, parseInt(req.query.limit || "24", 10) || 24),
     );
-    const searchQuery = String(req.query.q || "")
+    const rawSearchQuery = String(req.query.q || "").trim().replace(/\s+/g, " ");
+    const searchQuery = rawSearchQuery
       .trim()
       .toLowerCase();
+    const shouldTrackSearch =
+      Boolean(rawSearchQuery) &&
+      pageNum === 1 &&
+      String(req.query.track_search || "").trim() === "1";
     const filterStore = String(req.query.store || "").trim();
     const focusDealId = String(req.query.deal_id || "").trim();
     const { cacheKey, crawlDate } = await getCurrentDealsSnapshotContext();
@@ -230,6 +284,17 @@ router.get("/", async (req, res, next) => {
           focused_deal_id: focusDealId,
         },
       });
+      if (shouldTrackSearch) {
+        const identity = await getOptionalRequestIdentity(req);
+        await trackSearchQuery(db, {
+          query: rawSearchQuery,
+          userId: identity.userId,
+          userEmail: identity.userEmail,
+          sessionId: identity.sessionId,
+          route: req.originalUrl,
+          resultCount: data.length,
+        });
+      }
       return;
     }
 
@@ -439,6 +504,18 @@ router.get("/", async (req, res, next) => {
         },
       },
     });
+
+    if (shouldTrackSearch) {
+      const identity = await getOptionalRequestIdentity(req);
+      await trackSearchQuery(db, {
+        query: rawSearchQuery,
+        userId: identity.userId,
+        userEmail: identity.userEmail,
+        sessionId: identity.sessionId,
+        route: req.originalUrl,
+        resultCount: total,
+      });
+    }
 
     trackEvent(db, "browse.deals", {
       route: req.originalUrl,

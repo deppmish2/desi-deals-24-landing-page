@@ -799,6 +799,7 @@ export default function DealsPage() {
   const [bookmarksPanelOpen, setBookmarksPanelOpen] = useState(false);
   const [toast, setToast] = useState(null);
   const toastTimer = useRef(null);
+  const nextSearchShouldTrackRef = useRef(false);
   const [totalCount, setTotalCount] = useState(null);
   const {
     searchQuery,
@@ -883,6 +884,12 @@ export default function DealsPage() {
   }, [searchQuery]);
 
   useEffect(() => {
+    if (nextSearchShouldTrackRef.current) {
+      nextSearchShouldTrackRef.current = false;
+    }
+  }, [searchQuery]);
+
+  useEffect(() => {
     function onAuthChange() { setSession(getAuthSession()); }
     window.addEventListener("dd24-auth-changed", onAuthChange);
     return () => window.removeEventListener("dd24-auth-changed", onAuthChange);
@@ -957,6 +964,8 @@ export default function DealsPage() {
     limit: highlightDealId ? 1 : 20,
     deal_id: highlightDealId || undefined,
     q: searchQuery || undefined,
+    track_search:
+      nextSearchShouldTrackRef.current && searchQuery ? "1" : undefined,
     sort: sortValue && isLoggedIn ? sortValue : undefined,
     store: filterStore && isLoggedIn ? filterStore : undefined,
     category: filterCategory && isLoggedIn ? filterCategory : undefined,
@@ -1135,7 +1144,9 @@ export default function DealsPage() {
   }
 
   function handleSearch() {
-    updateAppliedState({ searchQuery: searchInput.trim(), page: 1 });
+    const nextQuery = searchInput.trim();
+    nextSearchShouldTrackRef.current = Boolean(nextQuery);
+    updateAppliedState({ searchQuery: nextQuery, page: 1 });
   }
 
   function removeFilterChip(type) {

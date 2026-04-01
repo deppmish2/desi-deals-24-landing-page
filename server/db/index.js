@@ -273,6 +273,25 @@ const ready = (async () => {
        ON deals(display_date, display_order)`,
     `CREATE INDEX IF NOT EXISTS idx_deals_active_display
        ON deals(is_active, display_date, display_order)`,
+    `CREATE TABLE IF NOT EXISTS search_queries (
+      id TEXT PRIMARY KEY,
+      query TEXT NOT NULL,
+      normalized_query TEXT NOT NULL,
+      user_id TEXT REFERENCES users(id) ON DELETE SET NULL,
+      user_email TEXT,
+      session_id TEXT,
+      route TEXT,
+      result_count INTEGER,
+      created_at DATETIME DEFAULT CURRENT_TIMESTAMP
+    )`,
+    `CREATE INDEX IF NOT EXISTS idx_search_queries_created
+       ON search_queries(created_at)`,
+    `CREATE INDEX IF NOT EXISTS idx_search_queries_normalized
+       ON search_queries(normalized_query)`,
+    `CREATE INDEX IF NOT EXISTS idx_search_queries_user_email
+       ON search_queries(user_email)`,
+    `CREATE INDEX IF NOT EXISTS idx_search_queries_session_id
+       ON search_queries(session_id)`,
   ];
 
   for (const sql of bootstrapStatements) {

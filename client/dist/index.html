@@ -39,12 +39,25 @@
     <meta name="twitter:image" content="https://desideals24.com/og-card.png" />
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <!-- Fonts loaded async — display=swap means text renders immediately in fallback font -->
     <link
+      rel="preload"
+      as="style"
       href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;900&display=swap"
-      rel="stylesheet"
+      onload="this.onload=null;this.rel='stylesheet'"
     />
-    <script type="module" crossorigin src="/assets/index-CL1Jqnpt.js"></script>
-    <link rel="stylesheet" crossorigin href="/assets/index-C3WyQ9KM.css">
+    <link
+      rel="preload"
+      as="style"
+      href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap"
+      onload="this.onload=null;this.rel='stylesheet'"
+    />
+    <noscript>
+      <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;900&display=swap" rel="stylesheet" />
+      <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet" />
+    </noscript>
+    <script type="module" crossorigin src="/assets/index-CkWUt1pH.js"></script>
+    <link rel="stylesheet" crossorigin href="/assets/index-DumAXYfC.css">
   </head>
   <body>
     <div id="root">
