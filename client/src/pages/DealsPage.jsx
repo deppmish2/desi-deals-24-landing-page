@@ -1367,83 +1367,152 @@ export default function DealsPage() {
   return (
     <div className="min-h-screen bg-[radial-gradient(circle_at_top,_#ffffff_0%,_#f8fbff_32%,_#f3f6fb_100%)]">
       <div className="sticky top-0 z-50 sm:hidden">
-        <div className="flex min-h-[72px] items-center justify-between gap-3 bg-white px-4 py-3 shadow-[0px_1px_2px_0px_rgba(0,0,0,0.05)]">
-          <Link to="/" className="flex min-w-0 items-center gap-2.5 no-underline" style={{ textDecoration: "none" }}>
-            <img src="/landing/dd24-logo.svg" alt="DesiDeals24" className="w-5 h-6 object-contain" />
-            <div className="min-w-0 text-[16px] font-extrabold leading-none tracking-[-0.05em] text-[#15803d]">
-              DesiDeals24
-            </div>
-          </Link>
-          <div className="flex items-center gap-2">
-            {isLoggedIn ? (
-              <>
-                <Link
-                  to="/saved"
-                  onClick={() =>
-                    trackAnalyticsEvent("saved_deals_open", buildAnalyticsContext())
-                  }
-                  className="relative inline-flex h-10 w-10 items-center justify-center rounded-full border border-slate-200 bg-white text-slate-600 transition-colors hover:bg-slate-50"
-                  style={{ textDecoration: "none" }}
-                  title="Saved deals"
+        <div className="bg-white shadow-[0px_1px_2px_0px_rgba(0,0,0,0.05)]">
+          <div className="flex min-h-[72px] items-center justify-between gap-3 px-4 py-3">
+            <Link to="/" className="flex min-w-0 items-center gap-2.5 no-underline" style={{ textDecoration: "none" }}>
+              <img src="/landing/dd24-logo.svg" alt="DesiDeals24" className="w-5 h-6 object-contain" />
+              <div className="min-w-0 text-[16px] font-extrabold leading-none tracking-[-0.05em] text-[#15803d]">
+                DesiDeals24
+              </div>
+            </Link>
+            <div className="flex items-center gap-2">
+              {isLoggedIn ? (
+                <>
+                  <Link
+                    to="/saved"
+                    onClick={() =>
+                      trackAnalyticsEvent("saved_deals_open", buildAnalyticsContext())
+                    }
+                    className="relative inline-flex h-10 w-10 items-center justify-center rounded-full border border-slate-200 bg-white text-slate-600 transition-colors hover:bg-slate-50"
+                    style={{ textDecoration: "none" }}
+                    title="Saved deals"
+                  >
+                    <CartIcon size={18} color="currentColor" />
+                    {bookmarkedIds.size > 0 && (
+                      <span className="absolute -top-1 -right-1 min-w-[18px] h-[18px] px-1 rounded-full bg-[#9a6500] text-white text-[10px] font-extrabold flex items-center justify-center leading-none">
+                        {bookmarkedIds.size}
+                      </span>
+                    )}
+                  </Link>
+                  <div className="relative">
+                    <button
+                      type="button"
+                      onClick={() => setMobileMenuOpen((v) => !v)}
+                      className="inline-flex items-center justify-center w-10 h-10 rounded-full border border-slate-200 bg-white text-slate-600 transition-colors hover:bg-slate-50"
+                    >
+                      <UserCircleIcon size={20} color="currentColor" />
+                    </button>
+                    {mobileMenuOpen && (
+                      <>
+                        <div className="fixed inset-0 z-40" onClick={() => setMobileMenuOpen(false)} />
+                        <div className="absolute right-0 top-[calc(100%+8px)] z-50 w-44 overflow-hidden rounded-[16px] border border-slate-100 bg-white shadow-xl">
+                          <Link
+                            to="/saved"
+                            onClick={() => setMobileMenuOpen(false)}
+                            className="flex items-center gap-3 px-4 py-3 text-[14px] font-semibold text-slate-700 hover:bg-slate-50 transition-colors no-underline"
+                            style={{ textDecoration: "none" }}
+                          >
+                            <CartIcon size={16} color="currentColor" />
+                            Saved deals
+                          </Link>
+                          <div className="h-px bg-slate-100 mx-3" />
+                          <button
+                            type="button"
+                            onClick={() => { setMobileMenuOpen(false); handleLogout(); }}
+                            className="flex w-full items-center gap-3 px-4 py-3 text-[14px] font-semibold text-slate-700 hover:bg-slate-50 transition-colors"
+                          >
+                            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                              <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/>
+                            </svg>
+                            Logout
+                          </button>
+                        </div>
+                      </>
+                    )}
+                  </div>
+                </>
+              ) : (
+                <button
+                  type="button"
+                  onClick={() => {
+                    trackAnalyticsEvent("sign_in_click", buildAnalyticsContext({
+                      source: "mobile_header",
+                    }));
+                    setLoginModal({});
+                  }}
+                  className="inline-flex h-10 w-10 items-center justify-center rounded-full border border-[#d8eadb] bg-[#eff8f1] text-[13px] font-bold text-[#17874a] transition-colors hover:bg-[#e7f5ea]"
                 >
-                  <CartIcon size={18} color="currentColor" />
-                  {bookmarkedIds.size > 0 && (
-                    <span className="absolute -top-1 -right-1 min-w-[18px] h-[18px] px-1 rounded-full bg-[#9a6500] text-white text-[10px] font-extrabold flex items-center justify-center leading-none">
-                      {bookmarkedIds.size}
-                    </span>
-                  )}
-                </Link>
-                <div className="relative">
+                  <UserCircleIcon size={20} color="#475569" />
+                </button>
+              )}
+            </div>
+          </div>
+
+          <div className="border-t border-[#edf2fb] bg-[#edf3ff]/95 px-4 py-3 shadow-[0_10px_22px_rgba(15,23,42,0.08)] backdrop-blur">
+            <form
+              onSubmit={(e) => {
+                e.preventDefault();
+                handleSearch();
+              }}
+              className="flex flex-col gap-3"
+            >
+              <div className="flex gap-3 items-center">
+                <div className="flex-1 flex items-center gap-3 rounded-[24px] border border-white/80 bg-white px-4 py-3.5 shadow-sm">
+                  <SearchIcon size={18} color="#94a3b8" />
+                  <input
+                    type="search"
+                    value={searchInput}
+                    onChange={(e) => setSearchInput(e.target.value)}
+                    placeholder="Search for ghee, rice, spices..."
+                    className="min-w-0 flex-1 bg-transparent text-[16px] font-medium text-slate-700 placeholder:text-[#94a3b8] outline-none"
+                  />
+                </div>
+
+                {!hasActiveState && (
                   <button
                     type="button"
-                    onClick={() => setMobileMenuOpen((v) => !v)}
-                    className="inline-flex items-center justify-center w-10 h-10 rounded-full border border-slate-200 bg-white text-slate-600 transition-colors hover:bg-slate-50"
+                    onClick={openFilters}
+                    className="relative inline-flex h-[44px] w-[44px] shrink-0 items-center justify-center rounded-[12px] border border-white/80 bg-white text-slate-600 shadow-sm transition-colors hover:bg-slate-50"
+                    aria-label="Open filters"
                   >
-                    <UserCircleIcon size={20} color="currentColor" />
+                    <FilterIcon size={18} color="currentColor" />
+                    {filterCount > 0 && (
+                      <span className="absolute -top-1 -right-1 min-w-[22px] h-[22px] px-1 rounded-full bg-[#9a6500] text-white text-[11px] font-extrabold flex items-center justify-center leading-none">
+                        {filterCount}
+                      </span>
+                    )}
                   </button>
-                  {mobileMenuOpen && (
-                    <>
-                      <div className="fixed inset-0 z-40" onClick={() => setMobileMenuOpen(false)} />
-                      <div className="absolute right-0 top-[calc(100%+8px)] z-50 w-44 overflow-hidden rounded-[16px] border border-slate-100 bg-white shadow-xl">
-                        <Link
-                          to="/saved"
-                          onClick={() => setMobileMenuOpen(false)}
-                          className="flex items-center gap-3 px-4 py-3 text-[14px] font-semibold text-slate-700 hover:bg-slate-50 transition-colors no-underline"
-                          style={{ textDecoration: "none" }}
-                        >
-                          <CartIcon size={16} color="currentColor" />
-                          Saved deals
-                        </Link>
-                        <div className="h-px bg-slate-100 mx-3" />
-                        <button
-                          type="button"
-                          onClick={() => { setMobileMenuOpen(false); handleLogout(); }}
-                          className="flex w-full items-center gap-3 px-4 py-3 text-[14px] font-semibold text-slate-700 hover:bg-slate-50 transition-colors"
-                        >
-                          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                            <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/>
-                          </svg>
-                          Logout
-                        </button>
-                      </div>
-                    </>
-                  )}
+                )}
+              </div>
+
+              {hasActiveState && (
+                <div className="flex items-center gap-3">
+                  <button
+                    type="button"
+                    onClick={openFilters}
+                    className="relative inline-flex h-[44px] w-[44px] shrink-0 items-center justify-center rounded-[12px] border border-white/80 bg-white text-slate-600 shadow-sm transition-colors hover:bg-slate-50"
+                    aria-label="Open filters"
+                  >
+                    <FilterIcon size={18} color="currentColor" />
+                    {filterCount > 0 && (
+                      <span className="absolute -top-1 -right-1 min-w-[22px] h-[22px] px-1 rounded-full bg-[#9a6500] text-white text-[11px] font-extrabold flex items-center justify-center leading-none">
+                        {filterCount}
+                      </span>
+                    )}
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => setConfirmClearOpen(true)}
+                    className="flex h-[44px] flex-1 items-center rounded-[12px] border border-[#dae6fb] bg-[#e6efff] px-4 text-left shadow-sm transition-colors hover:bg-[#edf3ff]"
+                  >
+                    <span className="text-[14px] font-extrabold text-[#17874a]">Remove filters</span>
+                    <span className="ml-2 text-[14px] text-slate-400">
+                      {totalCount != null ? `to see all ${totalCount.toLocaleString()} items` : "to see all items"}
+                    </span>
+                  </button>
                 </div>
-              </>
-            ) : (
-              <button
-                type="button"
-                onClick={() => {
-                  trackAnalyticsEvent("sign_in_click", buildAnalyticsContext({
-                    source: "mobile_header",
-                  }));
-                  setLoginModal({});
-                }}
-                className="inline-flex h-10 w-10 items-center justify-center rounded-full border border-[#d8eadb] bg-[#eff8f1] text-[13px] font-bold text-[#17874a] transition-colors hover:bg-[#e7f5ea]"
-              >
-                <UserCircleIcon size={20} color="#475569" />
-              </button>
-            )}
+              )}
+            </form>
           </div>
         </div>
       </div>
@@ -1541,7 +1610,7 @@ export default function DealsPage() {
               }}
               className="flex flex-col gap-4"
             >
-              <div className="sticky top-[72px] z-40 -mx-4 border-b border-white/70 bg-[#edf3ff]/95 px-4 py-3 shadow-[0_10px_22px_rgba(15,23,42,0.08)] backdrop-blur sm:static sm:z-auto sm:mx-0 sm:border-b-0 sm:bg-transparent sm:px-0 sm:py-0 sm:shadow-none">
+              <div className="hidden sm:block">
                 <div className="flex gap-3 items-center">
                   <div className="flex-1 flex items-center gap-3 rounded-[24px] border border-white/80 bg-white px-4 sm:px-5 py-3.5 shadow-sm">
                     <SearchIcon size={18} color="#94a3b8" />
@@ -1560,24 +1629,6 @@ export default function DealsPage() {
                     </button>
                   </div>
 
-                  {/* Mobile: filter inline when no filters active */}
-                  {!hasActiveState && (
-                    <button
-                      type="button"
-                      onClick={openFilters}
-                      className="sm:hidden relative inline-flex h-[44px] w-[44px] shrink-0 items-center justify-center rounded-[12px] border border-white/80 bg-white text-slate-600 shadow-sm transition-colors hover:bg-slate-50"
-                      aria-label="Open filters"
-                    >
-                      <FilterIcon size={18} color="currentColor" />
-                      {filterCount > 0 && (
-                        <span className="absolute -top-1 -right-1 min-w-[22px] h-[22px] px-1 rounded-full bg-[#9a6500] text-white text-[11px] font-extrabold flex items-center justify-center leading-none">
-                          {filterCount}
-                        </span>
-                      )}
-                    </button>
-                  )}
-
-                  {/* Desktop filter button */}
                   <button
                     type="button"
                     onClick={openFilters}
@@ -1593,35 +1644,6 @@ export default function DealsPage() {
                   </button>
 
                 </div>
-
-                {/* Mobile: filter + remove filters row — only when filters active */}
-                {hasActiveState && (
-                  <div className="sm:hidden mt-3 flex items-center gap-3">
-                    <button
-                      type="button"
-                      onClick={openFilters}
-                      className="relative inline-flex h-[44px] w-[44px] shrink-0 items-center justify-center rounded-[12px] border border-white/80 bg-white text-slate-600 shadow-sm transition-colors hover:bg-slate-50"
-                      aria-label="Open filters"
-                    >
-                      <FilterIcon size={18} color="currentColor" />
-                      {filterCount > 0 && (
-                        <span className="absolute -top-1 -right-1 min-w-[22px] h-[22px] px-1 rounded-full bg-[#9a6500] text-white text-[11px] font-extrabold flex items-center justify-center leading-none">
-                          {filterCount}
-                        </span>
-                      )}
-                    </button>
-                    <button
-                      type="button"
-                      onClick={() => setConfirmClearOpen(true)}
-                      className="flex h-[44px] flex-1 items-center rounded-[12px] border border-[#dae6fb] bg-[#e6efff] px-4 text-left shadow-sm transition-colors hover:bg-[#edf3ff]"
-                    >
-                      <span className="text-[14px] font-extrabold text-[#17874a]">Remove filters</span>
-                      <span className="ml-2 text-[14px] text-slate-400">
-                        {totalCount != null ? `to see all ${totalCount.toLocaleString()} items` : "to see all items"}
-                      </span>
-                    </button>
-                  </div>
-                )}
               </div>
 
               <div className="flex flex-col gap-4">
