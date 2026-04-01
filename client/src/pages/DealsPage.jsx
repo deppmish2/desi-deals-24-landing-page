@@ -1370,16 +1370,8 @@ export default function DealsPage() {
         <div className="flex min-h-[72px] items-center justify-between gap-3 bg-white px-4 py-3 shadow-[0px_1px_2px_0px_rgba(0,0,0,0.05)]">
           <Link to="/" className="flex min-w-0 items-center gap-2.5 no-underline" style={{ textDecoration: "none" }}>
             <img src="/landing/dd24-logo.svg" alt="DesiDeals24" className="w-5 h-6 object-contain" />
-            <div className="min-w-0">
-              <div className="text-[16px] font-extrabold leading-none tracking-[-0.05em] text-[#15803d]">
-                DesiDeals24
-              </div>
-              <div
-                className="mt-1 max-w-[210px] text-[12px] font-bold leading-[1.08] tracking-[-0.03em] text-slate-600"
-                style={{ fontFamily: '"Space Grotesk", "Plus Jakarta Sans", sans-serif' }}
-              >
-                {HEADER_HEADLINE}
-              </div>
+            <div className="min-w-0 text-[16px] font-extrabold leading-none tracking-[-0.05em] text-[#15803d]">
+              DesiDeals24
             </div>
           </Link>
           <div className="flex items-center gap-2">
@@ -1460,16 +1452,8 @@ export default function DealsPage() {
         <div className="flex items-center justify-between gap-4 border-b border-slate-100 sm:rounded-[28px] sm:border sm:border-slate-200/60 bg-white px-4 sm:px-7 lg:px-8 py-4 sm:py-5 shadow-[0_4px_16px_rgba(15,23,42,0.07)] sm:shadow-[0_18px_45px_rgba(15,23,42,0.14)]">
             <Link to="/" className="flex min-w-0 items-center gap-3 no-underline" style={{ textDecoration: "none" }}>
               <img src="/landing/dd24-logo.svg" alt="DesiDeals24" className="w-6 h-7 sm:w-7 sm:h-8 object-contain" />
-              <div className="min-w-0">
-                <div className="text-[28px] font-extrabold leading-none tracking-[-0.06em] text-[#17874a]">
-                  DesiDeals24
-                </div>
-                <div
-                  className="mt-1.5 max-w-[420px] text-[14px] font-bold leading-[1.08] tracking-[-0.03em] text-slate-600 lg:max-w-[520px] lg:text-[15px]"
-                  style={{ fontFamily: '"Space Grotesk", "Plus Jakarta Sans", sans-serif' }}
-                >
-                  {HEADER_HEADLINE}
-                </div>
+              <div className="min-w-0 text-[28px] font-extrabold leading-none tracking-[-0.06em] text-[#17874a]">
+                DesiDeals24
               </div>
             </Link>
 
@@ -1529,6 +1513,24 @@ export default function DealsPage() {
             </div>
           </div>
         </div>
+
+        <section className="relative overflow-hidden rounded-[28px] border border-[#e7eefb] bg-[linear-gradient(180deg,#ffffff_0%,#f7faff_100%)] px-4 py-5 shadow-[0_22px_70px_rgba(15,23,42,0.07)] sm:px-7 sm:py-7 lg:px-8 lg:py-8">
+          <div className="absolute inset-y-0 right-0 w-[42%] bg-[radial-gradient(circle_at_center,_rgba(22,163,74,0.12)_0%,_rgba(22,163,74,0)_72%)] pointer-events-none" />
+          <div className="relative max-w-[760px]">
+            <p className="text-[11px] font-extrabold uppercase tracking-[0.24em] text-[#17874a]/75 sm:text-[12px]">
+              Fresh finds across Germany
+            </p>
+            <h1
+              className="mt-2 text-[30px] font-bold leading-[0.96] tracking-[-0.06em] text-[#0f172a] sm:text-[42px] lg:text-[56px]"
+              style={{ fontFamily: '"Space Grotesk", "Plus Jakarta Sans", sans-serif' }}
+            >
+              {HEADER_HEADLINE}
+            </h1>
+            <p className="mt-3 max-w-[620px] text-[14px] font-medium leading-[1.55] text-slate-500 sm:text-[16px]">
+              Search live deals, compare discounts, and save the best grocery picks before they disappear.
+            </p>
+          </div>
+        </section>
 
         <section className="relative z-10 rounded-[30px] border border-white/80 bg-[#edf3ff] shadow-[0_30px_90px_rgba(15,23,42,0.08)]">
           <div className="relative px-4 sm:px-6 lg:px-8 py-4 sm:py-5 lg:py-6">
