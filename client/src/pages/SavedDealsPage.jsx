@@ -4,6 +4,7 @@ import { formatBestBefore, formatPrice, formatPricePerKg } from "../utils/format
 import {
   addBookmark, fetchBookmarks, fetchDealById, getAuthSession, logoutUser, removeBookmark,
 } from "../utils/api";
+import { trackAnalyticsEvent } from "../utils/analytics";
 import { buildDealPageUrl, buildWhatsAppDealShareUrl } from "../utils/share";
 
 function proxyImageUrl(imageUrl) {
@@ -21,6 +22,16 @@ function resolveUrl(deal, url) {
 
 function dealPermalink(dealId) {
   return buildDealPageUrl(dealId);
+}
+
+function buildSavedDealAnalyticsPayload(deal) {
+  return {
+    page_type: "saved_deals",
+    deal_id: deal?.id || undefined,
+    store_id: deal?.store?.id || undefined,
+    store_name: deal?.store?.name || undefined,
+    category: deal?.product_category || undefined,
+  };
 }
 
 function UserCircleIcon({ size = 20, color = "currentColor" }) {
@@ -123,6 +134,12 @@ function DealCard({ deal, onRemove }) {
             href={resolveUrl(deal, deal.product_url)}
             target="_blank"
             rel="noopener noreferrer"
+            onClick={() =>
+              trackAnalyticsEvent(
+                "snatch_deal_click",
+                buildSavedDealAnalyticsPayload(deal),
+              )
+            }
             className="flex-1 justify-center bg-[#16a34a] hover:bg-[#15803d] transition-colors rounded-[14px] py-3 inline-flex items-center gap-2 text-white no-underline hover:no-underline"
             style={{ textDecoration: "none" }}
           >
@@ -138,6 +155,12 @@ function DealCard({ deal, onRemove }) {
             })}
             target="_blank"
             rel="noopener noreferrer"
+            onClick={() =>
+              trackAnalyticsEvent(
+                "whatsapp_share_click",
+                buildSavedDealAnalyticsPayload(deal),
+              )
+            }
             className="shrink-0 inline-flex items-center justify-center w-[46px] h-[46px] rounded-[14px] border border-slate-200 bg-white hover:bg-[#e7fbe9] hover:border-[#25D366] transition-colors"
             title="Share on WhatsApp"
           >
@@ -148,7 +171,13 @@ function DealCard({ deal, onRemove }) {
           </a>
           <button
             type="button"
-            onClick={() => onRemove(deal.id)}
+            onClick={() => {
+              trackAnalyticsEvent(
+                "saved_deal_remove_click",
+                buildSavedDealAnalyticsPayload(deal),
+              );
+              onRemove(deal.id);
+            }}
             className="shrink-0 inline-flex items-center justify-center w-[46px] h-[46px] rounded-[14px] border border-slate-200 bg-white hover:bg-red-50 hover:border-red-200 text-slate-400 hover:text-red-500 transition-colors"
             title="Remove from saved"
           >
@@ -211,11 +240,16 @@ export default function SavedDealsPage() {
   const [confirmRemoveId, setConfirmRemoveId] = useState(null);
 
   const handleRemove = useCallback(async (dealId) => {
+    trackAnalyticsEvent("saved_deal_remove_confirmed", {
+      page_type: "saved_deals",
+      deal_id: dealId,
+    });
     setBookmarkedIds((prev) => { const next = new Set(prev); next.delete(dealId); return next; });
     try { await removeBookmark(dealId); } catch { syncBookmarks(); }
   }, [syncBookmarks]);
 
   async function handleLogout() {
+    trackAnalyticsEvent("logout_click", { page_type: "saved_deals" });
     await logoutUser();
     navigate("/", { replace: true });
   }
@@ -255,7 +289,13 @@ export default function SavedDealsPage() {
                   <div className="absolute right-0 top-[calc(100%+8px)] z-50 w-44 overflow-hidden rounded-[16px] border border-slate-100 bg-white shadow-xl">
                     <Link
                       to="/"
-                      onClick={() => setMobileMenuOpen(false)}
+                      onClick={() => {
+                        trackAnalyticsEvent("explore_all_deals_click", {
+                          page_type: "saved_deals",
+                          source: "mobile_menu",
+                        });
+                        setMobileMenuOpen(false);
+                      }}
                       className="flex items-center gap-3 px-4 py-3 text-[14px] font-semibold text-slate-700 hover:bg-slate-50 transition-colors no-underline"
                       style={{ textDecoration: "none" }}
                     >
@@ -291,6 +331,12 @@ export default function SavedDealsPage() {
           <div className="flex items-center gap-3">
             <Link
               to="/"
+              onClick={() =>
+                trackAnalyticsEvent("explore_all_deals_click", {
+                  page_type: "saved_deals",
+                  source: "desktop_header",
+                })
+              }
               className="inline-flex items-center gap-2 rounded-full border border-[#d8eadb] bg-[#eff8f1] px-4 py-2.5 text-[13px] font-bold text-[#17874a] transition-colors hover:bg-[#e7f5ea]"
               style={{ textDecoration: "none" }}
             >
@@ -337,6 +383,12 @@ export default function SavedDealsPage() {
             <p className="text-[14px] text-slate-300">Tap the bookmark icon on any deal to save it here.</p>
             <Link
               to="/"
+              onClick={() =>
+                trackAnalyticsEvent("explore_all_deals_click", {
+                  page_type: "saved_deals",
+                  source: "empty_state",
+                })
+              }
               className="mt-2 inline-flex items-center gap-2 bg-[#16a34a] hover:bg-[#15803d] text-white text-[14px] font-bold px-6 py-3 rounded-xl transition-colors no-underline"
               style={{ textDecoration: "none" }}
             >

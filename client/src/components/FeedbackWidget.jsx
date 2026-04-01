@@ -1,5 +1,6 @@
 import React, { useEffect, useState } from "react";
 import { getAuthSession, postContact } from "../utils/api";
+import { trackAnalyticsEvent } from "../utils/analytics";
 import {
   buildFeedbackMessage,
   resolveFeedbackSender,
@@ -71,6 +72,11 @@ export default function FeedbackWidget() {
         subject: "Feedback (24deals)",
         message: payload.message,
       });
+      trackAnalyticsEvent("feedback_submit", {
+        page_type: "feedback_widget",
+        source_path: window.location.pathname,
+        logged_in: isLoggedIn ? 1 : 0,
+      });
       setSent(true);
       setMessage("");
       if (!isLoggedIn) {
@@ -89,6 +95,10 @@ export default function FeedbackWidget() {
       <button
         type="button"
         onClick={() => {
+          trackAnalyticsEvent("feedback_open", {
+            source_path: window.location.pathname,
+            logged_in: isLoggedIn ? 1 : 0,
+          });
           setSent(false);
           setError("");
           setOpen(true);
@@ -118,7 +128,12 @@ export default function FeedbackWidget() {
                 </div>
                 <button
                   type="button"
-                  onClick={() => setOpen(false)}
+                  onClick={() => {
+                    trackAnalyticsEvent("feedback_close", {
+                      source_path: window.location.pathname,
+                    });
+                    setOpen(false);
+                  }}
                   className="text-slate-500 hover:text-slate-900 font-bold text-[16px] leading-[16px] px-2 py-2 rounded-md"
                   aria-label="Close"
                 >
@@ -182,7 +197,12 @@ export default function FeedbackWidget() {
                 <div className="mt-5 flex items-center justify-end gap-3">
                   <button
                     type="button"
-                    onClick={() => setOpen(false)}
+                    onClick={() => {
+                      trackAnalyticsEvent("feedback_close", {
+                        source_path: window.location.pathname,
+                      });
+                      setOpen(false);
+                    }}
                     className="px-4 py-2.5 rounded-[12px] font-bold text-slate-600 hover:bg-slate-50 border border-slate-200"
                   >
                     Close

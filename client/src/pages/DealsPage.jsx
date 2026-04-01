@@ -10,6 +10,7 @@ import {
   buildDealsSearchParams,
   readDealsViewState,
 } from "../utils/dealsViewState.mjs";
+import { trackAnalyticsEvent } from "../utils/analytics";
 import { buildDealPageUrl, buildWhatsAppDealShareUrl } from "../utils/share";
 
 const POST_AUTH_REDIRECT_STORAGE_KEY = "dd24_post_auth_redirect";
@@ -147,6 +148,9 @@ function LoginModal({ message, resumeState, onClose }) {
   async function handleGoogle() {
     setAuthError("");
     setLoading(true);
+    trackAnalyticsEvent("login_google_click", {
+      source: "login_modal",
+    });
     try {
       const state = createOAuthState();
       const redirectTo = `${window.location.pathname}${window.location.search}${window.location.hash}` || "/";
@@ -225,12 +229,35 @@ function resolveUrl(deal, url) {
   return storeBase ? `${storeBase}${raw.startsWith("/") ? "" : "/"}${raw}` : raw;
 }
 
+function buildDealAnalyticsPayload(deal, context = {}) {
+  return {
+    page_type: context.pageType || "deals",
+    page_number: context.pageNumber,
+    sort: context.sort,
+    search_active: context.searchActive ? 1 : 0,
+    filter_count: context.filterCount,
+    deal_id: deal?.id || undefined,
+    store_id: deal?.store?.id || undefined,
+    store_name: deal?.store?.name || undefined,
+    category: deal?.product_category || undefined,
+    highlighted: context.highlighted ? 1 : 0,
+  };
+}
+
 // ── Deal card ─────────────────────────────────────────────────────────────────
 function dealPermalink(dealId) {
   return buildDealPageUrl(dealId);
 }
 
-function DealCard({ deal, isBookmarked, onBookmark, highlighted, highlightRef, priority }) {
+function DealCard({
+  deal,
+  isBookmarked,
+  onBookmark,
+  highlighted,
+  highlightRef,
+  priority,
+  analyticsContext,
+}) {
   const [imgError, setImgError] = useState(false);
   const proxyImg = proxyImageUrl(deal?.image_url);
   const discountPct = deal?.discount_percent ? Math.round(deal.discount_percent) : null;
@@ -309,6 +336,12 @@ function DealCard({ deal, isBookmarked, onBookmark, highlighted, highlightRef, p
             href={resolveUrl(deal, deal.product_url)}
             target="_blank"
             rel="noopener noreferrer"
+            onClick={() =>
+              trackAnalyticsEvent(
+                "snatch_deal_click",
+                buildDealAnalyticsPayload(deal, analyticsContext),
+              )
+            }
             className="flex-1 justify-center bg-[#16a34a] hover:bg-[#15803d] transition-colors rounded-[14px] py-3 inline-flex items-center gap-2 text-white no-underline hover:no-underline"
             style={{ textDecoration: "none" }}
           >
@@ -325,6 +358,12 @@ function DealCard({ deal, isBookmarked, onBookmark, highlighted, highlightRef, p
             })}
             target="_blank"
             rel="noopener noreferrer"
+            onClick={() =>
+              trackAnalyticsEvent(
+                "whatsapp_share_click",
+                buildDealAnalyticsPayload(deal, analyticsContext),
+              )
+            }
             className="shrink-0 inline-flex items-center justify-center w-[46px] h-[46px] rounded-[14px] border border-slate-200 bg-white hover:bg-[#e7fbe9] hover:border-[#25D366] transition-colors"
             title="Share on WhatsApp"
           >
@@ -815,6 +854,12 @@ export default function DealsPage() {
 
   const [session, setSession] = useState(() => getAuthSession());
   const isLoggedIn = Boolean(session?.accessToken);
+  const analyticsFilterCount =
+    Number(Boolean(filterStore)) +
+    Number(Boolean(filterCategory)) +
+    Number(Boolean(filterMinDiscount)) +
+    Number(Boolean(filterPriceMin || filterPriceMax)) +
+    Number(Boolean(filterHideExpired && isLoggedIn));
 
   const createResumeState = useCallback(
     (overrides = {}) => ({
@@ -839,6 +884,25 @@ export default function DealsPage() {
       filterStore,
       page,
       searchInput,
+      searchQuery,
+      sortValue,
+    ],
+  );
+
+  const buildAnalyticsContext = useCallback(
+    (overrides = {}) => ({
+      pageType: highlightDealId ? "deal_permalink" : "deals",
+      pageNumber: highlightDealId ? 1 : page,
+      sort: sortValue || "random",
+      searchActive: Boolean(searchQuery),
+      filterCount: analyticsFilterCount,
+      highlighted: Boolean(highlightDealId),
+      ...overrides,
+    }),
+    [
+      analyticsFilterCount,
+      highlightDealId,
+      page,
       searchQuery,
       sortValue,
     ],
@@ -1071,6 +1135,10 @@ export default function DealsPage() {
 
   function requireLogin(message, action, resumeState) {
     if (!isLoggedIn) {
+      trackAnalyticsEvent("login_prompt_open", {
+        source: highlightDealId ? "deal_permalink" : "deals",
+        reason: message || "feature_gate",
+      });
       setLoginModal({ message, resumeState });
     } else {
       action?.();
@@ -1078,11 +1146,20 @@ export default function DealsPage() {
   }
 
   function openFilters() {
+    trackAnalyticsEvent("filters_open", buildAnalyticsContext());
     setFilterDraft({ store: filterStore, category: filterCategory, minDiscount: filterMinDiscount, priceMin: filterPriceMin, priceMax: filterPriceMax, hideExpired: filterHideExpired });
     setFiltersOpen(true);
   }
 
   function handleFiltersSignIn() {
+    trackAnalyticsEvent("filters_apply_login_required", buildAnalyticsContext({
+      filterCount:
+        Number(Boolean(filterDraft.store)) +
+        Number(Boolean(filterDraft.category)) +
+        Number(Boolean(filterDraft.minDiscount)) +
+        Number(Boolean(filterDraft.priceMin || filterDraft.priceMax)) +
+        Number(Boolean(filterDraft.hideExpired)),
+    }));
     setFiltersOpen(false);
     requireLogin(
       "Sign in to filter by store and category.",
@@ -1100,6 +1177,19 @@ export default function DealsPage() {
   }
 
   function applyFilters() {
+    trackAnalyticsEvent("filters_apply", buildAnalyticsContext({
+      filterCount:
+        Number(Boolean(filterDraft.store)) +
+        Number(Boolean(filterDraft.category)) +
+        Number(Boolean(filterDraft.minDiscount)) +
+        Number(Boolean(filterDraft.priceMin || filterDraft.priceMax)) +
+        Number(Boolean(filterDraft.hideExpired)),
+      has_store: filterDraft.store ? 1 : 0,
+      has_category: filterDraft.category ? 1 : 0,
+      has_min_discount: filterDraft.minDiscount ? 1 : 0,
+      has_price_range: filterDraft.priceMin || filterDraft.priceMax ? 1 : 0,
+      hide_expired: filterDraft.hideExpired ? 1 : 0,
+    }));
     updateAppliedState({
       filterStore: filterDraft.store,
       filterCategory: filterDraft.category,
@@ -1113,10 +1203,12 @@ export default function DealsPage() {
   }
 
   function clearFilters() {
+    trackAnalyticsEvent("filters_clear_draft", buildAnalyticsContext());
     setFilterDraft({ store: "", category: "", minDiscount: "", priceMin: "", priceMax: "", hideExpired: false });
   }
 
   function clearSearchAndFilters() {
+    trackAnalyticsEvent("filters_clear_all", buildAnalyticsContext());
     setSearchInput("");
     updateAppliedState({
       searchQuery: "",
@@ -1140,16 +1232,25 @@ export default function DealsPage() {
   }
 
   function handleSortChange(val) {
+    trackAnalyticsEvent("sort_change", buildAnalyticsContext({
+      selected_sort: val || "random",
+    }));
     updateAppliedState({ sortValue: val, page: 1 });
   }
 
   function handleSearch() {
     const nextQuery = searchInput.trim();
+    trackAnalyticsEvent("search_submit", buildAnalyticsContext({
+      query_length: nextQuery.length,
+    }));
     nextSearchShouldTrackRef.current = Boolean(nextQuery);
     updateAppliedState({ searchQuery: nextQuery, page: 1 });
   }
 
   function removeFilterChip(type) {
+    trackAnalyticsEvent("filter_chip_remove", buildAnalyticsContext({
+      filter_type: type,
+    }));
     if (type === "store") updateAppliedState({ filterStore: "", page: 1 });
     if (type === "category") updateAppliedState({ filterCategory: "", page: 1 });
     if (type === "sort") updateAppliedState({ sortValue: "", page: 1 });
@@ -1167,7 +1268,15 @@ export default function DealsPage() {
 
   const handleBookmark = useCallback(
     async (dealId) => {
+      const deal =
+        bookmarkedDeals[dealId] ||
+        displayDeals.find((entry) => entry?.id === dealId) ||
+        null;
       if (!isLoggedIn) {
+        trackAnalyticsEvent(
+          "bookmark_login_required",
+          buildDealAnalyticsPayload(deal, buildAnalyticsContext()),
+        );
         setLoginModal({
           message: "Bookmarks are for registered members only.",
           resumeState: createResumeState({ bookmarkDealId: dealId }),
@@ -1175,6 +1284,10 @@ export default function DealsPage() {
         return;
       }
       const wasBookmarked = bookmarkedIds.has(dealId);
+      trackAnalyticsEvent(
+        wasBookmarked ? "bookmark_remove_click" : "bookmark_add_click",
+        buildDealAnalyticsPayload(deal, buildAnalyticsContext()),
+      );
       setBookmarkedIds((prev) => {
         const next = new Set(prev);
         if (wasBookmarked) next.delete(dealId); else next.add(dealId);
@@ -1201,10 +1314,19 @@ export default function DealsPage() {
         syncBookmarks();
       }
     },
-    [createResumeState, isLoggedIn, bookmarkedIds, syncBookmarks],
+    [
+      bookmarkedDeals,
+      buildAnalyticsContext,
+      createResumeState,
+      displayDeals,
+      isLoggedIn,
+      bookmarkedIds,
+      syncBookmarks,
+    ],
   );
 
   async function handleLogout() {
+    trackAnalyticsEvent("logout_click", buildAnalyticsContext());
     await logoutUser();
     navigate("/", { replace: true });
   }
@@ -1254,6 +1376,9 @@ export default function DealsPage() {
               <>
                 <Link
                   to="/saved"
+                  onClick={() =>
+                    trackAnalyticsEvent("saved_deals_open", buildAnalyticsContext())
+                  }
                   className="relative inline-flex h-10 w-10 items-center justify-center rounded-full border border-slate-200 bg-white text-slate-600 transition-colors hover:bg-slate-50"
                   style={{ textDecoration: "none" }}
                   title="Saved deals"
@@ -1305,7 +1430,12 @@ export default function DealsPage() {
             ) : (
               <button
                 type="button"
-                onClick={() => setLoginModal({})}
+                onClick={() => {
+                  trackAnalyticsEvent("sign_in_click", buildAnalyticsContext({
+                    source: "mobile_header",
+                  }));
+                  setLoginModal({});
+                }}
                 className="inline-flex h-10 w-10 items-center justify-center rounded-full border border-[#d8eadb] bg-[#eff8f1] text-[13px] font-bold text-[#17874a] transition-colors hover:bg-[#e7f5ea]"
               >
                 <UserCircleIcon size={20} color="#475569" />
@@ -1326,6 +1456,9 @@ export default function DealsPage() {
               {isLoggedIn && (
                 <Link
                   to="/saved"
+                  onClick={() =>
+                    trackAnalyticsEvent("saved_deals_open", buildAnalyticsContext())
+                  }
                   className="relative inline-flex h-11 w-11 items-center justify-center rounded-full border border-slate-200 bg-white text-slate-600 shadow-sm transition-colors hover:bg-slate-50"
                   style={{ textDecoration: "none" }}
                   title="Saved deals"
@@ -1360,7 +1493,12 @@ export default function DealsPage() {
               ) : (
                 <button
                   type="button"
-                  onClick={() => setLoginModal({})}
+                  onClick={() => {
+                    trackAnalyticsEvent("sign_in_click", buildAnalyticsContext({
+                      source: "desktop_header",
+                    }));
+                    setLoginModal({});
+                  }}
                   className="inline-flex h-11 w-11 items-center justify-center rounded-full border border-[#d8eadb] bg-[#eff8f1] text-[13px] font-bold text-[#17874a] shadow-sm transition-colors hover:bg-[#e7f5ea] sm:h-auto sm:w-auto sm:gap-2 sm:px-4 sm:py-2.5"
                 >
                   <UserCircleIcon size={20} color="#475569" />
@@ -1575,6 +1713,7 @@ export default function DealsPage() {
                 highlighted={highlightDealId === deal.id}
                 highlightRef={highlightDealId === deal.id ? highlightRef : null}
                 priority={index < 4}
+                analyticsContext={buildAnalyticsContext()}
               />
             ))}
           </div>
@@ -1586,6 +1725,9 @@ export default function DealsPage() {
             page={page}
             totalPages={totalPages}
             onChange={(p) => {
+              trackAnalyticsEvent("pagination_click", buildAnalyticsContext({
+                target_page: p,
+              }));
               updateAppliedState({ page: p });
               window.scrollTo({ top: 0, behavior: "smooth" });
             }}

@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from "react";
 import { Link, useParams } from "react-router-dom";
 import { fetchDealById } from "../utils/api";
+import { trackAnalyticsEvent } from "../utils/analytics";
 import { formatBestBefore, formatPrice, formatPricePerKg } from "../utils/formatters";
 import { buildWhatsAppDealShareUrl } from "../utils/share";
 
@@ -15,6 +16,16 @@ function resolveUrl(deal, url) {
   if (/^https?:\/\//i.test(raw)) return raw;
   const storeBase = String(deal?.store?.url || "").replace(/\/+$/, "");
   return storeBase ? `${storeBase}${raw.startsWith("/") ? "" : "/"}${raw}` : raw;
+}
+
+function buildSharedDealAnalyticsPayload(deal) {
+  return {
+    page_type: "shared_deal",
+    deal_id: deal?.id || undefined,
+    store_id: deal?.store?.id || undefined,
+    store_name: deal?.store?.name || undefined,
+    category: deal?.product_category || undefined,
+  };
 }
 
 export default function DealSharePage() {
@@ -57,6 +68,12 @@ export default function DealSharePage() {
           </Link>
           <Link
             to="/"
+            onClick={() =>
+              trackAnalyticsEvent("explore_all_deals_click", {
+                page_type: "shared_deal",
+                source: "header",
+              })
+            }
             className="bg-[#eff8f1] border border-[#d8eadb] text-[#17874a] text-[13px] font-bold px-4 py-2 rounded-full no-underline transition-colors hover:bg-[#e7f5ea]"
             style={{ textDecoration: "none" }}
           >
@@ -91,6 +108,12 @@ export default function DealSharePage() {
             <p className="text-[13px] text-slate-500 mt-1.5">Indian groceries. German stores. Real savings.</p>
             <Link
               to="/"
+              onClick={() =>
+                trackAnalyticsEvent("explore_all_deals_click", {
+                  page_type: "shared_deal_missing",
+                  source: "empty_state",
+                })
+              }
               className="mt-5 inline-block bg-[#17874a] hover:bg-[#15803d] text-white font-bold text-[15px] px-8 py-3.5 rounded-[14px] no-underline transition-colors"
               style={{ textDecoration: "none" }}
             >
@@ -161,6 +184,12 @@ export default function DealSharePage() {
                     href={resolveUrl(deal, deal.product_url)}
                     target="_blank"
                     rel="noopener noreferrer"
+                    onClick={() =>
+                      trackAnalyticsEvent(
+                        "snatch_deal_click",
+                        buildSharedDealAnalyticsPayload(deal),
+                      )
+                    }
                     className="flex-1 justify-center bg-[#16a34a] hover:bg-[#15803d] transition-colors rounded-[14px] py-3 inline-flex items-center gap-2 text-white no-underline hover:no-underline"
                     style={{ textDecoration: "none" }}
                   >
@@ -176,6 +205,12 @@ export default function DealSharePage() {
                     })}
                     target="_blank"
                     rel="noopener noreferrer"
+                    onClick={() =>
+                      trackAnalyticsEvent(
+                        "whatsapp_share_click",
+                        buildSharedDealAnalyticsPayload(deal),
+                      )
+                    }
                     className="shrink-0 inline-flex items-center justify-center w-[46px] h-[46px] rounded-[14px] border border-slate-200 bg-white hover:bg-[#e7fbe9] hover:border-[#25D366] transition-colors"
                     title="Share on WhatsApp"
                   >
@@ -196,6 +231,12 @@ export default function DealSharePage() {
               <p className="text-[14px] text-slate-500 mt-2">Hundreds of Indian grocery deals in Germany, updated daily.</p>
               <Link
                 to="/"
+                onClick={() =>
+                  trackAnalyticsEvent("explore_all_deals_click", {
+                    page_type: "shared_deal",
+                    source: "bottom_cta",
+                  })
+                }
                 className="bg-[#17874a] text-white font-bold text-[15px] px-8 py-3.5 rounded-[14px] mt-4 inline-block no-underline transition-colors hover:bg-[#15803d]"
                 style={{ textDecoration: "none" }}
               >

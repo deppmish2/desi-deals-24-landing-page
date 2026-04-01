@@ -1,6 +1,16 @@
 import React, { Suspense, lazy, useEffect, useState } from "react";
-import { BrowserRouter, Navigate, Route, Routes } from "react-router-dom";
+import {
+  BrowserRouter,
+  Navigate,
+  Route,
+  Routes,
+  useLocation,
+} from "react-router-dom";
 import DealsPage from "./pages/DealsPage";
+import {
+  initGoogleAnalytics,
+  trackPageView,
+} from "./utils/analytics";
 
 const OAuthCallbackPage = lazy(() => import("./pages/OAuthCallbackPage"));
 const SavedDealsPage = lazy(() => import("./pages/SavedDealsPage"));
@@ -23,6 +33,20 @@ class ErrorBoundary extends React.Component {
     }
     return this.props.children;
   }
+}
+
+function RouteAnalytics() {
+  const location = useLocation();
+
+  useEffect(() => {
+    initGoogleAnalytics();
+    trackPageView(
+      `${location.pathname}${location.search}${location.hash}`,
+      document.title,
+    );
+  }, [location.hash, location.pathname, location.search]);
+
+  return null;
 }
 
 function AppShell() {
@@ -56,6 +80,7 @@ function AppShell() {
 
   return (
     <BrowserRouter>
+      <RouteAnalytics />
       <Suspense fallback={null}>
         <Routes>
           <Route path="/" element={<DealsPage />} />
