@@ -1541,85 +1541,88 @@ export default function DealsPage() {
               }}
               className="flex flex-col gap-4"
             >
-              <div className="flex gap-3 items-center">
-                <div className="flex-1 flex items-center gap-3 rounded-[24px] border border-white/80 bg-white px-4 sm:px-5 py-3.5 shadow-sm">
-                  <SearchIcon size={18} color="#94a3b8" />
-                  <input
-                    type="search"
-                    value={searchInput}
-                    onChange={(e) => setSearchInput(e.target.value)}
-                    placeholder="Search for ghee, rice, spices..."
-                    className="min-w-0 flex-1 bg-transparent text-[16px] sm:text-[18px] font-medium text-slate-700 placeholder:text-[#94a3b8] outline-none"
-                  />
-                  <button
-                    type="submit"
-                    className="hidden sm:inline-flex items-center justify-center rounded-full bg-[#17874a] px-5 py-2.5 text-[14px] font-bold text-white transition-colors hover:bg-[#136f3c]"
-                  >
-                    Search
-                  </button>
-                </div>
+              <div className="sticky top-[72px] z-40 -mx-4 border-b border-white/70 bg-[#edf3ff]/95 px-4 py-3 shadow-[0_10px_22px_rgba(15,23,42,0.08)] backdrop-blur sm:static sm:z-auto sm:mx-0 sm:border-b-0 sm:bg-transparent sm:px-0 sm:py-0 sm:shadow-none">
+                <div className="flex gap-3 items-center">
+                  <div className="flex-1 flex items-center gap-3 rounded-[24px] border border-white/80 bg-white px-4 sm:px-5 py-3.5 shadow-sm">
+                    <SearchIcon size={18} color="#94a3b8" />
+                    <input
+                      type="search"
+                      value={searchInput}
+                      onChange={(e) => setSearchInput(e.target.value)}
+                      placeholder="Search for ghee, rice, spices..."
+                      className="min-w-0 flex-1 bg-transparent text-[16px] sm:text-[18px] font-medium text-slate-700 placeholder:text-[#94a3b8] outline-none"
+                    />
+                    <button
+                      type="submit"
+                      className="hidden sm:inline-flex items-center justify-center rounded-full bg-[#17874a] px-5 py-2.5 text-[14px] font-bold text-white transition-colors hover:bg-[#136f3c]"
+                    >
+                      Search
+                    </button>
+                  </div>
 
-                {/* Mobile: filter inline when no filters active */}
-                {!hasActiveState && (
-                  <button
-                    type="button"
-                    onClick={openFilters}
-                    className="sm:hidden relative inline-flex h-[44px] w-[44px] shrink-0 items-center justify-center rounded-[12px] border border-white/80 bg-white text-slate-600 shadow-sm transition-colors hover:bg-slate-50"
-                    aria-label="Open filters"
-                  >
-                    <FilterIcon size={18} color="currentColor" />
-                    {filterCount > 0 && (
-                      <span className="absolute -top-1 -right-1 min-w-[22px] h-[22px] px-1 rounded-full bg-[#9a6500] text-white text-[11px] font-extrabold flex items-center justify-center leading-none">
-                        {filterCount}
-                      </span>
-                    )}
-                  </button>
-                )}
-
-                {/* Desktop filter button */}
-                <button
-                  type="button"
-                  onClick={openFilters}
-                  className="relative hidden min-h-[58px] items-center justify-center gap-2 rounded-[22px] border border-white/80 bg-white px-4 py-3.5 text-[14px] font-bold text-slate-600 shadow-sm transition-colors hover:bg-slate-50 sm:inline-flex xl:min-w-[76px]"
-                >
-                  <FilterIcon size={18} color="currentColor" />
-                  <span className="xl:hidden">Filters</span>
-                  {filterCount > 0 && (
-                    <span className="absolute -top-1 -right-1 min-w-[22px] h-[22px] px-1 rounded-full bg-[#9a6500] text-white text-[11px] font-extrabold flex items-center justify-center leading-none">
-                      {filterCount}
-                    </span>
+                  {/* Mobile: filter inline when no filters active */}
+                  {!hasActiveState && (
+                    <button
+                      type="button"
+                      onClick={openFilters}
+                      className="sm:hidden relative inline-flex h-[44px] w-[44px] shrink-0 items-center justify-center rounded-[12px] border border-white/80 bg-white text-slate-600 shadow-sm transition-colors hover:bg-slate-50"
+                      aria-label="Open filters"
+                    >
+                      <FilterIcon size={18} color="currentColor" />
+                      {filterCount > 0 && (
+                        <span className="absolute -top-1 -right-1 min-w-[22px] h-[22px] px-1 rounded-full bg-[#9a6500] text-white text-[11px] font-extrabold flex items-center justify-center leading-none">
+                          {filterCount}
+                        </span>
+                      )}
+                    </button>
                   )}
-                </button>
-              </div>
 
-              {/* Mobile: filter + remove filters row — only when filters active */}
-              {hasActiveState && (
-                <div className="sm:hidden flex items-center gap-3">
+                  {/* Desktop filter button */}
                   <button
                     type="button"
                     onClick={openFilters}
-                    className="relative inline-flex h-[44px] w-[44px] shrink-0 items-center justify-center rounded-[12px] border border-white/80 bg-white text-slate-600 shadow-sm transition-colors hover:bg-slate-50"
-                    aria-label="Open filters"
+                    className="relative hidden min-h-[58px] items-center justify-center gap-2 rounded-[22px] border border-white/80 bg-white px-4 py-3.5 text-[14px] font-bold text-slate-600 shadow-sm transition-colors hover:bg-slate-50 sm:inline-flex xl:min-w-[76px]"
                   >
                     <FilterIcon size={18} color="currentColor" />
+                    <span className="xl:hidden">Filters</span>
                     {filterCount > 0 && (
                       <span className="absolute -top-1 -right-1 min-w-[22px] h-[22px] px-1 rounded-full bg-[#9a6500] text-white text-[11px] font-extrabold flex items-center justify-center leading-none">
                         {filterCount}
                       </span>
                     )}
                   </button>
-                  <button
-                    type="button"
-                    onClick={() => setConfirmClearOpen(true)}
-                    className="flex h-[44px] flex-1 items-center rounded-[12px] border border-[#dae6fb] bg-[#e6efff] px-4 text-left shadow-sm transition-colors hover:bg-[#edf3ff]"
-                  >
-                    <span className="text-[14px] font-extrabold text-[#17874a]">Remove filters</span>
-                    <span className="ml-2 text-[14px] text-slate-400">
-                      {totalCount != null ? `to see all ${totalCount.toLocaleString()} items` : "to see all items"}
-                    </span>
-                  </button>
+
                 </div>
-              )}
+
+                {/* Mobile: filter + remove filters row — only when filters active */}
+                {hasActiveState && (
+                  <div className="sm:hidden mt-3 flex items-center gap-3">
+                    <button
+                      type="button"
+                      onClick={openFilters}
+                      className="relative inline-flex h-[44px] w-[44px] shrink-0 items-center justify-center rounded-[12px] border border-white/80 bg-white text-slate-600 shadow-sm transition-colors hover:bg-slate-50"
+                      aria-label="Open filters"
+                    >
+                      <FilterIcon size={18} color="currentColor" />
+                      {filterCount > 0 && (
+                        <span className="absolute -top-1 -right-1 min-w-[22px] h-[22px] px-1 rounded-full bg-[#9a6500] text-white text-[11px] font-extrabold flex items-center justify-center leading-none">
+                          {filterCount}
+                        </span>
+                      )}
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => setConfirmClearOpen(true)}
+                      className="flex h-[44px] flex-1 items-center rounded-[12px] border border-[#dae6fb] bg-[#e6efff] px-4 text-left shadow-sm transition-colors hover:bg-[#edf3ff]"
+                    >
+                      <span className="text-[14px] font-extrabold text-[#17874a]">Remove filters</span>
+                      <span className="ml-2 text-[14px] text-slate-400">
+                        {totalCount != null ? `to see all ${totalCount.toLocaleString()} items` : "to see all items"}
+                      </span>
+                    </button>
+                  </div>
+                )}
+              </div>
 
               <div className="flex flex-col gap-4">
                 <div className="flex items-center justify-between gap-3">
