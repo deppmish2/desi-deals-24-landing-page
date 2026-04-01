@@ -16,6 +16,7 @@ import { buildDealPageUrl, buildWhatsAppDealShareUrl } from "../utils/share";
 const POST_AUTH_REDIRECT_STORAGE_KEY = "dd24_post_auth_redirect";
 const OAUTH_STATE_STORAGE_PREFIX = "dd24_oauth_state:";
 const POST_LOGIN_RESUME_STATE_STORAGE_KEY = "dd24_post_login_resume_state";
+const HEADER_HEADLINE = "Best Desi grocery deals in Germany.";
 
 function createOAuthState() {
   if (typeof window !== "undefined" && window.crypto?.randomUUID) return window.crypto.randomUUID();
@@ -1366,10 +1367,20 @@ export default function DealsPage() {
   return (
     <div className="min-h-screen bg-[radial-gradient(circle_at_top,_#ffffff_0%,_#f8fbff_32%,_#f3f6fb_100%)]">
       <div className="sticky top-0 z-50 sm:hidden">
-        <div className="flex h-[60px] items-center justify-between gap-4 bg-white px-6 shadow-[0px_1px_2px_0px_rgba(0,0,0,0.05)]">
-          <Link to="/" className="flex items-center gap-2 no-underline" style={{ textDecoration: "none" }}>
+        <div className="flex min-h-[72px] items-center justify-between gap-3 bg-white px-4 py-3 shadow-[0px_1px_2px_0px_rgba(0,0,0,0.05)]">
+          <Link to="/" className="flex min-w-0 items-center gap-2.5 no-underline" style={{ textDecoration: "none" }}>
             <img src="/landing/dd24-logo.svg" alt="DesiDeals24" className="w-5 h-6 object-contain" />
-            <span className="font-bold tracking-[-1.2px] text-[24px] text-[#15803d]">DesiDeals24</span>
+            <div className="min-w-0">
+              <div className="text-[16px] font-extrabold leading-none tracking-[-0.05em] text-[#15803d]">
+                DesiDeals24
+              </div>
+              <div
+                className="mt-1 max-w-[210px] text-[12px] font-bold leading-[1.08] tracking-[-0.03em] text-slate-600"
+                style={{ fontFamily: '"Space Grotesk", "Plus Jakarta Sans", sans-serif' }}
+              >
+                {HEADER_HEADLINE}
+              </div>
+            </div>
           </Link>
           <div className="flex items-center gap-2">
             {isLoggedIn ? (
@@ -1446,10 +1457,20 @@ export default function DealsPage() {
       </div>
       <main className="max-w-[1320px] mx-auto px-3 sm:px-6 lg:px-8 py-3 sm:py-6 flex flex-col gap-6">
         <div className="sticky top-0 sm:top-3 z-50 hidden sm:block">
-          <div className="flex items-center justify-between gap-4 border-b border-slate-100 sm:rounded-[28px] sm:border sm:border-slate-200/60 bg-white px-4 sm:px-7 lg:px-8 py-4 sm:py-5 shadow-[0_4px_16px_rgba(15,23,42,0.07)] sm:shadow-[0_18px_45px_rgba(15,23,42,0.14)]">
-            <Link to="/" className="flex items-center gap-2.5 no-underline" style={{ textDecoration: "none" }}>
+        <div className="flex items-center justify-between gap-4 border-b border-slate-100 sm:rounded-[28px] sm:border sm:border-slate-200/60 bg-white px-4 sm:px-7 lg:px-8 py-4 sm:py-5 shadow-[0_4px_16px_rgba(15,23,42,0.07)] sm:shadow-[0_18px_45px_rgba(15,23,42,0.14)]">
+            <Link to="/" className="flex min-w-0 items-center gap-3 no-underline" style={{ textDecoration: "none" }}>
               <img src="/landing/dd24-logo.svg" alt="DesiDeals24" className="w-6 h-7 sm:w-7 sm:h-8 object-contain" />
-              <span className="font-extrabold tracking-[-0.8px] text-[26px] text-[#17874a]">DesiDeals24</span>
+              <div className="min-w-0">
+                <div className="text-[28px] font-extrabold leading-none tracking-[-0.06em] text-[#17874a]">
+                  DesiDeals24
+                </div>
+                <div
+                  className="mt-1.5 max-w-[420px] text-[14px] font-bold leading-[1.08] tracking-[-0.03em] text-slate-600 lg:max-w-[520px] lg:text-[15px]"
+                  style={{ fontFamily: '"Space Grotesk", "Plus Jakarta Sans", sans-serif' }}
+                >
+                  {HEADER_HEADLINE}
+                </div>
+              </div>
             </Link>
 
             <div className="flex items-center gap-2 sm:gap-3">

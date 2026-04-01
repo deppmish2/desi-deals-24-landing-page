@@ -5,6 +5,8 @@ import { trackAnalyticsEvent } from "../utils/analytics";
 import { formatBestBefore, formatPrice, formatPricePerKg } from "../utils/formatters";
 import { buildWhatsAppDealShareUrl } from "../utils/share";
 
+const HEADER_HEADLINE = "Best Desi grocery deals in Germany.";
+
 function proxyImageUrl(imageUrl) {
   if (!imageUrl) return null;
   return `/api/v1/admin/proxy/image?url=${encodeURIComponent(imageUrl)}`;
@@ -61,10 +63,20 @@ export default function DealSharePage() {
 
       {/* Header */}
       <div className="sticky top-0 z-50">
-        <div className="flex h-[60px] items-center justify-between gap-4 bg-white px-6 shadow-[0px_1px_2px_0px_rgba(0,0,0,0.05)]">
-          <Link to="/" className="flex items-center gap-2 no-underline" style={{ textDecoration: "none" }}>
+        <div className="flex min-h-[72px] items-center justify-between gap-3 bg-white px-4 py-3 shadow-[0px_1px_2px_0px_rgba(0,0,0,0.05)] sm:px-6">
+          <Link to="/" className="flex min-w-0 items-center gap-2.5 no-underline" style={{ textDecoration: "none" }}>
             <img src="/landing/dd24-logo.svg" alt="DesiDeals24" className="w-5 h-6 object-contain" />
-            <span className="font-bold tracking-[-1.2px] text-[24px] sm:text-[18px] text-[#15803d]">DesiDeals24</span>
+            <div className="min-w-0">
+              <div className="text-[16px] font-extrabold leading-none tracking-[-0.05em] text-[#15803d] sm:text-[24px]">
+                DesiDeals24
+              </div>
+              <div
+                className="mt-1 max-w-[210px] text-[12px] font-bold leading-[1.08] tracking-[-0.03em] text-slate-600 sm:max-w-[360px] sm:text-[14px]"
+                style={{ fontFamily: '"Space Grotesk", "Plus Jakarta Sans", sans-serif' }}
+              >
+                {HEADER_HEADLINE}
+              </div>
+            </div>
           </Link>
           <Link
             to="/"
