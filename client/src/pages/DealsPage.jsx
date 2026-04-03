@@ -1591,9 +1591,9 @@ export default function DealsPage() {
             </p>
             <h1
               className="mt-2 text-[30px] font-bold leading-[0.96] tracking-[-0.06em] text-[#0f172a] sm:text-[42px] lg:text-[56px]"
-              style={{ fontFamily: '"Space Grotesk", "Plus Jakarta Sans", sans-serif' }}
+              style={{ fontFamily: '"Plus Jakarta Sans", sans-serif' }}
             >
-              {HEADER_HEADLINE}
+              Best Desi grocery deals<br />in Germany.
             </h1>
             <p className="mt-3 max-w-[620px] text-[14px] font-medium leading-[1.55] text-slate-500 sm:text-[16px]">
               Search live deals, compare discounts, and save the best grocery picks before they disappear.
