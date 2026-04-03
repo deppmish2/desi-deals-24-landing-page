@@ -9,6 +9,7 @@ This skill helps frontend developers communicate **what data they need** without
 ## When to Use This Skill
 
 Use this skill when:
+
 - You need to communicate API requirements from frontend to backend
 - You're planning a new feature that requires backend support
 - You want to document what data your UI needs to display
@@ -36,6 +37,7 @@ All output goes to `.claude/docs/ai/<feature-name>/backend-requirements.md` - no
 ## Key Features
 
 ### Frontend Owns
+
 - What data is needed
 - What actions exist
 - UI states to handle
@@ -43,6 +45,7 @@ All output goes to `.claude/docs/ai/<feature-name>/backend-requirements.md` - no
 - Display requirements
 
 ### Backend Owns
+
 - How data is structured
 - Endpoint design
 - Field names and types
@@ -50,6 +53,7 @@ All output goes to `.claude/docs/ai/<feature-name>/backend-requirements.md` - no
 - Performance and caching strategies
 
 ### Collaboration Principles
+
 - **Describe, don't prescribe** - Say what you need, not how to provide it
 - **Include context** - Why you need it helps backend make better decisions
 - **Surface unknowns** - Don't hide confusion, invite clarification
@@ -64,50 +68,63 @@ The skill creates a markdown document with this structure:
 # Backend Requirements: <Feature Name>
 
 ## Context
+
 [What we're building, who it's for, what problem it solves]
 
 ## Screens/Components
 
 ### <Screen/Component Name>
+
 **Purpose**: What this screen does
 
 **Data I need to display**:
+
 - [Description of data piece, not field name]
 - [Relationships between pieces]
 
 **Actions**:
+
 - [Action description] → [Expected outcome]
 
 **States to handle**:
+
 - **Empty**: [When/why this happens]
 - **Loading**: [What's being fetched]
 - **Error**: [What can go wrong, what user sees]
 
 **Business rules affecting UI**:
+
 - [Rule that changes what's visible/enabled]
 
 ## Uncertainties
+
 - [ ] Not sure if [X] should show when [Y]
 
 ## Questions for Backend
+
 - Would it make sense to combine [X] and [Y]?
 
 ## Discussion Log
+
 [Backend responses, decisions made, changes to requirements]
 ```
 
 ## Usage Examples
 
 ### Good Request (Describing Needs)
+
 > "I need to show a list of contracts. Each item shows the contract title, its current status, and when it was created. User should be able to filter by status."
 
 ### Bad Request (Dictating Implementation)
+
 > "I need a GET /api/contracts endpoint that returns an array with fields: id, title, status, created_at"
 
 ### Good Request (Describing Relationship)
+
 > "For each contract, I need to show who the provider is (their name and maybe logo)"
 
 ### Bad Request (Assuming Structure)
+
 > "The provider object should be nested inside the contract response"
 
 ## Workflow
@@ -131,6 +148,7 @@ The skill creates a markdown document with this structure:
 ## Encouraging Collaboration
 
 Include phrases like:
+
 - "Let me know if this doesn't make sense for how the data is structured"
 - "Open to suggestions on a better approach"
 - "Not sure if this is the right way to think about it"

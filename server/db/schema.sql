@@ -37,14 +37,16 @@ CREATE TABLE IF NOT EXISTS deals (
   availability      TEXT DEFAULT 'unknown',
   bulk_pricing      TEXT,
   best_before       TEXT,
+  display_date      TEXT,
+  display_order     INTEGER,
   is_active         INTEGER DEFAULT 1,
-  last_pool_used_at DATETIME,
   created_at        DATETIME DEFAULT CURRENT_TIMESTAMP
 );
 
 -- Crawl run metadata
 CREATE TABLE IF NOT EXISTS crawl_runs (
   id                TEXT PRIMARY KEY,
+  crawl_date        TEXT,
   started_at        DATETIME NOT NULL,
   finished_at       DATETIME,
   status            TEXT DEFAULT 'running',
@@ -54,7 +56,40 @@ CREATE TABLE IF NOT EXISTS crawl_runs (
   errors            TEXT
 );
 
--- Generic scheduled/ops job ledger (crawl, pool refresh, verification)
+-- Daily price history for every crawled product
+CREATE TABLE IF NOT EXISTS deal_price_history (
+  id                TEXT PRIMARY KEY,
+  crawl_date        TEXT NOT NULL,
+  crawl_run_id      TEXT NOT NULL REFERENCES crawl_runs(id),
+  crawl_timestamp   DATETIME NOT NULL,
+  store_id          TEXT NOT NULL REFERENCES stores(id),
+  product_name      TEXT NOT NULL,
+  product_category  TEXT NOT NULL,
+  product_url       TEXT NOT NULL,
+  image_url         TEXT,
+  weight_raw        TEXT,
+  weight_value      REAL,
+  weight_unit       TEXT,
+  sale_price        REAL NOT NULL,
+  original_price    REAL,
+  discount_percent  REAL,
+  price_per_kg      REAL,
+  price_per_unit    REAL,
+  currency          TEXT DEFAULT 'EUR',
+  availability      TEXT DEFAULT 'unknown',
+  bulk_pricing      TEXT,
+  best_before       TEXT,
+  created_at        DATETIME DEFAULT CURRENT_TIMESTAMP,
+  UNIQUE (crawl_date, store_id, product_url)
+);
+
+CREATE INDEX IF NOT EXISTS idx_deals_display_date_order
+  ON deals(display_date, display_order);
+
+CREATE INDEX IF NOT EXISTS idx_deals_active_display
+  ON deals(is_active, display_date, display_order);
+
+-- Generic scheduled/ops job ledger
 CREATE TABLE IF NOT EXISTS job_runs (
   id                TEXT PRIMARY KEY,
   job_name          TEXT NOT NULL,
@@ -126,21 +161,6 @@ CREATE TABLE IF NOT EXISTS waitlist_referrals (
   invited_email_snapshot TEXT,
   claimed_at           DATETIME DEFAULT CURRENT_TIMESTAMP,
   created_at           DATETIME DEFAULT CURRENT_TIMESTAMP
-);
-
--- Fixed daily landing pool entries
-CREATE TABLE IF NOT EXISTS daily_deal_pool_entries (
-  pool_date             TEXT NOT NULL,
-  slot_index            INTEGER NOT NULL,
-  deal_id               TEXT REFERENCES deals(id) ON DELETE SET NULL,
-  store_id              TEXT NOT NULL REFERENCES stores(id),
-  base_key              TEXT,
-  product_signature     TEXT NOT NULL,
-  category              TEXT,
-  product_name_snapshot TEXT,
-  created_at            DATETIME DEFAULT CURRENT_TIMESTAMP,
-  PRIMARY KEY (pool_date, slot_index),
-  UNIQUE (pool_date, product_signature)
 );
 
 -- Refresh token sessions (access token remains stateless JWT)
@@ -283,6 +303,18 @@ CREATE TABLE IF NOT EXISTS events (
   created_at    DATETIME DEFAULT CURRENT_TIMESTAMP
 );
 
+CREATE TABLE IF NOT EXISTS search_queries (
+  id              TEXT PRIMARY KEY,
+  query           TEXT NOT NULL,
+  normalized_query TEXT NOT NULL,
+  user_id         TEXT REFERENCES users(id) ON DELETE SET NULL,
+  user_email      TEXT,
+  session_id      TEXT,
+  route           TEXT,
+  result_count    INTEGER,
+  created_at      DATETIME DEFAULT CURRENT_TIMESTAMP
+);
+
 -- Generic key-value settings store
 CREATE TABLE IF NOT EXISTS app_settings (
   key        TEXT PRIMARY KEY,
@@ -299,6 +331,10 @@ CREATE INDEX IF NOT EXISTS idx_deals_sale_price ON deals(sale_price);
 CREATE INDEX IF NOT EXISTS idx_deals_discount   ON deals(discount_percent);
 CREATE INDEX IF NOT EXISTS idx_deals_crawl_run  ON deals(crawl_run_id);
 CREATE INDEX IF NOT EXISTS idx_deals_canonical  ON deals(canonical_id);
+CREATE INDEX IF NOT EXISTS idx_crawl_runs_crawl_date ON crawl_runs(crawl_date);
+CREATE INDEX IF NOT EXISTS idx_deal_price_history_crawl_date ON deal_price_history(crawl_date);
+CREATE INDEX IF NOT EXISTS idx_deal_price_history_store_date ON deal_price_history(store_id, crawl_date);
+CREATE INDEX IF NOT EXISTS idx_deal_price_history_product_url ON deal_price_history(product_url);
 CREATE INDEX IF NOT EXISTS idx_crawl_locks_expires ON crawl_locks(expires_at);
 CREATE INDEX IF NOT EXISTS idx_job_runs_job_name_started ON job_runs(job_name, started_at);
 CREATE INDEX IF NOT EXISTS idx_job_runs_status_started ON job_runs(status, started_at);
@@ -309,8 +345,6 @@ CREATE INDEX IF NOT EXISTS idx_email_auth_tokens_expires_at ON email_auth_tokens
 CREATE INDEX IF NOT EXISTS idx_waitlist_referrals_inviter_user_id ON waitlist_referrals(inviter_user_id);
 CREATE UNIQUE INDEX IF NOT EXISTS idx_waitlist_referrals_invited_user_id ON waitlist_referrals(invited_user_id);
 CREATE INDEX IF NOT EXISTS idx_waitlist_referrals_claimed_at ON waitlist_referrals(claimed_at);
-CREATE INDEX IF NOT EXISTS idx_daily_deal_pool_entries_pool_date ON daily_deal_pool_entries(pool_date);
-CREATE INDEX IF NOT EXISTS idx_daily_deal_pool_entries_product_signature ON daily_deal_pool_entries(product_signature);
 CREATE INDEX IF NOT EXISTS idx_refresh_user     ON refresh_tokens(user_id);
 CREATE INDEX IF NOT EXISTS idx_refresh_hash     ON refresh_tokens(token_hash);
 CREATE INDEX IF NOT EXISTS idx_refresh_expires  ON refresh_tokens(expires_at);
@@ -329,3 +363,7 @@ CREATE INDEX IF NOT EXISTS idx_delivery_updated ON delivery_options(updated_at);
 CREATE INDEX IF NOT EXISTS idx_events_name      ON events(event_name);
 CREATE INDEX IF NOT EXISTS idx_events_created   ON events(created_at);
 CREATE INDEX IF NOT EXISTS idx_events_user      ON events(user_id);
+CREATE INDEX IF NOT EXISTS idx_search_queries_created ON search_queries(created_at);
+CREATE INDEX IF NOT EXISTS idx_search_queries_normalized ON search_queries(normalized_query);
+CREATE INDEX IF NOT EXISTS idx_search_queries_user_email ON search_queries(user_email);
+CREATE INDEX IF NOT EXISTS idx_search_queries_session_id ON search_queries(session_id);

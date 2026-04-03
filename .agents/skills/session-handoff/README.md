@@ -17,11 +17,13 @@ When working on complex, multi-session projects with AI agents, context gets los
 ## When to Use
 
 ### User-Triggered
+
 - User says "save state", "create handoff", "I need to pause"
 - User requests "load handoff", "resume from", "continue where we left off"
 - User mentions "context is getting full" or "save this for later"
 
 ### Agent-Triggered (Proactive)
+
 - Context window approaching capacity (>80% full)
 - Major task milestone completed
 - Work session ending with significant progress
@@ -29,6 +31,7 @@ When working on complex, multi-session projects with AI agents, context gets los
 - Before switching to a different task
 
 ### Resumption Scenarios
+
 - Starting a new session on an existing project
 - Different agent needs to continue the work
 - Need to recall decisions made in previous sessions
@@ -39,6 +42,7 @@ When working on complex, multi-session projects with AI agents, context gets los
 The skill operates in two primary modes:
 
 ### CREATE Mode
+
 Generates a comprehensive handoff document capturing current state:
 
 1. **Generate Scaffold** - Smart script pre-fills metadata (timestamp, git status, modified files)
@@ -47,6 +51,7 @@ Generates a comprehensive handoff document capturing current state:
 4. **Confirm** - Present location and summary to user
 
 ### RESUME Mode
+
 Loads and validates existing handoff documents:
 
 1. **Find Handoffs** - List available handoffs in project
@@ -58,14 +63,18 @@ Loads and validates existing handoff documents:
 ## Key Features
 
 ### Smart Scaffolding
+
 The `create_handoff.py` script automatically captures:
+
 - Timestamp and project path
 - Current git branch and recent commits
 - Modified and unstaged files
 - Handoff chain links (if continuing from previous)
 
 ### Validation & Quality Assurance
+
 The `validate_handoff.py` script checks:
+
 - No incomplete `[TODO: ...]` placeholders
 - All required sections populated
 - No potential secrets (API keys, passwords, tokens)
@@ -73,7 +82,9 @@ The `validate_handoff.py` script checks:
 - Quality score (0-100)
 
 ### Staleness Detection
+
 The `check_staleness.py` script assesses:
+
 - Time elapsed since handoff creation
 - Git commits made since handoff
 - Files changed since handoff
@@ -81,7 +92,9 @@ The `check_staleness.py` script assesses:
 - Missing referenced files
 
 ### Handoff Chaining
+
 For long-running projects, chain handoffs together:
+
 ```
 handoff-1.md (initial work)
     ↓
@@ -97,16 +110,19 @@ Each handoff links to its predecessor, providing context breadcrumbs for new age
 ### Creating a Handoff
 
 **Basic handoff creation:**
+
 ```bash
 python scripts/create_handoff.py implementing-user-auth
 ```
 
 **Continuation handoff (linked to previous):**
+
 ```bash
 python scripts/create_handoff.py "auth-part-2" --continues-from 2024-01-15-auth.md
 ```
 
 **Validate before finalizing:**
+
 ```bash
 python scripts/validate_handoff.py .claude/handoffs/2024-01-15-143022-implementing-auth.md
 ```
@@ -114,16 +130,19 @@ python scripts/validate_handoff.py .claude/handoffs/2024-01-15-143022-implementi
 ### Resuming from a Handoff
 
 **List available handoffs:**
+
 ```bash
 python scripts/list_handoffs.py
 ```
 
 **Check if handoff is current:**
+
 ```bash
 python scripts/check_staleness.py .claude/handoffs/2024-01-15-143022-implementing-auth.md
 ```
 
 **Load and continue work:**
+
 1. Read the handoff document completely
 2. Verify context using resume checklist
 3. Start with first item in "Immediate Next Steps"
@@ -155,22 +174,24 @@ Example: `2024-01-15-143022-implementing-auth.md`
 
 ## Scripts Reference
 
-| Script | Purpose | Usage |
-|--------|---------|-------|
-| `create_handoff.py` | Generate new handoff with smart scaffolding | `python scripts/create_handoff.py [slug] [--continues-from <file>]` |
-| `list_handoffs.py` | List available handoffs in a project | `python scripts/list_handoffs.py [path]` |
-| `validate_handoff.py` | Check completeness, quality, and security | `python scripts/validate_handoff.py <file>` |
-| `check_staleness.py` | Assess if handoff context is still current | `python scripts/check_staleness.py <file>` |
+| Script                | Purpose                                     | Usage                                                               |
+| --------------------- | ------------------------------------------- | ------------------------------------------------------------------- |
+| `create_handoff.py`   | Generate new handoff with smart scaffolding | `python scripts/create_handoff.py [slug] [--continues-from <file>]` |
+| `list_handoffs.py`    | List available handoffs in a project        | `python scripts/list_handoffs.py [path]`                            |
+| `validate_handoff.py` | Check completeness, quality, and security   | `python scripts/validate_handoff.py <file>`                         |
+| `check_staleness.py`  | Assess if handoff context is still current  | `python scripts/check_staleness.py <file>`                          |
 
 ## Quality Standards
 
 **Do not finalize a handoff if:**
+
 - Validation score is below 70
 - Secrets are detected
 - `[TODO: ...]` placeholders remain
 - Required sections are empty
 
 **Best practices:**
+
 - Write clear, specific next steps (not vague goals)
 - Document the "why" behind decisions, not just the "what"
 - Include code snippets for critical patterns

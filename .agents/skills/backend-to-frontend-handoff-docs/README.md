@@ -49,6 +49,7 @@ The skill operates in "no-chat" mode: it produces only the handoff document with
 ### Smart Shortcuts
 
 For simple CRUD APIs with obvious validation and no complex business logic, the skill can skip the full template and provide just:
+
 - Endpoint + method
 - Example request/response JSON
 
@@ -105,10 +106,13 @@ The generated handoff follows this structure:
 # API Handoff: [Feature Name]
 
 ## Business Context
+
 [Problem, users, domain terms]
 
 ## Endpoints
+
 ### [METHOD] /path
+
 - Purpose
 - Auth requirements
 - Request/Response examples
@@ -116,27 +120,34 @@ The generated handoff follows this structure:
 - Edge case notes
 
 ## Data Models / DTOs
+
 [TypeScript interfaces]
 
 ## Enums & Constants
+
 [Status codes, magic values, display labels]
 
 ## Validation Rules
+
 [Frontend should mirror for UX]
 
 ## Business Logic & Edge Cases
+
 [Non-obvious behaviors]
 
 ## Integration Notes
+
 - Recommended flow
 - Optimistic UI guidance
 - Caching strategy
 - Real-time considerations
 
 ## Test Scenarios
+
 [Key acceptance criteria]
 
 ## Open Questions / TODOs
+
 [Unresolved items]
 ```
 
@@ -160,11 +171,13 @@ The generated handoff follows this structure:
 ## Output Location
 
 Documents are saved to:
+
 ```
 .claude/docs/ai/<feature-name>/api-handoff.md
 ```
 
 Subsequent versions:
+
 ```
 .claude/docs/ai/<feature-name>/api-handoff-v2.md
 .claude/docs/ai/<feature-name>/api-handoff-v3.md
@@ -173,6 +186,7 @@ Subsequent versions:
 ## What's NOT Included
 
 The skill deliberately excludes:
+
 - Backend implementation details (file paths, class names, internal services)
 - Database schema or internal data structures
 - Deployment or infrastructure details
@@ -184,10 +198,11 @@ Focus is purely on integration contract and business context.
 
 Here's a sample of what the skill generates:
 
-```markdown
+````markdown
 # API Handoff: Expense Approval
 
 ## Business Context
+
 Employees submit expenses for manager approval. Managers review and approve/reject
 with optional comments. Approved expenses move to accounting for reimbursement.
 Domain terms: "Submitter" (employee), "Approver" (manager), "Reimbursable" (approved).
@@ -195,6 +210,7 @@ Domain terms: "Submitter" (employee), "Approver" (manager), "Reimbursable" (appr
 ## Endpoints
 
 ### POST /api/expenses/:id/approve
+
 - **Purpose**: Approve or reject an expense submission
 - **Auth**: Manager role required
 - **Request**:
@@ -204,6 +220,8 @@ Domain terms: "Submitter" (employee), "Approver" (manager), "Reimbursable" (appr
     "comment": "string (optional, max 500 chars)"
   }
   ```
+````
+
 - **Response** (success):
   ```json
   {
@@ -220,40 +238,45 @@ Domain terms: "Submitter" (employee), "Approver" (manager), "Reimbursable" (appr
 
 ```typescript
 interface ExpenseApprovalDto {
-  decision: 'approved' | 'rejected';
+  decision: "approved" | "rejected";
   comment?: string; // max 500 chars
 }
 
 interface ExpenseDto {
   id: number;
-  status: 'pending' | 'approved' | 'rejected';
+  status: "pending" | "approved" | "rejected";
   approvedBy?: string;
   approvedAt?: string; // ISO 8601
 }
 ```
 
 ## Validation Rules
+
 - `decision`: Required, must be 'approved' or 'rejected'
 - `comment`: Optional, max 500 characters, trimmed
 - Frontend should show character counter for comment field
 
 ## Business Logic & Edge Cases
+
 - User must have Manager role to approve
 - Cannot approve own expenses (enforced by backend)
 - Once approved/rejected, decision is final (no re-approval)
 - Soft-deleted expenses return 404
 
 ## Integration Notes
+
 - **Recommended flow**: Fetch expense → show approval modal → submit decision → refresh list
 - **Optimistic UI**: NOT recommended (permission checks may fail)
 - **Real-time**: No websocket events; polling or manual refresh after approval
 
 ## Test Scenarios
+
 1. **Happy path**: Manager approves pending expense → 200 with updated status
 2. **Validation error**: Empty decision → 422 with validation message
 3. **Permission denied**: Non-manager attempts approval → 403
 4. **Already approved**: Approve same expense twice → 422 conflict
-```
+
+````
 
 ## Related Skills
 
@@ -279,4 +302,4 @@ interface ExpenseDto {
 "Create API handoff documentation for the user profile endpoints"
 "Document the new authentication API for frontend"
 "Generate frontend handoff for expense approval feature"
-```
+````

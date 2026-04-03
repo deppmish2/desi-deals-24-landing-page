@@ -6,7 +6,10 @@ const db = require("../db");
 // Always-admin emails — works even before the DB row is updated
 // Configurable via ADMIN_EMAILS env var (comma-separated)
 const HARDCODED_ADMIN_EMAILS = new Set(
-  (process.env.ADMIN_EMAILS || "itsjustrahul@gmail.com,deppmish2@googlemail.com")
+  (
+    process.env.ADMIN_EMAILS ||
+    "itsjustrahul@gmail.com,deppmish2@googlemail.com"
+  )
     .split(",")
     .map((e) => e.trim().toLowerCase())
     .filter(Boolean),
@@ -50,7 +53,9 @@ module.exports = async function requireAdminAuth(req, res, next) {
 
   // DB check: is_admin flag
   try {
-    const user = await db.prepare("SELECT is_admin FROM users WHERE id = ?").get(userId);
+    const user = await db
+      .prepare("SELECT is_admin FROM users WHERE id = ?")
+      .get(userId);
     if (Number(user?.is_admin) === 1) {
       req.user = { id: userId, email };
       return next();

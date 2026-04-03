@@ -9,7 +9,6 @@ description: Clarify ambiguous requirements through focused dialogue before impl
 
 Automatically transforms vague requirements into actionable PRDs through systematic clarification with a 100-point scoring system.
 
-
 ## Instructions
 
 When invoked, detect vague requirements:
@@ -35,6 +34,7 @@ When invoked, detect vague requirements:
    - Missing "what's NOT included"
 
 **Do NOT activate when**:
+
 - Specific file paths mentioned (e.g., "auth.go:45")
 - Code snippets included
 - Existing functions/classes referenced
@@ -67,6 +67,7 @@ When invoked, detect vague requirements:
 **Input**: User's requirement description
 
 **Tasks**:
+
 1. Parse and understand core requirement
 2. Generate feature name (kebab-case format)
 3. Determine document version (default `1.0` unless user specifies otherwise)
@@ -74,6 +75,7 @@ When invoked, detect vague requirements:
 5. Perform initial clarity assessment (0-100)
 
 **Assessment Rubric**:
+
 ```
 Functional Clarity: /30 points
 - Clear inputs/outputs: 10 pts
@@ -97,15 +99,18 @@ Business Context: /20 points
 ```
 
 **Initial Response Format**:
+
 ```markdown
 I understand your requirement. Let me help you refine this specification.
 
 **Current Clarity Score**: X/100
 
 **Clear Aspects**:
+
 - [List what's clear]
 
 **Needs Clarification**:
+
 - [List gaps]
 
 Let me systematically clarify these points...
@@ -116,24 +121,28 @@ Let me systematically clarify these points...
 Identify missing information across four dimensions:
 
 **1. Functional Scope**
+
 - What is the core functionality?
 - What are the boundaries?
 - What is out of scope?
 - What are edge cases?
 
 **2. User Interaction**
+
 - How do users interact?
 - What are the inputs?
 - What are the outputs?
 - What are success/failure scenarios?
 
 **3. Technical Constraints**
+
 - Performance requirements?
 - Compatibility requirements?
 - Security considerations?
 - Scalability needs?
 
 **4. Business Value**
+
 - What problem does this solve?
 - Who are the target users?
 - What are success metrics?
@@ -142,6 +151,7 @@ Identify missing information across four dimensions:
 ### Step 3: Interactive Clarification
 
 **Question Strategy**:
+
 1. Start with highest-impact gaps
 2. Ask 2-3 questions per round
 3. Build context progressively
@@ -149,6 +159,7 @@ Identify missing information across four dimensions:
 5. Provide examples when helpful
 
 **Question Format**:
+
 ```markdown
 I need to clarify the following points to complete the requirements document:
 
@@ -163,6 +174,7 @@ Please provide your answers, and I'll continue refining the PRD.
 ```
 
 **After Each User Response**:
+
 1. Update clarity score
 2. Capture new information in the working PRD outline
 3. Identify remaining gaps
@@ -170,15 +182,18 @@ Please provide your answers, and I'll continue refining the PRD.
 5. If score ≥ 90: Proceed to PRD generation
 
 **Score Update Format**:
+
 ```markdown
 Thank you for the additional information!
 
 **Clarity Score Update**: X/100 → Y/100
 
 **New Clarified Content**:
+
 - [Summarize new information]
 
 **Remaining Points to Clarify**:
+
 - [List remaining gaps if score < 90]
 
 [If score < 90: Continue with next round of questions]
@@ -203,16 +218,19 @@ Use the `Write` tool to create or update this file. Derive `{version}` from the 
 ## Requirements Description
 
 ### Background
+
 - **Business Problem**: [Describe the business problem to solve]
 - **Target Users**: [Target user groups]
 - **Value Proposition**: [Value this feature brings]
 
 ### Feature Overview
+
 - **Core Features**: [List of main features]
 - **Feature Boundaries**: [What is and isn't included]
 - **User Scenarios**: [Typical usage scenarios]
 
 ### Detailed Requirements
+
 - **Input/Output**: [Specific input/output specifications]
 - **User Interaction**: [User operation flow]
 - **Data Requirements**: [Data structures and validation rules]
@@ -221,18 +239,21 @@ Use the `Write` tool to create or update this file. Derive `{version}` from the 
 ## Design Decisions
 
 ### Technical Approach
+
 - **Architecture Choice**: [Technical architecture decisions and rationale]
 - **Key Components**: [List of main technical components]
 - **Data Storage**: [Data models and storage solutions]
 - **Interface Design**: [API/interface specifications]
 
 ### Constraints
+
 - **Performance Requirements**: [Response time, throughput, etc.]
 - **Compatibility**: [System compatibility requirements]
 - **Security**: [Security considerations]
 - **Scalability**: [Future expansion considerations]
 
 ### Risk Assessment
+
 - **Technical Risks**: [Potential technical risks and mitigation plans]
 - **Dependency Risks**: [External dependencies and alternatives]
 - **Schedule Risks**: [Timeline risks and response strategies]
@@ -240,17 +261,20 @@ Use the `Write` tool to create or update this file. Derive `{version}` from the 
 ## Acceptance Criteria
 
 ### Functional Acceptance
+
 - [ ] Feature 1: [Specific acceptance conditions]
 - [ ] Feature 2: [Specific acceptance conditions]
 - [ ] Feature 3: [Specific acceptance conditions]
 
 ### Quality Standards
+
 - [ ] Code Quality: [Code standards and review requirements]
 - [ ] Test Coverage: [Testing requirements and coverage]
 - [ ] Performance Metrics: [Performance test pass criteria]
 - [ ] Security Review: [Security review requirements]
 
 ### User Acceptance
+
 - [ ] User Experience: [UX acceptance criteria]
 - [ ] Documentation: [Documentation delivery requirements]
 - [ ] Training Materials: [If needed, training material requirements]
@@ -258,28 +282,36 @@ Use the `Write` tool to create or update this file. Derive `{version}` from the 
 ## Execution Phases
 
 ### Phase 1: Preparation
+
 **Goal**: Environment preparation and technical validation
+
 - [ ] Task 1: [Specific task description]
 - [ ] Task 2: [Specific task description]
 - **Deliverables**: [Phase deliverables]
 - **Time**: [Estimated time]
 
 ### Phase 2: Core Development
+
 **Goal**: Implement core functionality
+
 - [ ] Task 1: [Specific task description]
 - [ ] Task 2: [Specific task description]
 - **Deliverables**: [Phase deliverables]
 - **Time**: [Estimated time]
 
 ### Phase 3: Integration & Testing
+
 **Goal**: Integration and quality assurance
+
 - [ ] Task 1: [Specific task description]
 - [ ] Task 2: [Specific task description]
 - **Deliverables**: [Phase deliverables]
 - **Time**: [Estimated time]
 
 ### Phase 4: Deployment
+
 **Goal**: Release and monitoring
+
 - [ ] Task 1: [Specific task description]
 - [ ] Task 2: [Specific task description]
 - **Deliverables**: [Phase deliverables]
@@ -296,6 +328,7 @@ Use the `Write` tool to create or update this file. Derive `{version}` from the 
 ## Behavioral Guidelines
 
 ### DO
+
 - Ask specific, targeted questions
 - Build on previous answers
 - Provide examples to guide users
@@ -306,6 +339,7 @@ Use the `Write` tool to create or update this file. Derive `{version}` from the 
 - Stay in clarification mode until score ≥ 90
 
 ### DON'T
+
 - Ask all questions at once
 - Make assumptions without confirmation
 - Generate PRD before 90+ score

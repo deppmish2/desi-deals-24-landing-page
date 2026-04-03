@@ -12,17 +12,21 @@ Hi [Team/Name],
 **Summary:** [One sentence on overall progress and key highlight]
 
 **Completed This Week:**
+
 - [Feature/task completed with brief outcome]
 - [Feature/task completed with brief outcome]
 
 **In Progress:**
+
 - [Current work item] - Expected completion: [Date]
 - [Current work item] - Expected completion: [Date]
 
 **Blockers/Risks:**
+
 - [Blocker description] - Need: [What you need to unblock]
 
 **Next Week:**
+
 - [Planned work items]
 
 Let me know if you have questions or need more detail on anything.
@@ -41,14 +45,17 @@ Hi Team,
 Thanks for a productive retrospective. Here's a summary of what we discussed:
 
 **What Went Well:**
+
 - [Positive item 1]
 - [Positive item 2]
 
 **What Could Improve:**
+
 - [Improvement area 1]
 - [Improvement area 2]
 
 **Action Items:**
+
 - [ ] [Person]: [Action] - Due: [Date]
 - [ ] [Person]: [Action] - Due: [Date]
 
@@ -72,6 +79,7 @@ I'd appreciate your feedback on [document/PR/design] when you have a chance.
 **Link:** [URL]
 
 **What I'm looking for:**
+
 - [Specific feedback area 1]
 - [Specific feedback area 2]
 
@@ -96,11 +104,13 @@ I'm escalating [issue] because [reason it needs escalation].
 [1-2 sentences describing the problem]
 
 **Impact:**
+
 - [Business/technical impact]
 - [Timeline/deadline affected]
 - [Users/customers affected]
 
 **What We've Tried:**
+
 - [Attempted solution 1]
 - [Attempted solution 2]
 
@@ -108,6 +118,7 @@ I'm escalating [issue] because [reason it needs escalation].
 [Specific decision or support you need]
 
 **Recommended Next Steps:**
+
 - [Your recommended approach]
 
 I'm available to discuss further. Please let me know how you'd like to proceed.
@@ -126,10 +137,12 @@ Hi [Team/Name],
 Quick heads up: [One sentence summary of what changed or is happening]
 
 **Details:**
+
 - [Key detail 1]
 - [Key detail 2]
 
 **Impact on You:**
+
 - [How this affects the recipient, if at all]
 
 **Action Needed:** [None / Specific action]
@@ -154,6 +167,7 @@ I'd like to schedule a meeting to discuss [topic].
 **Duration:** [Time estimate]
 
 **Proposed Times:**
+
 - [Option 1]
 - [Option 2]
 
@@ -179,10 +193,10 @@ We need a decision on [technical choice] for [project/feature].
 
 **Options:**
 
-| Option | Pros | Cons | Effort |
-| --- | --- | --- | --- |
-| Option A: [Name] | [Pro] | [Con] | [Est] |
-| Option B: [Name] | [Pro] | [Con] | [Est] |
+| Option           | Pros  | Cons  | Effort |
+| ---------------- | ----- | ----- | ------ |
+| Option A: [Name] | [Pro] | [Con] | [Est]  |
+| Option B: [Name] | [Pro] | [Con] | [Est]  |
 
 **My Recommendation:** Option [X] because [brief reasoning]
 
@@ -204,13 +218,16 @@ Hi Team,
 I'm [Name], joining as [Role] starting [Date]. Excited to be part of the team!
 
 **Background:**
+
 - [Brief relevant experience]
 - [What you'll be working on initially]
 
 **What I'm Looking Forward To:**
+
 - [Something genuine about the team/project]
 
 **How to Reach Me:**
+
 - Slack: [handle]
 - Preferred: [communication preference]
 
@@ -233,6 +250,7 @@ I'm working on [task/feature] and could use your expertise on [specific area].
 [Brief description]
 
 **What I've Tried:**
+
 - [Approach 1 and result]
 - [Approach 2 and result]
 
@@ -240,6 +258,7 @@ I'm working on [task/feature] and could use your expertise on [specific area].
 [Specific question or blocker]
 
 **Relevant Context:**
+
 - [Link to code/doc if helpful]
 - [Error message if applicable]
 

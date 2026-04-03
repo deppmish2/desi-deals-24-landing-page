@@ -110,16 +110,19 @@ The Gaia theme has multiple color schemes:
 
 ```markdown
 <!-- _class: lead -->
+
 # Default Colors
 
 ---
 
 <!-- _class: lead invert -->
+
 # Inverted Colors
 
 ---
 
 <!-- _class: lead gaia -->
+
 # Gaia Colors
 ```
 
@@ -211,13 +214,13 @@ section {
 
 ## Theme Comparison Table
 
-| Feature | default | gaia | uncover |
-|---------|---------|------|---------|
-| **Background** | White | Colorful | White/Black |
-| **Font** | Sans-serif | Sans-serif | Serif |
-| **Colors** | Simple | Vibrant | Minimal |
-| **Use Case** | General | Creative | Formal |
-| **Style** | Clean | Energetic | Elegant |
+| Feature        | default    | gaia       | uncover     |
+| -------------- | ---------- | ---------- | ----------- |
+| **Background** | White      | Colorful   | White/Black |
+| **Font**       | Sans-serif | Sans-serif | Serif       |
+| **Colors**     | Simple     | Vibrant    | Minimal     |
+| **Use Case**   | General    | Creative   | Formal      |
+| **Style**      | Clean      | Energetic  | Elegant     |
 
 ## Common Class Specifications
 

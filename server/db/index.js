@@ -11,8 +11,7 @@ const tursoUrl =
   process.env.TURSO_DATABASE_URL ||
   process.env.DESI_DEALS_DB_TURSO_DATABASE_URL;
 const tursoAuthToken =
-  process.env.TURSO_AUTH_TOKEN ||
-  process.env.DESI_DEALS_DB_TURSO_AUTH_TOKEN;
+  process.env.TURSO_AUTH_TOKEN || process.env.DESI_DEALS_DB_TURSO_AUTH_TOKEN;
 const client = tursoUrl
   ? createClient({
       url: tursoUrl,
@@ -70,8 +69,12 @@ const db = {
    */
   prepare(sql) {
     const normalizeA = (args) =>
-      args.length === 1 && !Array.isArray(args[0]) && args[0] !== null && typeof args[0] === 'object'
-        ? args[0] : args.flat();
+      args.length === 1 &&
+      !Array.isArray(args[0]) &&
+      args[0] !== null &&
+      typeof args[0] === "object"
+        ? args[0]
+        : args.flat();
 
     return {
       async all(...args) {
@@ -153,6 +156,8 @@ const ready = (async () => {
   const migrations = [
     "ALTER TABLE deals ADD COLUMN best_before TEXT",
     "ALTER TABLE deals ADD COLUMN canonical_id TEXT",
+    "ALTER TABLE deals ADD COLUMN display_date TEXT",
+    "ALTER TABLE deals ADD COLUMN display_order INTEGER",
     "ALTER TABLE stores ADD COLUMN free_shipping_min REAL",
     "ALTER TABLE stores ADD COLUMN address TEXT",
     "ALTER TABLE stores ADD COLUMN contact_phone TEXT",
@@ -176,6 +181,7 @@ const ready = (async () => {
     "ALTER TABLE users ADD COLUMN waitlist_referral_code TEXT",
     "ALTER TABLE users ADD COLUMN waitlist_referrer_user_id TEXT",
     "ALTER TABLE users ADD COLUMN waitlist_unlocked_at DATETIME",
+    "ALTER TABLE crawl_runs ADD COLUMN crawl_date TEXT",
     "ALTER TABLE shopping_lists ADD COLUMN raw_input TEXT",
     "ALTER TABLE shopping_lists ADD COLUMN input_method TEXT",
     "ALTER TABLE shopping_lists ADD COLUMN last_used_at DATETIME",
@@ -190,10 +196,17 @@ const ready = (async () => {
     "ALTER TABLE price_alerts ADD COLUMN triggered INTEGER DEFAULT 0",
     "ALTER TABLE price_alerts ADD COLUMN last_triggered_at DATETIME",
     "ALTER TABLE price_alerts ADD COLUMN is_active INTEGER DEFAULT 1",
-    "ALTER TABLE deals ADD COLUMN last_pool_used_at DATETIME",
     "ALTER TABLE waitlist_referrals DROP COLUMN invited_user_id_user_id",
     "ALTER TABLE waitlist_referrals DROP COLUMN inviter_user_id_user_id",
     "ALTER TABLE users ADD COLUMN is_admin INTEGER NOT NULL DEFAULT 0",
+    `CREATE TABLE IF NOT EXISTS bookmarks (
+      id TEXT PRIMARY KEY,
+      user_id TEXT NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+      deal_id TEXT NOT NULL REFERENCES deals(id) ON DELETE CASCADE,
+      created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+      UNIQUE(user_id, deal_id)
+    )`,
+    "CREATE INDEX IF NOT EXISTS idx_bookmarks_user ON bookmarks(user_id)",
   ];
 
   for (const sql of migrations) {
@@ -223,6 +236,62 @@ const ready = (async () => {
        ON job_runs(job_name, started_at)`,
     `CREATE INDEX IF NOT EXISTS idx_job_runs_status_started
        ON job_runs(status, started_at)`,
+    `CREATE TABLE IF NOT EXISTS deal_price_history (
+      id TEXT PRIMARY KEY,
+      crawl_date TEXT NOT NULL,
+      crawl_run_id TEXT NOT NULL REFERENCES crawl_runs(id),
+      crawl_timestamp DATETIME NOT NULL,
+      store_id TEXT NOT NULL REFERENCES stores(id),
+      product_name TEXT NOT NULL,
+      product_category TEXT NOT NULL,
+      product_url TEXT NOT NULL,
+      image_url TEXT,
+      weight_raw TEXT,
+      weight_value REAL,
+      weight_unit TEXT,
+      sale_price REAL NOT NULL,
+      original_price REAL,
+      discount_percent REAL,
+      price_per_kg REAL,
+      price_per_unit REAL,
+      currency TEXT DEFAULT 'EUR',
+      availability TEXT DEFAULT 'unknown',
+      bulk_pricing TEXT,
+      best_before TEXT,
+      created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+      UNIQUE (crawl_date, store_id, product_url)
+    )`,
+    `CREATE INDEX IF NOT EXISTS idx_crawl_runs_crawl_date
+       ON crawl_runs(crawl_date)`,
+    `CREATE INDEX IF NOT EXISTS idx_deal_price_history_crawl_date
+       ON deal_price_history(crawl_date)`,
+    `CREATE INDEX IF NOT EXISTS idx_deal_price_history_store_date
+       ON deal_price_history(store_id, crawl_date)`,
+    `CREATE INDEX IF NOT EXISTS idx_deal_price_history_product_url
+       ON deal_price_history(product_url)`,
+    `CREATE INDEX IF NOT EXISTS idx_deals_display_date_order
+       ON deals(display_date, display_order)`,
+    `CREATE INDEX IF NOT EXISTS idx_deals_active_display
+       ON deals(is_active, display_date, display_order)`,
+    `CREATE TABLE IF NOT EXISTS search_queries (
+      id TEXT PRIMARY KEY,
+      query TEXT NOT NULL,
+      normalized_query TEXT NOT NULL,
+      user_id TEXT REFERENCES users(id) ON DELETE SET NULL,
+      user_email TEXT,
+      session_id TEXT,
+      route TEXT,
+      result_count INTEGER,
+      created_at DATETIME DEFAULT CURRENT_TIMESTAMP
+    )`,
+    `CREATE INDEX IF NOT EXISTS idx_search_queries_created
+       ON search_queries(created_at)`,
+    `CREATE INDEX IF NOT EXISTS idx_search_queries_normalized
+       ON search_queries(normalized_query)`,
+    `CREATE INDEX IF NOT EXISTS idx_search_queries_user_email
+       ON search_queries(user_email)`,
+    `CREATE INDEX IF NOT EXISTS idx_search_queries_session_id
+       ON search_queries(session_id)`,
   ];
 
   for (const sql of bootstrapStatements) {
@@ -243,18 +312,42 @@ const ready = (async () => {
     ["desigros", "Desigros", "https://www.desigros.com"],
     ["zora-supermarkt", "Zora Supermarkt", "https://www.zorastore.eu"],
     ["md-store", "MD Store", "https://www.md-store.de"],
-    ["indiansupermarkt", "Indian Supermarkt", "https://www.indiansupermarkt.de"],
-    ["indianstorestuttgart", "Indian Store Stuttgart", "https://www.indianstorestuttgart.com"],
-    ["anuhita-groceries", "AnuHita Groceries", "https://www.anuhitagroceries.de"],
+    [
+      "indiansupermarkt",
+      "Indian Supermarkt",
+      "https://www.indiansupermarkt.de",
+    ],
+    [
+      "indianstorestuttgart",
+      "Indian Store Stuttgart",
+      "https://www.indianstorestuttgart.com",
+    ],
+    [
+      "anuhita-groceries",
+      "AnuHita Groceries",
+      "https://www.anuhitagroceries.de",
+    ],
     ["sairas", "SAIRAS", "https://www.sairas.de"],
-    ["indische-lebensmittel-online", "Indische-Lebensmittel-Online", "https://www.indische-lebensmittel-online.de"],
+    [
+      "indische-lebensmittel-online",
+      "Indische-Lebensmittel-Online",
+      "https://www.indische-lebensmittel-online.de",
+    ],
     ["indianfoodstore", "Indian Food Store", "https://www.indianfoodstore.de"],
     ["swadesh", "Swadesh", "https://www.swadesh.eu"],
     ["spicelands", "Spicelands", "https://www.spicelands.de"],
     ["annachi", "Annachi Europe", "https://www.annachi.fr"],
-    ["namastedeutschland", "Namaste Deutschland", "https://www.namastedeutschland.de"],
+    [
+      "namastedeutschland",
+      "Namaste Deutschland",
+      "https://www.namastedeutschland.de",
+    ],
     ["india-store", "India Store", "https://www.india-store.de"],
-    ["india-express-food", "India Express Food", "https://www.india-express-food.de"],
+    [
+      "india-express-food",
+      "India Express Food",
+      "https://www.india-express-food.de",
+    ],
   ];
 
   for (const [id, name, url] of stores) {
@@ -275,16 +368,18 @@ const ready = (async () => {
   } catch (_) {}
 
   // Seed admin status for known admin accounts (configurable via ADMIN_EMAILS env var)
-  const adminEmails = (process.env.ADMIN_EMAILS || "itsjustrahul@gmail.com,deppmish2@googlemail.com")
+  const adminEmails = (
+    process.env.ADMIN_EMAILS ||
+    "itsjustrahul@gmail.com,deppmish2@googlemail.com"
+  )
     .split(",")
     .map((e) => e.trim().toLowerCase())
     .filter(Boolean);
   for (const email of adminEmails) {
     try {
-      await db.execute(
-        `UPDATE users SET is_admin = 1 WHERE email = ?`,
-        [email],
-      );
+      await db.execute(`UPDATE users SET is_admin = 1 WHERE email = ?`, [
+        email,
+      ]);
     } catch (_) {}
   }
 })();

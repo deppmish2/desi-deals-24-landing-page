@@ -997,16 +997,7 @@ test("recommendation prefers structured fallback size over stale pcs list rows",
       `INSERT INTO list_items
         (list_id, canonical_id, raw_item_text, quantity, quantity_unit, item_count, resolved, unresolvable)
        VALUES (?, ?, ?, ?, ?, ?, ?, ?)`,
-    ).run(
-      listId,
-      "schani-2kg-toor-dal",
-      "Schani Toor Dal",
-      1,
-      "pcs",
-      1,
-      1,
-      0,
-    );
+    ).run(listId, "schani-2kg-toor-dal", "Schani Toor Dal", 1, "pcs", 1, 1, 0);
 
     const recommend = await api.request(`/api/v1/lists/${listId}/recommend`, {
       method: "POST",
@@ -1035,7 +1026,8 @@ test("recommendation prefers structured fallback size over stale pcs list rows",
     assert.ok(
       !recommend.json.stores.some(
         (store) =>
-          store?.store?.id === "jamoona" && Number(store?.items_matched || 0) > 0,
+          store?.store?.id === "jamoona" &&
+          Number(store?.items_matched || 0) > 0,
       ),
     );
 

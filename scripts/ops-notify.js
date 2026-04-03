@@ -19,7 +19,9 @@ async function main() {
   const runUrl = process.env.RUN_URL || "";
   const errorMessage = process.env.FAILED_STEP_ERROR || "";
 
-  console.log(`[ops-notify] Sending failure notification for step: ${failedStep}`);
+  console.log(
+    `[ops-notify] Sending failure notification for step: ${failedStep}`,
+  );
 
   await notifyCrawlFailure({ failedStep, runUrl, errorMessage });
 

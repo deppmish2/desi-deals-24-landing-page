@@ -1,5 +1,6 @@
 const BASE = "/api/v1";
 const AUTH_STORAGE_KEY = "dd24_auth_session";
+const CLIENT_SESSION_STORAGE_KEY = "dd24_client_session_id";
 
 function readAuthSession() {
   try {
@@ -20,6 +21,21 @@ function writeAuthSession(value) {
   window.dispatchEvent(new Event("dd24-auth-changed"));
 }
 
+function getClientSessionId() {
+  try {
+    const storage = window.sessionStorage;
+    const existing = storage.getItem(CLIENT_SESSION_STORAGE_KEY);
+    if (existing) return existing;
+    const next =
+      (window.crypto && window.crypto.randomUUID && window.crypto.randomUUID()) ||
+      `dd24-${Math.random().toString(36).slice(2)}${Date.now().toString(36)}`;
+    storage.setItem(CLIENT_SESSION_STORAGE_KEY, next);
+    return next;
+  } catch {
+    return "dd24-anon";
+  }
+}
+
 function buildUrl(path, params = {}) {
   const url = new URL(BASE + path, window.location.origin);
   Object.entries(params).forEach(([key, value]) => {
@@ -35,8 +51,21 @@ async function parseError(res) {
   return json.error || `API error ${res.status}`;
 }
 
-async function request(path, params = {}) {
-  const res = await fetch(buildUrl(path, params));
+async function request(path, params = {}, options = {}) {
+  const session = readAuthSession();
+  const headers = {
+    ...(options.headers || {}),
+    "X-DD24-Session-Id": getClientSessionId(),
+  };
+
+  if (session?.accessToken && !headers.Authorization) {
+    headers.Authorization = `Bearer ${session.accessToken}`;
+  }
+
+  const res = await fetch(buildUrl(path, params), {
+    ...options,
+    headers,
+  });
   if (!res.ok) throw new Error(await parseError(res));
   return res.json();
 }
@@ -66,6 +95,7 @@ async function authRequest(path, options = {}, retry = true) {
   const session = readAuthSession();
   const headers = {
     ...(options.headers || {}),
+    "X-DD24-Session-Id": getClientSessionId(),
   };
 
   if (session?.accessToken) {
@@ -101,6 +131,11 @@ function persistAuthPayload(json) {
 
 export function fetchDeals(params) {
   return request("/deals", params);
+}
+
+export async function fetchDealById(dealId) {
+  const res = await request("/deals", { deal_id: dealId, limit: 1 });
+  return res?.data?.[0] || null;
 }
 
 export async function postContact(data) {
@@ -236,18 +271,6 @@ export async function logoutUser() {
   writeAuthSession(null);
 }
 
-export function fetchWaitlistMe() {
-  return authRequest("/waitlist/me");
-}
-
-export function claimWaitlistReferral(referralCode) {
-  return authRequest("/waitlist/claim-referral", {
-    method: "POST",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({ referral_code: referralCode }),
-  });
-}
-
 export function fetchMe() {
   return authRequest("/auth/me");
 }
@@ -260,6 +283,22 @@ export function updateAuthSessionUser(user) {
   const session = readAuthSession();
   if (!session) return;
   writeAuthSession({ ...session, user: { ...(session.user || {}), ...user } });
+}
+
+export function fetchBookmarks() {
+  return authRequest("/bookmarks", { cache: "no-store" });
+}
+
+export function addBookmark(dealId) {
+  return authRequest(`/bookmarks/${encodeURIComponent(dealId)}`, {
+    method: "POST",
+  });
+}
+
+export function removeBookmark(dealId) {
+  return authRequest(`/bookmarks/${encodeURIComponent(dealId)}`, {
+    method: "DELETE",
+  });
 }
 
 export async function startEmailAuth({ email, referral_code } = {}) {

@@ -26,15 +26,15 @@ cp .env.example .env
 
 Edit `.env` if needed (defaults work for local development):
 
-| Variable                      | Default                  | Description                                                  |
-| ----------------------------- | ------------------------ | ------------------------------------------------------------ |
-| `PORT`                        | `3000`                   | Express server port                                          |
-| `DB_PATH`                     | `./data/desiDeals24.db`  | SQLite database file                                         |
-| `TURSO_DATABASE_URL`          | —                        | Remote Turso/libsql database URL                             |
-| `TURSO_AUTH_TOKEN`            | —                        | Turso auth token                                             |
-| `ADMIN_SECRET`                | `changeme-in-production` | Bearer token for admin endpoints                             |
-| `CRAWL_ON_STARTUP`            | `false`                  | Set `true` to crawl immediately on server start              |
-| `CRAWL_LOCK_TTL_MINUTES`      | `180`                    | Shared crawl lock expiry for Turso-backed crawl runs         |
+| Variable                 | Default                  | Description                                          |
+| ------------------------ | ------------------------ | ---------------------------------------------------- |
+| `PORT`                   | `3000`                   | Express server port                                  |
+| `DB_PATH`                | `./data/desiDeals24.db`  | SQLite database file                                 |
+| `TURSO_DATABASE_URL`     | —                        | Remote Turso/libsql database URL                     |
+| `TURSO_AUTH_TOKEN`       | —                        | Turso auth token                                     |
+| `ADMIN_SECRET`           | `changeme-in-production` | Bearer token for admin endpoints                     |
+| `CRAWL_ON_STARTUP`       | `false`                  | Set `true` to crawl immediately on server start      |
+| `CRAWL_LOCK_TTL_MINUTES` | `180`                    | Shared crawl lock expiry for Turso-backed crawl runs |
 
 ### 3. Run the crawler (fetch deals)
 
@@ -48,10 +48,9 @@ npm run crawl
 npm run schedule:run
 ```
 
-This uses Europe/Berlin time windows:
-- `06:00` Berlin: full crawl
-- `07:00+` Berlin: daily pool refresh + verification until today's pool exists
-- outside those windows it exits quickly unless `FORCE_JOB=crawl|pool|all` is set
+This repo now uses a single daily crawl window in Europe/Berlin time:
+
+- `08:00` Berlin: full crawl across all configured shops
 
 Expected output:
 
@@ -107,24 +106,16 @@ This builds the React app into `client/dist/`. The Express server automatically 
 
 ### How availability is maintained
 
-1. At 06:00 Europe/Berlin, the full crawl writes directly into SQLite or Turso.
-2. The crawler updates only changed products, inserts new products, and deactivates removed ones.
-3. At 07:00 Europe/Berlin, the app fixes the daily 24-deal pool for that Berlin date.
-4. The landing page and unlocked deals page read directly from that daily pool.
-5. Products are excluded from the pool if they appeared in the prior rolling 7-day window.
-
-### Daily pool rules
-
-- The pool is fixed for the day once generated.
-- No intra-day re-curation happens after the pool is fixed.
-- Only currently active, in-stock deals are materialized for viewing.
+1. At 08:00 Europe/Berlin, the full crawl runs across all configured shops.
+2. The crawler writes the live active deals into the `deals` table and stores a daily snapshot for every crawled product in `deal_price_history`.
+3. The website reads directly from Turso using the latest completed crawl date.
+4. The API serves the live active deals for that latest completed crawl day.
 
 ### Production scheduling
 
-- The production scheduler lives in [`.github/workflows/daily-pipeline.yml`](./.github/workflows/daily-pipeline.yml).
-- GitHub Actions runs hourly and the app gates execution in code using Europe/Berlin time.
-- That keeps the `06:00` crawl and `07:00` daily-pool generation aligned across DST changes without relying on Vercel cold-start behavior for data freshness.
-- Vercel serves precomputed data only; it is no longer the source of truth for scheduled ingestion.
+- The production scheduler lives in [`.github/workflows/crawl.yml`](./.github/workflows/crawl.yml).
+- GitHub Actions triggers twice in UTC and gates execution in code so the crawl runs exactly once at `08:00 Europe/Berlin`, including DST changes.
+- Vercel serves Turso data only; it is not the scheduler for ingestion.
 
 ### Health / ops
 

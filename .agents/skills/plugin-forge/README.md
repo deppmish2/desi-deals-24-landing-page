@@ -20,6 +20,7 @@ Use this skill when you need to:
 - **Publish plugins** - "Publish plugin to marketplace", "Distribute my plugin"
 
 **Trigger phrases:**
+
 - "Create a Claude Code plugin"
 - "Build a plugin for marketplace"
 - "Add command/skill/agent/hook to plugin"
@@ -47,18 +48,18 @@ Use this skill when you need to:
 
 ### Automation Scripts
 
-| Script | Purpose |
-|--------|---------|
+| Script             | Purpose                                                    |
+| ------------------ | ---------------------------------------------------------- |
 | `create_plugin.py` | Scaffold new plugins with complete structure and manifests |
-| `bump_version.py` | Update versions across all manifest files consistently |
+| `bump_version.py`  | Update versions across all manifest files consistently     |
 
 ### Reference Documentation
 
-| Document | Content |
-|----------|---------|
-| `plugin-structure.md` | Directory hierarchy, manifest schema, component types |
+| Document                | Content                                                   |
+| ----------------------- | --------------------------------------------------------- |
+| `plugin-structure.md`   | Directory hierarchy, manifest schema, component types     |
 | `marketplace-schema.md` | Marketplace format, plugin entries, source specifications |
-| `workflows.md` | Development workflows, testing patterns, publishing guide |
+| `workflows.md`          | Development workflows, testing patterns, publishing guide |
 
 ### Plugin Patterns
 
@@ -68,13 +69,13 @@ Use this skill when you need to:
 
 ### Component Support
 
-| Component | Location | Format |
-|-----------|----------|--------|
-| Commands | `commands/` | Markdown with frontmatter |
-| Skills | `skills/<name>/` | Directory with `SKILL.md` |
-| Agents | `agents/` | Markdown definitions |
-| Hooks | `hooks/hooks.json` | Event handlers |
-| MCP Servers | `.mcp.json` | External integrations |
+| Component   | Location           | Format                    |
+| ----------- | ------------------ | ------------------------- |
+| Commands    | `commands/`        | Markdown with frontmatter |
+| Skills      | `skills/<name>/`   | Directory with `SKILL.md` |
+| Agents      | `agents/`          | Markdown definitions      |
+| Hooks       | `hooks/hooks.json` | Event handlers            |
+| MCP Servers | `.mcp.json`        | External integrations     |
 
 ## Usage Examples
 
@@ -91,6 +92,7 @@ python scripts/create_plugin.py my-awesome-plugin \
 ```
 
 This creates:
+
 ```
 plugins/my-awesome-plugin/
 ├── .claude-plugin/
@@ -198,6 +200,7 @@ Next steps:
 ### Git Commits
 
 Use conventional commits for clear history:
+
 ```bash
 git commit -m "feat: add new plugin"
 git commit -m "fix: correct plugin manifest"
@@ -239,18 +242,21 @@ plugin-name/
 ### Plugin directory already exists
 
 The `create_plugin.py` script will not overwrite existing plugins. Either:
+
 - Delete the existing directory if you want to start fresh
 - Manually update the existing plugin
 
 ### Plugin not found in marketplace manifest
 
 When using `bump_version.py`, ensure:
+
 - The plugin name matches exactly (case-sensitive)
 - The plugin entry exists in `.claude-plugin/marketplace.json`
 
 ### Changes not taking effect after reinstall
 
 Claude Code caches plugin files. After reinstalling:
+
 1. Restart Claude Code completely
 2. Verify the plugin is listed with `/plugin list`
 

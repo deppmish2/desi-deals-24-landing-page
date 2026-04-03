@@ -1,4 +1,5 @@
 # DesiDeals24 — Production Architecture Design
+
 > Output of `crisp_run.spec` — March 2026
 
 ---
@@ -9,6 +10,7 @@
 
 **Primary cause: Vercel serverless cold starts.**
 When the function has not been invoked for ~15–30 minutes, Vercel spins down the container. The next request must:
+
 - Boot a new Node.js process
 - Connect to Turso (TCP handshake + auth)
 - Query the DB
@@ -22,18 +24,21 @@ This adds 1–4 s of latency on first load after inactivity. Users perceive the 
 ### 1.2 Crawl reliability
 
 **The crawl runs via GitHub Actions in an external repo** (not this codebase). This is fragile:
+
 - If the Actions workflow is disabled, edited, or hits quota, crawls silently stop.
 - No visibility from this codebase — the server has no way to alert on missed crawls.
 - The Vercel 60 s function limit drove this workaround. It solves one constraint but creates an operational blind spot.
 
 **The Vercel Cron only refreshes the pool, not the crawl.**
 If GitHub Actions fails to push new deal data, the pool refresh will either:
+
 - Re-curate stale data (old deals with wrong prices), or
 - Silently generate a thin/empty pool if discounts have expired.
 
 ### 1.3 No in-memory / edge cache
 
 Every `GET /api/v1/deals` call:
+
 1. Hits serverless function (cold-start risk)
 2. Issues a Turso TCP query over the network
 
@@ -116,16 +121,16 @@ The lock mechanism in `crawler/utils/snapshot.js` prevents double-runs within a 
 
 ## 3. Recommended Stack / Infra Choices
 
-| Concern | Current | Recommended | Why |
-|---|---|---|---|
-| **Crawl trigger** | GitHub Actions (external repo) | GitHub Actions (this repo, `.github/workflows/daily-pipeline.yml`) | Same tool, but owned here. Visible, auditable, alertable. |
-| **Crawl runtime** | Vercel function (60 s limit workaround) | GitHub Actions runner (no time limit) | No workarounds needed. 21 stores × ~5 s = ~2 min, well within limits. |
-| **DB** | Turso | Turso (keep) | Already good. libSQL, edge replicas, fast reads. |
-| **Pool cache** | None (DB query on every request) | Warm-instance memory cache only | Keeps infra simple while Turso remains the only persistent store. |
-| **API cache** | None | Vercel Edge Cache (`Cache-Control` headers) | Free CDN caching. Serves millions of requests without hitting function. |
-| **Cold start mitigation** | None | Edge caching + precomputed Turso reads | Removes live crawl work from requests and keeps the read path deterministic. |
-| **Monitoring** | None | UptimeRobot (free) + email/Slack alerts via existing `alert-notifier.js` | No new infra needed. Wire up existing code. |
-| **Crawl pool builder** | Vercel Cron 3× daily | Step in GitHub Actions workflow (after crawl job) | Sequential, reliable, no separate cron needed. |
+| Concern                   | Current                                 | Recommended                                                              | Why                                                                          |
+| ------------------------- | --------------------------------------- | ------------------------------------------------------------------------ | ---------------------------------------------------------------------------- |
+| **Crawl trigger**         | GitHub Actions (external repo)          | GitHub Actions (this repo, `.github/workflows/daily-pipeline.yml`)       | Same tool, but owned here. Visible, auditable, alertable.                    |
+| **Crawl runtime**         | Vercel function (60 s limit workaround) | GitHub Actions runner (no time limit)                                    | No workarounds needed. 21 stores × ~5 s = ~2 min, well within limits.        |
+| **DB**                    | Turso                                   | Turso (keep)                                                             | Already good. libSQL, edge replicas, fast reads.                             |
+| **Pool cache**            | None (DB query on every request)        | Warm-instance memory cache only                                          | Keeps infra simple while Turso remains the only persistent store.            |
+| **API cache**             | None                                    | Vercel Edge Cache (`Cache-Control` headers)                              | Free CDN caching. Serves millions of requests without hitting function.      |
+| **Cold start mitigation** | None                                    | Edge caching + precomputed Turso reads                                   | Removes live crawl work from requests and keeps the read path deterministic. |
+| **Monitoring**            | None                                    | UptimeRobot (free) + email/Slack alerts via existing `alert-notifier.js` | No new infra needed. Wire up existing code.                                  |
+| **Crawl pool builder**    | Vercel Cron 3× daily                    | Step in GitHub Actions workflow (after crawl job)                        | Sequential, reliable, no separate cron needed.                               |
 
 ---
 
@@ -235,6 +240,7 @@ GitHub Actions: .github/workflows/daily-pipeline.yml
 `GET /api/v1/health/detail` (already exists — `server/routes/health.js`)
 
 Extend to return:
+
 ```json
 {
   "status": "ok",
@@ -258,14 +264,14 @@ Extend to return:
 
 ### 6.2 Alert conditions
 
-| Condition | Severity | Action |
-|---|---|---|
-| No crawl run in > 26 hours | Critical | Email + Slack |
-| Crawl run: > 30% stores failed | Warning | Slack |
-| Pool size < 18 by 08:00 Berlin | Warning | Slack |
-| Pool size = 0 | Critical | Email + Slack |
-| `/api/v1/deals` p95 > 2 s | Warning | Slack |
-| Turso DB unreachable | Critical | Email + Slack |
+| Condition                      | Severity | Action        |
+| ------------------------------ | -------- | ------------- |
+| No crawl run in > 26 hours     | Critical | Email + Slack |
+| Crawl run: > 30% stores failed | Warning  | Slack         |
+| Pool size < 18 by 08:00 Berlin | Warning  | Slack         |
+| Pool size = 0                  | Critical | Email + Slack |
+| `/api/v1/deals` p95 > 2 s      | Warning  | Slack         |
+| Turso DB unreachable           | Critical | Email + Slack |
 
 ### 6.3 UptimeRobot setup (free tier)
 
@@ -277,6 +283,7 @@ Extend to return:
 ### 6.4 Crawl run log
 
 `crawl_runs` table already exists. Expose via admin dashboard:
+
 - Last 7 crawl runs (date, duration, stores, deals, errors)
 - Flag runs where `stores_succeeded / stores_attempted < 0.7` in red
 
@@ -315,10 +322,11 @@ Extend to return:
    ```js
    async function fetchWithRetry(url, options, retries = 2, backoff = 5000) {
      for (let i = 0; i <= retries; i++) {
-       try { return await fetch(url, options); }
-       catch (err) {
+       try {
+         return await fetch(url, options);
+       } catch (err) {
          if (i === retries) throw err;
-         await new Promise(r => setTimeout(r, backoff * (i + 1)));
+         await new Promise((r) => setTimeout(r, backoff * (i + 1)));
        }
      }
    }
@@ -376,25 +384,33 @@ Extend to return:
 ## 8. Nice-to-Have Optimizations (Later)
 
 ### 8.1 Parallel store crawling with concurrency limit
+
 Run 3–5 store adapters in parallel instead of sequentially. Reduces total crawl time from ~2 min to ~30 s. Use `p-limit` to cap concurrency and avoid overwhelming any single store.
 
 ### 8.2 Per-store incremental crawl
+
 Track `stores.last_crawled_at` per store. Only re-crawl stores whose last crawl is > 20 hours old. Reduces load and avoids re-processing unchanged data.
 
 ### 8.3 Response streaming for large deal sets
+
 If the pool ever grows to 100+ items, stream the response using Node.js streams or `res.write()` to reduce time-to-first-byte.
 
 ### 8.4 Edge Function for `/api/v1/deals`
+
 Convert to a Vercel Edge Function later if needed. This would require removing Node.js-only APIs from the hot path.
 
 ### 8.5 Stale pool as permanent fallback
+
 If today's pool cannot be built (e.g., all stores down), serve yesterday's pool with a `X-Pool-Date: yesterday` header. Frontend can show a banner: "Deals last updated yesterday."
 
 ### 8.6 Crawl diff notifications
+
 After each crawl, compute diff vs previous: new deals added, expired deals removed, price changes. Emit to a channel or store as an event. Useful for future user notifications ("New deal at Jamoona!").
 
 ### 8.7 Shopify bulk catalog sync
+
 For Shopify stores (jamoona, dookan, namma-markt), use the `/products.json?limit=250&page_info=...` cursor pagination instead of single-page fetch. Catches all deals, not just first 250.
 
 ### 8.8 Admin crawl trigger via UI
+
 Add a "Run crawl now" button in the admin dashboard that calls `POST /api/v1/admin/crawl` → triggers `runCrawl(db)` in a background worker. Useful for on-demand refreshes without touching GitHub.

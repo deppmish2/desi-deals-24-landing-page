@@ -107,12 +107,12 @@ Focus conversation on behavior and impact, not assumed intentions.
 
 ### Managing Emotions
 
-| If You Feel | Before Acting |
-| ----------- | ------------- |
-| Angry | Wait 24 hours, write but don't send |
-| Hurt | Talk to neutral party first |
-| Anxious | Practice the conversation |
-| Defensive | Identify your contribution |
+| If You Feel | Before Acting                       |
+| ----------- | ----------------------------------- |
+| Angry       | Wait 24 hours, write but don't send |
+| Hurt        | Talk to neutral party first         |
+| Anxious     | Practice the conversation           |
+| Defensive   | Identify your contribution          |
 
 ### When to Escalate
 

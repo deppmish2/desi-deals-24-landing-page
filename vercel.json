@@ -1,19 +1,17 @@
 {
   "version": 2,
-  "buildCommand": "npm install && npm --prefix client install && node scripts/build-seed.js && npm run build:client",
+  "buildCommand": "npm install && npm --prefix client install && npm run build:client",
   "outputDirectory": "client/dist",
   "rewrites": [
     { "source": "/api/:path*", "destination": "/api/server" },
+    { "source": "/share/deal/:path*", "destination": "/api/server" },
+    { "source": "/deal/:path*", "destination": "/api/server" },
     { "source": "/:path*", "destination": "/index.html" }
   ],
   "functions": {
     "api/server.js": {
       "maxDuration": 300,
-      "includeFiles": "server/**/*,crawler/**/*"
-    },
-    "api/cron.js": {
-      "maxDuration": 60,
-      "includeFiles": "server/**/*,crawler/**/*"
+      "includeFiles": "server/**/*"
     }
   }
 }

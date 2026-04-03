@@ -21,14 +21,15 @@ Extract specific, grounded software engineering lessons from actual code changes
 
 Ask the user or infer from context what to analyze.
 
-| Scope | Git Commands | When to Use |
-|-------|-------------|-------------|
-| Feature branch | `git log main..HEAD --oneline` + `git diff main...HEAD` | User is on a non-main branch (default) |
-| Last N commits | `git log --oneline -N` + `git diff HEAD~N..HEAD` | User specifies a range, or on main (default N=5) |
-| Specific commit | `git show <sha>` | User references a specific commit |
-| Working changes | `git diff` + `git diff --cached` | User says "what about these changes?" before committing |
+| Scope           | Git Commands                                            | When to Use                                             |
+| --------------- | ------------------------------------------------------- | ------------------------------------------------------- |
+| Feature branch  | `git log main..HEAD --oneline` + `git diff main...HEAD` | User is on a non-main branch (default)                  |
+| Last N commits  | `git log --oneline -N` + `git diff HEAD~N..HEAD`        | User specifies a range, or on main (default N=5)        |
+| Specific commit | `git show <sha>`                                        | User references a specific commit                       |
+| Working changes | `git diff` + `git diff --cached`                        | User says "what about these changes?" before committing |
 
 **Default behavior:**
+
 - If on a feature branch: analyze branch commits vs main
 - If on main: analyze the last 5 commits
 - If the user provides a different scope, use that
@@ -46,6 +47,7 @@ Ask the user or infer from context what to analyze.
 Identify the **dominant pattern** -- the single most instructive thing about these changes.
 
 Look for:
+
 - **Structural decisions** -- How was the code organized? Why those boundaries?
 - **Trade-offs made** -- What was gained vs. sacrificed? (readability vs. performance, DRY vs. clarity, speed vs. correctness)
 - **Problems solved** -- What was the before/after? What made the "after" better?
@@ -87,14 +89,14 @@ If there is a second lesson worth noting (maximum 2 additional):
 
 ## What NOT to Do
 
-| Avoid | Why | Instead |
-|-------|-----|---------|
-| Listing every principle that vaguely applies | Overwhelming and generic | Pick the 1-2 most relevant |
-| Analyzing files that were not changed | Scope creep | Stick to the diff |
-| Ignoring commit messages | They contain intent that diffs miss | Read them as primary context |
-| Abstract advice disconnected from the code | Not actionable | Always reference specific files/lines |
-| Negative-only feedback | Demoralizing | Lead with what works, then suggest improvements |
-| More than 3 lessons | Dilutes the insight | One well-grounded lesson beats seven vague ones |
+| Avoid                                        | Why                                 | Instead                                         |
+| -------------------------------------------- | ----------------------------------- | ----------------------------------------------- |
+| Listing every principle that vaguely applies | Overwhelming and generic            | Pick the 1-2 most relevant                      |
+| Analyzing files that were not changed        | Scope creep                         | Stick to the diff                               |
+| Ignoring commit messages                     | They contain intent that diffs miss | Read them as primary context                    |
+| Abstract advice disconnected from the code   | Not actionable                      | Always reference specific files/lines           |
+| Negative-only feedback                       | Demoralizing                        | Lead with what works, then suggest improvements |
+| More than 3 lessons                          | Dilutes the insight                 | One well-grounded lesson beats seven vague ones |
 
 ## Conversation Style
 

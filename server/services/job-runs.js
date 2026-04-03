@@ -30,11 +30,13 @@ async function startJobRun(db, options = {}) {
     throw new Error("jobName is required");
   }
 
-  await db.prepare(
-    `INSERT INTO job_runs
+  await db
+    .prepare(
+      `INSERT INTO job_runs
       (id, job_name, trigger_type, status, started_at, details)
      VALUES (?, ?, ?, 'running', ?, ?)`,
-  ).run(id, jobName, triggerType, startedAt, safeStringify(options.details));
+    )
+    .run(id, jobName, triggerType, startedAt, safeStringify(options.details));
 
   return { id, jobName, triggerType, startedAt };
 }
@@ -54,8 +56,9 @@ async function finishJobRun(db, run, options = {}) {
     ? Number(options.warningCount)
     : warnings.length;
 
-  await db.prepare(
-    `UPDATE job_runs
+  await db
+    .prepare(
+      `UPDATE job_runs
      SET status = ?,
          finished_at = ?,
          duration_ms = ?,
@@ -64,16 +67,17 @@ async function finishJobRun(db, run, options = {}) {
          details = ?,
          error_message = ?
      WHERE id = ?`,
-  ).run(
-    String(options.status || "completed"),
-    finishedAt,
-    durationMs,
-    options.itemCount == null ? null : Number(options.itemCount),
-    warningCount,
-    safeStringify(options.details),
-    options.errorMessage ? String(options.errorMessage) : null,
-    run.id,
-  );
+    )
+    .run(
+      String(options.status || "completed"),
+      finishedAt,
+      durationMs,
+      options.itemCount == null ? null : Number(options.itemCount),
+      warningCount,
+      safeStringify(options.details),
+      options.errorMessage ? String(options.errorMessage) : null,
+      run.id,
+    );
 
   return {
     ...run,
@@ -91,13 +95,15 @@ async function latestJobRun(db, jobName) {
   const name = String(jobName || "").trim();
   if (!name) return null;
 
-  const row = await db.prepare(
-    `SELECT *
+  const row = await db
+    .prepare(
+      `SELECT *
      FROM job_runs
      WHERE job_name = ?
      ORDER BY started_at DESC
      LIMIT 1`,
-  ).get(name);
+    )
+    .get(name);
 
   if (!row) return null;
   return {
@@ -117,13 +123,15 @@ async function recentJobRuns(db, jobName, limit = 10) {
     params.push(name);
   }
 
-  const rows = await db.prepare(
-    `SELECT *
+  const rows = await db
+    .prepare(
+      `SELECT *
      FROM job_runs
      ${where}
      ORDER BY started_at DESC
      LIMIT ?`,
-  ).all(...params, Math.max(1, Number(limit || 10)));
+    )
+    .all(...params, Math.max(1, Number(limit || 10)));
 
   return rows.map((row) => ({
     ...row,

@@ -1,5 +1,5 @@
 /* Google Fontsから日本語フォントを読み込み */
-@import url('https://fonts.googleapis.com/css2?family=Noto+Sans+JP:wght@300;400;500&display=swap');
+@import url("https://fonts.googleapis.com/css2?family=Noto+Sans+JP:wght@300;400;500&display=swap");
 
 /* --- シンプル＆ミニマルテーマ --- */
 :root {
@@ -7,7 +7,8 @@
   --color-foreground: #2c2c2c;
   --color-heading: #1a1a1a;
   --color-accent: #e0e0e0;
-  --font-default: 'Noto Sans JP', 'Hiragino Kaku Gothic ProN', 'Meiryo', sans-serif;
+  --font-default:
+    "Noto Sans JP", "Hiragino Kaku Gothic ProN", "Meiryo", sans-serif;
 }
 
 section {
@@ -22,7 +23,12 @@ section {
   padding: 60px 80px;
 }
 
-h1, h2, h3, h4, h5, h6 {
+h1,
+h2,
+h3,
+h4,
+h5,
+h6 {
   font-weight: 400;
   color: var(--color-heading);
   margin: 0;
@@ -52,7 +58,8 @@ h3 {
   font-weight: 400;
 }
 
-ul, ol {
+ul,
+ol {
   padding-left: 32px;
 }
 

@@ -13,29 +13,37 @@ Ready-to-use scripts, phrases, and techniques for navigating challenging moments
 ### General Openings
 
 **Collaborative tone:**
+
 > "I'd like to talk about [topic]. My goal is to understand your perspective and share mine so we can [outcome]. Is this a good time?"
 
 **Direct tone:**
+
 > "We need to discuss [topic]. I want to be straightforward with you, and I also want to hear your side. Can we talk now?"
 
 **Curious tone:**
+
 > "I've noticed [observation] and I'd like to understand what's happening. Can you help me see your perspective?"
 
 ### Specific Situation Openings
 
 **For Performance Issues:**
+
 > "I wanted to check in about [specific area]. I've noticed [specific observation], and I'd like to understand what's happening from your end so we can address it together."
 
 **For Conflict with Peer:**
+
 > "I'd like to clear the air about [incident/pattern]. I value our working relationship and want to address this before it affects our collaboration. Can we talk?"
 
 **For Feedback to Manager:**
+
 > "I have some feedback I'd like to share. I'm bringing this up because I want our working relationship to be as effective as possible. Are you open to hearing it?"
 
 **For Requesting Something (Raise, Promotion):**
+
 > "I'd like to discuss my [compensation/career path]. I've prepared some thoughts, and I'm also interested in understanding your perspective on my trajectory here."
 
 **For Sensitive Personal Topic:**
+
 > "I need to discuss something personal that's affecting my work. I want to be transparent with you while also keeping some boundaries. Is now a good time?"
 
 ## Response Phrases
@@ -199,63 +207,81 @@ When the conversation has drifted:
 ### Performance Conversation
 
 **Opening:**
+
 > "I wanted to discuss your work on [project/area]. I've noticed [specific observation] and want to understand what's happening so we can address it."
 
 **Sharing Impact:**
+
 > "When [behavior], the impact is [effect]. For example, [specific instance]."
 
 **Inviting Response:**
+
 > "I'd like to hear your perspective. What's been going on from your end?"
 
 **Moving to Solution:**
+
 > "Given what we've discussed, what do you think would help improve this?"
 
 **Setting Expectation:**
+
 > "Going forward, I need to see [specific behavior]. Let's check in [when] to see how it's going."
 
 ### Giving Critical Feedback to Peer
 
 **Opening:**
+
 > "I wanted to share some feedback about [topic]. I'm bringing this up because I value working with you and think this could help."
 
 **The Feedback:**
+
 > "In [situation], when [behavior], the impact was [effect]. I want to share this because [positive intent]."
 
 **Seeking Dialogue:**
+
 > "How does this land with you? I'm curious about your perspective."
 
 ### Receiving Difficult Feedback
 
 **Acknowledging:**
+
 > "Thank you for telling me. I appreciate you being direct."
 
 **Clarifying:**
+
 > "Can you give me a specific example so I can understand better?"
 
 **Processing:**
+
 > "I need some time to think about this. Can I follow up with you [when]?"
 
 **Committing:**
+
 > "I hear what you're saying about [summary]. I'm going to work on [specific action]."
 
 ### Upward Feedback (to Manager)
 
 **Opening:**
+
 > "I have some feedback I'd like to share. I'm hoping this can help us work together even better."
 
 **The Feedback:**
+
 > "When [situation], I find myself [feeling/struggling with] because [impact]. I'm wondering if [alternative approach] might work better."
 
 **Inviting Response:**
+
 > "I may be missing context. Help me understand your perspective."
 
 ### Escalating an Issue
 
 **Opening:**
+
 > "I need to bring something to your attention. I've tried to address it directly, and I'm now at a point where I need your help."
 
 **Background:**
+
 > "Here's what's happened: [facts]. Here's what I've tried: [attempts]. Here's where we are: [current state]."
 
 **Ask:**
+
 > "I'm hoping you can [specific help needed]. What do you think the right next step is?"

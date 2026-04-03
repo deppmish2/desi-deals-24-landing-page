@@ -70,11 +70,11 @@ env | grep [relevant-var]
 
 Rate the handoff quality to identify if more exploration is needed:
 
-| Aspect | Good | Needs Exploration |
-|--------|------|-------------------|
-| Next steps | Clear, actionable | Vague or missing |
+| Aspect          | Good                 | Needs Exploration    |
+| --------------- | -------------------- | -------------------- |
+| Next steps      | Clear, actionable    | Vague or missing     |
 | File references | Specific paths/lines | General descriptions |
-| Decisions | Rationale included | Just outcomes |
-| Context | Complete picture | Gaps or assumptions |
+| Decisions       | Rationale included   | Just outcomes        |
+| Context         | Complete picture     | Gaps or assumptions  |
 
 If multiple aspects "Need Exploration", spend time re-exploring the codebase before continuing implementation.

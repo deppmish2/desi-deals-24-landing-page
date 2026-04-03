@@ -210,12 +210,12 @@ jira sprint close SPRINT-ID
 
 ## Linking Issues
 
-| Relationship | Meaning |
-|--------------|---------|
-| `Blocks` | First ticket blocks second |
-| `Relates` | General relationship |
-| `Duplicate` | Same work |
-| `Epic-Story` | Story belongs to Epic |
+| Relationship | Meaning                    |
+| ------------ | -------------------------- |
+| `Blocks`     | First ticket blocks second |
+| `Relates`    | General relationship       |
+| `Duplicate`  | Same work                  |
+| `Epic-Story` | Story belongs to Epic      |
 
 ```bash
 # Basic link

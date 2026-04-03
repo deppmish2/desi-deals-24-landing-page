@@ -31,7 +31,10 @@ function insertCanonical(db, canonicalId, name, category = "Lentils & Pulses") {
   ).run(canonicalId, name, category);
 }
 
-function insertListItem(db, { listId, canonicalId, rawText, qty, unit, itemCount = 1 }) {
+function insertListItem(
+  db,
+  { listId, canonicalId, rawText, qty, unit, itemCount = 1 },
+) {
   db.prepare(
     `INSERT INTO list_items
       (list_id, canonical_id, raw_item_text, quantity, quantity_unit, item_count, resolved, unresolvable)
@@ -707,7 +710,10 @@ test("searchStrictReplacementOptions keeps exact matches first and appends broad
   assert.equal(strict.results_mode, "exact");
   assert.equal(strict.more_options_included, true);
   assert.equal(strict.results[0].matched_total_quantity, 1);
-  assert.equal(String(strict.results[0].matched_total_unit).toLowerCase(), "kg");
+  assert.equal(
+    String(strict.results[0].matched_total_unit).toLowerCase(),
+    "kg",
+  );
   assert.ok(
     strict.results.some((row) => row.product_name === "TRS Toor Dal 2kg"),
     "expected broader same-base replacement options after exact matches",

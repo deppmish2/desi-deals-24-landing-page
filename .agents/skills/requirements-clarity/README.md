@@ -9,6 +9,7 @@ This skill helps you avoid costly misunderstandings and rework by ensuring requi
 ## When to Use This Skill
 
 ### Use When
+
 - Requirements are vague or ambiguous (e.g., "add login feature", "implement payment")
 - Features are complex and estimated to take more than 2 days
 - Cross-team coordination is required
@@ -17,6 +18,7 @@ This skill helps you avoid costly misunderstandings and rework by ensuring requi
 - Unclear scope boundaries ("what exactly does 'user management' include?")
 
 ### Don't Use When
+
 - Specific file paths are mentioned (e.g., "fix auth.go:45")
 - Code snippets are already included in the request
 - Working with existing functions/classes (use code review instead)
@@ -62,24 +64,28 @@ The 100-point scoring system evaluates:
 ## Key Features
 
 ### Systematic Questioning
+
 - Focused, specific questions (not overwhelming)
 - One category at a time
 - Builds on previous answers
 - Uses your language and provides examples
 
 ### Quality-Driven Iteration
+
 - Continuous clarity assessment
 - Transparent score updates
 - Iterates until ≥ 90 points achieved
 - Documents all clarification rounds
 
 ### Actionable Output
+
 - Concrete specifications ready for development
 - Measurable acceptance criteria (checklistable format)
 - Executable implementation phases with specific tasks
 - Complete PRD with all necessary sections
 
 ### Core Principles
+
 - **Why?** (YAGNI check) - Ensures features are truly needed
 - **Simpler?** (KISS check) - Explores simpler alternatives before complex solutions
 
@@ -88,11 +94,13 @@ The 100-point scoring system evaluates:
 ### Example 1: Vague Feature Request
 
 **User Input:**
+
 ```
 I need a login feature for my app.
 ```
 
 **Skill Response:**
+
 ```
 I understand your requirement. Let me help you refine this specification.
 
@@ -124,6 +132,7 @@ Let me systematically clarify these points...
 ### Example 2: After Clarification Round
 
 **After User Response:**
+
 ```
 Thank you for the additional information!
 
@@ -155,6 +164,7 @@ Let me continue with the next round of questions...
 ### Example 3: Final PRD Generation
 
 **When Clarity Score ≥ 90:**
+
 ```
 Perfect! I will now generate the complete PRD document...
 
@@ -206,17 +216,20 @@ Each phase includes specific tasks, deliverables, and time estimates.
 ## Output Location
 
 PRDs are saved to:
+
 ```
 ./docs/prds/{feature-name}-v{version}-prd.md
 ```
 
 Where:
+
 - `{feature-name}`: Auto-generated in kebab-case format
 - `{version}`: Document version (default 1.0, or user-specified)
 
 ## Best Practices
 
 ### DO
+
 - Answer questions thoroughly but concisely
 - Provide examples when you have specific preferences
 - Ask for clarification if questions aren't clear
@@ -224,6 +237,7 @@ Where:
 - Share constraints and non-negotiables upfront
 
 ### DON'T
+
 - Rush through clarification rounds
 - Assume the skill knows your technical context
 - Skip questions that seem "obvious"
@@ -233,6 +247,7 @@ Where:
 ## Success Criteria
 
 A successful requirements clarification session results in:
+
 - Clarity score ≥ 90/100
 - All PRD sections complete with substantial content
 - Acceptance criteria in checklistable format

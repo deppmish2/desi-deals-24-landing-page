@@ -46,13 +46,13 @@ START
 
 Check for available integrations **silently** (suppress errors, don't show to user):
 
-| Integration | Detection |
-|-------------|-----------|
+| Integration             | Detection                                                 |
+| ----------------------- | --------------------------------------------------------- |
 | **Claude Code History** | `~/.claude/projects` directory exists with `.jsonl` files |
-| GitHub CLI | `gh auth status` succeeds |
-| Jira CLI | `jira` command exists |
-| Atlassian MCP | `mcp__atlassian__*` tools available |
-| Git | Inside a git repository |
+| GitHub CLI              | `gh auth status` succeeds                                 |
+| Jira CLI                | `jira` command exists                                     |
+| Atlassian MCP           | `mcp__atlassian__*` tools available                       |
+| Git                     | Inside a git repository                                   |
 
 ### Step 2: Offer GitHub/Jira Integrations (if available)
 
@@ -95,6 +95,7 @@ Options:
 ### Step 3: Pull GitHub/Jira Data (if approved)
 
 **GitHub/Git** — For each approved repo:
+
 - Commits by user since yesterday
 - PRs opened/merged by user
 - Reviews done by user
@@ -108,6 +109,7 @@ Options:
 This integration captures everything you worked on with Claude Code — useful for recalling work that isn't in git or Jira.
 
 **Detection:**
+
 ```bash
 ls ~/.claude/projects/*/*.jsonl 2>/dev/null | head -1
 ```
@@ -145,11 +147,13 @@ Options (multiSelect):
 **Key insight:** User selects which sessions are work-related. Personal projects or experiments can be excluded.
 
 **Do NOT run digest script when:**
+
 - User explicitly says "No" to Claude Code history
 - User says they'll provide everything manually
 - `~/.claude/projects` directory doesn't exist
 
 **If digest script fails:**
+
 - Fallback: Skip Claude Code integration silently, proceed with interview
 - Common issues: Python not installed, no sessions from yesterday, permission errors
 - Do NOT block the standup flow — the script is supplemental, not required
@@ -182,6 +186,7 @@ Anything else you worked on yesterday that I missed?"
 ```
 
 If user response is vague, ask follow-up:
+
 - "Can you give more details about X?"
 - "Did you complete anything specific?"
 
@@ -240,28 +245,36 @@ Combine all information into clean Markdown:
 # Daily Update - [DATE]
 
 ## Yesterday
+
 - [Items from interview]
 - [Items from GitHub/Jira if pulled]
 
 ## Today
+
 - [Items from interview]
 
 ## Blockers
+
 - [Blockers or "No blockers"]
 
 ## PRs & Reviews (if pulled from GitHub)
+
 - [PRs opened]
 - [PRs merged]
 - [Reviews done]
 
 ## Jira (if pulled from Jira)
+
 - [Tickets updated]
 
 ## Topics for Discussion
+
 - [Topics or "None"]
 
 ---
-*Links:*
+
+_Links:_
+
 - [PR links]
 - [Ticket links]
 ```
@@ -278,13 +291,13 @@ Combine all information into clean Markdown:
 
 ## Quick Reference
 
-| Phase | Action | Tool |
-|-------|--------|------|
-| 1. Detect & Offer | Check gh/jira/claude history, ask user, pull data | Bash (silent), AskUserQuestionTool* |
-| 2. Interview | Ask 4 questions with insights | AskUserQuestionTool* |
-| 3. Generate | Format Markdown | Output text |
+| Phase             | Action                                            | Tool                                 |
+| ----------------- | ------------------------------------------------- | ------------------------------------ |
+| 1. Detect & Offer | Check gh/jira/claude history, ask user, pull data | Bash (silent), AskUserQuestionTool\* |
+| 2. Interview      | Ask 4 questions with insights                     | AskUserQuestionTool\*                |
+| 3. Generate       | Format Markdown                                   | Output text                          |
 
-*Claude Code only: Use `AskUserQuestionTool` tool for structured questions.
+\*Claude Code only: Use `AskUserQuestionTool` tool for structured questions.
 
 ### Claude Code Digest Script
 
@@ -358,28 +371,35 @@ User: "Yes, I want to discuss the architecture of the new payments module"
 # Daily Update - 2026-01-22
 
 ## Yesterday
+
 - Worked on authentication feature
 - Research on payment providers
 - Merged PR #120 (fix: login timeout)
 - Opened PR #125 (feat: add OAuth flow)
 
 ## Today
+
 - Continue OAuth feature
 - Deploy to staging
 
 ## Blockers
+
 - No blockers
 
 ## PRs & Reviews
+
 - **Opened:** PR #125 - feat: add OAuth flow
 - **Merged:** PR #120 - fix: login timeout
 - **Reviews:** PR #123 (approved), PR #456 (changes requested)
 
 ## Topics for Discussion
+
 - Architecture of the new payments module
 
 ---
-*Links:*
+
+_Links:_
+
 - https://github.com/org/repo/pull/125
 - https://github.com/org/repo/pull/120
 ```
@@ -388,14 +408,14 @@ User: "Yes, I want to discuss the architecture of the new payments module"
 
 ## Anti-Patterns
 
-| Avoid | Why (Expert Knowledge) | Instead |
-|-------|------------------------|---------|
-| Run gh/jira without asking | Users may have personal repos visible, or be in a sensitive project context they don't want exposed | Always ask first, let user choose repos |
-| Assume current directory is the only project | Developers often work on 2-5 repos simultaneously (frontend, backend, infra) | Ask "Which projects are you working on?" |
-| Skip interview even with tool data | Tools capture WHAT happened but miss WHY and context (research, meetings, planning) | Interview is primary, tools supplement |
-| Generate update before all 4 questions | User might have critical blocker or discussion topic that changes the narrative | Complete interview, then generate |
-| Include raw commit messages | Commit messages are often cryptic ("fix", "wip") and don't tell the story | Summarize into human-readable outcomes |
-| Ask for data after interview | Showing insights during interview makes questions smarter ("I see you merged PR #123, anything else?") | Pull data first, then interview with context |
+| Avoid                                        | Why (Expert Knowledge)                                                                                 | Instead                                      |
+| -------------------------------------------- | ------------------------------------------------------------------------------------------------------ | -------------------------------------------- |
+| Run gh/jira without asking                   | Users may have personal repos visible, or be in a sensitive project context they don't want exposed    | Always ask first, let user choose repos      |
+| Assume current directory is the only project | Developers often work on 2-5 repos simultaneously (frontend, backend, infra)                           | Ask "Which projects are you working on?"     |
+| Skip interview even with tool data           | Tools capture WHAT happened but miss WHY and context (research, meetings, planning)                    | Interview is primary, tools supplement       |
+| Generate update before all 4 questions       | User might have critical blocker or discussion topic that changes the narrative                        | Complete interview, then generate            |
+| Include raw commit messages                  | Commit messages are often cryptic ("fix", "wip") and don't tell the story                              | Summarize into human-readable outcomes       |
+| Ask for data after interview                 | Showing insights during interview makes questions smarter ("I see you merged PR #123, anything else?") | Pull data first, then interview with context |
 
 ---
 

@@ -1,5 +1,5 @@
 /* Google Fontsから日本語フォントを読み込み */
-@import url('https://fonts.googleapis.com/css2?family=Noto+Sans+JP:wght@400;700&display=swap');
+@import url("https://fonts.googleapis.com/css2?family=Noto+Sans+JP:wght@400;700&display=swap");
 
 /* --- 色やフォントの基本設定 --- */
 :root {
@@ -7,7 +7,8 @@
   --color-foreground: #3a3b5a;
   --color-heading: #4f86c6;
   --color-hr: #000000;
-  --font-default: 'Noto Sans JP', 'Hiragino Kaku Gothic ProN', 'Meiryo', sans-serif;
+  --font-default:
+    "Noto Sans JP", "Hiragino Kaku Gothic ProN", "Meiryo", sans-serif;
 }
 
 /* --- スライド全体のスタイル --- */
@@ -29,7 +30,12 @@ section:last-of-type {
 }
 
 /* --- 見出しのスタイル --- */
-h1, h2, h3, h4, h5, h6 {
+h1,
+h2,
+h3,
+h4,
+h5,
+h6 {
   font-weight: 700;
   color: var(--color-heading);
   margin: 0;
@@ -56,7 +62,7 @@ h2 {
 
 /* h2の疑似要素(::after)を使って、短い線を実装 */
 h2::after {
-  content: '';
+  content: "";
   position: absolute;
   left: 0;
   bottom: 8px;
@@ -79,7 +85,8 @@ h3 {
 }
 
 /* --- リストのスタイル --- */
-ul, ol {
+ul,
+ol {
   padding-left: 32px;
 }
 

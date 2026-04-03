@@ -8,13 +8,13 @@ Guide to effective communication in remote-first and async-first environments.
 
 Before scheduling a meeting, ask: "Could this be async instead?"
 
-| Sync (Meeting) | Async (Document/Message) |
-| -------------- | ------------------------ |
-| Brainstorming with immediate building | Collecting feedback over time |
-| Sensitive/emotional conversations | Status updates |
-| Real-time collaboration | Decisions with clear options |
-| Urgent problem-solving | Non-urgent questions |
-| Relationship building | Documentation and knowledge sharing |
+| Sync (Meeting)                        | Async (Document/Message)            |
+| ------------------------------------- | ----------------------------------- |
+| Brainstorming with immediate building | Collecting feedback over time       |
+| Sensitive/emotional conversations     | Status updates                      |
+| Real-time collaboration               | Decisions with clear options        |
+| Urgent problem-solving                | Non-urgent questions                |
+| Relationship building                 | Documentation and knowledge sharing |
 
 ### Why Async Matters
 
@@ -107,12 +107,12 @@ In remote work, default to over-communication:
 
 People can't see what you're working on:
 
-| Don't | Do |
-| ----- | -- |
-| Disappear for hours | Post "heads down on X, will be slow to respond" |
-| Assume people know your schedule | Share working hours in your profile |
-| Go silent when stuck | Post "blocked on X, exploring options" |
-| Complete work silently | Share progress: "Finished the API, moving to tests" |
+| Don't                            | Do                                                  |
+| -------------------------------- | --------------------------------------------------- |
+| Disappear for hours              | Post "heads down on X, will be slow to respond"     |
+| Assume people know your schedule | Share working hours in your profile                 |
+| Go silent when stuck             | Post "blocked on X, exploring options"              |
+| Complete work silently           | Share progress: "Finished the API, moving to tests" |
 
 ### Working Out Loud
 
@@ -206,6 +206,7 @@ For important sync meetings:
 Start with the conclusion/ask, then provide context:
 
 **Buried lead (bad):**
+
 > "I've been looking at our deployment pipeline and noticed that the test suite takes 45 minutes. After investigating, I found that most of the time is spent on integration tests that could be parallelized. I've put together a proposal to reduce this by 60%..."
 
 **Frontloaded (good):**
@@ -227,10 +228,10 @@ Use structure for long messages:
 
 The reader shouldn't need to ask follow-up questions:
 
-| Missing context | Complete context |
-| --------------- | ---------------- |
-| "The deploy failed" | "The 3pm deploy to staging failed with timeout error (link to logs). I'm investigating and will update in 1 hour." |
-| "Can you review my PR?" | "Can you review my PR (#123)? It's ~200 lines touching the auth flow. Happy to answer questions async or sync." |
+| Missing context         | Complete context                                                                                                   |
+| ----------------------- | ------------------------------------------------------------------------------------------------------------------ |
+| "The deploy failed"     | "The 3pm deploy to staging failed with timeout error (link to logs). I'm investigating and will update in 1 hour." |
+| "Can you review my PR?" | "Can you review my PR (#123)? It's ~200 lines touching the auth flow. Happy to answer questions async or sync."    |
 
 ### Set Clear Expectations
 
@@ -285,20 +286,24 @@ Consider establishing explicit norms:
 ## Our Communication Norms
 
 ### Response Times
+
 - **Slack DM:** Within 4 working hours
 - **Slack channel:** Within 24 hours
 - **Email:** Within 48 hours
 - **Document comments:** Before stated deadline
 
 ### Urgent vs. Non-Urgent
+
 - For truly urgent: Use @here or call
 - For everything else: Assume async
 
 ### Deep Work Protection
+
 - No expectation of response during focus time (blocked on calendar)
 - "Do Not Disturb" is respected
 
 ### Time Zone Respect
+
 - Core overlap hours: 10am-2pm EST
 - Meetings scheduled in overlap hours only
 - Async preferred outside overlap

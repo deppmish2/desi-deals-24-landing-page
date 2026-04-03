@@ -6,6 +6,7 @@ description: Use when the user asks to run Gemini CLI for code review, plan revi
 # Gemini Skill Guide
 
 ## When to Use Gemini
+
 - WHEN ASKED TO BE ACTIVATED
 - **Code Review**: Comprehensive code reviews across multiple files
 - **Plan Review**: Analyzing architectural plans, technical specifications, or project roadmaps
@@ -17,16 +18,19 @@ description: Use when the user asks to run Gemini CLI for code review, plan revi
 **NEVER use `--approval-mode default` in background or non-interactive shells** (like Claude Code tool calls). It will hang indefinitely waiting for approval prompts that cannot be provided.
 
 **For automated/background reviews:**
+
 - ✅ Use `--approval-mode yolo` for fully automated execution
 - ✅ OR wrap with timeout: `timeout 300 gemini ...`
 - ❌ NEVER use `--approval-mode default` without interactive terminal
 
 **Symptoms of hung Gemini:**
+
 - Process running 20+ minutes with 0% CPU usage
 - No network activity
 - Process state shows 'S' (sleeping)
 
 **Fix hung process:**
+
 ```bash
 # Check if hung
 ps aux | grep gemini | grep -v grep
@@ -60,6 +64,7 @@ pkill -9 -f "gemini.*gemini-3-pro-preview"
 4. **For background/automated tasks, ALWAYS use `--approval-mode yolo`** or add timeout wrapper. NEVER use `default` in non-interactive shells.
 
 5. Run the command and capture the output. For background/automated mode:
+
    ```bash
    # Recommended: Use yolo for background tasks
    gemini -m gemini-3-pro-preview --approval-mode yolo "Review this codebase for security issues"
@@ -69,6 +74,7 @@ pkill -9 -f "gemini.*gemini-3-pro-preview"
    ```
 
 6. For interactive sessions with an initial prompt:
+
    ```bash
    gemini -m gemini-3-pro-preview -i "Review the authentication system" --approval-mode auto_edit
    ```
@@ -77,28 +83,28 @@ pkill -9 -f "gemini.*gemini-3-pro-preview"
 
 ### Quick Reference
 
-| Use case | Approval mode | Key flags |
-| --- | --- | --- |
-| Background code review | `yolo` ✅ | `-m gemini-3-pro-preview --approval-mode yolo` |
-| Background analysis | `yolo` ✅ | `-m gemini-3-pro-preview --approval-mode yolo` |
-| Background with timeout | `yolo` ✅ | `timeout 300 gemini -m gemini-3-pro-preview --approval-mode yolo` |
-| Interactive code review | `default` | `-m gemini-3-pro-preview --approval-mode default` (interactive terminal only) |
-| Code review with auto-edits | `auto_edit` | `-m gemini-3-pro-preview --approval-mode auto_edit` |
-| Automated refactoring | `yolo` | `-m gemini-3-pro-preview --approval-mode yolo` |
-| Speed-critical background | `yolo` ✅ | `-m gemini-3-flash --approval-mode yolo` |
-| Cost-optimized background | `yolo` ✅ | `-m gemini-2.5-flash --approval-mode yolo` |
-| Multi-directory analysis | `yolo` (if background) | `--include-directories <DIR1> --include-directories <DIR2>` |
-| Interactive with prompt | `auto_edit` or `default` | `-i "prompt" --approval-mode <mode>` |
+| Use case                    | Approval mode            | Key flags                                                                     |
+| --------------------------- | ------------------------ | ----------------------------------------------------------------------------- |
+| Background code review      | `yolo` ✅                | `-m gemini-3-pro-preview --approval-mode yolo`                                |
+| Background analysis         | `yolo` ✅                | `-m gemini-3-pro-preview --approval-mode yolo`                                |
+| Background with timeout     | `yolo` ✅                | `timeout 300 gemini -m gemini-3-pro-preview --approval-mode yolo`             |
+| Interactive code review     | `default`                | `-m gemini-3-pro-preview --approval-mode default` (interactive terminal only) |
+| Code review with auto-edits | `auto_edit`              | `-m gemini-3-pro-preview --approval-mode auto_edit`                           |
+| Automated refactoring       | `yolo`                   | `-m gemini-3-pro-preview --approval-mode yolo`                                |
+| Speed-critical background   | `yolo` ✅                | `-m gemini-3-flash --approval-mode yolo`                                      |
+| Cost-optimized background   | `yolo` ✅                | `-m gemini-2.5-flash --approval-mode yolo`                                    |
+| Multi-directory analysis    | `yolo` (if background)   | `--include-directories <DIR1> --include-directories <DIR2>`                   |
+| Interactive with prompt     | `auto_edit` or `default` | `-i "prompt" --approval-mode <mode>`                                          |
 
 ### Model Selection Guide
 
-| Model | Best for | Context window | Key features |
-| --- | --- | --- | --- |
+| Model                     | Best for                                                     | Context window        | Key features                               |
+| ------------------------- | ------------------------------------------------------------ | --------------------- | ------------------------------------------ |
 | `gemini-3-pro-preview` ⭐ | **Flagship model**: Complex reasoning, coding, agentic tasks | 1M input / 64k output | Vibe coding, 76.2% SWE-bench, $2-4/M input |
-| `gemini-3-flash` | Sub-second latency, speed-critical applications | 1M input / 64k output | Distilled from 3 Pro, TPU-optimized |
-| `gemini-2.5-pro` | Legacy: Strong all-around performance | 1M input / 65k output | Thinking mode, mature stability |
-| `gemini-2.5-flash` | Legacy: Cost-efficient, high-volume tasks | 1M input / 65k output | Best price ($0.15/M), thinking mode |
-| `gemini-2.5-flash-lite` | Legacy: Fastest processing, high throughput | 1M input / 65k output | Maximum speed, minimal latency |
+| `gemini-3-flash`          | Sub-second latency, speed-critical applications              | 1M input / 64k output | Distilled from 3 Pro, TPU-optimized        |
+| `gemini-2.5-pro`          | Legacy: Strong all-around performance                        | 1M input / 65k output | Thinking mode, mature stability            |
+| `gemini-2.5-flash`        | Legacy: Cost-efficient, high-volume tasks                    | 1M input / 65k output | Best price ($0.15/M), thinking mode        |
+| `gemini-2.5-flash-lite`   | Legacy: Fastest processing, high throughput                  | 1M input / 65k output | Maximum speed, minimal latency             |
 
 **Gemini 3 Advantages**: 35% higher accuracy in software engineering, state-of-the-art on SWE-bench (76.2%), GPQA Diamond (91.9%), and WebDev Arena (1487 Elo). Knowledge cutoff: January 2025.
 
@@ -107,6 +113,7 @@ pkill -9 -f "gemini.*gemini-3-pro-preview"
 ## Common Use Cases
 
 ### Code Review (Background/Automated)
+
 ```bash
 # For background execution (Claude Code, CI/CD, etc.)
 gemini -m gemini-3-pro-preview --approval-mode yolo \
@@ -122,6 +129,7 @@ timeout 300 gemini -m gemini-3-pro-preview --approval-mode yolo \
 ```
 
 ### Plan Review (Background/Automated)
+
 ```bash
 # For background execution
 gemini -m gemini-3-pro-preview --approval-mode yolo \
@@ -133,6 +141,7 @@ gemini -m gemini-3-pro-preview --approval-mode yolo \
 ```
 
 ### Big Context Analysis (Background/Automated)
+
 ```bash
 # For background execution
 gemini -m gemini-3-pro-preview --approval-mode yolo \
@@ -144,6 +153,7 @@ gemini -m gemini-3-pro-preview --approval-mode yolo \
 ```
 
 ### Interactive Code Review (Terminal Only)
+
 ```bash
 # ONLY use default mode in interactive terminal
 gemini -m gemini-3-pro-preview --approval-mode default \
@@ -167,6 +177,7 @@ gemini -m gemini-3-pro-preview --approval-mode default \
 ## Troubleshooting Hung Gemini Processes
 
 ### Detection
+
 ```bash
 # Check for hung processes
 ps aux | grep -E "gemini.*gemini-3" | grep -v grep
@@ -179,6 +190,7 @@ ps aux | grep -E "gemini.*gemini-3" | grep -v grep
 ```
 
 ### Diagnosis
+
 ```bash
 # Get detailed process info
 ps -o pid,etime,pcpu,stat,command -p <PID>
@@ -189,6 +201,7 @@ lsof -p <PID> 2>/dev/null | grep -E "(TCP|ESTABLISHED)" | wc -l
 ```
 
 ### Resolution
+
 ```bash
 # Kill hung Gemini processes
 pkill -9 -f "gemini.*gemini-3-pro-preview"
@@ -201,6 +214,7 @@ ps aux | grep gemini | grep -v grep
 ```
 
 ### Prevention
+
 - **ALWAYS use `--approval-mode yolo` for background/automated tasks**
 - Add timeout wrapper for safety: `timeout 300 gemini ...`
 - Never use `--approval-mode default` in non-interactive shells

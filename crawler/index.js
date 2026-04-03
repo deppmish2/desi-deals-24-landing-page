@@ -5,19 +5,13 @@ require("dotenv").config({ path: ".env.local", override: true });
 const { v4: uuidv4 } = require("uuid");
 
 const { parseBestBefore } = require("./utils/best-before-parser");
+const { acquireCrawlLock, releaseCrawlLock } = require("./utils/snapshot");
 const {
-  acquireCrawlLock,
-  releaseCrawlLock,
-} = require("./utils/snapshot");
-const {
-  ensureDailyDealsPool,
-  getCurrentPoolDate,
-} = require("../server/services/daily-deals-pool");
-const { getBerlinHour } = require("../server/services/berlin-time");
-const {
-  finishJobRun,
-  startJobRun,
-} = require("../server/services/job-runs");
+  buildStableDisplayOrder,
+  dateSeed,
+} = require("../server/services/deal-order");
+const { formatBerlinDateKey } = require("../server/services/berlin-time");
+const { finishJobRun, startJobRun } = require("../server/services/job-runs");
 
 const DELAY_MIN = parseInt(process.env.REQUEST_DELAY_MIN_MS || "2000", 10);
 const DELAY_MAX = parseInt(process.env.REQUEST_DELAY_MAX_MS || "5000", 10);
@@ -27,6 +21,18 @@ const CRAWL_WARNING_SUCCESS_RATE = Number(
 const CRAWL_WARNING_MIN_DEALS_RATIO = Number(
   process.env.CRAWL_WARNING_MIN_DEALS_RATIO || 0.5,
 );
+const EXCLUDED_DISPLAY_STORE_IDS_SQL = "'dookan'";
+const DISPLAYABLE_DEALS_SQL = `
+  (
+    coalesce(discount_percent, 0) > 0
+    OR (
+      original_price IS NOT NULL
+      AND sale_price IS NOT NULL
+      AND original_price > sale_price
+      AND original_price > 0
+    )
+  )
+`;
 
 const adapters = [
   require("./stores/jamoona"),
@@ -124,12 +130,14 @@ async function markDealsInactive(db, dealIds) {
   let changes = 0;
   for (const dealId of dealIds) {
     // eslint-disable-next-line no-await-in-loop
-    const result = await db.prepare(
-      `UPDATE deals
+    const result = await db
+      .prepare(
+        `UPDATE deals
        SET is_active = 0
        WHERE id = ?
          AND is_active = 1`,
-    ).run(dealId);
+      )
+      .run(dealId);
     changes += Number(result?.changes || 0);
   }
   return changes;
@@ -158,6 +166,73 @@ async function insertDeals(db, deals) {
     changes += Number(result?.changes || 0);
   }
   return changes;
+}
+
+async function replaceDailyPriceHistoryForStore(
+  db,
+  { crawlDate, crawlRunId, crawlTimestamp, storeId, deals },
+) {
+  await db
+    .prepare(
+      `DELETE FROM deal_price_history
+       WHERE crawl_date = ?
+         AND store_id = ?`,
+    )
+    .run(crawlDate, storeId);
+
+  if (!Array.isArray(deals) || deals.length === 0) return 0;
+
+  const insertSql = `
+    INSERT INTO deal_price_history
+      (id, crawl_date, crawl_run_id, crawl_timestamp, store_id,
+       product_name, product_category, product_url, image_url,
+       weight_raw, weight_value, weight_unit,
+       sale_price, original_price, discount_percent,
+       price_per_kg, price_per_unit, currency, availability,
+       bulk_pricing, best_before)
+    VALUES
+      (?, ?, ?, ?, ?,
+       ?, ?, ?, ?,
+       ?, ?, ?,
+       ?, ?, ?,
+       ?, ?, ?, ?,
+       ?, ?)
+  `;
+
+  const statements = deals.map((deal) => ({
+    sql: insertSql,
+    args: [
+      uuidv4(),
+      crawlDate,
+      crawlRunId,
+      crawlTimestamp,
+      storeId,
+      deal.product_name,
+      deal.product_category,
+      deal.product_url,
+      deal.image_url,
+      deal.weight_raw,
+      deal.weight_value,
+      deal.weight_unit,
+      deal.sale_price,
+      deal.original_price,
+      deal.discount_percent,
+      deal.price_per_kg,
+      deal.price_per_unit,
+      deal.currency,
+      deal.availability,
+      deal.bulk_pricing,
+      deal.best_before,
+    ],
+  }));
+
+  const batchSize = 100;
+  for (let index = 0; index < statements.length; index += batchSize) {
+    // eslint-disable-next-line no-await-in-loop
+    await db.batch(statements.slice(index, index + batchSize), "write");
+  }
+
+  return deals.length;
 }
 
 function buildNormalizedScrapedDeals(rawDeals, storeId, runId, crawlTimestamp) {
@@ -253,34 +328,6 @@ async function reconcileStoreDeals(db, storeId, scrapedDeals) {
   return stats;
 }
 
-async function ensureTodayPoolAfterCrawl(db) {
-  if (getBerlinHour(new Date()) < 7) return null;
-
-  const poolDate = getCurrentPoolDate();
-  const existingPool = await db
-    .prepare(
-      `SELECT pool_date
-       FROM daily_deal_pool_entries
-       WHERE pool_date = ?
-       LIMIT 1`,
-    )
-    .get(poolDate);
-
-  if (existingPool?.pool_date) {
-    return {
-      poolDate,
-      reused: true,
-    };
-  }
-
-  const pool = await ensureDailyDealsPool(db, { poolDate });
-  return {
-    poolDate: pool.poolDate,
-    entries: pool.entries.length,
-    reused: false,
-  };
-}
-
 async function previousCompletedCrawl(db, excludeRunId) {
   return await db
     .prepare(
@@ -292,6 +339,49 @@ async function previousCompletedCrawl(db, excludeRunId) {
        LIMIT 1`,
     )
     .get(excludeRunId);
+}
+
+async function refreshDailyDisplayOrder(db, crawlDate) {
+  await db
+    .prepare(
+      `UPDATE deals
+       SET display_date = NULL,
+           display_order = NULL
+       WHERE is_active = 1`,
+    )
+    .run();
+
+  const activeRows = await db
+    .prepare(
+      `SELECT id, store_id
+       FROM deals
+       WHERE is_active = 1
+         AND lower(coalesce(store_id, '')) NOT IN (${EXCLUDED_DISPLAY_STORE_IDS_SQL})
+         AND lower(coalesce(availability, '')) = 'in_stock'
+         AND ${DISPLAYABLE_DEALS_SQL}`,
+    )
+    .all();
+
+  const orderedRows = buildStableDisplayOrder(activeRows, 20, dateSeed(crawlDate));
+  if (orderedRows.length === 0) return 0;
+
+  const statements = orderedRows.map((deal, index) => ({
+    sql: `
+      UPDATE deals
+      SET display_date = ?,
+          display_order = ?
+      WHERE id = ?
+    `,
+    args: [crawlDate, index + 1, deal.id],
+  }));
+
+  const batchSize = 100;
+  for (let index = 0; index < statements.length; index += batchSize) {
+    // eslint-disable-next-line no-await-in-loop
+    await db.batch(statements.slice(index, index + batchSize), "write");
+  }
+
+  return orderedRows.length;
 }
 
 async function buildCrawlWarnings(db, summary) {
@@ -335,11 +425,13 @@ async function buildCrawlWarnings(db, summary) {
 async function runCrawl(db, options = {}) {
   await db.ready;
   const runId = uuidv4();
-  const triggerType = String(options.triggerType || "manual").trim() || "manual";
+  const triggerType =
+    String(options.triggerType || "manual").trim() || "manual";
+  const crawlDate = formatBerlinDateKey(new Date());
   const jobRun = await startJobRun(db, {
     jobName: "full_crawl",
     triggerType,
-    details: { run_id: runId },
+    details: { run_id: runId, crawl_date: crawlDate },
   });
   const lock = await acquireCrawlLock(db, { ownerId: runId });
   if (!lock.acquired) {
@@ -357,13 +449,17 @@ async function runCrawl(db, options = {}) {
   let storesAttempted = 0;
   let storesSucceeded = 0;
   let dealsFound = 0;
+  let historyRowsWritten = 0;
+  let displayRowsOrdered = 0;
   const errors = [];
 
   try {
-    await db.prepare(
-      `INSERT INTO crawl_runs (id, started_at, status)
-       VALUES (?, ?, 'running')`,
-    ).run(runId, startedAt);
+    await db
+      .prepare(
+        `INSERT INTO crawl_runs (id, crawl_date, started_at, status)
+       VALUES (?, ?, ?, 'running')`,
+      )
+      .run(runId, crawlDate, startedAt);
 
     for (const adapter of adapters) {
       storesAttempted += 1;
@@ -379,17 +475,27 @@ async function runCrawl(db, options = {}) {
           crawlTimestamp,
         );
         const stats = await reconcileStoreDeals(db, adapter.storeId, deals);
+        const historyCount = await replaceDailyPriceHistoryForStore(db, {
+          crawlDate,
+          crawlRunId: runId,
+          crawlTimestamp,
+          storeId: adapter.storeId,
+          deals,
+        });
 
-        await db.prepare(
-          `UPDATE stores
+        await db
+          .prepare(
+            `UPDATE stores
            SET last_crawled_at = ?, crawl_status = 'active'
            WHERE id = ?`,
-        ).run(crawlTimestamp, adapter.storeId);
+          )
+          .run(crawlTimestamp, adapter.storeId);
 
         dealsFound += deals.length;
+        historyRowsWritten += historyCount;
         storesSucceeded += 1;
         console.log(
-          `✓ ${adapter.storeName}: ${deals.length} scraped (${stats.inserted} new, ${stats.updated} changed, ${stats.unchanged} unchanged, ${stats.removed} removed)`,
+          `✓ ${adapter.storeName}: ${deals.length} scraped (${stats.inserted} new, ${stats.updated} changed, ${stats.unchanged} unchanged, ${stats.removed} removed, ${historyCount} history rows)`,
         );
       } catch (error) {
         console.error(`✗ ${adapter.storeName}: ${error.message}`);
@@ -398,11 +504,13 @@ async function runCrawl(db, options = {}) {
           error_message: error.message,
         });
 
-        await db.prepare(
-          `UPDATE stores
+        await db
+          .prepare(
+            `UPDATE stores
            SET crawl_status = 'error'
            WHERE id = ?`,
-        ).run(adapter.storeId);
+          )
+          .run(adapter.storeId);
       }
 
       if (adapters.indexOf(adapter) < adapters.length - 1) {
@@ -411,8 +519,10 @@ async function runCrawl(db, options = {}) {
     }
 
     const finishedAt = new Date().toISOString();
-    await db.prepare(
-      `UPDATE crawl_runs
+    displayRowsOrdered = await refreshDailyDisplayOrder(db, crawlDate);
+    await db
+      .prepare(
+        `UPDATE crawl_runs
        SET finished_at = ?,
            status = 'completed',
            stores_attempted = ?,
@@ -420,14 +530,15 @@ async function runCrawl(db, options = {}) {
            deals_found = ?,
            errors = ?
        WHERE id = ?`,
-    ).run(
-      finishedAt,
-      storesAttempted,
-      storesSucceeded,
-      dealsFound,
-      JSON.stringify(errors),
-      runId,
-    );
+      )
+      .run(
+        finishedAt,
+        storesAttempted,
+        storesSucceeded,
+        dealsFound,
+        JSON.stringify(errors),
+        runId,
+      );
 
     const warnings = await buildCrawlWarnings(db, {
       runId,
@@ -436,21 +547,15 @@ async function runCrawl(db, options = {}) {
       dealsFound,
     });
 
-    const dailyPool = await ensureTodayPoolAfterCrawl(db).catch((error) => {
-      console.error("[crawl] Daily pool refresh error:", error.message);
-      return null;
-    });
-
     console.log(
       `\n=== Crawl finished: ${storesSucceeded}/${storesAttempted} stores, ${dealsFound} deals ===`,
     );
-    if (dailyPool?.reused) {
-      console.log(`[crawl] Daily pool already fixed for ${dailyPool.poolDate}.`);
-    } else if (dailyPool?.poolDate) {
-      console.log(
-        `[crawl] Daily pool ready for ${dailyPool.poolDate} (${dailyPool.entries} deals).`,
-      );
-    }
+    console.log(
+      `[crawl] Daily price history stored for ${crawlDate}: ${historyRowsWritten} rows.`,
+    );
+    console.log(
+      `[crawl] Display order refreshed for ${crawlDate}: ${displayRowsOrdered} active deals.`,
+    );
 
     if (warnings.length > 0) {
       for (const warning of warnings) {
@@ -467,26 +572,30 @@ async function runCrawl(db, options = {}) {
         stores_attempted: storesAttempted,
         stores_succeeded: storesSucceeded,
         deals_found: dealsFound,
+        crawl_date: crawlDate,
+        history_rows_written: historyRowsWritten,
+        display_rows_ordered: displayRowsOrdered,
         errors,
         warnings,
-        daily_pool: dailyPool,
       },
     });
 
     return {
       runId,
+      crawlDate,
       storesAttempted,
       storesSucceeded,
       dealsFound,
+      historyRowsWritten,
       errors,
       warnings,
-      dailyPool,
     };
   } catch (error) {
     const failedAt = new Date().toISOString();
     try {
-      await db.prepare(
-        `UPDATE crawl_runs
+      await db
+        .prepare(
+          `UPDATE crawl_runs
          SET finished_at = ?,
              status = 'failed',
              stores_attempted = ?,
@@ -494,19 +603,23 @@ async function runCrawl(db, options = {}) {
              deals_found = ?,
              errors = ?
          WHERE id = ?`,
-      ).run(
-        failedAt,
-        storesAttempted,
-        storesSucceeded,
-        dealsFound,
-        JSON.stringify([
-          ...errors,
-          { store_id: null, error_message: error.message },
-        ]),
-        runId,
-      );
+        )
+        .run(
+          failedAt,
+          storesAttempted,
+          storesSucceeded,
+          dealsFound,
+          JSON.stringify([
+            ...errors,
+            { store_id: null, error_message: error.message },
+          ]),
+          runId,
+        );
     } catch (updateError) {
-      console.warn("[crawl] Failed to mark crawl run as failed:", updateError.message);
+      console.warn(
+        "[crawl] Failed to mark crawl run as failed:",
+        updateError.message,
+      );
     }
 
     await finishJobRun(db, jobRun, {
@@ -517,6 +630,9 @@ async function runCrawl(db, options = {}) {
         stores_attempted: storesAttempted,
         stores_succeeded: storesSucceeded,
         deals_found: dealsFound,
+        crawl_date: crawlDate,
+        history_rows_written: historyRowsWritten,
+        display_rows_ordered: displayRowsOrdered,
         errors,
       },
       errorMessage: error.message,

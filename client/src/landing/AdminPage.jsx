@@ -18,11 +18,7 @@ function BarChart({ data }) {
 
   return (
     <div className="overflow-x-auto">
-      <svg
-        width={Math.max(totalW, 200)}
-        height={chartH + 24}
-        className="block"
-      >
+      <svg width={Math.max(totalW, 200)} height={chartH + 24} className="block">
         {data.map((d, i) => {
           const barH = Math.max(2, Math.round((d.count / max) * chartH));
           const x = i * (barW + 2);
@@ -74,6 +70,15 @@ function KpiCard({ label, value }) {
   );
 }
 
+function formatActorLabel(search) {
+  if (search.user_email) return search.user_email;
+  if (search.session_id) {
+    const value = String(search.session_id);
+    return `anon · ${value.slice(0, 10)}`;
+  }
+  return "unknown";
+}
+
 export default function AdminPage() {
   const navigate = useNavigate();
   const [stats, setStats] = useState(null);
@@ -83,7 +88,7 @@ export default function AdminPage() {
   useEffect(() => {
     const session = getAuthSession();
     if (!session?.accessToken && import.meta.env.PROD) {
-      navigate("/waitlist", { replace: true });
+      navigate("/", { replace: true });
       return;
     }
 
@@ -91,8 +96,12 @@ export default function AdminPage() {
       .then(setStats)
       .catch((err) => {
         const msg = String(err?.message || "");
-        if (msg.includes("401") || msg.includes("Missing") || msg.includes("expired")) {
-          navigate("/waitlist", { replace: true });
+        if (
+          msg.includes("401") ||
+          msg.includes("Missing") ||
+          msg.includes("expired")
+        ) {
+          navigate("/", { replace: true });
         } else {
           setError(msg || "Failed to load dashboard");
         }
@@ -102,7 +111,7 @@ export default function AdminPage() {
 
   async function handleLogout() {
     await logoutUser();
-    navigate("/waitlist", { replace: true });
+    navigate("/", { replace: true });
   }
 
   if (loading) {
@@ -117,10 +126,12 @@ export default function AdminPage() {
     return (
       <div className="min-h-screen bg-slate-50 flex items-center justify-center p-6">
         <div className="text-center">
-          <div className="text-slate-900 font-extrabold text-xl mb-2">Access denied</div>
+          <div className="text-slate-900 font-extrabold text-xl mb-2">
+            Access denied
+          </div>
           <div className="text-slate-500 text-sm mb-6">{error}</div>
           <button
-            onClick={() => navigate("/waitlist")}
+            onClick={() => navigate("/")}
             className="px-5 py-2.5 rounded-xl bg-slate-900 text-white text-sm font-bold"
           >
             Go back
@@ -134,9 +145,12 @@ export default function AdminPage() {
     return (
       <div className="min-h-screen bg-slate-50 flex items-center justify-center p-6">
         <div className="text-center">
-          <div className="text-slate-900 font-extrabold text-xl mb-2">Unexpected response</div>
+          <div className="text-slate-900 font-extrabold text-xl mb-2">
+            Unexpected response
+          </div>
           <div className="text-slate-500 text-sm mb-6">
-            The server returned an unexpected response. Make sure the backend is running and restart it.
+            The server returned an unexpected response. Make sure the backend is
+            running and restart it.
           </div>
           <button
             onClick={() => window.location.reload()}
@@ -149,15 +163,23 @@ export default function AdminPage() {
     );
   }
 
-  const { kpis, signups_by_day, invites_by_day, top_inviters, recent_signups } = stats;
+  const {
+    kpis,
+    signups_by_day,
+    searches_by_day,
+    top_search_terms,
+    recent_searches,
+    recent_users,
+  } = stats;
 
   return (
     <div className="min-h-screen bg-slate-50">
-      {/* Header */}
       <div className="bg-white border-b border-slate-100 sticky top-0 z-10">
-        <div className="max-w-5xl mx-auto px-6 py-4 flex items-center justify-between">
+        <div className="max-w-6xl mx-auto px-6 py-4 flex items-center justify-between">
           <div className="flex items-center gap-3">
-            <span className="font-extrabold text-slate-900 text-base">DesiDeals24</span>
+            <span className="font-extrabold text-slate-900 text-base">
+              DesiDeals24
+            </span>
             <span className="px-2 py-0.5 rounded-md bg-slate-100 text-slate-500 text-[11px] font-bold uppercase tracking-wide">
               Admin
             </span>
@@ -171,16 +193,14 @@ export default function AdminPage() {
         </div>
       </div>
 
-      <div className="max-w-5xl mx-auto px-6 py-8 space-y-8">
-        {/* KPIs */}
+      <div className="max-w-6xl mx-auto px-6 py-8 space-y-8">
         <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
           <KpiCard label="Total users" value={kpis.total_users} />
-          <KpiCard label="Invites claimed" value={kpis.total_invites} />
-          <KpiCard label="Unlocked" value={kpis.unlocked_users} />
-          <KpiCard label="Still waiting" value={kpis.waiting_users} />
+          <KpiCard label="New users (30d)" value={kpis.new_users_30d} />
+          <KpiCard label="Searches today" value={kpis.searches_today} />
+          <KpiCard label="Unique searchers (30d)" value={kpis.unique_searchers_30d} />
         </div>
 
-        {/* Growth charts */}
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
           <div className="bg-white rounded-2xl border border-slate-100 shadow-sm px-6 py-5">
             <div className="text-[11px] font-bold uppercase tracking-[1.2px] text-slate-400 mb-4">
@@ -190,43 +210,47 @@ export default function AdminPage() {
           </div>
           <div className="bg-white rounded-2xl border border-slate-100 shadow-sm px-6 py-5">
             <div className="text-[11px] font-bold uppercase tracking-[1.2px] text-slate-400 mb-4">
-              Invites claimed — last 30 days
+              Searches — last 30 days
             </div>
-            <BarChart data={invites_by_day} />
+            <BarChart data={searches_by_day} />
           </div>
         </div>
 
-        {/* Top inviters + Recent signups */}
-        <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
           <div className="bg-white rounded-2xl border border-slate-100 shadow-sm px-6 py-5">
             <div className="text-[11px] font-bold uppercase tracking-[1.2px] text-slate-400 mb-4">
-              Top inviters
+              Top search terms
             </div>
-            {top_inviters.length === 0 ? (
-              <div className="text-slate-300 text-sm py-4">No invites yet</div>
+            {top_search_terms.length === 0 ? (
+              <div className="text-slate-300 text-sm py-4">No searches yet</div>
             ) : (
               <table className="w-full text-sm">
                 <thead>
                   <tr className="text-left text-[10px] font-bold uppercase tracking-[1px] text-slate-400 border-b border-slate-100">
                     <th className="pb-2 pr-3">#</th>
-                    <th className="pb-2 pr-3">User</th>
-                    <th className="pb-2 text-right">Invites</th>
+                    <th className="pb-2 pr-3">Query</th>
+                    <th className="pb-2 text-right">Count</th>
                   </tr>
                 </thead>
                 <tbody>
-                  {top_inviters.map((u, i) => (
-                    <tr key={u.email} className="border-b border-slate-50 last:border-0">
-                      <td className="py-2.5 pr-3 text-slate-300 font-mono text-xs">{i + 1}</td>
+                  {top_search_terms.map((term, i) => (
+                    <tr
+                      key={`${term.normalized_query}-${i}`}
+                      className="border-b border-slate-50 last:border-0"
+                    >
+                      <td className="py-2.5 pr-3 text-slate-300 font-mono text-xs">
+                        {i + 1}
+                      </td>
                       <td className="py-2.5 pr-3">
-                        <div className="font-medium text-slate-700 text-[13px] truncate max-w-[160px]">
-                          {u.name}
+                        <div className="font-medium text-slate-700 text-[13px] truncate max-w-[240px]">
+                          {term.query}
                         </div>
-                        <div className="text-slate-400 text-[11px] truncate max-w-[160px]">
-                          {u.email}
+                        <div className="text-slate-400 text-[11px] truncate max-w-[240px]">
+                          {term.unique_searchers} unique searchers
                         </div>
                       </td>
                       <td className="py-2.5 text-right font-extrabold text-[#16a34a]">
-                        {u.invite_count}
+                        {term.search_count}
                       </td>
                     </tr>
                   ))}
@@ -237,28 +261,30 @@ export default function AdminPage() {
 
           <div className="bg-white rounded-2xl border border-slate-100 shadow-sm px-6 py-5">
             <div className="text-[11px] font-bold uppercase tracking-[1.2px] text-slate-400 mb-4">
-              Recent signups
+              Recent searches
             </div>
-            {recent_signups.length === 0 ? (
-              <div className="text-slate-300 text-sm py-4">No signups yet</div>
+            {recent_searches.length === 0 ? (
+              <div className="text-slate-300 text-sm py-4">No searches yet</div>
             ) : (
               <div className="space-y-3">
-                {recent_signups.map((u) => (
-                  <div key={u.email} className="flex items-center justify-between gap-3">
+                {recent_searches.map((search, index) => (
+                  <div
+                    key={`${search.created_at}-${search.query}-${index}`}
+                    className="flex items-center justify-between gap-3"
+                  >
                     <div className="min-w-0">
                       <div className="text-[13px] font-medium text-slate-700 truncate">
-                        {u.name || u.email.split("@")[0]}
+                        {search.query}
                       </div>
-                      <div className="text-[11px] text-slate-400 truncate">{u.email}</div>
-                      {u.invited_by && (
-                        <div className="text-[10px] text-slate-400 mt-0.5 truncate">
-                          <span className="text-slate-300">invited by </span>
-                          <span className="font-medium">{u.invited_by.name}</span>
-                        </div>
-                      )}
-                      {u.created_at && (
+                      <div className="text-[11px] text-slate-400 truncate">
+                        {formatActorLabel(search)}
+                        {search.result_count != null
+                          ? ` · ${search.result_count} results`
+                          : ""}
+                      </div>
+                      {search.created_at && (
                         <div className="text-[10px] text-slate-300 mt-0.5">
-                          {new Date(u.created_at).toLocaleString("en-GB", {
+                          {new Date(search.created_at).toLocaleString("en-GB", {
                             day: "2-digit",
                             month: "short",
                             year: "numeric",
@@ -268,20 +294,62 @@ export default function AdminPage() {
                         </div>
                       )}
                     </div>
-                    <span
-                      className={`shrink-0 px-2 py-0.5 rounded-full text-[10px] font-bold uppercase tracking-wide ${
-                        u.unlocked
-                          ? "bg-green-50 text-green-700"
-                          : "bg-slate-100 text-slate-400"
-                      }`}
-                    >
-                      {u.unlocked ? "Unlocked" : "Waiting"}
+                    <span className="shrink-0 px-2 py-0.5 rounded-full text-[10px] font-bold uppercase tracking-wide bg-slate-100 text-slate-500">
+                      Search
                     </span>
                   </div>
                 ))}
               </div>
             )}
           </div>
+        </div>
+
+        <div className="bg-white rounded-2xl border border-slate-100 shadow-sm px-6 py-5">
+          <div className="text-[11px] font-bold uppercase tracking-[1.2px] text-slate-400 mb-4">
+            Recent users
+          </div>
+          {recent_users.length === 0 ? (
+            <div className="text-slate-300 text-sm py-4">No users yet</div>
+          ) : (
+            <div className="space-y-3">
+              {recent_users.map((user) => (
+                <div
+                  key={user.email}
+                  className="flex items-center justify-between gap-3"
+                >
+                  <div className="min-w-0">
+                    <div className="text-[13px] font-medium text-slate-700 truncate">
+                      {user.name || user.email.split("@")[0]}
+                    </div>
+                    <div className="text-[11px] text-slate-400 truncate">
+                      {user.email}
+                    </div>
+                    {user.created_at && (
+                      <div className="text-[10px] text-slate-300 mt-0.5">
+                        Joined{" "}
+                        {new Date(user.created_at).toLocaleString("en-GB", {
+                          day: "2-digit",
+                          month: "short",
+                          year: "numeric",
+                          hour: "2-digit",
+                          minute: "2-digit",
+                        })}
+                      </div>
+                    )}
+                  </div>
+                  <span
+                    className={`shrink-0 px-2 py-0.5 rounded-full text-[10px] font-bold uppercase tracking-wide ${
+                      user.email_verified
+                        ? "bg-green-50 text-green-700"
+                        : "bg-slate-100 text-slate-500"
+                    }`}
+                  >
+                    {user.email_verified ? "Verified" : "Signed up"}
+                  </span>
+                </div>
+              ))}
+            </div>
+          )}
         </div>
       </div>
     </div>

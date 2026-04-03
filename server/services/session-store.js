@@ -6,14 +6,13 @@ function hashToken(token) {
   return crypto.createHash("sha256").update(token).digest("hex");
 }
 
-async function createRefreshSession(
-  db,
-  { id, userId, tokenHash, expiresAt },
-) {
-  await db.prepare(
-    `INSERT INTO refresh_tokens (id, user_id, token_hash, expires_at)
+async function createRefreshSession(db, { id, userId, tokenHash, expiresAt }) {
+  await db
+    .prepare(
+      `INSERT INTO refresh_tokens (id, user_id, token_hash, expires_at)
      VALUES (?, ?, ?, ?)`,
-  ).run(id, userId, tokenHash, expiresAt);
+    )
+    .run(id, userId, tokenHash, expiresAt);
 }
 
 async function getRefreshSession(db, tokenHash) {
@@ -32,21 +31,25 @@ async function getRefreshSession(db, tokenHash) {
 }
 
 async function revokeRefreshSession(db, tokenHash) {
-  await db.prepare(
-    `UPDATE refresh_tokens
+  await db
+    .prepare(
+      `UPDATE refresh_tokens
      SET revoked_at = ?
      WHERE token_hash = ?
        AND revoked_at IS NULL`,
-  ).run(new Date().toISOString(), tokenHash);
+    )
+    .run(new Date().toISOString(), tokenHash);
 }
 
 async function revokeAllUserSessions(db, userId) {
-  await db.prepare(
-    `UPDATE refresh_tokens
+  await db
+    .prepare(
+      `UPDATE refresh_tokens
      SET revoked_at = ?
      WHERE user_id = ?
        AND revoked_at IS NULL`,
-  ).run(new Date().toISOString(), userId);
+    )
+    .run(new Date().toISOString(), userId);
 }
 
 async function cacheUser() {

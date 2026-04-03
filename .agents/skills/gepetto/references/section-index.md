@@ -48,12 +48,12 @@ After the manifest block, include:
 Table showing what blocks what:
 
 ```markdown
-| Section | Depends On | Blocks | Parallelizable |
-|---------|------------|--------|----------------|
-| section-01-foundation | - | section-02, section-03 | Yes |
-| section-02-config | section-01 | section-04 | No |
-| section-03-parser | section-01 | section-04 | Yes |
-| section-04-api | section-02, section-03 | - | No |
+| Section               | Depends On             | Blocks                 | Parallelizable |
+| --------------------- | ---------------------- | ---------------------- | -------------- |
+| section-01-foundation | -                      | section-02, section-03 | Yes            |
+| section-02-config     | section-01             | section-04             | No             |
+| section-03-parser     | section-01             | section-04             | Yes            |
+| section-04-api        | section-02, section-03 | -                      | No             |
 ```
 
 ### Execution Order
@@ -72,9 +72,11 @@ Brief description of each section:
 
 ```markdown
 ### section-01-foundation
+
 Initial project setup and configuration.
 
 ### section-02-config
+
 Configuration loading and validation.
 ```
 
@@ -100,13 +102,13 @@ END_MANIFEST -->
 
 ## Dependency Graph
 
-| Section | Depends On | Blocks | Parallelizable |
-|---------|------------|--------|----------------|
-| section-01-foundation | - | all | Yes |
-| section-02-core-libs | 01 | 03, 04 | No |
-| section-03-api-layer | 02 | 05 | Yes |
-| section-04-frontend | 02 | 05 | Yes |
-| section-05-integration | 03, 04 | - | No |
+| Section                | Depends On | Blocks | Parallelizable |
+| ---------------------- | ---------- | ------ | -------------- |
+| section-01-foundation  | -          | all    | Yes            |
+| section-02-core-libs   | 01         | 03, 04 | No             |
+| section-03-api-layer   | 02         | 05     | Yes            |
+| section-04-frontend    | 02         | 05     | Yes            |
+| section-05-integration | 03, 04     | -      | No             |
 
 ## Execution Order
 
@@ -118,17 +120,22 @@ END_MANIFEST -->
 ## Section Summaries
 
 ### section-01-foundation
+
 Directory structure, config files, base setup.
 
 ### section-02-core-libs
+
 Shared utilities and core libraries.
 
 ### section-03-api-layer
+
 REST API endpoints and middleware.
 
 ### section-04-frontend
+
 UI components and pages.
 
 ### section-05-integration
+
 End-to-end integration and final wiring.
 ```

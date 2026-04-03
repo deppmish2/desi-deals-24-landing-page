@@ -9,6 +9,7 @@ The Meme Factory skill enables you to quickly create visual memes for various co
 ## When to Use
 
 Use this skill when you want to:
+
 - Add humor to technical conversations
 - Create visual content for social media
 - Make code reviews more engaging
@@ -25,6 +26,7 @@ https://api.memegen.link/images/{template}/{top_text}/{bottom_text}.png
 ```
 
 Key features:
+
 - **No API key required** - Free and open-source
 - **100+ templates** - Popular meme formats built-in
 - **URL-based** - All parameters in the URL (stateless)
@@ -34,6 +36,7 @@ Key features:
 ## Key Features
 
 ### 1. Popular Templates
+
 - `buzz` - "X, X everywhere" format
 - `drake` - Two-panel comparison
 - `success` - Celebrating wins
@@ -44,11 +47,13 @@ Key features:
 - `mordor` - "One does not simply..."
 
 ### 2. Text Formatting
+
 - Spaces: Use `_` or `-`
 - Newlines: Use `~n`
 - Special chars: `~q` (question), `~p` (percent), `~s` (slash), `~h` (hash)
 
 ### 3. Customization Options
+
 - Image formats: PNG, JPG, WebP, GIF
 - Dimensions: Custom width/height
 - Layout: Top, bottom, or default
@@ -56,7 +61,9 @@ Key features:
 - Custom backgrounds: Use any image URL
 
 ### 4. Textual Memes
+
 Includes 15+ text-based meme formats:
+
 - Greentext stories
 - Copypasta
 - ASCII art
@@ -124,16 +131,19 @@ Claude will select appropriate template (likely `mordor`) and generate the meme.
 ## Quick Start
 
 1. **Invoke the skill:**
+
    ```
    /meme-factory
    ```
 
 2. **Specify template and text:**
+
    ```
    /meme-factory {template} {top_text} {bottom_text}
    ```
 
 3. **Or use natural language:**
+
    ```
    meme-factory: create a meme about {your topic}
    ```
@@ -148,20 +158,21 @@ Claude will select appropriate template (likely `mordor`) and generate the meme.
 
 ## Template Selection Guide
 
-| Context | Recommended Template | Why |
-|---------|---------------------|-----|
-| Comparing two options | `drake` | Two-panel reject/approve |
-| Celebrating wins | `success` | Positive emphasis |
-| Things going wrong | `fine` | Ironic "everything is fine" |
-| Uncertainty | `fry` | "Not sure if X or Y" |
-| Controversial take | `changemind` | Statement + challenge |
-| Something ubiquitous | `buzz` | "X, X everywhere" |
-| Bad ideas | `mordor` | "One does not simply..." |
-| Wrong priorities | `distracted` | Boyfriend looking at other girl |
+| Context               | Recommended Template | Why                             |
+| --------------------- | -------------------- | ------------------------------- |
+| Comparing two options | `drake`              | Two-panel reject/approve        |
+| Celebrating wins      | `success`            | Positive emphasis               |
+| Things going wrong    | `fine`               | Ironic "everything is fine"     |
+| Uncertainty           | `fry`                | "Not sure if X or Y"            |
+| Controversial take    | `changemind`         | Statement + challenge           |
+| Something ubiquitous  | `buzz`               | "X, X everywhere"               |
+| Bad ideas             | `mordor`             | "One does not simply..."        |
+| Wrong priorities      | `distracted`         | Boyfriend looking at other girl |
 
 ## Validation Checklist
 
 After generating a meme, verify:
+
 - [ ] URL returns valid image (HTTP 200)
 - [ ] Text is readable (not too long - keep 2-6 words per line)
 - [ ] Template matches the message context
@@ -170,22 +181,22 @@ After generating a meme, verify:
 
 ### Platform Dimensions
 
-| Platform | Recommended Size |
-|----------|-----------------|
-| Social media (Open Graph) | 1200x630 |
-| Slack/Discord | 800x600 |
-| GitHub | Default |
+| Platform                  | Recommended Size |
+| ------------------------- | ---------------- |
+| Social media (Open Graph) | 1200x630         |
+| Slack/Discord             | 800x600          |
+| GitHub                    | Default          |
 
 ## Common Pitfalls
 
-| Mistake | Why It Fails | Solution |
-|---------|-------------|----------|
-| Spaces without encoding | URL breaks | Use `_` or `-` |
-| Too much text | Unreadable | Keep it short (2-6 words) |
-| Wrong template | Message mismatch | Match template to context |
-| Missing extension | Invalid URL | Always use `.png`, `.jpg`, etc. |
-| Unencoded special chars | URL breaks | Use `~q`, `~s`, `~p` |
-| Assuming template exists | 404 error | Check templates list first |
+| Mistake                  | Why It Fails     | Solution                        |
+| ------------------------ | ---------------- | ------------------------------- |
+| Spaces without encoding  | URL breaks       | Use `_` or `-`                  |
+| Too much text            | Unreadable       | Keep it short (2-6 words)       |
+| Wrong template           | Message mismatch | Match template to context       |
+| Missing extension        | Invalid URL      | Always use `.png`, `.jpg`, etc. |
+| Unencoded special chars  | URL breaks       | Use `~q`, `~s`, `~p`            |
+| Assuming template exists | 404 error        | Check templates list first      |
 
 ## Additional Resources
 

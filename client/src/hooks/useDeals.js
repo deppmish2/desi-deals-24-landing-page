@@ -13,10 +13,13 @@ export default function useDeals(filters = {}) {
   const [retryCount, setRetryCount] = useState(0);
   const debounceRef = useRef(null);
   const pollRef = useRef(null);
+  const requestIdRef = useRef(0);
 
   useEffect(() => {
     clearTimeout(debounceRef.current);
     clearTimeout(pollRef.current);
+    const requestId = requestIdRef.current + 1;
+    requestIdRef.current = requestId;
 
     if (!enabled) {
       setDeals([]);
@@ -36,6 +39,7 @@ export default function useDeals(filters = {}) {
         setError(null);
         try {
           const res = await fetchDeals(requestFilters);
+          if (requestIdRef.current !== requestId) return;
           setDeals(res.data || []);
           setPagination(res.pagination || null);
           setMeta(res.meta || null);
@@ -43,17 +47,24 @@ export default function useDeals(filters = {}) {
           // Auto-poll while a crawl is running so deals appear without manual refresh
           if (res.meta?.crawling) {
             pollRef.current = setTimeout(
-              () => setRetryCount((c) => c + 1),
+              () => {
+                if (requestIdRef.current === requestId) {
+                  setRetryCount((c) => c + 1);
+                }
+              },
               CRAWL_POLL_INTERVAL,
             );
           }
         } catch (e) {
+          if (requestIdRef.current !== requestId) return;
           setError(e.message);
         } finally {
-          setLoading(false);
+          if (requestIdRef.current === requestId) {
+            setLoading(false);
+          }
         }
       },
-      requestFilters.q ? 60 : 0,
+      requestFilters.q ? 400 : 0,
     );
 
     return () => {

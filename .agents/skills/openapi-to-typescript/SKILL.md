@@ -43,54 +43,59 @@ If invalid, report the error and stop.
 
 ### Primitives
 
-| OpenAPI     | TypeScript   |
-|-------------|--------------|
-| `string`    | `string`     |
-| `number`    | `number`     |
-| `integer`   | `number`     |
-| `boolean`   | `boolean`    |
-| `null`      | `null`       |
+| OpenAPI   | TypeScript |
+| --------- | ---------- |
+| `string`  | `string`   |
+| `number`  | `number`   |
+| `integer` | `number`   |
+| `boolean` | `boolean`  |
+| `null`    | `null`     |
 
 ### Format Modifiers
 
-| Format        | TypeScript              |
-|---------------|-------------------------|
-| `uuid`        | `string` (comment UUID) |
-| `date`        | `string` (comment date) |
-| `date-time`   | `string` (comment ISO)  |
-| `email`       | `string` (comment email)|
-| `uri`         | `string` (comment URI)  |
+| Format      | TypeScript               |
+| ----------- | ------------------------ |
+| `uuid`      | `string` (comment UUID)  |
+| `date`      | `string` (comment date)  |
+| `date-time` | `string` (comment ISO)   |
+| `email`     | `string` (comment email) |
+| `uri`       | `string` (comment URI)   |
 
 ### Complex Types
 
 **Object:**
+
 ```typescript
 // OpenAPI: type: object, properties: {id, name}, required: [id]
 interface Example {
-  id: string;      // required: no ?
-  name?: string;   // optional: with ?
+  id: string; // required: no ?
+  name?: string; // optional: with ?
 }
 ```
 
 **Array:**
+
 ```typescript
 // OpenAPI: type: array, items: {type: string}
 type Names = string[];
 ```
 
 **Enum:**
+
 ```typescript
 // OpenAPI: type: string, enum: [active, draft]
 type Status = "active" | "draft";
 ```
 
 **oneOf (Union):**
+
 ```typescript
 // OpenAPI: oneOf: [{$ref: Cat}, {$ref: Dog}]
 type Pet = Cat | Dog;
 ```
 
 **allOf (Intersection/Extends):**
+
 ```typescript
 // OpenAPI: allOf: [{$ref: Base}, {type: object, properties: ...}]
 interface Extended extends Base {
@@ -160,6 +165,7 @@ export type CreateProductResponse = Product;
 ```
 
 Naming convention:
+
 - `{Method}{Path}Request` for params/body
 - `{Method}{Path}Response` for response
 
@@ -170,19 +176,20 @@ For each main interface, generate a type guard:
 ```typescript
 export function isProduct(value: unknown): value is Product {
   return (
-    typeof value === 'object' &&
+    typeof value === "object" &&
     value !== null &&
-    'id' in value &&
-    typeof (value as any).id === 'string' &&
-    'title' in value &&
-    typeof (value as any).title === 'string' &&
-    'price' in value &&
-    typeof (value as any).price === 'number'
+    "id" in value &&
+    typeof (value as any).id === "string" &&
+    "title" in value &&
+    typeof (value as any).title === "string" &&
+    "price" in value &&
+    typeof (value as any).price === "number"
   );
 }
 ```
 
 Type guard rules:
+
 - Check `typeof value === 'object' && value !== null`
 - For each required field: check `'field' in value`
 - For primitive fields: check `typeof`
@@ -200,12 +207,12 @@ export interface ApiError {
 
 export function isApiError(value: unknown): value is ApiError {
   return (
-    typeof value === 'object' &&
+    typeof value === "object" &&
     value !== null &&
-    'status' in value &&
-    typeof (value as any).status === 'number' &&
-    'error' in value &&
-    typeof (value as any).error === 'string'
+    "status" in value &&
+    typeof (value as any).status === "number" &&
+    "error" in value &&
+    typeof (value as any).error === "string"
   );
 }
 ```
@@ -213,6 +220,7 @@ export function isApiError(value: unknown): value is ApiError {
 ## $ref Resolution
 
 When encountering `{"$ref": "#/components/schemas/Product"}`:
+
 1. Extract the schema name (`Product`)
 2. Use the type directly (don't resolve inline)
 
@@ -225,6 +233,7 @@ items: Product[]  // reference, not inline
 ## Complete Example
 
 **Input (OpenAPI):**
+
 ```json
 {
   "openapi": "3.0.0",
@@ -233,9 +242,9 @@ items: Product[]  // reference, not inline
       "User": {
         "type": "object",
         "properties": {
-          "id": {"type": "string", "format": "uuid"},
-          "email": {"type": "string", "format": "email"},
-          "role": {"type": "string", "enum": ["admin", "user"]}
+          "id": { "type": "string", "format": "uuid" },
+          "email": { "type": "string", "format": "email" },
+          "role": { "type": "string", "enum": ["admin", "user"] }
         },
         "required": ["id", "email", "role"]
       }
@@ -244,12 +253,12 @@ items: Product[]  // reference, not inline
   "paths": {
     "/users/{id}": {
       "get": {
-        "parameters": [{"name": "id", "in": "path", "required": true}],
+        "parameters": [{ "name": "id", "in": "path", "required": true }],
         "responses": {
           "200": {
             "content": {
               "application/json": {
-                "schema": {"$ref": "#/components/schemas/User"}
+                "schema": { "$ref": "#/components/schemas/User" }
               }
             }
           }
@@ -261,6 +270,7 @@ items: Product[]  // reference, not inline
 ```
 
 **Output (TypeScript):**
+
 ```typescript
 /**
  * Auto-generated from: api.openapi.json
@@ -301,14 +311,14 @@ export type GetUserByIdResponse = User;
 
 export function isUser(value: unknown): value is User {
   return (
-    typeof value === 'object' &&
+    typeof value === "object" &&
     value !== null &&
-    'id' in value &&
-    typeof (value as any).id === 'string' &&
-    'email' in value &&
-    typeof (value as any).email === 'string' &&
-    'role' in value &&
-    ['admin', 'user'].includes((value as any).role)
+    "id" in value &&
+    typeof (value as any).id === "string" &&
+    "email" in value &&
+    typeof (value as any).email === "string" &&
+    "role" in value &&
+    ["admin", "user"].includes((value as any).role)
   );
 }
 
@@ -324,21 +334,21 @@ export interface ApiError {
 
 export function isApiError(value: unknown): value is ApiError {
   return (
-    typeof value === 'object' &&
+    typeof value === "object" &&
     value !== null &&
-    'status' in value &&
-    typeof (value as any).status === 'number' &&
-    'error' in value &&
-    typeof (value as any).error === 'string'
+    "status" in value &&
+    typeof (value as any).status === "number" &&
+    "error" in value &&
+    typeof (value as any).error === "string"
   );
 }
 ```
 
 ## Common Errors
 
-| Error | Action |
-|-------|--------|
-| OpenAPI version != 3.0.x | Report that only 3.0 is supported |
-| $ref not found | List missing refs |
-| Unknown type | Use `unknown` and warn |
-| Circular reference | Use type alias with lazy reference |
+| Error                    | Action                             |
+| ------------------------ | ---------------------------------- |
+| OpenAPI version != 3.0.x | Report that only 3.0 is supported  |
+| $ref not found           | List missing refs                  |
+| Unknown type             | Use `unknown` and warn             |
+| Circular reference       | Use type alias with lazy reference |

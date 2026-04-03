@@ -14,9 +14,7 @@ function normalizeText(value) {
 
 function normalizeUserType(value) {
   const normalized = normalizeText(value).toLowerCase();
-  return normalized === "basic" || normalized === "premium"
-    ? normalized
-    : null;
+  return normalized === "basic" || normalized === "premium" ? normalized : null;
 }
 
 async function upsertWaitlistReferralRow(db, referral) {
@@ -24,8 +22,9 @@ async function upsertWaitlistReferralRow(db, referral) {
   const invitedUserId = normalizeText(referral?.invited_user_id);
   if (!inviterUserId || !invitedUserId) return null;
 
-  await db.prepare(
-    `INSERT INTO waitlist_referrals (
+  await db
+    .prepare(
+      `INSERT INTO waitlist_referrals (
       inviter_user_id,
       invited_user_id,
       referral_code,
@@ -37,13 +36,14 @@ async function upsertWaitlistReferralRow(db, referral) {
       referral_code = COALESCE(waitlist_referrals.referral_code, excluded.referral_code),
       invited_email_snapshot = COALESCE(waitlist_referrals.invited_email_snapshot, excluded.invited_email_snapshot),
       claimed_at = COALESCE(waitlist_referrals.claimed_at, excluded.claimed_at)`,
-  ).run(
-    inviterUserId,
-    invitedUserId,
-    normalizeText(referral?.referral_code) || null,
-    normalizeText(referral?.invited_email_snapshot) || null,
-    referral?.claimed_at || new Date().toISOString(),
-  );
+    )
+    .run(
+      inviterUserId,
+      invitedUserId,
+      normalizeText(referral?.referral_code) || null,
+      normalizeText(referral?.invited_email_snapshot) || null,
+      referral?.claimed_at || new Date().toISOString(),
+    );
 
   return await db
     .prepare(
@@ -58,8 +58,9 @@ async function upsertWaitlistReferralRow(db, referral) {
 async function restoreCachedUserToSqlite(db, cached) {
   if (!cached?.id || !cached?.email) return null;
 
-  await db.prepare(
-    `INSERT INTO users (
+  await db
+    .prepare(
+      `INSERT INTO users (
       id,
       email,
       name,
@@ -103,46 +104,51 @@ async function restoreCachedUserToSqlite(db, cached) {
       waitlist_unlocked_at = excluded.waitlist_unlocked_at,
       created_at = excluded.created_at,
       last_login_at = excluded.last_login_at`,
-  ).run(
-    cached.id,
-    cached.email,
-    normalizeText(cached.name) || null,
-    normalizeText(cached.first_name) || null,
-    cached.password_hash || null,
-    cached.google_id || null,
-    cached.facebook_id || null,
-    normalizeText(cached.postcode),
-    cached.city || null,
-    typeof cached.dietary_prefs === "string"
-      ? cached.dietary_prefs
-      : JSON.stringify(cached.dietary_prefs || []),
-    typeof cached.preferred_stores === "string"
-      ? cached.preferred_stores
-      : JSON.stringify(cached.preferred_stores || []),
-    typeof cached.blocked_stores === "string"
-      ? cached.blocked_stores
-      : JSON.stringify(cached.blocked_stores || []),
-    typeof cached.preferred_brands === "string"
-      ? cached.preferred_brands
-      : JSON.stringify(cached.preferred_brands || {}),
-    cached.delivery_speed_pref || "cheapest",
-    cached.email_verified_at || null,
-    normalizeUserType(cached.user_type),
-    normalizeText(cached.waitlist_referral_code) || null,
-    normalizeText(cached.waitlist_referrer_user_id) || null,
-    cached.waitlist_unlocked_at || null,
-    cached.created_at || new Date().toISOString(),
-    cached.last_login_at || null,
-  );
+    )
+    .run(
+      cached.id,
+      cached.email,
+      normalizeText(cached.name) || null,
+      normalizeText(cached.first_name) || null,
+      cached.password_hash || null,
+      cached.google_id || null,
+      cached.facebook_id || null,
+      normalizeText(cached.postcode),
+      cached.city || null,
+      typeof cached.dietary_prefs === "string"
+        ? cached.dietary_prefs
+        : JSON.stringify(cached.dietary_prefs || []),
+      typeof cached.preferred_stores === "string"
+        ? cached.preferred_stores
+        : JSON.stringify(cached.preferred_stores || []),
+      typeof cached.blocked_stores === "string"
+        ? cached.blocked_stores
+        : JSON.stringify(cached.blocked_stores || []),
+      typeof cached.preferred_brands === "string"
+        ? cached.preferred_brands
+        : JSON.stringify(cached.preferred_brands || {}),
+      cached.delivery_speed_pref || "cheapest",
+      cached.email_verified_at || null,
+      normalizeUserType(cached.user_type),
+      normalizeText(cached.waitlist_referral_code) || null,
+      normalizeText(cached.waitlist_referrer_user_id) || null,
+      cached.waitlist_unlocked_at || null,
+      cached.created_at || new Date().toISOString(),
+      cached.last_login_at || null,
+    );
 
-  return await db.prepare("SELECT * FROM users WHERE id = ? LIMIT 1").get(cached.id);
+  return await db
+    .prepare("SELECT * FROM users WHERE id = ? LIMIT 1")
+    .get(cached.id);
 }
 
 async function findUserByIdOrCache(db, userId) {
   const id = normalizeText(userId);
   if (!id) return null;
 
-  let user = await db.prepare("SELECT * FROM users WHERE id = ? LIMIT 1").get(id);
+  let user = await db
+    .prepare("SELECT * FROM users WHERE id = ? LIMIT 1")
+    .get(id);
   if (user) return user;
 
   const cached = await getCachedUser(id);
@@ -256,7 +262,9 @@ async function findWaitlistReferralByInviteeOrCache(db, invitedUserId) {
 }
 
 async function syncCachedUserById(db, userId, options = {}) {
-  const user = await db.prepare("SELECT * FROM users WHERE id = ? LIMIT 1").get(userId);
+  const user = await db
+    .prepare("SELECT * FROM users WHERE id = ? LIMIT 1")
+    .get(userId);
   if (!user) return null;
   await cacheUser(user, options);
   return user;
