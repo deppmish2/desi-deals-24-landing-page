@@ -56,6 +56,27 @@ CREATE TABLE IF NOT EXISTS crawl_runs (
   errors            TEXT
 );
 
+CREATE TABLE IF NOT EXISTS crawl_store_results (
+  id                  TEXT PRIMARY KEY,
+  crawl_run_id        TEXT NOT NULL REFERENCES crawl_runs(id) ON DELETE CASCADE,
+  crawl_date          TEXT,
+  store_id            TEXT NOT NULL REFERENCES stores(id),
+  store_name          TEXT NOT NULL,
+  store_url           TEXT,
+  started_at          DATETIME,
+  finished_at         DATETIME,
+  status              TEXT NOT NULL,
+  deals_scraped       INTEGER DEFAULT 0,
+  deals_inserted      INTEGER DEFAULT 0,
+  deals_updated       INTEGER DEFAULT 0,
+  deals_unchanged     INTEGER DEFAULT 0,
+  deals_removed       INTEGER DEFAULT 0,
+  history_rows_written INTEGER DEFAULT 0,
+  category_counts_json TEXT,
+  error_message       TEXT,
+  created_at          DATETIME DEFAULT CURRENT_TIMESTAMP
+);
+
 -- Daily price history for every crawled product
 CREATE TABLE IF NOT EXISTS deal_price_history (
   id                TEXT PRIMARY KEY,
@@ -88,6 +109,12 @@ CREATE INDEX IF NOT EXISTS idx_deals_display_date_order
 
 CREATE INDEX IF NOT EXISTS idx_deals_active_display
   ON deals(is_active, display_date, display_order);
+
+CREATE INDEX IF NOT EXISTS idx_crawl_store_results_run
+  ON crawl_store_results(crawl_run_id);
+
+CREATE INDEX IF NOT EXISTS idx_crawl_store_results_store
+  ON crawl_store_results(store_id, crawl_date);
 
 -- Generic scheduled/ops job ledger
 CREATE TABLE IF NOT EXISTS job_runs (

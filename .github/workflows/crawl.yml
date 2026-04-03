@@ -58,4 +58,20 @@ jobs:
           TURSO_AUTH_TOKEN: ${{ secrets.TURSO_AUTH_TOKEN }}
           DESI_DEALS_DB_TURSO_DATABASE_URL: ${{ secrets.DESI_DEALS_DB_TURSO_DATABASE_URL }}
           DESI_DEALS_DB_TURSO_AUTH_TOKEN: ${{ secrets.DESI_DEALS_DB_TURSO_AUTH_TOKEN }}
+          DB_BOOTSTRAP_ON_STARTUP: "true"
         run: npm run crawl
+
+      - name: Warm public deals cache
+        if: steps.gate.outputs.should_run == 'true'
+        env:
+          CLIENT_APP_URL: ${{ secrets.CLIENT_APP_URL }}
+        shell: bash
+        run: |
+          base_url="${CLIENT_APP_URL%/}"
+          if [ -z "$base_url" ]; then
+            echo "Skipping warm step: CLIENT_APP_URL not configured."
+            exit 0
+          fi
+
+          today_key="$(TZ=Europe/Berlin date +%F)"
+          curl --fail --silent --show-error "$base_url/api/v1/deals?limit=20&page=1&in_stock=1&cache_date=$today_key" >/dev/null
