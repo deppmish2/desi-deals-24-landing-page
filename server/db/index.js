@@ -4,6 +4,7 @@ const fs = require("fs");
 const path = require("path");
 
 const { createClient } = require("@libsql/client");
+const { getAdminEmailSet } = require("../utils/admin-access");
 
 // Local: file: URL pointing at the existing SQLite file
 // Vercel / any env with TURSO_DATABASE_URL: remote Turso DB
@@ -425,14 +426,7 @@ const ready = (async () => {
   } catch (_) {}
 
   // Seed admin status for known admin accounts (configurable via ADMIN_EMAILS env var)
-  const adminEmails = (
-    process.env.ADMIN_EMAILS ||
-    "itsjustrahul@gmail.com,deppmish2@googlemail.com"
-  )
-    .split(",")
-    .map((e) => e.trim().toLowerCase())
-    .filter(Boolean);
-  for (const email of adminEmails) {
+  for (const email of getAdminEmailSet()) {
     try {
       await db.execute(`UPDATE users SET is_admin = 1 WHERE email = ?`, [
         email,

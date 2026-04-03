@@ -1,19 +1,11 @@
 "use strict";
 
 const { verifyJwt } = require("../utils/jwt");
+const {
+  isAdminEmail,
+  normalizeAdminEmail,
+} = require("../utils/admin-access");
 const db = require("../db");
-
-// Always-admin emails — works even before the DB row is updated
-// Configurable via ADMIN_EMAILS env var (comma-separated)
-const HARDCODED_ADMIN_EMAILS = new Set(
-  (
-    process.env.ADMIN_EMAILS ||
-    "itsjustrahul@gmail.com,deppmish2@googlemail.com"
-  )
-    .split(",")
-    .map((e) => e.trim().toLowerCase())
-    .filter(Boolean),
-);
 
 function resolveAccessSecret() {
   return (
@@ -43,21 +35,27 @@ module.exports = async function requireAdminAuth(req, res, next) {
   }
 
   const userId = result.payload.sub;
-  const email = result.payload.email;
+  const email = normalizeAdminEmail(result.payload.email);
 
-  // Fast path: hardcoded admin list
-  if (HARDCODED_ADMIN_EMAILS.has(email)) {
+  if (result.payload?.is_admin === true || Number(result.payload?.is_admin) === 1) {
     req.user = { id: userId, email };
     return next();
   }
 
-  // DB check: is_admin flag
+  // Fast path: always-admin email list
+  if (isAdminEmail(email)) {
+    req.user = { id: userId, email };
+    return next();
+  }
+
+  // DB check: is_admin flag or admin email on the stored user row
   try {
     const user = await db
-      .prepare("SELECT is_admin FROM users WHERE id = ?")
+      .prepare("SELECT email, is_admin FROM users WHERE id = ?")
       .get(userId);
-    if (Number(user?.is_admin) === 1) {
-      req.user = { id: userId, email };
+    const storedEmail = normalizeAdminEmail(user?.email) || email;
+    if (Number(user?.is_admin) === 1 || isAdminEmail(storedEmail)) {
+      req.user = { id: userId, email: storedEmail };
       return next();
     }
   } catch (_) {}

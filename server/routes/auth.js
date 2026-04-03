@@ -41,6 +41,7 @@ const {
   exchangeCodeForProfile: exchangeFacebookCodeForProfile,
   isConfigured: facebookOAuthConfigured,
 } = require("../services/facebook-oauth");
+const { isAdminEmail } = require("../utils/admin-access");
 
 const router = express.Router();
 
@@ -241,6 +242,7 @@ function serializeUser(row) {
     email_verified_at: row.email_verified_at || null,
     email_verified: isEmailVerified(row),
     user_type: normalizeUserType(row.user_type),
+    is_admin: Number(row.is_admin) === 1,
     created_at: row.created_at,
     last_login_at: row.last_login_at,
   };
@@ -256,11 +258,27 @@ function issueAccessToken(user) {
     {
       sub: user.id,
       email: user.email,
+      is_admin:
+        Number(user?.is_admin) === 1 || isAdminEmail(user?.email || ""),
       type: "access",
     },
     accessSecret(),
     ACCESS_TTL_SECONDS,
   );
+}
+
+async function ensureAdminAccess(user) {
+  if (!user || !user.id || !isAdminEmail(user.email)) {
+    return user;
+  }
+
+  if (Number(user.is_admin) === 1) {
+    return user;
+  }
+
+  await db.prepare("UPDATE users SET is_admin = 1 WHERE id = ?").run(user.id);
+  const updatedUser = await syncCachedUserById(db, user.id);
+  return updatedUser || { ...user, is_admin: 1 };
 }
 
 async function issueRefreshToken(userId) {
@@ -291,15 +309,16 @@ async function issueRefreshToken(userId) {
 }
 
 async function buildAuthResponse(user) {
-  const accessToken = issueAccessToken(user);
-  const refreshToken = await issueRefreshToken(user.id);
+  const effectiveUser = await ensureAdminAccess(user);
+  const accessToken = issueAccessToken(effectiveUser);
+  const refreshToken = await issueRefreshToken(effectiveUser.id);
   return {
     accessToken,
     refreshToken,
     tokenType: "Bearer",
     expiresIn: ACCESS_TTL_SECONDS,
     sessionStore: "sqlite",
-    user: serializeUser(user),
+    user: serializeUser(effectiveUser),
   };
 }
 
