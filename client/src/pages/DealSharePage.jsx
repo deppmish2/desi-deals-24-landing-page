@@ -72,7 +72,7 @@ export default function DealSharePage() {
               </div>
               <div
                 className="mt-1 max-w-[210px] text-[12px] font-bold leading-[1.08] tracking-[-0.03em] text-slate-600 sm:max-w-[360px] sm:text-[14px]"
-                style={{ fontFamily: '"Space Grotesk", "Plus Jakarta Sans", sans-serif' }}
+                style={{ fontFamily: '"Plus Jakarta Sans", sans-serif' }}
               >
                 {HEADER_HEADLINE}
               </div>

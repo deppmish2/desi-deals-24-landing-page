@@ -6,6 +6,7 @@ import {
   Routes,
   useLocation,
 } from "react-router-dom";
+import AdLandingPage from "./pages/AdLandingPage";
 import DealsPage from "./pages/DealsPage";
 import {
   initGoogleAnalytics,
@@ -85,6 +86,7 @@ function AppShell() {
         <Routes>
           <Route path="/" element={<DealsPage />} />
           <Route path="/deals" element={<DealsPage />} />
+          <Route path="/insta" element={<AdLandingPage />} />
           <Route path="/deal/:dealId" element={<DealsPage />} />
           <Route path="/share/deal/:dealId" element={<DealSharePage />} />
           <Route path="/saved" element={<SavedDealsPage />} />
