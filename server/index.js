@@ -447,7 +447,7 @@ if (require.main === module) {
 
     if (isServerless) {
       console.log(
-        "[scheduler] Skipped local scheduler in serverless mode (GitHub Actions handles the 07:00 Europe/Berlin crawl).",
+        "[scheduler] Skipped local scheduler in serverless mode (GitHub Actions handles the 08:00 Europe/Berlin crawl).",
       );
     } else {
       const { startScheduler } = require("../crawler/scheduler");

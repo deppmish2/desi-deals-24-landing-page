@@ -48,11 +48,9 @@ npm run crawl
 npm run schedule:run
 ```
 
-This uses Europe/Berlin time windows:
+This repo now uses a single daily crawl window in Europe/Berlin time:
 
-- `06:00` Berlin: full crawl
-- `07:00+` Berlin: daily pool refresh + verification until today's pool exists
-- outside those windows it exits quickly unless `FORCE_JOB=crawl|pool|all` is set
+- `08:00` Berlin: full crawl across all configured shops
 
 Expected output:
 
@@ -108,7 +106,7 @@ This builds the React app into `client/dist/`. The Express server automatically 
 
 ### How availability is maintained
 
-1. At 07:00 Europe/Berlin, the full crawl runs across all configured shops.
+1. At 08:00 Europe/Berlin, the full crawl runs across all configured shops.
 2. The crawler writes the live active deals into the `deals` table and stores a daily snapshot for every crawled product in `deal_price_history`.
 3. The website reads directly from Turso using the latest completed crawl date.
 4. The API serves the live active deals for that latest completed crawl day.
@@ -116,7 +114,7 @@ This builds the React app into `client/dist/`. The Express server automatically 
 ### Production scheduling
 
 - The production scheduler lives in [`.github/workflows/crawl.yml`](./.github/workflows/crawl.yml).
-- GitHub Actions triggers twice in UTC and gates execution in code so the crawl runs exactly once at `07:00 Europe/Berlin`, including DST changes.
+- GitHub Actions triggers twice in UTC and gates execution in code so the crawl runs exactly once at `08:00 Europe/Berlin`, including DST changes.
 - Vercel serves Turso data only; it is not the scheduler for ingestion.
 
 ### Health / ops

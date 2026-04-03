@@ -7,9 +7,9 @@ const { BERLIN_TIME_ZONE } = require("../server/services/berlin-time");
 
 function startScheduler(db) {
   cron.schedule(
-    "0 7 * * *",
+    "0 8 * * *",
     async () => {
-      console.log("[scheduler] Starting 07:00 Europe/Berlin crawl...");
+      console.log("[scheduler] Starting 08:00 Europe/Berlin crawl...");
       try {
         await runCrawl(db, { triggerType: "local_scheduler" });
       } catch (error) {
@@ -20,7 +20,7 @@ function startScheduler(db) {
   );
 
   console.log(
-    "[scheduler] Scheduled daily crawl at 07:00 Europe/Berlin",
+    "[scheduler] Scheduled daily crawl at 08:00 Europe/Berlin",
   );
 
   if (process.env.CRAWL_ON_STARTUP === "true") {

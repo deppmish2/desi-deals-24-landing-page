@@ -2,8 +2,8 @@ name: Daily Crawl
 
 on:
   schedule:
-    - cron: "0 5 * * *"
     - cron: "0 6 * * *"
+    - cron: "0 7 * * *"
   workflow_dispatch:
 
 concurrency:
@@ -34,7 +34,7 @@ jobs:
           echo "berlin_hour=$berlin_hour" >> "$GITHUB_OUTPUT"
           echo "berlin_date=$berlin_date" >> "$GITHUB_OUTPUT"
 
-          if [ "${{ github.event_name }}" = "workflow_dispatch" ] || [ "$berlin_hour" = "07" ]; then
+          if [ "${{ github.event_name }}" = "workflow_dispatch" ] || [ "$berlin_hour" = "08" ]; then
             echo "should_run=true" >> "$GITHUB_OUTPUT"
           else
             echo "should_run=false" >> "$GITHUB_OUTPUT"
