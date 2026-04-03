@@ -10,23 +10,18 @@ const { parseWeight } = require("../utils/weight-parser");
 const { mapCategory } = require("../utils/category-mapper");
 const { resolveImage } = require("../utils/image-resolver");
 const { getMaxPages } = require("../utils/crawl-scope");
-const { discoverLinksByPatterns } = require("../utils/link-discovery");
+const { parseDiscountBadge } = require("../utils/discount-badge");
 
-const STORE_ID = "spicelands";
-const STORE_NAME = "Spicelands";
-const STORE_URL = "https://www.spicelands.de";
+const STORE_ID = "asiatischer-lebensmittelladen";
+const STORE_NAME = "Asiatischer Lebensmittelladen";
+const STORE_URL = "https://www.asiatischer-lebensmittelladen.de";
+const SHOP_URL = `${STORE_URL}/shop/`;
 const UA =
   "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 Chrome/120.0.0.0 Safari/537.36";
 
-const DEFAULT_BASE_URLS = [
-  `${STORE_URL}/produkt-kategorie/angebote/`,
-  `${STORE_URL}/produkt-kategorie/mhd-angebote/`,
-];
-
-function pageUrl(base, page) {
-  if (page === 1) return base;
-  // Insert page/N/ before the trailing slash
-  return base.replace(/\/$/, "") + `/page/${page}/`;
+function pageUrl(page) {
+  if (page === 1) return SHOP_URL;
+  return `${SHOP_URL.replace(/\/+$/, "")}/page/${page}/`;
 }
 
 async function fetchPage(url) {
@@ -45,31 +40,26 @@ async function fetchPage(url) {
 function parseProductCards(html) {
   const $ = cheerio.load(html);
   const deals = [];
-
-  // Spicelands now renders Woodmart/WooCommerce product cards.
   const productEls = $(
-    "li.product, div.product, .product-item, .nasa-product-grid li, .product-grid-item, .wd-product",
+    "li.product, .products .product, .product-grid-item, .wd-product, .content-product",
   );
 
   productEls.each((_, el) => {
     const $el = $(el);
-
-    // Product URL & name
     const link = $el
       .find(
-        "a.wd-product-img-link, a.product-image-link, .wd-entities-title a, a.woocommerce-LoopProduct-link, a.product-img-wrap, h2 a, h3 a, .woocommerce-loop-product__title a",
+        "a.wd-product-img-link, a.product-image-link, a.woocommerce-LoopProduct-link, .product-title a, h2 a, h3 a",
       )
       .first();
     const productUrl = link.attr("href") || $el.find("a").first().attr("href");
     const name = $el
-      .find(".wd-entities-title, .woocommerce-loop-product__title, .product-title, h2, h3")
+      .find(".product-title, .woocommerce-loop-product__title, h2, h3")
       .first()
       .text()
       .trim();
 
     if (!name || !productUrl) return;
 
-    // Prices — WooCommerce sale items show <ins> for sale, <del> for original
     const salePriceText =
       $el
         .find(".price ins .woocommerce-Price-amount bdi, .price ins .woocommerce-Price-amount, .price ins bdi")
@@ -83,16 +73,16 @@ function parseProductCards(html) {
 
     const salePrice = parsePrice(salePriceText);
     const origPrice = parsePrice(origPriceText);
-
-    // Skip products without a price
     if (!salePrice) return;
 
     const originalPrice = origPrice && origPrice > salePrice ? origPrice : null;
-    const discountPercent = calcDiscount(salePrice, originalPrice);
+    const discountPercent =
+      calcDiscount(salePrice, originalPrice) ||
+      parseDiscountBadge($el.find(".onsale, .badge").first().text());
 
-    // Image
-    const $img = $el.find("img").first();
-    const imageUrl = resolveImage($img, STORE_URL);
+    if (!originalPrice && !(discountPercent > 0)) {
+      return;
+    }
 
     const weight = parseWeight(name);
     const pricePerKg = weight
@@ -105,8 +95,8 @@ function parseProductCards(html) {
       store_url: STORE_URL,
       product_name: name,
       product_category: mapCategory(name),
-      product_url: productUrl,
-      image_url: imageUrl,
+      product_url,
+      image_url: resolveImage($el.find("img").first(), STORE_URL),
       weight_raw: weight?.raw || null,
       weight_value: weight?.value || null,
       weight_unit: weight?.unit || null,
@@ -116,64 +106,56 @@ function parseProductCards(html) {
       price_per_kg: pricePerKg,
       price_per_unit: null,
       currency: "EUR",
-      availability: $el.find(".out-of-stock, .outofstock").length
-        ? "out_of_stock"
-        : "in_stock",
+      availability:
+        /out of stock|nicht vorrätig/i.test($el.text()) ||
+        $el.hasClass("outofstock") ||
+        $el.find(".out-of-stock").length
+          ? "out_of_stock"
+          : "in_stock",
       bulk_pricing: null,
     });
   });
 
-  // Check if there's a next page
-  const hasNextPage = $("a.next.page-numbers, .next.page-numbers a").length > 0;
-  return { deals, hasNextPage };
+  return {
+    deals,
+    hasNextPage:
+      $("a.next.page-numbers, .next.page-numbers a, .page-numbers .next").length >
+      0,
+  };
 }
 
 async function scrape() {
   const allDeals = [];
   const seen = new Set();
   const maxPages = getMaxPages(5);
-  const baseUrls = await discoverLinksByPatterns({
-    storeId: STORE_ID,
-    storeUrl: STORE_URL,
-    ua: UA,
-    patterns: [/\/produkt-kategorie\//i, /\/product-category\//i],
-    fallback: DEFAULT_BASE_URLS,
-    extraSeedUrls: [`${STORE_URL}/shop/`],
-  });
 
-  for (const base of baseUrls) {
-    let page = 1;
+  for (let page = 1; page <= maxPages; page += 1) {
+    const url = pageUrl(page);
+    console.log(`[${STORE_ID}] Fetching page ${page}: ${url}`);
 
-    while (page <= maxPages) {
-      const url = pageUrl(base, page);
-      console.log(`[spicelands] Fetching page ${page}: ${url}`);
-      let html;
-      try {
-        html = await fetchPage(url);
-      } catch (e) {
-        console.warn(`[spicelands] Page ${page} failed: ${e.message}`);
-        break;
-      }
-
-      if (!html) break;
-
-      const { deals, hasNextPage } = parseProductCards(html);
-      let pageDeals = 0;
-      for (const deal of deals) {
-        if (seen.has(deal.product_url)) continue;
-        seen.add(deal.product_url);
-        allDeals.push(deal);
-        pageDeals += 1;
-      }
-      console.log(`[spicelands] Page ${page} (${base}): ${pageDeals} deals`);
-
-      if (!hasNextPage) break;
-      page++;
-      await new Promise((r) => setTimeout(r, 2000 + Math.random() * 2000));
+    let html;
+    try {
+      // eslint-disable-next-line no-await-in-loop
+      html = await fetchPage(url);
+    } catch (error) {
+      console.warn(`[${STORE_ID}] Fetch failed: ${error.message}`);
+      break;
     }
+
+    if (!html) break;
+
+    const { deals, hasNextPage } = parseProductCards(html);
+    for (const deal of deals) {
+      if (seen.has(deal.product_url)) continue;
+      seen.add(deal.product_url);
+      allDeals.push(deal);
+    }
+
+    if (!hasNextPage) break;
+    await new Promise((resolve) => setTimeout(resolve, 1800));
   }
 
-  console.log(`[spicelands] Total: ${allDeals.length} deals`);
+  console.log(`[${STORE_ID}] Total: ${allDeals.length} deals`);
   return allDeals;
 }
 

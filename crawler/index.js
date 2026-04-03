@@ -7,6 +7,11 @@ const { v4: uuidv4 } = require("uuid");
 const { parseBestBefore } = require("./utils/best-before-parser");
 const { acquireCrawlLock, releaseCrawlLock } = require("./utils/snapshot");
 const {
+  logInfo,
+  logWarn,
+  logError,
+} = require("./utils/crawl-logger");
+const {
   buildStableDisplayOrder,
   dateSeed,
 } = require("../server/services/deal-order");
@@ -56,6 +61,17 @@ const adapters = [
   require("./stores/namastedeutschland"),
   require("./stores/india-store"),
   require("./stores/india-express-food"),
+  require("./stores/transfoodlev"),
+  require("./stores/desistore"),
+  require("./stores/asiatischer-lebensmittelladen"),
+  require("./stores/villagefoods"),
+  require("./stores/indianspicebasket"),
+  require("./stores/barkatfood"),
+  require("./stores/yogimart"),
+  require("./stores/bajwa-shop"),
+  require("./stores/asiangrocerystore"),
+  require("./stores/zakiasianfoods"),
+  require("./stores/masimpex"),
 ];
 
 function sleep(ms) {
@@ -85,6 +101,68 @@ function normalizeBulkPricing(value) {
     return text || null;
   }
   return JSON.stringify(value);
+}
+
+function buildCategoryCounts(deals) {
+  const counts = {};
+
+  for (const deal of Array.isArray(deals) ? deals : []) {
+    const category = normalizeText(deal.product_category) || "Other";
+    counts[category] = (counts[category] || 0) + 1;
+  }
+
+  return Object.fromEntries(
+    Object.entries(counts).sort((left, right) => right[1] - left[1]),
+  );
+}
+
+async function recordStoreResult(
+  db,
+  {
+    crawlRunId,
+    crawlDate,
+    adapter,
+    startedAt,
+    finishedAt,
+    status,
+    stats,
+    historyRowsWritten,
+    categoryCounts,
+    errorMessage,
+  },
+) {
+  await db
+    .prepare(
+      `INSERT INTO crawl_store_results
+        (id, crawl_run_id, crawl_date, store_id, store_name, store_url,
+         started_at, finished_at, status,
+         deals_scraped, deals_inserted, deals_updated, deals_unchanged, deals_removed,
+         history_rows_written, category_counts_json, error_message)
+       VALUES
+        (?, ?, ?, ?, ?, ?,
+         ?, ?, ?,
+         ?, ?, ?, ?, ?,
+         ?, ?, ?)`,
+    )
+    .run(
+      uuidv4(),
+      crawlRunId,
+      crawlDate,
+      adapter.storeId,
+      adapter.storeName,
+      adapter.storeUrl,
+      startedAt,
+      finishedAt,
+      status,
+      Number(stats?.scraped || 0),
+      Number(stats?.inserted || 0),
+      Number(stats?.updated || 0),
+      Number(stats?.unchanged || 0),
+      Number(stats?.removed || 0),
+      Number(historyRowsWritten || 0),
+      JSON.stringify(categoryCounts || {}),
+      errorMessage || null,
+    );
 }
 
 function toComparableDealShape(deal) {
@@ -435,7 +513,7 @@ async function runCrawl(db, options = {}) {
   });
   const lock = await acquireCrawlLock(db, { ownerId: runId });
   if (!lock.acquired) {
-    console.log("[crawl] Another crawl is already running — skipping.");
+    logWarn("run", "Another crawl is already running — skipping.");
     await finishJobRun(db, jobRun, {
       status: "skipped",
       details: { run_id: runId, reason: "lock" },
@@ -444,7 +522,7 @@ async function runCrawl(db, options = {}) {
   }
 
   const startedAt = new Date().toISOString();
-  console.log(`\n=== Crawl run ${runId} started at ${startedAt} ===`);
+  logInfo("run", "Crawl started", { run_id: runId, started_at: startedAt });
 
   let storesAttempted = 0;
   let storesSucceeded = 0;
@@ -463,7 +541,12 @@ async function runCrawl(db, options = {}) {
 
     for (const adapter of adapters) {
       storesAttempted += 1;
-      console.log(`\n--- Crawling: ${adapter.storeName} ---`);
+      const storeStartedAt = new Date().toISOString();
+      logInfo("store", "Crawling store", {
+        run_id: runId,
+        store_id: adapter.storeId,
+        store_name: adapter.storeName,
+      });
 
       try {
         const rawDeals = await adapter.scrape();
@@ -491,14 +574,42 @@ async function runCrawl(db, options = {}) {
           )
           .run(crawlTimestamp, adapter.storeId);
 
+        const categoryCounts = buildCategoryCounts(deals);
+        const storeFinishedAt = new Date().toISOString();
+        await recordStoreResult(db, {
+          crawlRunId: runId,
+          crawlDate,
+          adapter,
+          startedAt: storeStartedAt,
+          finishedAt: storeFinishedAt,
+          status: "completed",
+          stats,
+          historyRowsWritten: historyCount,
+          categoryCounts,
+        });
+
         dealsFound += deals.length;
         historyRowsWritten += historyCount;
         storesSucceeded += 1;
-        console.log(
-          `✓ ${adapter.storeName}: ${deals.length} scraped (${stats.inserted} new, ${stats.updated} changed, ${stats.unchanged} unchanged, ${stats.removed} removed, ${historyCount} history rows)`,
-        );
+        logInfo("store", "Store crawl completed", {
+          run_id: runId,
+          store_id: adapter.storeId,
+          scraped: deals.length,
+          inserted: stats.inserted,
+          updated: stats.updated,
+          unchanged: stats.unchanged,
+          removed: stats.removed,
+          history_rows_written: historyCount,
+          categories: categoryCounts,
+        });
       } catch (error) {
-        console.error(`✗ ${adapter.storeName}: ${error.message}`);
+        const storeFinishedAt = new Date().toISOString();
+        logError("store", "Store crawl failed", {
+          run_id: runId,
+          store_id: adapter.storeId,
+          store_name: adapter.storeName,
+          error_message: error.message,
+        });
         errors.push({
           store_id: adapter.storeId,
           error_message: error.message,
@@ -511,6 +622,19 @@ async function runCrawl(db, options = {}) {
            WHERE id = ?`,
           )
           .run(adapter.storeId);
+
+        await recordStoreResult(db, {
+          crawlRunId: runId,
+          crawlDate,
+          adapter,
+          startedAt: storeStartedAt,
+          finishedAt: storeFinishedAt,
+          status: "failed",
+          stats: null,
+          historyRowsWritten: 0,
+          categoryCounts: {},
+          errorMessage: error.message,
+        });
       }
 
       if (adapters.indexOf(adapter) < adapters.length - 1) {
@@ -547,19 +671,19 @@ async function runCrawl(db, options = {}) {
       dealsFound,
     });
 
-    console.log(
-      `\n=== Crawl finished: ${storesSucceeded}/${storesAttempted} stores, ${dealsFound} deals ===`,
-    );
-    console.log(
-      `[crawl] Daily price history stored for ${crawlDate}: ${historyRowsWritten} rows.`,
-    );
-    console.log(
-      `[crawl] Display order refreshed for ${crawlDate}: ${displayRowsOrdered} active deals.`,
-    );
+    logInfo("run", "Crawl finished", {
+      run_id: runId,
+      stores_succeeded: storesSucceeded,
+      stores_attempted: storesAttempted,
+      deals_found: dealsFound,
+      crawl_date: crawlDate,
+      history_rows_written: historyRowsWritten,
+      display_rows_ordered: displayRowsOrdered,
+    });
 
     if (warnings.length > 0) {
       for (const warning of warnings) {
-        console.warn(`[crawl] Warning: ${warning.message}`);
+        logWarn("run", warning.message, warning);
       }
     }
 

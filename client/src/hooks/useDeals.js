@@ -1,5 +1,11 @@
 import { useState, useEffect, useRef } from "react";
 import { fetchDeals } from "../utils/api";
+import {
+  getBerlinDateKey,
+  isDefaultDealsRequest,
+  readCachedDefaultDeals,
+  writeCachedDefaultDeals,
+} from "../utils/defaultDealsCache.mjs";
 
 const CRAWL_POLL_INTERVAL = 15000; // re-fetch every 15s while a crawl is running
 
@@ -20,6 +26,13 @@ export default function useDeals(filters = {}) {
     clearTimeout(pollRef.current);
     const requestId = requestIdRef.current + 1;
     requestIdRef.current = requestId;
+    const shouldUseDefaultDealsCache = isDefaultDealsRequest(requestFilters);
+    const requestParams = shouldUseDefaultDealsCache
+      ? { ...requestFilters, cache_date: getBerlinDateKey() }
+      : requestFilters;
+    const cachedDefaultDeals = shouldUseDefaultDealsCache
+      ? readCachedDefaultDeals()
+      : null;
 
     if (!enabled) {
       setDeals([]);
@@ -33,16 +46,30 @@ export default function useDeals(filters = {}) {
       };
     }
 
+    setError(null);
+    if (cachedDefaultDeals) {
+      setDeals(cachedDefaultDeals.data || []);
+      setPagination(cachedDefaultDeals.pagination || null);
+      setMeta(cachedDefaultDeals.meta || null);
+      setLoading(false);
+    } else {
+      setLoading(true);
+    }
+
     debounceRef.current = setTimeout(
       async () => {
-        setLoading(true);
-        setError(null);
+        if (!cachedDefaultDeals) {
+          setLoading(true);
+        }
         try {
-          const res = await fetchDeals(requestFilters);
+          const res = await fetchDeals(requestParams);
           if (requestIdRef.current !== requestId) return;
           setDeals(res.data || []);
           setPagination(res.pagination || null);
           setMeta(res.meta || null);
+          if (shouldUseDefaultDealsCache) {
+            writeCachedDefaultDeals(res);
+          }
 
           // Auto-poll while a crawl is running so deals appear without manual refresh
           if (res.meta?.crawling) {
@@ -57,7 +84,9 @@ export default function useDeals(filters = {}) {
           }
         } catch (e) {
           if (requestIdRef.current !== requestId) return;
-          setError(e.message);
+          if (!cachedDefaultDeals) {
+            setError(e.message);
+          }
         } finally {
           if (requestIdRef.current === requestId) {
             setLoading(false);
