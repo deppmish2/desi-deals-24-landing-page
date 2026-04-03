@@ -8,6 +8,16 @@ const router = Router();
 
 router.use(requireAdminAuth);
 
+function parseJsonObject(value) {
+  if (!value) return {};
+  try {
+    const parsed = JSON.parse(value);
+    return parsed && typeof parsed === "object" ? parsed : {};
+  } catch {
+    return {};
+  }
+}
+
 router.get("/stats", async (req, res) => {
   try {
     const [
@@ -21,6 +31,8 @@ router.get("/stats", async (req, res) => {
       topSearchTerms,
       recentSearches,
       recentUsers,
+      latestCrawlRun,
+      recentCrawlRuns,
     ] = await Promise.all([
       db.prepare("SELECT COUNT(*) as count FROM users").get(),
       db
@@ -117,7 +129,56 @@ router.get("/stats", async (req, res) => {
       `,
         )
         .all(),
+      db
+        .prepare(
+          `
+        SELECT id, crawl_date, started_at, finished_at, status, stores_attempted, stores_succeeded, deals_found, errors
+        FROM crawl_runs
+        ORDER BY started_at DESC
+        LIMIT 1
+      `,
+        )
+        .get(),
+      db
+        .prepare(
+          `
+        SELECT id, crawl_date, started_at, finished_at, status, stores_attempted, stores_succeeded, deals_found
+        FROM crawl_runs
+        ORDER BY started_at DESC
+        LIMIT 8
+      `,
+        )
+        .all(),
     ]);
+
+    const latestCrawlStores = latestCrawlRun?.id
+      ? await db
+          .prepare(
+            `
+          SELECT store_id, store_name, store_url, started_at, finished_at, status,
+                 deals_scraped, deals_inserted, deals_updated, deals_unchanged,
+                 deals_removed, history_rows_written, category_counts_json, error_message
+          FROM crawl_store_results
+          WHERE crawl_run_id = ?
+          ORDER BY
+            CASE status WHEN 'failed' THEN 0 ELSE 1 END,
+            deals_scraped DESC,
+            store_name ASC
+        `,
+          )
+          .all(latestCrawlRun.id)
+      : [];
+
+    const crawlCategoryTotals = {};
+    for (const row of latestCrawlStores) {
+      const categoryCounts = parseJsonObject(row.category_counts_json);
+      for (const [category, count] of Object.entries(categoryCounts)) {
+        crawlCategoryTotals[category] =
+          (crawlCategoryTotals[category] || 0) + Number(count || 0);
+      }
+    }
+
+    const crawlErrors = parseJsonObject(latestCrawlRun?.errors);
 
     res.json({
       kpis: {
@@ -127,6 +188,56 @@ router.get("/stats", async (req, res) => {
         searches_30d: Number(searches30dRow?.count ?? 0),
         unique_searchers_30d: Number(uniqueSearchers30dRow?.count ?? 0),
       },
+      latest_crawl: latestCrawlRun
+        ? {
+            id: latestCrawlRun.id,
+            crawl_date: latestCrawlRun.crawl_date || null,
+            started_at: latestCrawlRun.started_at,
+            finished_at: latestCrawlRun.finished_at || null,
+            status: latestCrawlRun.status,
+            stores_attempted: Number(latestCrawlRun.stores_attempted || 0),
+            stores_succeeded: Number(latestCrawlRun.stores_succeeded || 0),
+            stores_failed: Math.max(
+              0,
+              Number(latestCrawlRun.stores_attempted || 0) -
+                Number(latestCrawlRun.stores_succeeded || 0),
+            ),
+            deals_found: Number(latestCrawlRun.deals_found || 0),
+            errors: Array.isArray(crawlErrors) ? crawlErrors : [],
+            category_totals: Object.entries(crawlCategoryTotals)
+              .sort((left, right) => right[1] - left[1])
+              .map(([category, count]) => ({
+                category,
+                count: Number(count || 0),
+              })),
+            store_results: latestCrawlStores.map((row) => ({
+              store_id: row.store_id,
+              store_name: row.store_name,
+              store_url: row.store_url || null,
+              started_at: row.started_at || null,
+              finished_at: row.finished_at || null,
+              status: row.status,
+              deals_scraped: Number(row.deals_scraped || 0),
+              deals_inserted: Number(row.deals_inserted || 0),
+              deals_updated: Number(row.deals_updated || 0),
+              deals_unchanged: Number(row.deals_unchanged || 0),
+              deals_removed: Number(row.deals_removed || 0),
+              history_rows_written: Number(row.history_rows_written || 0),
+              category_counts: parseJsonObject(row.category_counts_json),
+              error_message: row.error_message || null,
+            })),
+          }
+        : null,
+      recent_crawl_runs: recentCrawlRuns.map((row) => ({
+        id: row.id,
+        crawl_date: row.crawl_date || null,
+        started_at: row.started_at,
+        finished_at: row.finished_at || null,
+        status: row.status,
+        stores_attempted: Number(row.stores_attempted || 0),
+        stores_succeeded: Number(row.stores_succeeded || 0),
+        deals_found: Number(row.deals_found || 0),
+      })),
       signups_by_day: signupsByDay.map((r) => ({
         day: r.day,
         count: Number(r.count),

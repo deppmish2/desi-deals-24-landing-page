@@ -12,6 +12,7 @@ const tursoUrl =
   process.env.DESI_DEALS_DB_TURSO_DATABASE_URL;
 const tursoAuthToken =
   process.env.TURSO_AUTH_TOKEN || process.env.DESI_DEALS_DB_TURSO_AUTH_TOKEN;
+const usingRemoteDb = Boolean(tursoUrl);
 const client = tursoUrl
   ? createClient({
       url: tursoUrl,
@@ -142,9 +143,26 @@ function loadSchemaSql() {
 
 const schema = loadSchemaSql();
 
+function shouldBootstrapRuntimeDb() {
+  const override = String(process.env.DB_BOOTSTRAP_ON_STARTUP || "")
+    .trim()
+    .toLowerCase();
+
+  if (override === "true") return true;
+  if (override === "false") return false;
+
+  // Local file DBs should keep self-bootstrapping. Remote Turso runtimes should
+  // stay on the hot path and avoid replaying schema/migration work on cold start.
+  return !usingRemoteDb;
+}
+
 // We can't await at module level in CJS, so we fire-and-forget.
 // This keeps local SQLite files and remote Turso schemas aligned.
 const ready = (async () => {
+  if (!shouldBootstrapRuntimeDb()) {
+    return;
+  }
+
   try {
     if (schema) {
       await db.exec(schema);
@@ -263,6 +281,30 @@ const ready = (async () => {
     )`,
     `CREATE INDEX IF NOT EXISTS idx_crawl_runs_crawl_date
        ON crawl_runs(crawl_date)`,
+    `CREATE TABLE IF NOT EXISTS crawl_store_results (
+      id TEXT PRIMARY KEY,
+      crawl_run_id TEXT NOT NULL REFERENCES crawl_runs(id) ON DELETE CASCADE,
+      crawl_date TEXT,
+      store_id TEXT NOT NULL REFERENCES stores(id),
+      store_name TEXT NOT NULL,
+      store_url TEXT,
+      started_at DATETIME,
+      finished_at DATETIME,
+      status TEXT NOT NULL,
+      deals_scraped INTEGER DEFAULT 0,
+      deals_inserted INTEGER DEFAULT 0,
+      deals_updated INTEGER DEFAULT 0,
+      deals_unchanged INTEGER DEFAULT 0,
+      deals_removed INTEGER DEFAULT 0,
+      history_rows_written INTEGER DEFAULT 0,
+      category_counts_json TEXT,
+      error_message TEXT,
+      created_at DATETIME DEFAULT CURRENT_TIMESTAMP
+    )`,
+    `CREATE INDEX IF NOT EXISTS idx_crawl_store_results_run
+       ON crawl_store_results(crawl_run_id)`,
+    `CREATE INDEX IF NOT EXISTS idx_crawl_store_results_store
+       ON crawl_store_results(store_id, crawl_date)`,
     `CREATE INDEX IF NOT EXISTS idx_deal_price_history_crawl_date
        ON deal_price_history(crawl_date)`,
     `CREATE INDEX IF NOT EXISTS idx_deal_price_history_store_date
@@ -348,6 +390,21 @@ const ready = (async () => {
       "India Express Food",
       "https://www.india-express-food.de",
     ],
+    ["transfoodlev", "Transfood Lebensmittelvertrieb", "https://transfoodlev.com"],
+    ["desistore", "Desi Store", "https://desistore.at"],
+    [
+      "asiatischer-lebensmittelladen",
+      "Asiatischer Lebensmittelladen",
+      "https://www.asiatischer-lebensmittelladen.de",
+    ],
+    ["villagefoods", "Village Foods", "https://villagefoods.de"],
+    ["indianspicebasket", "Indian Spice Basket", "https://indianspicebasket.be"],
+    ["barkatfood", "Barkat Food", "https://barkatfood.de"],
+    ["yogimart", "Yogi Mart", "https://yogimart.de"],
+    ["bajwa-shop", "Bajwa Shop", "https://bajwa-shop.com"],
+    ["asiangrocerystore", "Asian Grocery Store", "https://www.asiangrocerystore.de"],
+    ["zakiasianfoods", "Zaki Asian Foods", "https://zakiasianfoods.de"],
+    ["masimpex", "MAS Impex", "https://www.masimpex.com"],
   ];
 
   for (const [id, name, url] of stores) {
