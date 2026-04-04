@@ -288,7 +288,7 @@ test("Kit subscription happens after email-link confirmation, not at signup star
   });
 });
 
-test("Google callback stays pending confirmation by default when SMTP is missing", async () => {
+test("Google callback signs in immediately even when SMTP is missing", async () => {
   process.env.NODE_ENV = "development";
   process.env.JWT_SECRET = "test-access-secret";
   process.env.JWT_REFRESH_SECRET = "test-refresh-secret";
@@ -339,13 +339,18 @@ test("Google callback stays pending confirmation by default when SMTP is missing
   });
 
   assert.equal(response.status, 200);
-  assert.equal(response.json.pending_email_confirmation, true);
-  assert.ok(response.json.masked_email);
-  assert.equal(response.json.accessToken, undefined);
-  assert.equal(subscribeCalls.length, 0);
+  assert.ok(response.json.accessToken);
+  assert.equal(response.json.pending_email_confirmation, undefined);
+  assert.equal(response.json.user.email, "google.pending@example.com");
+  assert.equal(response.json.user.email_verified, true);
+  assert.equal(subscribeCalls.length, 1);
+  assert.deepEqual(subscribeCalls[0], {
+    email: "google.pending@example.com",
+    firstName: "Google",
+  });
 });
 
-test("Google callback auto-verifies only when the explicit dev override is enabled", async () => {
+test("Google callback also signs in immediately when the dev override is enabled", async () => {
   process.env.NODE_ENV = "development";
   process.env.JWT_SECRET = "test-access-secret";
   process.env.JWT_REFRESH_SECRET = "test-refresh-secret";
@@ -409,7 +414,7 @@ test("Google callback auto-verifies only when the explicit dev override is enabl
   }
 });
 
-test("Google signup subscribes to Kit after email confirmation completes", async () => {
+test("Google signup subscribes to Kit immediately", async () => {
   process.env.NODE_ENV = "development";
   process.env.JWT_SECRET = "test-access-secret";
   process.env.JWT_REFRESH_SECRET = "test-refresh-secret";
@@ -464,38 +469,8 @@ test("Google signup subscribes to Kit after email confirmation completes", async
   );
 
   assert.equal(googleStart.status, 200);
-  assert.equal(googleStart.json.pending_email_confirmation, true);
-  assert.equal(subscribeCalls.length, 0);
-
-  const tokenRow = rawDb
-    .prepare(
-      "SELECT token_hash, expires_at, consumed_at FROM email_auth_tokens WHERE email = ? ORDER BY created_at DESC LIMIT 1",
-    )
-    .get("google.confirm@example.com");
-
-  assert.ok(tokenRow);
-  assert.equal(tokenRow.consumed_at, null);
-
-  const previewStart = await api.request("/api/v1/auth/email-link/start", {
-    method: "POST",
-    headers: {
-      origin: "http://localhost:5173",
-    },
-    body: { email: "google.confirm@example.com" },
-  });
-
-  assert.equal(previewStart.status, 202);
-  const previewUrl = new URL(previewStart.json.preview_url);
-  const token = previewUrl.searchParams.get("email_auth_token");
-
-  assert.ok(token);
-
-  const complete = await api.request("/api/v1/auth/email-link/complete", {
-    method: "POST",
-    body: { token },
-  });
-
-  assert.equal(complete.status, 200);
+  assert.ok(googleStart.json.accessToken);
+  assert.equal(googleStart.json.user.email, "google.confirm@example.com");
   assert.equal(subscribeCalls.length, 1);
   assert.deepEqual(subscribeCalls[0], {
     email: "google.confirm@example.com",

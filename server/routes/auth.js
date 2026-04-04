@@ -349,7 +349,7 @@ async function insertGoogleUser({ profile, postcode }) {
       (id, email, name, first_name, password_hash, google_id, postcode, city, dietary_prefs, preferred_stores, blocked_stores,
        preferred_brands, delivery_speed_pref, email_verified_at, created_at, last_login_at)
      VALUES
-      (?, ?, ?, ?, NULL, ?, ?, NULL, ?, ?, ?, ?, 'cheapest', NULL, ?, ?)`,
+      (?, ?, ?, ?, NULL, ?, ?, NULL, ?, ?, ?, ?, 'cheapest', ?, ?, ?)`,
     )
     .run(
       id,
@@ -362,6 +362,7 @@ async function insertGoogleUser({ profile, postcode }) {
       JSON.stringify([]),
       JSON.stringify([]),
       JSON.stringify({}),
+      now,
       now,
       now,
     );
@@ -418,18 +419,17 @@ async function upsertGoogleUser(profile, postcodeInput) {
   const wasVerified = isEmailVerified(user);
 
   if (user) {
-    // Do NOT touch email_verified_at here — if it is still NULL the caller
-    // will detect it and re-send the confirmation email.
     await db
       .prepare(
         `UPDATE users
        SET email = ?,
            name = COALESCE(?, name),
            first_name = COALESCE(?, first_name),
+           email_verified_at = COALESCE(email_verified_at, ?),
            last_login_at = ?
        WHERE id = ?`,
       )
-      .run(profile.email, fullName, firstName, now, user.id);
+      .run(profile.email, fullName, firstName, now, now, user.id);
     const updatedUser = await syncCachedUserById(db, user.id);
     return markSignupState(updatedUser, {
       _justVerifiedEmail: !wasVerified && isEmailVerified(updatedUser),
@@ -477,6 +477,28 @@ async function upsertGoogleUser(profile, postcodeInput) {
   return markSignupState(updatedUser, {
     _justVerifiedEmail: !emailWasVerified && isEmailVerified(updatedUser),
   });
+}
+
+async function ensureGoogleVerifiedUser(user) {
+  if (!user?.id || user.email_verified_at) {
+    return user;
+  }
+
+  const now = new Date().toISOString();
+  await db
+    .prepare(
+      `UPDATE users
+       SET email_verified_at = COALESCE(email_verified_at, ?)
+       WHERE id = ?`,
+    )
+    .run(now, user.id);
+
+  return (
+    (await syncCachedUserById(db, user.id, { strict: true })) || {
+      ...user,
+      email_verified_at: now,
+    }
+  );
 }
 
 async function insertFacebookUser({ profile, postcode }) {
@@ -1211,55 +1233,7 @@ router.post("/google", async (req, res) => {
           clientOrigin: resolveClientOrigin(req),
         });
     let user = await upsertGoogleUser(profile, postcode);
-
-    // New user — send email confirmation before issuing tokens
-    if (!user.email_verified_at) {
-      if (googleDevAutoVerifyEnabled()) {
-        await db
-          .prepare("UPDATE users SET email_verified_at = ? WHERE id = ?")
-          .run(new Date().toISOString(), user.id);
-        user = await syncCachedUserById(db, user.id, {
-          strict: true,
-        });
-        trackEvent(db, "auth.google_register", {
-          userId: user.id,
-          route: req.originalUrl,
-          entityType: "user",
-          entityId: user.id,
-          payload: { email: user.email, dev_auto_verified: true },
-        });
-        subscribeVerifiedSignup(
-          markSignupState(user, {
-            _createdDuringSignup: true,
-            _justVerifiedEmail: true,
-          }),
-        );
-        return res.json(await buildAuthResponse(user));
-      }
-
-      try {
-        await sendGoogleSignupConfirmation(user, req);
-      } catch (emailError) {
-        if (emailError?.code === "EMAIL_AUTH_NOT_CONFIGURED") {
-          return res.status(503).json({
-            error:
-              "Email confirmation is required to complete signup, but email sending is not configured on this deployment. Please contact support.",
-          });
-        }
-        throw emailError;
-      }
-      trackEvent(db, "auth.google_register", {
-        userId: user.id,
-        route: req.originalUrl,
-        entityType: "user",
-        entityId: user.id,
-        payload: { email: user.email, pending_confirmation: true },
-      });
-      return res.json({
-        pending_email_confirmation: true,
-        masked_email: maskEmail(user.email),
-      });
-    }
+    user = await ensureGoogleVerifiedUser(user);
 
     trackEvent(db, "auth.google_login", {
       userId: user.id,
@@ -1268,6 +1242,7 @@ router.post("/google", async (req, res) => {
       entityId: user.id,
       payload: { email: user.email },
     });
+    subscribeVerifiedSignup(user);
     res.json(await buildAuthResponse(user));
   } catch (error) {
     const status =
@@ -1307,54 +1282,7 @@ router.get("/google/callback", async (req, res) => {
       clientOrigin: resolveClientOrigin(req),
     });
     let user = await upsertGoogleUser(profile, postcode);
-
-    if (!user.email_verified_at) {
-      if (googleDevAutoVerifyEnabled()) {
-        await db
-          .prepare("UPDATE users SET email_verified_at = ? WHERE id = ?")
-          .run(new Date().toISOString(), user.id);
-        user = await syncCachedUserById(db, user.id, {
-          strict: true,
-        });
-        trackEvent(db, "auth.google_register", {
-          userId: user.id,
-          route: req.originalUrl,
-          entityType: "user",
-          entityId: user.id,
-          payload: { email: user.email, dev_auto_verified: true },
-        });
-        subscribeVerifiedSignup(
-          markSignupState(user, {
-            _createdDuringSignup: true,
-            _justVerifiedEmail: true,
-          }),
-        );
-        return res.json(await buildAuthResponse(user));
-      }
-
-      try {
-        await sendGoogleSignupConfirmation(user, req);
-      } catch (emailError) {
-        if (emailError?.code === "EMAIL_AUTH_NOT_CONFIGURED") {
-          return res.status(503).json({
-            error:
-              "Email confirmation is required to complete signup, but email sending is not configured on this deployment. Please contact support.",
-          });
-        }
-        throw emailError;
-      }
-      trackEvent(db, "auth.google_register", {
-        userId: user.id,
-        route: req.originalUrl,
-        entityType: "user",
-        entityId: user.id,
-        payload: { email: user.email, pending_confirmation: true },
-      });
-      return res.json({
-        pending_email_confirmation: true,
-        masked_email: maskEmail(user.email),
-      });
-    }
+    user = await ensureGoogleVerifiedUser(user);
 
     trackEvent(db, "auth.google_login", {
       userId: user.id,
