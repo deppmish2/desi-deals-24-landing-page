@@ -1,60 +1,78 @@
-import React, { useMemo, useRef, useState } from "react";
+import React, { useRef, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { fetchOAuthAuthUrl, getAuthSession } from "../utils/api";
+import { formatBestBefore, formatPrice, formatPricePerKg } from "../utils/formatters";
+import { buildWhatsAppDealShareUrl } from "../utils/share";
 
 const POST_AUTH_REDIRECT_STORAGE_KEY = "dd24_post_auth_redirect";
 const OAUTH_STATE_STORAGE_PREFIX = "dd24_oauth_state:";
 
+// Hero ATF panel — hardcoded to match the ad creative exactly
+const HERO_DEALS = [
+  { heroTitle: "Jeera / Cumin Powder 400g", price: "7,99", originalPrice: "11,99" },
+  { heroTitle: "Sona Masoori Rice 10Kg", price: "19,99", originalPrice: "26,99" },
+  { heroTitle: "Aashirvaad Atta 5kg", price: "7,99", originalPrice: "11,99" },
+];
+const TOTAL_SAVINGS = "15,00";
+
+// Deal card data — sourced from desideals24.com share pages
 const FEATURED_DEALS = [
   {
-    id: "uphaar-chana-dal",
-    store: "Global Food Hub",
-    title: "Uphaar Chana Dal 1kg",
-    heroTitle: "Chana Dal 1kg",
-    price: "1,99",
-    originalPrice: "3,99",
-    discountPct: 50,
-    image: "https://cdn.shopify.com/s/files/1/0605/4038/7576/files/Uphaar-Chana-Dal-1Kg-GlobalFoodHub_com_f51ec386.jpg?v=1773668860",
-    href: "https://globalfoodhub.com/products/uphaar-chana-dal-indian-origin-1kg",
-    weight: "1kg",
-    pricePerKg: "1,99 €/kg",
-    bestBefore: null,
+    id: "1899232e-09d4-44a1-ab65-15e80973a0c4",
+    product_name: "TRS Jeera/ Cumin Powder 400g",
+    sale_price: 7.99,
+    original_price: 11.99,
+    discount_percent: 33,
+    image_url: "https://cdn.shopify.com/s/files/1/0838/2834/3091/files/IMG_3665.jpg",
+    product_url: "https://www.nammamarkt.com/products/trs-cumin-powder-400g",
+    weight_raw: "400g",
+    price_per_kg: 19.98,
+    best_before: null,
+    store: { name: "Namma Markt", url: "https://www.nammamarkt.com" },
+    currency: "EUR",
   },
   {
-    id: "happy-desi-rice",
-    store: "Global Food Hub",
-    title: "Happy Desi Extra Long Basmati Rice 5kg",
-    heroTitle: <>Basmati Rice<br />Extra Long 5kg</>,
-    price: "9,99",
-    originalPrice: "14,99",
-    discountPct: 33,
-    image: "https://cdn.shopify.com/s/files/1/0605/4038/7576/files/Happy-Desi-Extra-Long-Basmati-Rice-5kgs-GlobalFoodHub_com.webp?v=1769576953",
-    href: "https://globalfoodhub.com/products/happy-desi-extra-long-basmati-rice-5kgs",
-    weight: "5kg",
-    pricePerKg: "2,00 €/kg",
-    bestBefore: null,
+    id: "fa5bcc8a-cda4-4191-a72d-8c4c5cf71ab5",
+    product_name: "Annam Sona Masoori Rice 10kg (BBE: 05.2027) - Only 1 per Order",
+    sale_price: 19.99,
+    original_price: 26.99,
+    discount_percent: 26,
+    image_url: "https://cdn.shopify.com/s/files/1/0812/6205/1651/products/8026.jpg",
+    product_url: "https://www.zorastore.eu/products/annam-sona-masoori-rice-10kg-only-1-per-order",
+    weight_raw: "10kg",
+    price_per_kg: 2,
+    best_before: "2027-05",
+    store: { name: "Zora Supermarkt", url: "https://www.zorastore.eu" },
+    currency: "EUR",
   },
   {
-    id: "aashirvaad-atta",
-    store: "Zora Supermarkt",
-    title: "Aashirvaad Atta 5kg (Export Pack) – BBE: 11.2026",
-    heroTitle: "Aashirvaad Atta 5kg",
-    price: "7,99",
-    originalPrice: "11,99",
-    discountPct: 33,
-    image: "https://cdn.shopify.com/s/files/1/0812/6205/1651/products/4533.jpg?width=400",
-    href: "https://zorastore.eu/products/aashirvaad-atta-5kg-export-pack",
-    weight: "5kg",
-    pricePerKg: "1,60 €/kg",
-    bestBefore: "Nov 2026",
+    id: "a1f0e765-efa8-4874-93fb-5bf115b92f28",
+    product_name: "Aashirvaad Atta 5kg (Export Pack) - BBE: 11.2026",
+    sale_price: 7.99,
+    original_price: 11.99,
+    discount_percent: 33,
+    image_url: "https://cdn.shopify.com/s/files/1/0812/6205/1651/products/4533.jpg",
+    product_url: "https://www.zorastore.eu/products/aashirvaad-atta-5kg-export-pack",
+    weight_raw: "5kg",
+    price_per_kg: 1.6,
+    best_before: "2026-11",
+    store: { name: "Zora Supermarkt", url: "https://www.zorastore.eu" },
+    currency: "EUR",
   },
 ];
+
+function resolveProductUrl(deal) {
+  const raw = String(deal?.product_url || "").trim();
+  if (!raw) return "#";
+  if (/^https?:\/\//i.test(raw)) return raw;
+  const storeBase = String(deal?.store?.url || "").replace(/\/+$/, "");
+  return storeBase ? `${storeBase}${raw.startsWith("/") ? "" : "/"}${raw}` : raw;
+}
 
 function createOAuthState() {
   if (typeof window !== "undefined" && window.crypto?.randomUUID) {
     return window.crypto.randomUUID();
   }
-
   return `dd24-${Math.random().toString(36).slice(2)}${Date.now().toString(36)}`;
 }
 
@@ -71,13 +89,7 @@ function DD24Icon() {
 function ArrowRightIcon() {
   return (
     <svg viewBox="0 0 24 24" className="h-4 w-4" fill="none" aria-hidden="true">
-      <path
-        d="M5 12h14m-6-6 6 6-6 6"
-        stroke="currentColor"
-        strokeWidth="2.2"
-        strokeLinecap="round"
-        strokeLinejoin="round"
-      />
+      <path d="M5 12h14m-6-6 6 6-6 6" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round" />
     </svg>
   );
 }
@@ -89,15 +101,6 @@ function GoogleIcon({ size = 20 }) {
       <path fill="#4285F4" d="M46.98 24.55c0-1.57-.15-3.09-.38-4.55H24v9.02h12.94c-.58 2.96-2.26 5.48-4.78 7.18l7.73 6c4.51-4.18 7.09-10.36 7.09-17.65z" />
       <path fill="#FBBC05" d="M10.53 28.59c-.48-1.45-.76-2.99-.76-4.59s.27-3.14.76-4.59l-7.98-6.19C.92 16.46 0 20.12 0 24c0 3.88.92 7.54 2.56 10.78l7.97-6.19z" />
       <path fill="#34A853" d="M24 48c6.48 0 11.93-2.13 15.89-5.81l-7.73-6c-2.18 1.48-4.97 2.31-8.16 2.31-6.26 0-11.57-4.22-13.47-9.91l-7.98 6.19C6.51 42.62 14.62 48 24 48z" />
-    </svg>
-  );
-}
-
-function LockIcon() {
-  return (
-    <svg viewBox="0 0 24 24" className="h-5 w-5" fill="none" aria-hidden="true">
-      <rect x="4" y="11" width="16" height="9" rx="2.5" stroke="currentColor" strokeWidth="2" />
-      <path d="M8 11V8a4 4 0 0 1 8 0v3" stroke="currentColor" strokeWidth="2" strokeLinecap="round" />
     </svg>
   );
 }
@@ -126,7 +129,6 @@ function LoginModal({ onClose, searchQuery = null }) {
   async function handleGoogleLogin() {
     setLoading(true);
     setError("");
-
     try {
       const state = createOAuthState();
       sessionStorage.setItem(`${OAUTH_STATE_STORAGE_PREFIX}google`, state);
@@ -134,14 +136,9 @@ function LoginModal({ onClose, searchQuery = null }) {
         ? `/deals?search=${encodeURIComponent(searchQuery)}`
         : "/deals";
       sessionStorage.setItem(POST_AUTH_REDIRECT_STORAGE_KEY, redirectTarget);
-
       const payload = await fetchOAuthAuthUrl("google", state);
       const authUrl = payload?.authUrl || payload?.url;
-
-      if (!authUrl) {
-        throw new Error("Google sign-in is unavailable right now.");
-      }
-
+      if (!authUrl) throw new Error("Google sign-in is unavailable right now.");
       window.location.assign(authUrl);
     } catch (err) {
       setLoading(false);
@@ -158,7 +155,6 @@ function LoginModal({ onClose, searchQuery = null }) {
         className="w-full max-w-sm overflow-hidden rounded-[28px] bg-white shadow-[0_24px_90px_rgba(0,0,0,0.18)]"
         onClick={(event) => event.stopPropagation()}
       >
-        {/* Brand header */}
         <div className="flex flex-col items-center bg-[#14311f] px-6 pb-7 pt-6">
           <div className="flex h-14 w-14 items-center justify-center rounded-2xl bg-[#16a34a] shadow-[0_8px_24px_rgba(22,163,74,0.35)]">
             <DD24Icon />
@@ -176,39 +172,59 @@ function LoginModal({ onClose, searchQuery = null }) {
               Unlock 1200+ desi deals
             </h2>
           )}
-        {error ? (
-          <div className="mb-4 rounded-xl border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700">
-            {error}
-          </div>
-        ) : null}
-        <button
-          type="button"
-          onClick={handleGoogleLogin}
-          disabled={loading}
-          className="flex w-full items-center justify-center gap-3 rounded-2xl border border-[#e2e8f0] bg-white px-4 py-4 text-[15px] font-semibold text-[#0f172a] shadow-sm transition-colors hover:bg-slate-50 disabled:cursor-not-allowed disabled:opacity-70"
-        >
-          <GoogleIcon size={20} />
-          {loading ? "Redirecting…" : "Continue with Google"}
-        </button>
-        <button
-          type="button"
-          onClick={onClose}
-          className="mt-4 w-full py-2 text-[14px] text-[#94a3b8] hover:text-slate-600"
-        >
-          Maybe later
-        </button>
+          {error ? (
+            <div className="mb-4 rounded-xl border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700">
+              {error}
+            </div>
+          ) : null}
+          <button
+            type="button"
+            onClick={handleGoogleLogin}
+            disabled={loading}
+            className="flex w-full items-center justify-center gap-3 rounded-2xl border border-[#e2e8f0] bg-white px-4 py-4 text-[15px] font-semibold text-[#0f172a] shadow-sm transition-colors hover:bg-slate-50 disabled:cursor-not-allowed disabled:opacity-70"
+          >
+            <GoogleIcon size={20} />
+            {loading ? "Redirecting…" : "Continue with Google"}
+          </button>
+          <button
+            type="button"
+            onClick={onClose}
+            className="mt-4 w-full py-2 text-[14px] text-[#94a3b8] hover:text-slate-600"
+          >
+            Maybe later
+          </button>
         </div>
       </div>
     </div>
   );
 }
 
+const FALLBACK_IMG = 'data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" width="112" height="112" viewBox="0 0 112 112"><rect fill="%23ffffff" width="112" height="112"/><text fill="%2394a3b8" font-size="28" text-anchor="middle" dominant-baseline="middle" x="56" y="58">🛒</text></svg>';
+
 function FeaturedDealCard({ deal, cardRef, onLoginRequired }) {
   const [imgError, setImgError] = useState(false);
-  const pct = deal.discountPct;
+
+  const pct = Math.round(deal.discount_percent || 0);
   const badgeBg = pct > 50 ? "#ffe4e8" : pct >= 30 ? "#fff3e0" : pct >= 20 ? "#e8f0fe" : "#f1f5f9";
   const badgeColor = pct > 50 ? "#e53e3e" : pct >= 30 ? "#c05200" : pct >= 20 ? "#1a56db" : "#1e293b";
-  const waText = encodeURIComponent(`${deal.title} for only ${deal.price}€! ${deal.href}`);
+
+  const currency = deal.currency || "EUR";
+  const priceStr = formatPrice(deal.sale_price, currency);
+  const originalPriceStr = deal.original_price ? formatPrice(deal.original_price, currency) : null;
+  const weightStr = [
+    deal.weight_raw || null,
+    deal.price_per_kg ? formatPricePerKg(deal.price_per_kg) : null,
+  ].filter(Boolean).join(" | ");
+  const bestBeforeStr = deal.best_before ? formatBestBefore(deal.best_before) : null;
+  const productUrl = resolveProductUrl(deal);
+
+  const waUrl = buildWhatsAppDealShareUrl({
+    dealId: deal.id,
+    productName: deal.product_name,
+    priceText: priceStr,
+    originalPriceText: originalPriceStr,
+    storeName: deal.store?.name,
+  });
 
   return (
     <div
@@ -216,11 +232,10 @@ function FeaturedDealCard({ deal, cardRef, onLoginRequired }) {
       className="bg-white rounded-[20px] flex flex-col overflow-hidden border border-[#f1f5f9]"
       style={{ boxShadow: "0px 2px 12px rgba(0,0,0,0.06)" }}
     >
-      {/* Image */}
       <div className="relative w-full h-[200px] bg-white flex items-center justify-center p-5">
         <img
-          src={imgError ? 'data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" width="112" height="112" viewBox="0 0 112 112"><rect fill="%23ffffff" width="112" height="112"/><text fill="%2394a3b8" font-size="28" text-anchor="middle" dominant-baseline="middle" x="56" y="58">🛒</text></svg>' : deal.image}
-          alt={deal.title}
+          src={imgError ? FALLBACK_IMG : deal.image_url}
+          alt={deal.product_name}
           className="w-full h-full object-contain"
           onError={() => setImgError(true)}
         />
@@ -229,36 +244,39 @@ function FeaturedDealCard({ deal, cardRef, onLoginRequired }) {
             <span className="font-bold text-[13px] leading-none" style={{ color: badgeColor }}>-{pct}%</span>
           </div>
         )}
-        {deal.bestBefore && (
+        {bestBeforeStr && (
           <span className="absolute bottom-3 left-3 bg-[#d5890f] text-white text-[10px] leading-[15px] font-medium rounded-full px-2 py-0.5">
-            Best before {deal.bestBefore}
+            {bestBeforeStr}
           </span>
         )}
       </div>
 
-      {/* Body */}
       <div className="flex flex-col flex-1 px-5 pt-4 pb-5 gap-3">
         <div className="flex flex-col gap-1.5">
           <p className="text-[#94a3b8] text-[10px] leading-[15px] tracking-[1.5px] uppercase font-extrabold">
-            {deal.store}
+            {deal.store?.name || ""}
           </p>
           <p className="text-[#1e293b] text-[15px] leading-[22px] font-bold line-clamp-2 min-h-[44px]">
-            {deal.title}
+            {deal.product_name}
           </p>
           <div className="flex items-baseline justify-between gap-2">
             <div className="flex items-baseline gap-2">
-              <span className="text-[#1e293b] text-[22px] leading-[30px] font-extrabold">{deal.price} €</span>
-              <span className="text-[#94a3b8] text-[14px] leading-[20px] line-through">{deal.originalPrice} €</span>
+              <span className="text-[#1e293b] text-[22px] leading-[30px] font-extrabold">{priceStr}</span>
+              {originalPriceStr && (
+                <span className="text-[#94a3b8] text-[14px] leading-[20px] line-through">{originalPriceStr}</span>
+              )}
             </div>
-            <span className="text-[#94a3b8] text-[11px] leading-[16px] font-medium text-right shrink-0">
-              {deal.weight} | {deal.pricePerKg}
-            </span>
+            {weightStr && (
+              <span className="text-[#94a3b8] text-[11px] leading-[16px] font-medium text-right shrink-0">
+                {weightStr}
+              </span>
+            )}
           </div>
         </div>
 
         <div className="mt-auto flex items-center gap-2 pt-2">
           <a
-            href={deal.href}
+            href={productUrl}
             target="_blank"
             rel="noopener noreferrer"
             className="flex-1 justify-center bg-[#16a34a] hover:bg-[#15803d] transition-colors rounded-[14px] py-3 inline-flex items-center gap-2 text-white no-underline hover:no-underline"
@@ -267,7 +285,7 @@ function FeaturedDealCard({ deal, cardRef, onLoginRequired }) {
             <span className="text-[13px] leading-[16px] font-extrabold tracking-wide uppercase">Snatch Deal</span>
           </a>
           <a
-            href={`https://wa.me/?text=${waText}`}
+            href={waUrl}
             target="_blank"
             rel="noopener noreferrer"
             className="shrink-0 inline-flex items-center justify-center w-[46px] h-[46px] rounded-[14px] border border-slate-200 bg-white hover:bg-[#e7fbe9] hover:border-[#25D366] transition-colors"
@@ -305,15 +323,6 @@ export default function AdLandingPage() {
   function scrollToCard(index) {
     cardRefs.current[index]?.current?.scrollIntoView({ behavior: "smooth", block: "center" });
   }
-
-  const totalSavings = useMemo(() => {
-    return FEATURED_DEALS.reduce((sum, deal) => {
-      const orig = Number.parseFloat(deal.originalPrice.replace(",", "."));
-      const sale = Number.parseFloat(deal.price.replace(",", "."));
-      const diff = orig - sale;
-      return sum + (Number.isFinite(diff) ? diff : 0);
-    }, 0);
-  }, []);
 
   function handleUnlockDeals() {
     if (session?.accessToken) {
@@ -370,21 +379,21 @@ export default function AdLandingPage() {
             </div>
 
             <div className="mt-auto">
-              <h1 className="font-[‘Space_Grotesk’,sans-serif] text-[3.5rem] font-bold leading-[1.0] tracking-[-0.03em] text-white">
+              <h1 className="font-['Space_Grotesk',sans-serif] text-[3.5rem] font-bold leading-[1.0] tracking-[-0.03em] text-white">
                 Same <span className="font-black">desi</span> products.
                 <span className="block text-[#ffd54a]">Better prices.</span>
               </h1>
 
               <div className="mt-6 overflow-hidden rounded-[24px] border border-white/15 bg-[#0d2e18]/80 shadow-[0_16px_40px_rgba(8,25,16,0.35)] backdrop-blur-md">
                 <div className="divide-y divide-white/10">
-                  {FEATURED_DEALS.map((deal, i) => (
+                  {HERO_DEALS.map((deal, i) => (
                     <button
-                      key={deal.id}
+                      key={deal.heroTitle}
                       type="button"
                       onClick={() => scrollToCard(i)}
                       className="flex w-full items-center justify-between px-5 py-4 text-white text-left active:bg-white/5"
                     >
-                      <p className="text-[15px] font-bold leading-5">{deal.heroTitle || deal.title}</p>
+                      <p className="text-[15px] font-bold leading-5">{deal.heroTitle}</p>
                       <div className="ml-4 flex shrink-0 items-center gap-2">
                         <span className="text-sm text-white/45 line-through">{deal.originalPrice}€</span>
                         <span className="text-[1.6rem] font-black leading-none text-[#ffd54a]">
@@ -401,7 +410,7 @@ export default function AdLandingPage() {
                   className="mx-4 mb-4 mt-3 w-[calc(100%-2rem)] rounded-2xl bg-[#ffd11a] px-4 py-4 text-center shadow-[0_10px_30px_rgba(255,209,26,0.22)] active:scale-[0.98] transition-transform"
                 >
                   <p className="text-[1.35rem] font-black text-[#c43300]">
-                    You Save {totalSavings.toFixed(2).replace(".", ",")}€
+                    You Save {TOTAL_SAVINGS}€
                   </p>
                 </button>
 
@@ -508,7 +517,6 @@ export default function AdLandingPage() {
             </p>
           </div>
         </section>
-
       </main>
 
       {showLoginModal ? (
