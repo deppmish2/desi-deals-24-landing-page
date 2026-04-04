@@ -1,7 +1,7 @@
 "use strict";
 
 function seededRandom(seed) {
-  let s = (seed >>> 0) || 1;
+  let s = seed >>> 0 || 1;
   return function () {
     s ^= s << 13;
     s ^= s >> 17;
@@ -41,7 +41,8 @@ function scoreStoreCandidate(
   queues,
   storePriority,
 ) {
-  const expectedPlaced = ((totalPerStore.get(storeId) || 0) / totalDeals) * position;
+  const expectedPlaced =
+    ((totalPerStore.get(storeId) || 0) / totalDeals) * position;
   const deficit = expectedPlaced - (placedPerStore.get(storeId) || 0);
   return {
     storeId,
@@ -101,7 +102,11 @@ function buildDiversifiedPages(deals, pageSize, seed) {
     let candidates = storeIds.filter((storeId) => {
       const remaining = queues.get(storeId)?.length || 0;
       const pageCount = currentPageCounts.get(storeId) || 0;
-      return remaining > 0 && storeId !== previousStoreId && pageCount < perStoreLimit;
+      return (
+        remaining > 0 &&
+        storeId !== previousStoreId &&
+        pageCount < perStoreLimit
+      );
     });
 
     if (candidates.length === 0) {
@@ -122,7 +127,9 @@ function buildDiversifiedPages(deals, pageSize, seed) {
     }
 
     if (candidates.length === 0) {
-      candidates = storeIds.filter((storeId) => (queues.get(storeId)?.length || 0) > 0);
+      candidates = storeIds.filter(
+        (storeId) => (queues.get(storeId)?.length || 0) > 0,
+      );
       if (candidates.length > 0) {
         relaxedAdjacencyUsed = true;
         relaxedCapUsed = true;
@@ -150,11 +157,16 @@ function buildDiversifiedPages(deals, pageSize, seed) {
       });
 
     const selectedStoreId = scoredCandidates[0]?.storeId;
-    const selectedDeal = selectedStoreId ? queues.get(selectedStoreId)?.shift() : null;
+    const selectedDeal = selectedStoreId
+      ? queues.get(selectedStoreId)?.shift()
+      : null;
     if (!selectedDeal) break;
 
     ordered.push(selectedDeal);
-    placedPerStore.set(selectedStoreId, (placedPerStore.get(selectedStoreId) || 0) + 1);
+    placedPerStore.set(
+      selectedStoreId,
+      (placedPerStore.get(selectedStoreId) || 0) + 1,
+    );
     currentPageCounts.set(
       selectedStoreId,
       (currentPageCounts.get(selectedStoreId) || 0) + 1,

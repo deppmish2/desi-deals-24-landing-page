@@ -1,10 +1,7 @@
 "use strict";
 const fetch = require("node-fetch");
 const cheerio = require("cheerio");
-const {
-  parsePrice,
-  calcPricePerKg,
-} = require("../utils/price-parser");
+const { parsePrice, calcPricePerKg } = require("../utils/price-parser");
 const { parseWeight } = require("../utils/weight-parser");
 const { mapCategory } = require("../utils/category-mapper");
 const { resolveImage } = require("../utils/image-resolver");

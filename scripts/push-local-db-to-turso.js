@@ -91,14 +91,14 @@ function sortTablesForImport(tables) {
   return [...tables]
     .filter((table) => !EXCLUDED_TABLES.has(String(table?.name || "")))
     .sort((a, b) => {
-    const aRank = order.has(a.name)
-      ? order.get(a.name)
-      : Number.MAX_SAFE_INTEGER;
-    const bRank = order.has(b.name)
-      ? order.get(b.name)
-      : Number.MAX_SAFE_INTEGER;
-    if (aRank !== bRank) return aRank - bRank;
-    return String(a.name).localeCompare(String(b.name));
+      const aRank = order.has(a.name)
+        ? order.get(a.name)
+        : Number.MAX_SAFE_INTEGER;
+      const bRank = order.has(b.name)
+        ? order.get(b.name)
+        : Number.MAX_SAFE_INTEGER;
+      if (aRank !== bRank) return aRank - bRank;
+      return String(a.name).localeCompare(String(b.name));
     });
 }
 

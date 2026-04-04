@@ -391,7 +391,11 @@ const ready = (async () => {
       "India Express Food",
       "https://www.india-express-food.de",
     ],
-    ["transfoodlev", "Transfood Lebensmittelvertrieb", "https://transfoodlev.com"],
+    [
+      "transfoodlev",
+      "Transfood Lebensmittelvertrieb",
+      "https://transfoodlev.com",
+    ],
     ["desistore", "Desi Store", "https://desistore.at"],
     [
       "asiatischer-lebensmittelladen",
@@ -399,11 +403,19 @@ const ready = (async () => {
       "https://www.asiatischer-lebensmittelladen.de",
     ],
     ["villagefoods", "Village Foods", "https://villagefoods.de"],
-    ["indianspicebasket", "Indian Spice Basket", "https://indianspicebasket.be"],
+    [
+      "indianspicebasket",
+      "Indian Spice Basket",
+      "https://indianspicebasket.be",
+    ],
     ["barkatfood", "Barkat Food", "https://barkatfood.de"],
     ["yogimart", "Yogi Mart", "https://yogimart.de"],
     ["bajwa-shop", "Bajwa Shop", "https://bajwa-shop.com"],
-    ["asiangrocerystore", "Asian Grocery Store", "https://www.asiangrocerystore.de"],
+    [
+      "asiangrocerystore",
+      "Asian Grocery Store",
+      "https://www.asiangrocerystore.de",
+    ],
     ["zakiasianfoods", "Zaki Asian Foods", "https://zakiasianfoods.de"],
     ["masimpex", "MAS Impex", "https://www.masimpex.com"],
   ];

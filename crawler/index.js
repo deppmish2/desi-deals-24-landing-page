@@ -6,11 +6,7 @@ const { v4: uuidv4 } = require("uuid");
 
 const { parseBestBefore } = require("./utils/best-before-parser");
 const { acquireCrawlLock, releaseCrawlLock } = require("./utils/snapshot");
-const {
-  logInfo,
-  logWarn,
-  logError,
-} = require("./utils/crawl-logger");
+const { logInfo, logWarn, logError } = require("./utils/crawl-logger");
 const {
   buildStableDisplayOrder,
   dateSeed,
@@ -440,7 +436,11 @@ async function refreshDailyDisplayOrder(db, crawlDate) {
     )
     .all();
 
-  const orderedRows = buildStableDisplayOrder(activeRows, 20, dateSeed(crawlDate));
+  const orderedRows = buildStableDisplayOrder(
+    activeRows,
+    20,
+    dateSeed(crawlDate),
+  );
   if (orderedRows.length === 0) return 0;
 
   const statements = orderedRows.map((deal, index) => ({

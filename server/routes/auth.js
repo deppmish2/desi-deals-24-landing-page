@@ -258,8 +258,7 @@ function issueAccessToken(user) {
     {
       sub: user.id,
       email: user.email,
-      is_admin:
-        Number(user?.is_admin) === 1 || isAdminEmail(user?.email || ""),
+      is_admin: Number(user?.is_admin) === 1 || isAdminEmail(user?.email || ""),
       type: "access",
     },
     accessSecret(),
@@ -945,11 +944,9 @@ router.post("/email-link/complete", async (req, res) => {
       .json({ error: "This email link is invalid or already used." });
   }
   if (tokenRow.expired) {
-    return res
-      .status(410)
-      .json({
-        error: "This email link has expired. Please request a new one.",
-      });
+    return res.status(410).json({
+      error: "This email link has expired. Please request a new one.",
+    });
   }
 
   let user = await resolveUserByEmail(tokenRow.email);
@@ -1210,7 +1207,9 @@ router.post("/google", async (req, res) => {
   try {
     const profile = idToken
       ? await verifyGoogleIdToken(idToken)
-      : await exchangeGoogleCodeForProfile(code);
+      : await exchangeGoogleCodeForProfile(code, {
+          clientOrigin: resolveClientOrigin(req),
+        });
     let user = await upsertGoogleUser(profile, postcode);
 
     // New user — send email confirmation before issuing tokens
@@ -1304,7 +1303,9 @@ router.get("/google/callback", async (req, res) => {
   }
 
   try {
-    const profile = await exchangeGoogleCodeForProfile(code);
+    const profile = await exchangeGoogleCodeForProfile(code, {
+      clientOrigin: resolveClientOrigin(req),
+    });
     let user = await upsertGoogleUser(profile, postcode);
 
     if (!user.email_verified_at) {

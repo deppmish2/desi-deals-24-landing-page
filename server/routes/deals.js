@@ -16,9 +16,9 @@ const { verifyJwt } = require("../utils/jwt");
 
 const router = express.Router();
 const EXCLUDED_STORE_IDS = ["dookan"];
-const EXCLUDED_STORE_IDS_SQL = EXCLUDED_STORE_IDS
-  .map((storeId) => `'${String(storeId).replace(/'/g, "''")}'`)
-  .join(", ");
+const EXCLUDED_STORE_IDS_SQL = EXCLUDED_STORE_IDS.map(
+  (storeId) => `'${String(storeId).replace(/'/g, "''")}'`,
+).join(", ");
 const DISPLAYABLE_DISCOUNT_SQL = `
   (
     coalesce(d.discount_percent, 0) > 0
@@ -51,10 +51,7 @@ function setMemCache(key, deals) {
 }
 
 async function getCurrentDealsSnapshotContext() {
-  if (
-    _snapshotContextCache &&
-    Date.now() < _snapshotContextCache.expiresAt
-  ) {
+  if (_snapshotContextCache && Date.now() < _snapshotContextCache.expiresAt) {
     return _snapshotContextCache.value;
   }
 
@@ -87,16 +84,18 @@ async function getCurrentDealsSnapshotContext() {
 
 // Levenshtein distance — used for fuzzy token matching.
 function levenshtein(a, b) {
-  const m = a.length, n = b.length;
+  const m = a.length,
+    n = b.length;
   if (m === 0) return n;
   if (n === 0) return m;
   const dp = Array.from({ length: m + 1 }, (_, i) => [i]);
   for (let j = 1; j <= n; j++) dp[0][j] = j;
   for (let i = 1; i <= m; i++) {
     for (let j = 1; j <= n; j++) {
-      dp[i][j] = a[i - 1] === b[j - 1]
-        ? dp[i - 1][j - 1]
-        : 1 + Math.min(dp[i - 1][j], dp[i][j - 1], dp[i - 1][j - 1]);
+      dp[i][j] =
+        a[i - 1] === b[j - 1]
+          ? dp[i - 1][j - 1]
+          : 1 + Math.min(dp[i - 1][j], dp[i][j - 1], dp[i - 1][j - 1]);
     }
   }
   return dp[m][n];
@@ -238,9 +237,10 @@ function resolveAccessSecret() {
 }
 
 async function getOptionalRequestIdentity(req) {
-  const sessionId = String(req.headers["x-dd24-session-id"] || "")
-    .trim()
-    .slice(0, 128) || null;
+  const sessionId =
+    String(req.headers["x-dd24-session-id"] || "")
+      .trim()
+      .slice(0, 128) || null;
   const auth = String(req.headers.authorization || "");
   const token = auth.startsWith("Bearer ") ? auth.slice(7) : null;
 
@@ -285,10 +285,10 @@ router.get("/", async (req, res, next) => {
       1,
       Math.min(100, parseInt(req.query.limit || "24", 10) || 24),
     );
-    const rawSearchQuery = String(req.query.q || "").trim().replace(/\s+/g, " ");
-    const searchQuery = rawSearchQuery
+    const rawSearchQuery = String(req.query.q || "")
       .trim()
-      .toLowerCase();
+      .replace(/\s+/g, " ");
+    const searchQuery = rawSearchQuery.trim().toLowerCase();
     const shouldTrackSearch =
       Boolean(rawSearchQuery) &&
       pageNum === 1 &&
@@ -388,16 +388,16 @@ router.get("/", async (req, res, next) => {
       const total = rows.length
         ? Number(rows[0]?.total_count || 0)
         : Number(
-          (
-            await db
-              .prepare(
-                `SELECT COUNT(*) AS total
+            (
+              await db
+                .prepare(
+                  `SELECT COUNT(*) AS total
                  FROM deals d
                  WHERE ${FAST_CURRENT_DEALS_WHERE_SQL}`,
-              )
-              .get(crawlDate)
-          )?.total || 0,
-        );
+                )
+                .get(crawlDate)
+            )?.total || 0,
+          );
       if (total > 0) {
         const totalPages = Math.max(1, Math.ceil(total / limitNum));
         const data = rows.map(serializeDeal);
@@ -423,7 +423,9 @@ router.get("/", async (req, res, next) => {
               no_adjacent_same_store: true,
               max_per_store: Math.max(1, Math.floor(limitNum * 0.2)),
               cap_enforced: true,
-              unique_store_count: new Set(data.map((deal) => getDealStoreId(deal) || "__unknown__")).size,
+              unique_store_count: new Set(
+                data.map((deal) => getDealStoreId(deal) || "__unknown__"),
+              ).size,
               disabled_for_explicit_sort: false,
             },
           },
@@ -444,7 +446,10 @@ router.get("/", async (req, res, next) => {
     let filtered = allDeals;
     if (searchQuery) {
       filtered = filtered.filter((d) =>
-        fuzzySearch(`${d.product_name || ""} ${d.store?.name || ""} ${d.product_category || ""}`, searchQuery),
+        fuzzySearch(
+          `${d.product_name || ""} ${d.store?.name || ""} ${d.product_category || ""}`,
+          searchQuery,
+        ),
       );
     }
     if (filterStores.length > 0) {
@@ -455,7 +460,9 @@ router.get("/", async (req, res, next) => {
       filtered = filtered.filter((d) => d.product_category === filterCategory);
     }
     if (minDiscount > 0) {
-      filtered = filtered.filter((d) => (d.discount_percent || 0) >= minDiscount);
+      filtered = filtered.filter(
+        (d) => (d.discount_percent || 0) >= minDiscount,
+      );
     }
     if (priceMin > 0) {
       filtered = filtered.filter((d) => (d.sale_price || 0) >= priceMin);
@@ -468,7 +475,9 @@ router.get("/", async (req, res, next) => {
     }
     if (hideExpired) {
       const thisMonth = new Date().toISOString().slice(0, 7);
-      filtered = filtered.filter((d) => !d.best_before || d.best_before >= thisMonth);
+      filtered = filtered.filter(
+        (d) => !d.best_before || d.best_before >= thisMonth,
+      );
     }
 
     if (sort === "discount") {
@@ -476,33 +485,41 @@ router.get("/", async (req, res, next) => {
         (a, b) =>
           (b.discount_percent || 0) - (a.discount_percent || 0) ||
           (a.sale_price || 0) - (b.sale_price || 0) ||
-          String(a.product_name || "").localeCompare(String(b.product_name || "")),
+          String(a.product_name || "").localeCompare(
+            String(b.product_name || ""),
+          ),
       );
     } else if (sort === "price_per_kg") {
       filtered = [...filtered].sort(
         (a, b) =>
           (a.price_per_kg || Infinity) - (b.price_per_kg || Infinity) ||
           (b.discount_percent || 0) - (a.discount_percent || 0) ||
-          String(a.product_name || "").localeCompare(String(b.product_name || "")),
+          String(a.product_name || "").localeCompare(
+            String(b.product_name || ""),
+          ),
       );
     } else if (sort === "price") {
       filtered = [...filtered].sort(
         (a, b) =>
           (a.sale_price || 0) - (b.sale_price || 0) ||
           (b.discount_percent || 0) - (a.discount_percent || 0) ||
-          String(a.product_name || "").localeCompare(String(b.product_name || "")),
+          String(a.product_name || "").localeCompare(
+            String(b.product_name || ""),
+          ),
       );
     }
 
     const total = filtered.length;
-    const uniqueStoreCount = new Set(filtered.map((deal) => getDealStoreId(deal) || "__unknown__")).size;
+    const uniqueStoreCount = new Set(
+      filtered.map((deal) => getDealStoreId(deal) || "__unknown__"),
+    ).size;
     const pageLayout = usesExplicitOrdering
       ? null
       : buildDiversifiedPages(
-        filtered,
-        limitNum,
-        dateSeed(`${cacheKey}:${sort || "random"}:${limitNum}`),
-      );
+          filtered,
+          limitNum,
+          dateSeed(`${cacheKey}:${sort || "random"}:${limitNum}`),
+        );
     const orderedPage = usesExplicitOrdering
       ? paginateSequential(filtered, limitNum, pageNum)
       : null;

@@ -8,10 +8,7 @@ import {
 } from "react-router-dom";
 import AdLandingPage from "./pages/AdLandingPage";
 import DealsPage from "./pages/DealsPage";
-import {
-  initGoogleAnalytics,
-  trackPageView,
-} from "./utils/analytics";
+import { initGoogleAnalytics, trackPageView } from "./utils/analytics";
 
 const OAuthCallbackPage = lazy(() => import("./pages/OAuthCallbackPage"));
 const SavedDealsPage = lazy(() => import("./pages/SavedDealsPage"));
@@ -20,14 +17,21 @@ const AdminPage = lazy(() => import("./landing/AdminPage"));
 const FeedbackWidget = lazy(() => import("./components/FeedbackWidget"));
 
 class ErrorBoundary extends React.Component {
-  constructor(props) { super(props); this.state = { error: null }; }
-  static getDerivedStateFromError(error) { return { error }; }
+  constructor(props) {
+    super(props);
+    this.state = { error: null };
+  }
+  static getDerivedStateFromError(error) {
+    return { error };
+  }
   render() {
     if (this.state.error) {
       return (
         <div style={{ padding: 32, fontFamily: "monospace" }}>
           <h2 style={{ color: "red" }}>Render error</h2>
-          <pre style={{ whiteSpace: "pre-wrap", fontSize: 13 }}>{String(this.state.error)}</pre>
+          <pre style={{ whiteSpace: "pre-wrap", fontSize: 13 }}>
+            {String(this.state.error)}
+          </pre>
           <button onClick={() => window.location.reload()}>Reload</button>
         </div>
       );
@@ -70,7 +74,11 @@ function AppShell() {
 
     return () => {
       cancelled = true;
-      if (idleId !== null && typeof window !== "undefined" && "cancelIdleCallback" in window) {
+      if (
+        idleId !== null &&
+        typeof window !== "undefined" &&
+        "cancelIdleCallback" in window
+      ) {
         window.cancelIdleCallback(idleId);
       }
       if (timeoutId !== null) {

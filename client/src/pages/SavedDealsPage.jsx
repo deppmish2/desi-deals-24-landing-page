@@ -1,8 +1,17 @@
 import React, { useCallback, useEffect, useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
-import { formatBestBefore, formatPrice, formatPricePerKg } from "../utils/formatters";
 import {
-  addBookmark, fetchBookmarks, fetchDealById, getAuthSession, logoutUser, removeBookmark,
+  formatBestBefore,
+  formatPrice,
+  formatPricePerKg,
+} from "../utils/formatters";
+import {
+  addBookmark,
+  fetchBookmarks,
+  fetchDealById,
+  getAuthSession,
+  logoutUser,
+  removeBookmark,
 } from "../utils/api";
 import { trackAnalyticsEvent } from "../utils/analytics";
 import { buildDealPageUrl, buildWhatsAppDealShareUrl } from "../utils/share";
@@ -19,7 +28,9 @@ function resolveUrl(deal, url) {
   if (!raw) return "";
   if (/^https?:\/\//i.test(raw)) return raw;
   const storeBase = String(deal?.store?.url || "").replace(/\/+$/, "");
-  return storeBase ? `${storeBase}${raw.startsWith("/") ? "" : "/"}${raw}` : raw;
+  return storeBase
+    ? `${storeBase}${raw.startsWith("/") ? "" : "/"}${raw}`
+    : raw;
 }
 
 function dealPermalink(dealId) {
@@ -38,7 +49,17 @@ function buildSavedDealAnalyticsPayload(deal) {
 
 function UserCircleIcon({ size = 20, color = "currentColor" }) {
   return (
-    <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke={color} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+    <svg
+      width={size}
+      height={size}
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke={color}
+      strokeWidth="2"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+      aria-hidden="true"
+    >
       <circle cx="12" cy="12" r="9" />
       <circle cx="12" cy="9" r="3" />
       <path d="M7 18c1.2-2.15 3.03-3.22 5.5-3.22S16.8 15.85 18 18" />
@@ -48,7 +69,17 @@ function UserCircleIcon({ size = 20, color = "currentColor" }) {
 
 function TrashIcon({ size = 16, color = "currentColor" }) {
   return (
-    <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke={color} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+    <svg
+      width={size}
+      height={size}
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke={color}
+      strokeWidth="2"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+      aria-hidden="true"
+    >
       <polyline points="3 6 5 6 21 6" />
       <path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6" />
       <path d="M10 11v6M14 11v6" />
@@ -59,9 +90,21 @@ function TrashIcon({ size = 16, color = "currentColor" }) {
 
 function GridIcon({ size = 18, color = "currentColor" }) {
   return (
-    <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke={color} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
-      <rect x="3" y="3" width="7" height="7" /><rect x="14" y="3" width="7" height="7" />
-      <rect x="14" y="14" width="7" height="7" /><rect x="3" y="14" width="7" height="7" />
+    <svg
+      width={size}
+      height={size}
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke={color}
+      strokeWidth="2"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+      aria-hidden="true"
+    >
+      <rect x="3" y="3" width="7" height="7" />
+      <rect x="14" y="3" width="7" height="7" />
+      <rect x="14" y="14" width="7" height="7" />
+      <rect x="3" y="14" width="7" height="7" />
     </svg>
   );
 }
@@ -69,14 +112,22 @@ function GridIcon({ size = 18, color = "currentColor" }) {
 function DealCard({ deal, onRemove }) {
   const [imgError, setImgError] = useState(false);
   const proxyImg = proxyImageUrl(deal?.image_url);
-  const discountPct = deal?.discount_percent ? Math.round(deal.discount_percent) : null;
-  const bestBeforeText = deal?.best_before ? formatBestBefore(deal.best_before) : null;
+  const discountPct = deal?.discount_percent
+    ? Math.round(deal.discount_percent)
+    : null;
+  const bestBeforeText = deal?.best_before
+    ? formatBestBefore(deal.best_before)
+    : null;
   const priceText = formatPrice(deal.sale_price, deal.currency);
-  const originalPriceText = deal.original_price ? formatPrice(deal.original_price, deal.currency) : null;
+  const originalPriceText = deal.original_price
+    ? formatPrice(deal.original_price, deal.currency)
+    : null;
   const weightText = [
     deal.weight_raw || null,
     deal.price_per_kg ? formatPricePerKg(deal.price_per_kg) : null,
-  ].filter(Boolean).join(" | ");
+  ]
+    .filter(Boolean)
+    .join(" | ");
 
   return (
     <div
@@ -84,21 +135,48 @@ function DealCard({ deal, onRemove }) {
       style={{ boxShadow: "0px 2px 12px rgba(0,0,0,0.06)" }}
     >
       {/* Image — not clickable */}
-      <div className="relative w-full bg-white flex items-center justify-center p-5" style={{ height: 200 }}>
+      <div
+        className="relative w-full bg-white flex items-center justify-center p-5"
+        style={{ height: 200 }}
+      >
         <img
-          src={imgError || !proxyImg
-            ? 'data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" width="112" height="112" viewBox="0 0 112 112"><rect fill="%23ffffff" width="112" height="112"/><text fill="%2394a3b8" font-size="28" text-anchor="middle" dominant-baseline="middle" x="56" y="58">🛒</text></svg>'
-            : proxyImg}
+          src={
+            imgError || !proxyImg
+              ? 'data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" width="112" height="112" viewBox="0 0 112 112"><rect fill="%23ffffff" width="112" height="112"/><text fill="%2394a3b8" font-size="28" text-anchor="middle" dominant-baseline="middle" x="56" y="58">🛒</text></svg>'
+              : proxyImg
+          }
           alt={deal.product_name}
           loading="lazy"
           className="w-full h-full object-contain"
           onError={() => setImgError(true)}
         />
         {discountPct > 0 && (
-          <div className="absolute top-3 right-3 rounded-[8px] px-2.5 py-1"
-            style={{ backgroundColor: discountPct > 50 ? "#ffe4e8" : discountPct >= 30 ? "#fff3e0" : discountPct >= 20 ? "#e8f0fe" : "#f1f5f9" }}>
-            <span className="font-bold text-[13px] leading-none"
-              style={{ color: discountPct > 50 ? "#e53e3e" : discountPct >= 30 ? "#c05200" : discountPct >= 20 ? "#1a56db" : "#1e293b" }}>
+          <div
+            className="absolute top-3 right-3 rounded-[8px] px-2.5 py-1"
+            style={{
+              backgroundColor:
+                discountPct > 50
+                  ? "#ffe4e8"
+                  : discountPct >= 30
+                    ? "#fff3e0"
+                    : discountPct >= 20
+                      ? "#e8f0fe"
+                      : "#f1f5f9",
+            }}
+          >
+            <span
+              className="font-bold text-[13px] leading-none"
+              style={{
+                color:
+                  discountPct > 50
+                    ? "#e53e3e"
+                    : discountPct >= 30
+                      ? "#c05200"
+                      : discountPct >= 20
+                        ? "#1a56db"
+                        : "#1e293b",
+              }}
+            >
               -{discountPct}%
             </span>
           </div>
@@ -120,13 +198,19 @@ function DealCard({ deal, onRemove }) {
           </p>
           <div className="flex items-baseline justify-between gap-2">
             <div className="flex items-baseline gap-2">
-              <span className="text-[#1e293b] text-[22px] leading-[30px] font-extrabold">{priceText}</span>
+              <span className="text-[#1e293b] text-[22px] leading-[30px] font-extrabold">
+                {priceText}
+              </span>
               {originalPriceText && (
-                <span className="text-[#94a3b8] text-[14px] leading-[20px] line-through">{originalPriceText}</span>
+                <span className="text-[#94a3b8] text-[14px] leading-[20px] line-through">
+                  {originalPriceText}
+                </span>
               )}
             </div>
             {weightText && (
-              <span className="text-[#94a3b8] text-[11px] leading-[16px] font-medium text-right shrink-0">{weightText}</span>
+              <span className="text-[#94a3b8] text-[11px] leading-[16px] font-medium text-right shrink-0">
+                {weightText}
+              </span>
             )}
           </div>
         </div>
@@ -145,7 +229,9 @@ function DealCard({ deal, onRemove }) {
             className="flex-1 justify-center bg-[#16a34a] hover:bg-[#15803d] transition-colors rounded-[14px] py-3 inline-flex items-center gap-2 text-white no-underline hover:no-underline"
             style={{ textDecoration: "none" }}
           >
-            <span className="text-[13px] leading-[16px] font-extrabold tracking-wide uppercase">Snatch Deal</span>
+            <span className="text-[13px] leading-[16px] font-extrabold tracking-wide uppercase">
+              Snatch Deal
+            </span>
           </a>
           <a
             href={buildWhatsAppDealShareUrl({
@@ -167,8 +253,14 @@ function DealCard({ deal, onRemove }) {
             title="Share on WhatsApp"
           >
             <svg width="18" height="18" viewBox="0 0 32 32" fill="none">
-              <path d="M16 3C9.373 3 4 8.373 4 15c0 2.385.67 4.61 1.832 6.5L4 29l7.697-1.803A12.94 12.94 0 0 0 16 27c6.627 0 12-5.373 12-12S22.627 3 16 3z" fill="#25D366"/>
-              <path d="M21.786 18.618c-.306-.153-1.81-.894-2.09-.994-.28-.1-.484-.153-.688.153-.204.306-.79.994-.968 1.198-.178.204-.356.23-.662.077-.306-.153-1.29-.476-2.458-1.516-.908-.81-1.522-1.81-1.7-2.116-.178-.306-.019-.47.134-.622.137-.136.306-.356.459-.535.153-.178.204-.306.306-.51.102-.204.051-.382-.025-.535-.077-.153-.688-1.658-.942-2.27-.248-.595-.5-.514-.688-.524l-.586-.01c-.204 0-.535.077-.816.382-.28.306-1.07 1.045-1.07 2.55s1.095 2.96 1.248 3.164c.153.204 2.154 3.29 5.22 4.614.73.315 1.3.503 1.744.644.733.233 1.4.2 1.927.121.588-.087 1.81-.74 2.065-1.455.255-.714.255-1.326.178-1.455-.076-.13-.28-.204-.586-.357z" fill="white"/>
+              <path
+                d="M16 3C9.373 3 4 8.373 4 15c0 2.385.67 4.61 1.832 6.5L4 29l7.697-1.803A12.94 12.94 0 0 0 16 27c6.627 0 12-5.373 12-12S22.627 3 16 3z"
+                fill="#25D366"
+              />
+              <path
+                d="M21.786 18.618c-.306-.153-1.81-.894-2.09-.994-.28-.1-.484-.153-.688.153-.204.306-.79.994-.968 1.198-.178.204-.356.23-.662.077-.306-.153-1.29-.476-2.458-1.516-.908-.81-1.522-1.81-1.7-2.116-.178-.306-.019-.47.134-.622.137-.136.306-.356.459-.535.153-.178.204-.306.306-.51.102-.204.051-.382-.025-.535-.077-.153-.688-1.658-.942-2.27-.248-.595-.5-.514-.688-.524l-.586-.01c-.204 0-.535.077-.816.382-.28.306-1.07 1.045-1.07 2.55s1.095 2.96 1.248 3.164c.153.204 2.154 3.29 5.22 4.614.73.315 1.3.503 1.744.644.733.233 1.4.2 1.927.121.588-.087 1.81-.74 2.065-1.455.255-.714.255-1.326.178-1.455-.076-.13-.28-.204-.586-.357z"
+                fill="white"
+              />
             </svg>
           </a>
           <button
@@ -203,7 +295,9 @@ export default function SavedDealsPage() {
   const [loadingBookmarks, setLoadingBookmarks] = useState(true);
 
   useEffect(() => {
-    function onAuthChange() { setSession(getAuthSession()); }
+    function onAuthChange() {
+      setSession(getAuthSession());
+    }
     window.addEventListener("dd24-auth-changed", onAuthChange);
     return () => window.removeEventListener("dd24-auth-changed", onAuthChange);
   }, []);
@@ -213,7 +307,11 @@ export default function SavedDealsPage() {
   }, [isLoggedIn, navigate]);
 
   const syncBookmarks = useCallback(async () => {
-    if (!isLoggedIn) { setBookmarkedIds(new Set()); setLoadingBookmarks(false); return; }
+    if (!isLoggedIn) {
+      setBookmarkedIds(new Set());
+      setLoadingBookmarks(false);
+      return;
+    }
     setLoadingBookmarks(true);
     try {
       const res = await fetchBookmarks();
@@ -225,30 +323,70 @@ export default function SavedDealsPage() {
     }
   }, [isLoggedIn]);
 
-  useEffect(() => { syncBookmarks(); }, [syncBookmarks]);
+  useEffect(() => {
+    syncBookmarks();
+  }, [syncBookmarks]);
 
   useEffect(() => {
     let cancelled = false;
-    if (!isLoggedIn) { setSavedDeals([]); setLoadingDeals(false); return () => { cancelled = true; }; }
-    if (bookmarkedIds.size === 0) { setSavedDeals([]); setLoadingDeals(false); return () => { cancelled = true; }; }
+    if (!isLoggedIn) {
+      setSavedDeals([]);
+      setLoadingDeals(false);
+      return () => {
+        cancelled = true;
+      };
+    }
+    if (bookmarkedIds.size === 0) {
+      setSavedDeals([]);
+      setLoadingDeals(false);
+      return () => {
+        cancelled = true;
+      };
+    }
     setLoadingDeals(true);
-    Promise.all(Array.from(bookmarkedIds).map((id) => fetchDealById(id).catch(() => null)))
-      .then((rows) => { if (!cancelled) setSavedDeals(rows.filter((d) => d?.id && d?.product_url && d?.product_name)); })
-      .catch(() => { if (!cancelled) setSavedDeals([]); })
-      .finally(() => { if (!cancelled) setLoadingDeals(false); });
-    return () => { cancelled = true; };
+    Promise.all(
+      Array.from(bookmarkedIds).map((id) =>
+        fetchDealById(id).catch(() => null),
+      ),
+    )
+      .then((rows) => {
+        if (!cancelled)
+          setSavedDeals(
+            rows.filter((d) => d?.id && d?.product_url && d?.product_name),
+          );
+      })
+      .catch(() => {
+        if (!cancelled) setSavedDeals([]);
+      })
+      .finally(() => {
+        if (!cancelled) setLoadingDeals(false);
+      });
+    return () => {
+      cancelled = true;
+    };
   }, [isLoggedIn, bookmarkedIds]);
 
   const [confirmRemoveId, setConfirmRemoveId] = useState(null);
 
-  const handleRemove = useCallback(async (dealId) => {
-    trackAnalyticsEvent("saved_deal_remove_confirmed", {
-      page_type: "saved_deals",
-      deal_id: dealId,
-    });
-    setBookmarkedIds((prev) => { const next = new Set(prev); next.delete(dealId); return next; });
-    try { await removeBookmark(dealId); } catch { syncBookmarks(); }
-  }, [syncBookmarks]);
+  const handleRemove = useCallback(
+    async (dealId) => {
+      trackAnalyticsEvent("saved_deal_remove_confirmed", {
+        page_type: "saved_deals",
+        deal_id: dealId,
+      });
+      setBookmarkedIds((prev) => {
+        const next = new Set(prev);
+        next.delete(dealId);
+        return next;
+      });
+      try {
+        await removeBookmark(dealId);
+      } catch {
+        syncBookmarks();
+      }
+    },
+    [syncBookmarks],
+  );
 
   async function handleLogout() {
     trackAnalyticsEvent("logout_click", { page_type: "saved_deals" });
@@ -260,12 +398,19 @@ export default function SavedDealsPage() {
 
   return (
     <div className="min-h-screen bg-[radial-gradient(circle_at_top,_#ffffff_0%,_#f8fbff_32%,_#f3f6fb_100%)]">
-
       {/* Mobile header — matches DealsPage style */}
       <div className="sticky top-0 z-50 sm:hidden">
         <div className="flex min-h-[72px] items-center justify-between gap-3 bg-white px-4 py-3 shadow-[0px_1px_2px_0px_rgba(0,0,0,0.05)]">
-          <Link to="/" className="flex min-w-0 items-center gap-2.5 no-underline" style={{ textDecoration: "none" }}>
-            <img src="/landing/dd24-logo.svg" alt="DesiDeals24" className="w-5 h-6 object-contain" />
+          <Link
+            to="/"
+            className="flex min-w-0 items-center gap-2.5 no-underline"
+            style={{ textDecoration: "none" }}
+          >
+            <img
+              src="/landing/dd24-logo.svg"
+              alt="DesiDeals24"
+              className="w-5 h-6 object-contain"
+            />
             <div className="min-w-0">
               <div className="text-[16px] font-extrabold leading-none tracking-[-0.05em] text-[#15803d]">
                 DesiDeals24
@@ -297,7 +442,10 @@ export default function SavedDealsPage() {
               </button>
               {mobileMenuOpen && (
                 <>
-                  <div className="fixed inset-0 z-40" onClick={() => setMobileMenuOpen(false)} />
+                  <div
+                    className="fixed inset-0 z-40"
+                    onClick={() => setMobileMenuOpen(false)}
+                  />
                   <div className="absolute right-0 top-[calc(100%+8px)] z-50 w-44 overflow-hidden rounded-[16px] border border-slate-100 bg-white shadow-xl">
                     <Link
                       to="/"
@@ -317,11 +465,25 @@ export default function SavedDealsPage() {
                     <div className="h-px bg-slate-100 mx-3" />
                     <button
                       type="button"
-                      onClick={() => { setMobileMenuOpen(false); handleLogout(); }}
+                      onClick={() => {
+                        setMobileMenuOpen(false);
+                        handleLogout();
+                      }}
                       className="flex w-full items-center gap-3 px-4 py-3 text-[14px] font-semibold text-slate-700 hover:bg-slate-50 transition-colors"
                     >
-                      <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                        <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/>
+                      <svg
+                        width="15"
+                        height="15"
+                        viewBox="0 0 24 24"
+                        fill="none"
+                        stroke="currentColor"
+                        strokeWidth="2"
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                      >
+                        <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4" />
+                        <polyline points="16 17 21 12 16 7" />
+                        <line x1="21" y1="12" x2="9" y2="12" />
                       </svg>
                       Logout
                     </button>
@@ -336,8 +498,16 @@ export default function SavedDealsPage() {
       {/* Desktop header */}
       <div className="sticky top-3 z-50 hidden sm:block max-w-[1320px] mx-auto px-6 lg:px-8 pt-3">
         <div className="flex items-center justify-between gap-4 rounded-[28px] border border-slate-200/60 bg-white px-7 lg:px-8 py-5 shadow-[0_18px_45px_rgba(15,23,42,0.14)]">
-          <Link to="/" className="flex min-w-0 items-center gap-3 no-underline" style={{ textDecoration: "none" }}>
-            <img src="/landing/dd24-logo.svg" alt="DesiDeals24" className="w-7 h-8 object-contain" />
+          <Link
+            to="/"
+            className="flex min-w-0 items-center gap-3 no-underline"
+            style={{ textDecoration: "none" }}
+          >
+            <img
+              src="/landing/dd24-logo.svg"
+              alt="DesiDeals24"
+              className="w-7 h-8 object-contain"
+            />
             <div className="min-w-0">
               <div className="text-[28px] font-extrabold leading-none tracking-[-0.06em] text-[#17874a]">
                 DesiDeals24
@@ -392,17 +562,37 @@ export default function SavedDealsPage() {
 
         {loading && (
           <div className="flex justify-center py-20">
-            <div className="w-10 h-10 rounded-full animate-spin" style={{ borderWidth: 3, borderStyle: "solid", borderColor: "#e2e8f0", borderTopColor: "#16a34a" }} />
+            <div
+              className="w-10 h-10 rounded-full animate-spin"
+              style={{
+                borderWidth: 3,
+                borderStyle: "solid",
+                borderColor: "#e2e8f0",
+                borderTopColor: "#16a34a",
+              }}
+            />
           </div>
         )}
 
         {!loading && savedDeals.length === 0 && (
           <div className="flex flex-col items-center justify-center py-24 gap-4">
-            <svg className="text-slate-200" width="56" height="56" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5">
-              <path d="M19 21l-7-5-7 5V5a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2z"/>
+            <svg
+              className="text-slate-200"
+              width="56"
+              height="56"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              strokeWidth="1.5"
+            >
+              <path d="M19 21l-7-5-7 5V5a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2z" />
             </svg>
-            <p className="text-[18px] font-bold text-slate-400">No saved deals yet</p>
-            <p className="text-[14px] text-slate-300">Tap the bookmark icon on any deal to save it here.</p>
+            <p className="text-[18px] font-bold text-slate-400">
+              No saved deals yet
+            </p>
+            <p className="text-[14px] text-slate-300">
+              Tap the bookmark icon on any deal to save it here.
+            </p>
             <Link
               to="/"
               onClick={() =>
@@ -434,18 +624,37 @@ export default function SavedDealsPage() {
       </main>
 
       {confirmRemoveId && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center px-4" onClick={() => setConfirmRemoveId(null)}>
+        <div
+          className="fixed inset-0 z-50 flex items-center justify-center px-4"
+          onClick={() => setConfirmRemoveId(null)}
+        >
           <div className="absolute inset-0 bg-black/30 backdrop-blur-[2px]" />
-          <div className="relative w-full max-w-sm rounded-[24px] bg-white p-6 shadow-2xl flex flex-col gap-4" onClick={(e) => e.stopPropagation()}>
-            <h2 className="text-[18px] font-extrabold text-[#111827]">Remove this deal?</h2>
-            <p className="text-[14px] text-slate-500 leading-relaxed">This deal will be removed from your saved list.</p>
+          <div
+            className="relative w-full max-w-sm rounded-[24px] bg-white p-6 shadow-2xl flex flex-col gap-4"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <h2 className="text-[18px] font-extrabold text-[#111827]">
+              Remove this deal?
+            </h2>
+            <p className="text-[14px] text-slate-500 leading-relaxed">
+              This deal will be removed from your saved list.
+            </p>
             <div className="flex gap-3 pt-1">
-              <button type="button" onClick={() => setConfirmRemoveId(null)}
-                className="flex-1 rounded-[14px] border border-slate-200 bg-white py-3 text-[14px] font-bold text-slate-600 transition-colors hover:bg-slate-50">
+              <button
+                type="button"
+                onClick={() => setConfirmRemoveId(null)}
+                className="flex-1 rounded-[14px] border border-slate-200 bg-white py-3 text-[14px] font-bold text-slate-600 transition-colors hover:bg-slate-50"
+              >
                 Cancel
               </button>
-              <button type="button" onClick={() => { handleRemove(confirmRemoveId); setConfirmRemoveId(null); }}
-                className="flex-1 rounded-[14px] bg-red-500 py-3 text-[14px] font-bold text-white transition-colors hover:bg-red-600">
+              <button
+                type="button"
+                onClick={() => {
+                  handleRemove(confirmRemoveId);
+                  setConfirmRemoveId(null);
+                }}
+                className="flex-1 rounded-[14px] bg-red-500 py-3 text-[14px] font-bold text-white transition-colors hover:bg-red-600"
+              >
                 Remove
               </button>
             </div>

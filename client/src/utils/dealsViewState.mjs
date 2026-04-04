@@ -38,7 +38,10 @@ export function buildDealsSearchParams(searchParams, nextState, routeDealId) {
   if (nextState.searchQuery) nextParams.set("q", nextState.searchQuery);
   if (nextState.sortValue) nextParams.set("sort", nextState.sortValue);
   if (nextState.page > 1) nextParams.set("page", String(nextState.page));
-  if (Array.isArray(nextState.filterStores) && nextState.filterStores.length > 0) {
+  if (
+    Array.isArray(nextState.filterStores) &&
+    nextState.filterStores.length > 0
+  ) {
     nextParams.set("store", nextState.filterStores.join(","));
   }
   if (nextState.filterCategory) {

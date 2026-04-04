@@ -56,12 +56,21 @@ async function scrape() {
       .trim();
     const salePriceText =
       $el
-        .find(".price ins .woocommerce-Price-amount bdi, .price ins .woocommerce-Price-amount, .price ins bdi")
+        .find(
+          ".price ins .woocommerce-Price-amount bdi, .price ins .woocommerce-Price-amount, .price ins bdi",
+        )
         .first()
         .text() ||
-      $el.find(".price .woocommerce-Price-amount bdi, .price .woocommerce-Price-amount").first().text();
+      $el
+        .find(
+          ".price .woocommerce-Price-amount bdi, .price .woocommerce-Price-amount",
+        )
+        .first()
+        .text();
     const origPriceText = $el
-      .find(".price del .woocommerce-Price-amount bdi, .price del .woocommerce-Price-amount, .price del bdi")
+      .find(
+        ".price del .woocommerce-Price-amount bdi, .price del .woocommerce-Price-amount, .price del bdi",
+      )
       .first()
       .text();
 

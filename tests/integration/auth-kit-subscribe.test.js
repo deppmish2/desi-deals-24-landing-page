@@ -55,9 +55,8 @@ function purgeModule(modulePath) {
 function buildAuthApp({ dbMock, kitService, googleOAuthService }) {
   const dbModulePath = require.resolve("../../server/db");
   const kitModulePath = require.resolve("../../server/services/kit");
-  const googleOAuthModulePath = require.resolve(
-    "../../server/services/google-oauth",
-  );
+  const googleOAuthModulePath =
+    require.resolve("../../server/services/google-oauth");
   const authRoutePath = require.resolve("../../server/routes/auth");
 
   const dependentModules = [
@@ -197,7 +196,10 @@ async function startInMemoryApi(app) {
     return res;
   }
 
-  async function request(pathname, { method = "GET", headers = {}, body } = {}) {
+  async function request(
+    pathname,
+    { method = "GET", headers = {}, body } = {},
+  ) {
     const reqHeaders = {};
     for (const [key, value] of Object.entries(headers || {})) {
       reqHeaders[String(key).toLowerCase()] = value;
@@ -451,12 +453,15 @@ test("Google signup subscribes to Kit after email confirmation completes", async
   });
   const api = await startInMemoryApi(app);
 
-  const googleStart = await api.request("/api/v1/auth/google/callback?code=test", {
-    method: "GET",
-    headers: {
-      origin: "http://localhost:5173",
+  const googleStart = await api.request(
+    "/api/v1/auth/google/callback?code=test",
+    {
+      method: "GET",
+      headers: {
+        origin: "http://localhost:5173",
+      },
     },
-  });
+  );
 
   assert.equal(googleStart.status, 200);
   assert.equal(googleStart.json.pending_email_confirmation, true);

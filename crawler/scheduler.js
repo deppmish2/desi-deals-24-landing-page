@@ -19,9 +19,7 @@ function startScheduler(db) {
     { timezone: BERLIN_TIME_ZONE },
   );
 
-  console.log(
-    "[scheduler] Scheduled daily crawl at 08:00 Europe/Berlin",
-  );
+  console.log("[scheduler] Scheduled daily crawl at 08:00 Europe/Berlin");
 
   if (process.env.CRAWL_ON_STARTUP === "true") {
     console.log("[scheduler] Running startup crawl...");

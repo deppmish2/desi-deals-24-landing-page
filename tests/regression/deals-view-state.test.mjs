@@ -59,16 +59,19 @@ test("buildDealsSearchParams keeps non-default state and preserves highlighted d
     null,
   );
 
-  assert.equal(nextParams.toString(), [
-    "deal=deal-123",
-    "q=ghee",
-    "sort=price",
-    "page=2",
-    "store=MD+Store",
-    "min_discount=10",
-    "price_max=7",
-    "hide_expired=1",
-  ].join("&"));
+  assert.equal(
+    nextParams.toString(),
+    [
+      "deal=deal-123",
+      "q=ghee",
+      "sort=price",
+      "page=2",
+      "store=MD+Store",
+      "min_discount=10",
+      "price_max=7",
+      "hide_expired=1",
+    ].join("&"),
+  );
 });
 
 test("buildDealsSearchParams drops default values and route-level deal ids do not duplicate query deal ids", () => {

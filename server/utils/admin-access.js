@@ -1,7 +1,6 @@
 "use strict";
 
-const DEFAULT_ADMIN_EMAILS =
-  "itsjustrahul@gmail.com,deppmish2@googlemail.com";
+const DEFAULT_ADMIN_EMAILS = "itsjustrahul@gmail.com,deppmish2@googlemail.com";
 
 function normalizeAdminEmail(email) {
   return String(email || "")

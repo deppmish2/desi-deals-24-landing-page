@@ -275,8 +275,7 @@ router.get("/stats", async (req, res) => {
         normalized_query: r.normalized_query,
         user_email: r.user_email || null,
         session_id: r.session_id || null,
-        result_count:
-          r.result_count == null ? null : Number(r.result_count),
+        result_count: r.result_count == null ? null : Number(r.result_count),
         created_at: r.created_at,
       })),
       recent_users: recentUsers.map((r) => ({

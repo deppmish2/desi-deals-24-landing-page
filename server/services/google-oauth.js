@@ -27,7 +27,20 @@ function parseMockProfile() {
 
 function isConfigured() {
   const cfg = getConfig();
-  return Boolean(cfg.clientId && cfg.clientSecret && cfg.callbackUrl);
+  return Boolean(cfg.clientId && cfg.clientSecret);
+}
+
+function resolveCallbackUrl(clientOriginOverride) {
+  const cfg = getConfig();
+  if (cfg.callbackUrl) return cfg.callbackUrl;
+  const origin =
+    normalizeClientOrigin(clientOriginOverride) ||
+    normalizeClientOrigin(
+      process.env.CLIENT_APP_URL ||
+        process.env.APP_URL ||
+        process.env.FRONTEND_URL,
+    );
+  return origin ? `${origin}/oauth/google/callback` : "";
 }
 
 function localDevMockEnabled() {
@@ -114,7 +127,7 @@ function normalizeProfile(input) {
 
 function buildAuthUrl(state, options = {}) {
   const cfg = getConfig();
-  if (!cfg.clientId || !cfg.callbackUrl) {
+  if (!cfg.clientId) {
     if (localDevMockEnabled()) {
       return devMockClientUrl(state, options.clientOrigin);
     }
@@ -123,9 +136,20 @@ function buildAuthUrl(state, options = {}) {
     });
   }
 
+  const callbackUrl = resolveCallbackUrl(options.clientOrigin);
+  if (!callbackUrl) {
+    if (localDevMockEnabled()) {
+      return devMockClientUrl(state, options.clientOrigin);
+    }
+    throw Object.assign(
+      new Error("GOOGLE_CALLBACK_URL is not set and cannot be derived"),
+      { code: "GOOGLE_NOT_CONFIGURED" },
+    );
+  }
+
   const url = new URL("https://accounts.google.com/o/oauth2/v2/auth");
   url.searchParams.set("client_id", cfg.clientId);
-  url.searchParams.set("redirect_uri", cfg.callbackUrl);
+  url.searchParams.set("redirect_uri", callbackUrl);
   url.searchParams.set("response_type", "code");
   url.searchParams.set("scope", "openid email profile");
   url.searchParams.set("access_type", "offline");
@@ -180,7 +204,7 @@ async function verifyIdToken(idToken) {
   return normalizeProfile(profile);
 }
 
-async function exchangeCodeForProfile(code) {
+async function exchangeCodeForProfile(code, options = {}) {
   const mock = parseMockProfile();
   if (mock) return normalizeProfile(mock);
   if (localDevMockEnabled() && String(code || "").trim() === DEV_MOCK_CODE) {
@@ -188,7 +212,7 @@ async function exchangeCodeForProfile(code) {
   }
 
   const cfg = getConfig();
-  if (!cfg.clientId || !cfg.clientSecret || !cfg.callbackUrl) {
+  if (!cfg.clientId || !cfg.clientSecret) {
     throw Object.assign(new Error("Google OAuth is not fully configured"), {
       code: "GOOGLE_NOT_CONFIGURED",
     });
@@ -199,6 +223,14 @@ async function exchangeCodeForProfile(code) {
     });
   }
 
+  const callbackUrl = resolveCallbackUrl(options.clientOrigin);
+  if (!callbackUrl) {
+    throw Object.assign(
+      new Error("GOOGLE_CALLBACK_URL is not set and cannot be derived"),
+      { code: "GOOGLE_NOT_CONFIGURED" },
+    );
+  }
+
   const tokenRes = await fetch(GOOGLE_TOKEN_URL, {
     method: "POST",
     headers: { "content-type": "application/x-www-form-urlencoded" },
@@ -206,7 +238,7 @@ async function exchangeCodeForProfile(code) {
       code: String(code),
       client_id: cfg.clientId,
       client_secret: cfg.clientSecret,
-      redirect_uri: cfg.callbackUrl,
+      redirect_uri: callbackUrl,
       grant_type: "authorization_code",
     }).toString(),
     timeout: 10000,

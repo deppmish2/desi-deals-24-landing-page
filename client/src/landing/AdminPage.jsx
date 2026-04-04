@@ -26,7 +26,14 @@ function BarChart({ data }) {
           const every = Math.max(1, Math.ceil(data.length / 8));
           return (
             <g key={d.day}>
-              <rect x={x} y={y} width={barW} height={barH} fill="#16a34a" rx={2} />
+              <rect
+                x={x}
+                y={y}
+                width={barW}
+                height={barH}
+                fill="#16a34a"
+                rx={2}
+              />
               {d.count > 0 && (
                 <text
                   x={x + barW / 2}
@@ -231,7 +238,10 @@ export default function AdminPage() {
           <KpiCard label="Total users" value={kpis.total_users} />
           <KpiCard label="New users (30d)" value={kpis.new_users_30d} />
           <KpiCard label="Searches today" value={kpis.searches_today} />
-          <KpiCard label="Unique searchers (30d)" value={kpis.unique_searchers_30d} />
+          <KpiCard
+            label="Unique searchers (30d)"
+            value={kpis.unique_searchers_30d}
+          />
         </div>
 
         <div className="bg-white rounded-2xl border border-slate-100 shadow-sm px-6 py-5 space-y-5">
@@ -259,7 +269,10 @@ export default function AdminPage() {
               label="Stores failed"
               value={latest_crawl?.stores_failed ?? 0}
             />
-            <KpiCard label="Deals found" value={latest_crawl?.deals_found ?? 0} />
+            <KpiCard
+              label="Deals found"
+              value={latest_crawl?.deals_found ?? 0}
+            />
             <KpiCard
               label="Finished"
               value={latest_crawl?.finished_at ? "Yes" : "No"}
@@ -369,7 +382,9 @@ export default function AdminPage() {
                   Category totals
                 </div>
                 {!latest_crawl?.category_totals?.length ? (
-                  <div className="text-slate-300 text-sm">No category data yet</div>
+                  <div className="text-slate-300 text-sm">
+                    No category data yet
+                  </div>
                 ) : (
                   <div className="space-y-2">
                     {latest_crawl.category_totals.slice(0, 12).map((row) => (
@@ -392,7 +407,9 @@ export default function AdminPage() {
                   Recent crawl runs
                 </div>
                 {!recent_crawl_runs?.length ? (
-                  <div className="text-slate-300 text-sm">No crawl history yet</div>
+                  <div className="text-slate-300 text-sm">
+                    No crawl history yet
+                  </div>
                 ) : (
                   <div className="space-y-3">
                     {recent_crawl_runs.map((run) => (
@@ -405,8 +422,8 @@ export default function AdminPage() {
                             {run.crawl_date || "No date"}
                           </div>
                           <div className="text-[11px] text-slate-400">
-                            {run.stores_succeeded}/{run.stores_attempted} stores ·{" "}
-                            {run.deals_found} deals
+                            {run.stores_succeeded}/{run.stores_attempted} stores
+                            · {run.deals_found} deals
                           </div>
                         </div>
                         <StatusPill status={run.status} />

@@ -1,10 +1,7 @@
 "use strict";
 
 const { verifyJwt } = require("../utils/jwt");
-const {
-  isAdminEmail,
-  normalizeAdminEmail,
-} = require("../utils/admin-access");
+const { isAdminEmail, normalizeAdminEmail } = require("../utils/admin-access");
 const db = require("../db");
 
 function resolveAccessSecret() {
@@ -37,7 +34,10 @@ module.exports = async function requireAdminAuth(req, res, next) {
   const userId = result.payload.sub;
   const email = normalizeAdminEmail(result.payload.email);
 
-  if (result.payload?.is_admin === true || Number(result.payload?.is_admin) === 1) {
+  if (
+    result.payload?.is_admin === true ||
+    Number(result.payload?.is_admin) === 1
+  ) {
     req.user = { id: userId, email };
     return next();
   }

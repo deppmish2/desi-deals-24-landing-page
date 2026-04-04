@@ -27,7 +27,9 @@ function getClientSessionId() {
     const existing = storage.getItem(CLIENT_SESSION_STORAGE_KEY);
     if (existing) return existing;
     const next =
-      (window.crypto && window.crypto.randomUUID && window.crypto.randomUUID()) ||
+      (window.crypto &&
+        window.crypto.randomUUID &&
+        window.crypto.randomUUID()) ||
       `dd24-${Math.random().toString(36).slice(2)}${Date.now().toString(36)}`;
     storage.setItem(CLIENT_SESSION_STORAGE_KEY, next);
     return next;

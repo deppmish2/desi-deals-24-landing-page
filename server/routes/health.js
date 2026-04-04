@@ -33,32 +33,31 @@ function hoursSince(isoTs) {
 async function gatherHealthData() {
   const startMs = Date.now();
 
-  const [lastCrawlRow, activeDealsRow, crawlingRow] =
-    await Promise.all([
-      db
-        .prepare(
-          `SELECT crawl_date, finished_at, stores_succeeded, stores_attempted, deals_found, status
+  const [lastCrawlRow, activeDealsRow, crawlingRow] = await Promise.all([
+    db
+      .prepare(
+        `SELECT crawl_date, finished_at, stores_succeeded, stores_attempted, deals_found, status
        FROM crawl_runs
        ORDER BY started_at DESC
        LIMIT 1`,
-        )
-        .get(),
-      db.prepare(`SELECT COUNT(*) AS cnt FROM deals WHERE is_active = 1`).get(),
-      db
-        .prepare(
-          `SELECT COUNT(*) AS cnt FROM crawl_runs WHERE status = 'running'`,
-        )
-        .get(),
-    ]);
+      )
+      .get(),
+    db.prepare(`SELECT COUNT(*) AS cnt FROM deals WHERE is_active = 1`).get(),
+    db
+      .prepare(
+        `SELECT COUNT(*) AS cnt FROM crawl_runs WHERE status = 'running'`,
+      )
+      .get(),
+  ]);
 
   const historyRow = lastCrawlRow?.crawl_date
     ? await db
-      .prepare(
-        `SELECT COUNT(*) AS cnt
+        .prepare(
+          `SELECT COUNT(*) AS cnt
          FROM deal_price_history
          WHERE crawl_date = ?`,
-      )
-      .get(lastCrawlRow.crawl_date)
+        )
+        .get(lastCrawlRow.crawl_date)
     : { cnt: 0 };
 
   const dbLatencyMs = Date.now() - startMs;
@@ -131,20 +130,19 @@ router.get("/detail", requireAuth, async (_req, res) => {
   try {
     const data = await gatherHealthData();
 
-    const [recentRuns, latestCrawlJob] =
-      await Promise.all([
-        db
-          .prepare(
-            `SELECT id, crawl_date, started_at, finished_at, status,
+    const [recentRuns, latestCrawlJob] = await Promise.all([
+      db
+        .prepare(
+          `SELECT id, crawl_date, started_at, finished_at, status,
                   stores_attempted, stores_succeeded, deals_found,
                   json(errors) AS errors
            FROM crawl_runs
            ORDER BY started_at DESC
            LIMIT 7`,
-          )
-          .all(),
-        latestJobRun(db, "full_crawl"),
-      ]);
+        )
+        .all(),
+      latestJobRun(db, "full_crawl"),
+    ]);
 
     res.set("Cache-Control", "no-store");
     res.json({
