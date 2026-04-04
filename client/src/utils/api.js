@@ -133,6 +133,10 @@ export function fetchDeals(params) {
   return request("/deals", params);
 }
 
+export function fetchDealStores(params) {
+  return request("/deals/stores", params);
+}
+
 export async function fetchDealById(dealId) {
   const res = await request("/deals", { deal_id: dealId, limit: 1 });
   return res?.data?.[0] || null;

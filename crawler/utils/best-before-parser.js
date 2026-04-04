@@ -41,11 +41,11 @@ const MONTH_MAP = {
 // All recognised best-before keywords (German + English)
 // bbd = "Best Before Date" used by indiansupermarkt.de e.g. "(BBD : 22 October 2025)"
 const KEYWORD =
-  /\b(mhd|bbe|b\.b\.e|best[\s-]?before|bbd|bb|expiry[\s-]?date|mhb|mindestens[\s-]?haltbar[\s-]?bis|mindesthaltbarkeitsdatum|haltbarkeitsdatum|mindesthaltbarkeit|ablauf)\b/i;
+  /\b(mhd|bbe|b\.b\.e|best[\s-]?before|bbd|bb|expiry(?:[\s-]?date)?|exp|mhb|mindestens[\s-]?haltbar[\s-]?bis|mindesthaltbarkeitsdatum|haltbarkeitsdatum|mindesthaltbarkeit|ablauf)\b/i;
 
 // Shared keyword group used inside each extraction pattern
 const KW =
-  "(?:mhd|bbe|b\\.b\\.e|best[\\s-]?before|bbd|bb|expiry[\\s-]?date|mhb|mindestens[\\s-]?haltbar[\\s-]?bis|mindesthaltbarkeitsdatum|haltbarkeitsdatum|mindesthaltbarkeit|ablauf)";
+  "(?:mhd|bbe|b\\.b\\.e|best[\\s-]?before|bbd|bb|expiry(?:[\\s-]?date)?|exp|mhb|mindestens[\\s-]?haltbar[\\s-]?bis|mindesthaltbarkeitsdatum|haltbarkeitsdatum|mindesthaltbarkeit|ablauf)";
 
 const MONTH_PATTERN = Object.keys(MONTH_MAP)
   .sort((a, b) => b.length - a.length)

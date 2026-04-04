@@ -13,6 +13,10 @@ function resolveImage($img, baseUrl) {
     $img.attr("data-src"),
     $img.attr("data-original"),
     $img.attr("data-lazy-src"),
+    $img.attr("data-lazyloadsrc"),
+    $img.attr("data-o_src"),
+    $img.attr("data-large_image"),
+    $img.attr("data-thumb"),
   ];
 
   // srcset: pick the highest-width descriptor
@@ -37,20 +41,20 @@ function resolveImage($img, baseUrl) {
 
   candidates.push($img.attr("src"));
 
-  const url = candidates.find((c) => c && c.trim() !== "");
+  const url = candidates.find(
+    (candidate) =>
+      candidate &&
+      candidate.trim() !== "" &&
+      !/^data:image\//i.test(candidate.trim()),
+  );
   if (!url) return null;
 
-  // Resolve relative URLs
-  if (url.startsWith("//")) return "https:" + url;
-  if (url.startsWith("/") && baseUrl) {
-    try {
-      const base = new URL(baseUrl);
-      return `${base.protocol}//${base.host}${url}`;
-    } catch {
-      return url;
-    }
+  try {
+    return new URL(url, baseUrl).toString();
+  } catch {
+    if (url.startsWith("//")) return `https:${url}`;
+    return url;
   }
-  return url;
 }
 
 module.exports = { resolveImage };

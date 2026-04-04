@@ -3,7 +3,7 @@ import { Link, useNavigate, useParams, useSearchParams } from "react-router-dom"
 import useDeals from "../hooks/useDeals";
 import { formatBestBefore, formatPrice, formatPricePerKg } from "../utils/formatters";
 import {
-  addBookmark, fetchBookmarks, fetchDeals, fetchOAuthAuthUrl,
+  addBookmark, fetchBookmarks, fetchDealStores, fetchDeals, fetchOAuthAuthUrl,
   getAuthSession, logoutUser, removeBookmark,
 } from "../utils/api";
 import {
@@ -11,6 +11,7 @@ import {
   readDealsViewState,
 } from "../utils/dealsViewState.mjs";
 import { trackAnalyticsEvent } from "../utils/analytics";
+import { proxyDealImageUrl } from "../utils/images";
 import { buildDealPageUrl, buildWhatsAppDealShareUrl } from "../utils/share";
 
 const POST_AUTH_REDIRECT_STORAGE_KEY = "dd24_post_auth_redirect";
@@ -209,19 +210,6 @@ function LoginModal({ message, resumeState, onClose }) {
 }
 
 // ── Helpers ───────────────────────────────────────────────────────────────────
-function proxyImageUrl(imageUrl) {
-  if (!imageUrl) return null;
-  if (/^https?:\/\//i.test(imageUrl)) {
-    // Shopify CDN supports native resizing via ?width= — avoids downloading 2000x2000 images
-    if (/cdn\.shopify\.com/i.test(imageUrl)) {
-      const sep = imageUrl.includes("?") ? "&" : "?";
-      return `${imageUrl}${sep}width=400`;
-    }
-    return imageUrl;
-  }
-  return `/api/v1/admin/proxy/image?url=${encodeURIComponent(imageUrl)}`;
-}
-
 function resolveUrl(deal, url) {
   const raw = String(url || "").trim();
   if (!raw) return "";
@@ -260,7 +248,7 @@ function DealCard({
   analyticsContext,
 }) {
   const [imgError, setImgError] = useState(false);
-  const proxyImg = proxyImageUrl(deal?.image_url);
+  const proxyImg = proxyDealImageUrl(deal);
   const discountPct = deal?.discount_percent ? Math.round(deal.discount_percent) : null;
   const bestBeforeText = deal?.best_before ? formatBestBefore(deal.best_before) : null;
   const priceText = formatPrice(deal.sale_price, deal.currency);
@@ -408,7 +396,7 @@ const SORT_OPTIONS = [
 
 // ── Filters modal ─────────────────────────────────────────────────────────────
 function FiltersModal({ storeNames, draft, onChange, onClear, onApply, onClose, isLoggedIn, onSignIn }) {
-  const { store, category } = draft;
+  const { stores = [], category } = draft;
 
   function handleApply() {
     if (!isLoggedIn) { onSignIn(); return; }
@@ -444,12 +432,22 @@ function FiltersModal({ storeNames, draft, onChange, onClear, onApply, onClose, 
             <div className="flex flex-wrap gap-2">
               {["All stores", ...storeNames].map((name) => {
                 const val = name === "All stores" ? "" : name;
-                const active = store === val;
+                const active = val === "" ? stores.length === 0 : stores.includes(val);
                 return (
                   <button
                     key={name}
                     type="button"
-                    onClick={() => onChange({ ...draft, store: val })}
+                    onClick={() => {
+                      if (val === "") {
+                        onChange({ ...draft, stores: [] });
+                        return;
+                      }
+
+                      const nextStores = stores.includes(val)
+                        ? stores.filter((entry) => entry !== val)
+                        : [...stores, val];
+                      onChange({ ...draft, stores: nextStores });
+                    }}
                     className={`px-4 py-2 rounded-full border text-[14px] font-medium transition-colors ${
                       active ? "bg-[#0f172a] border-[#0f172a] text-white" : "bg-white border-slate-200 text-[#0f172a] hover:border-slate-400"
                     }`}
@@ -739,7 +737,7 @@ function BookmarksPanel({ bookmarkedDeals, bookmarkedIds, onRemove, onClose }) {
             <div key={deal.id} className="flex items-center gap-3 px-4 py-3 hover:bg-slate-50 transition-colors">
               <div className="w-10 h-10 rounded-lg bg-slate-100 flex items-center justify-center overflow-hidden shrink-0">
                 {deal.image_url ? (
-                  <img src={proxyImageUrl(deal.image_url)} alt="" className="w-full h-full object-contain" onError={(e) => { e.target.style.display = "none"; }} />
+                  <img src={proxyDealImageUrl(deal)} alt="" className="w-full h-full object-contain" onError={(e) => { e.target.style.display = "none"; }} />
                 ) : (
                   <span className="text-[16px]">🛒</span>
                 )}

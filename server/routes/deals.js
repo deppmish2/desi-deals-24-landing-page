@@ -130,6 +130,13 @@ function paginateSequential(deals, pageSize, pageNum) {
   };
 }
 
+function parseCsvList(value) {
+  return String(value || "")
+    .split(",")
+    .map((entry) => entry.trim())
+    .filter(Boolean);
+}
+
 function serializeDeal(row) {
   return {
     id: row.id,
@@ -184,6 +191,43 @@ const FAST_CURRENT_DEALS_WHERE_SQL = `
   AND lower(d.store_id) NOT IN (${EXCLUDED_STORE_IDS_SQL})
   AND ${DISPLAYABLE_DISCOUNT_SQL}
 `;
+
+router.get("/stores", async (req, res, next) => {
+  try {
+    const onlyInStock = req.query.in_stock !== "0";
+    const rows = await db
+      .prepare(
+        `SELECT
+           d.store_id,
+           s.name AS store_name,
+           COUNT(*) AS deal_count
+         FROM deals d
+         JOIN stores s ON s.id = d.store_id
+         WHERE d.is_active = 1
+           AND lower(d.store_id) NOT IN (${EXCLUDED_STORE_IDS_SQL})
+           AND ${DISPLAYABLE_DISCOUNT_SQL}
+           ${onlyInStock ? "AND lower(coalesce(d.availability, '')) = 'in_stock'" : ""}
+         GROUP BY d.store_id, s.name
+         ORDER BY s.name ASC`,
+      )
+      .all();
+
+    res.set(
+      "Cache-Control",
+      "public, s-maxage=300, stale-while-revalidate=3600",
+    );
+
+    res.json({
+      data: rows.map((row) => ({
+        id: row.store_id,
+        name: row.store_name,
+        deal_count: Number(row.deal_count || 0),
+      })),
+    });
+  } catch (error) {
+    next(error);
+  }
+});
 
 function resolveAccessSecret() {
   return (
@@ -249,7 +293,7 @@ router.get("/", async (req, res, next) => {
       Boolean(rawSearchQuery) &&
       pageNum === 1 &&
       String(req.query.track_search || "").trim() === "1";
-    const filterStore = String(req.query.store || "").trim();
+    const filterStores = parseCsvList(req.query.stores || req.query.store);
     const focusDealId = String(req.query.deal_id || "").trim();
     const { cacheKey, crawlDate } = await getCurrentDealsSnapshotContext();
 
@@ -310,7 +354,7 @@ router.get("/", async (req, res, next) => {
     const canUseFastPath = Boolean(
       !focusDealId &&
       !searchQuery &&
-      !filterStore &&
+      filterStores.length === 0 &&
       !filterCategory &&
       minDiscount <= 0 &&
       priceMin <= 0 &&
@@ -403,8 +447,9 @@ router.get("/", async (req, res, next) => {
         fuzzySearch(`${d.product_name || ""} ${d.store?.name || ""} ${d.product_category || ""}`, searchQuery),
       );
     }
-    if (filterStore) {
-      filtered = filtered.filter((d) => d.store?.name === filterStore);
+    if (filterStores.length > 0) {
+      const storeFilterSet = new Set(filterStores);
+      filtered = filtered.filter((d) => storeFilterSet.has(d.store?.name));
     }
     if (filterCategory) {
       filtered = filtered.filter((d) => d.product_category === filterCategory);
@@ -526,6 +571,7 @@ router.get("/", async (req, res, next) => {
         limit: limitNum,
         sort: sort || "random",
         search: searchQuery || null,
+        store_filters: filterStores,
       },
     });
   } catch (error) {
