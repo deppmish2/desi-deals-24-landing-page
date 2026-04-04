@@ -830,7 +830,7 @@ export default function DealsPage() {
   const [filtersOpen, setFiltersOpen] = useState(false);
   const [confirmClearOpen, setConfirmClearOpen] = useState(false);
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
-  const [filterDraft, setFilterDraft] = useState({ store: "", category: "", minDiscount: "", priceMin: "", priceMax: "", hideExpired: false });
+  const [filterDraft, setFilterDraft] = useState({ stores: [], category: "", minDiscount: "", priceMin: "", priceMax: "", hideExpired: false });
   const [loginModal, setLoginModal] = useState(null);
   const [bookmarkedIds, setBookmarkedIds] = useState(new Set());
   const [bookmarkedDeals, setBookmarkedDeals] = useState({});
@@ -843,7 +843,7 @@ export default function DealsPage() {
     searchQuery,
     sortValue,
     page,
-    filterStore,
+    filterStores,
     filterCategory,
     filterMinDiscount,
     filterPriceMin,
@@ -854,7 +854,7 @@ export default function DealsPage() {
   const [session, setSession] = useState(() => getAuthSession());
   const isLoggedIn = Boolean(session?.accessToken);
   const analyticsFilterCount =
-    Number(Boolean(filterStore)) +
+    Number(filterStores.length > 0) +
     Number(Boolean(filterCategory)) +
     Number(Boolean(filterMinDiscount)) +
     Number(Boolean(filterPriceMin || filterPriceMax)) +
@@ -865,7 +865,7 @@ export default function DealsPage() {
       searchInput,
       searchQuery,
       sortValue,
-      filterStore,
+      filterStores,
       filterCategory,
       filterMinDiscount,
       filterPriceMin,
@@ -880,7 +880,7 @@ export default function DealsPage() {
       filterMinDiscount,
       filterPriceMax,
       filterPriceMin,
-      filterStore,
+      filterStores,
       page,
       searchInput,
       searchQuery,
@@ -913,7 +913,7 @@ export default function DealsPage() {
         searchQuery,
         sortValue,
         page,
-        filterStore,
+        filterStores,
         filterCategory,
         filterMinDiscount,
         filterPriceMin,
@@ -932,7 +932,7 @@ export default function DealsPage() {
       filterMinDiscount,
       filterPriceMax,
       filterPriceMin,
-      filterStore,
+      filterStores,
       page,
       routeDealId,
       searchParams,
@@ -973,7 +973,7 @@ export default function DealsPage() {
       if (!resumeState || typeof resumeState !== "object") return;
 
       const nextDraft = {
-        store: resumeState.filterStore || "",
+        stores: Array.isArray(resumeState.filterStores) ? resumeState.filterStores : [],
         category: resumeState.filterCategory || "",
         minDiscount: resumeState.filterMinDiscount || "",
         priceMin: resumeState.filterPriceMin || "",
@@ -992,7 +992,7 @@ export default function DealsPage() {
               Number.isInteger(resumeState.page) && resumeState.page > 0
                 ? resumeState.page
                 : 1,
-            filterStore: nextDraft.store,
+            filterStores: nextDraft.stores,
             filterCategory: nextDraft.category,
             filterMinDiscount: nextDraft.minDiscount,
             filterPriceMin: nextDraft.priceMin,
@@ -1030,7 +1030,7 @@ export default function DealsPage() {
     track_search:
       nextSearchShouldTrackRef.current && searchQuery ? "1" : undefined,
     sort: sortValue && isLoggedIn ? sortValue : undefined,
-    store: filterStore && isLoggedIn ? filterStore : undefined,
+    store: filterStores.length > 0 && isLoggedIn ? filterStores.join(",") : undefined,
     category: filterCategory && isLoggedIn ? filterCategory : undefined,
     min_discount: filterMinDiscount && isLoggedIn ? filterMinDiscount : undefined,
     price_min: filterPriceMin && isLoggedIn ? filterPriceMin : undefined,
@@ -1146,14 +1146,14 @@ export default function DealsPage() {
 
   function openFilters() {
     trackAnalyticsEvent("filters_open", buildAnalyticsContext());
-    setFilterDraft({ store: filterStore, category: filterCategory, minDiscount: filterMinDiscount, priceMin: filterPriceMin, priceMax: filterPriceMax, hideExpired: filterHideExpired });
+    setFilterDraft({ stores: filterStores, category: filterCategory, minDiscount: filterMinDiscount, priceMin: filterPriceMin, priceMax: filterPriceMax, hideExpired: filterHideExpired });
     setFiltersOpen(true);
   }
 
   function handleFiltersSignIn() {
     trackAnalyticsEvent("filters_apply_login_required", buildAnalyticsContext({
       filterCount:
-        Number(Boolean(filterDraft.store)) +
+        Number(filterDraft.stores.length > 0) +
         Number(Boolean(filterDraft.category)) +
         Number(Boolean(filterDraft.minDiscount)) +
         Number(Boolean(filterDraft.priceMin || filterDraft.priceMax)) +
@@ -1164,7 +1164,7 @@ export default function DealsPage() {
       "Sign in to filter by store and category.",
       undefined,
       createResumeState({
-        filterStore: filterDraft.store,
+        filterStores: filterDraft.stores,
         filterCategory: filterDraft.category,
         filterMinDiscount: filterDraft.minDiscount,
         filterPriceMin: filterDraft.priceMin,
@@ -1178,19 +1178,19 @@ export default function DealsPage() {
   function applyFilters() {
     trackAnalyticsEvent("filters_apply", buildAnalyticsContext({
       filterCount:
-        Number(Boolean(filterDraft.store)) +
+        Number(filterDraft.stores.length > 0) +
         Number(Boolean(filterDraft.category)) +
         Number(Boolean(filterDraft.minDiscount)) +
         Number(Boolean(filterDraft.priceMin || filterDraft.priceMax)) +
         Number(Boolean(filterDraft.hideExpired)),
-      has_store: filterDraft.store ? 1 : 0,
+      has_store: filterDraft.stores.length > 0 ? 1 : 0,
       has_category: filterDraft.category ? 1 : 0,
       has_min_discount: filterDraft.minDiscount ? 1 : 0,
       has_price_range: filterDraft.priceMin || filterDraft.priceMax ? 1 : 0,
       hide_expired: filterDraft.hideExpired ? 1 : 0,
     }));
     updateAppliedState({
-      filterStore: filterDraft.store,
+      filterStores: filterDraft.stores,
       filterCategory: filterDraft.category,
       filterMinDiscount: filterDraft.minDiscount,
       filterPriceMin: filterDraft.priceMin,
@@ -1203,7 +1203,7 @@ export default function DealsPage() {
 
   function clearFilters() {
     trackAnalyticsEvent("filters_clear_draft", buildAnalyticsContext());
-    setFilterDraft({ store: "", category: "", minDiscount: "", priceMin: "", priceMax: "", hideExpired: false });
+    setFilterDraft({ stores: [], category: "", minDiscount: "", priceMin: "", priceMax: "", hideExpired: false });
   }
 
   function clearSearchAndFilters() {
@@ -1212,7 +1212,7 @@ export default function DealsPage() {
     updateAppliedState({
       searchQuery: "",
       sortValue: "",
-      filterStore: "",
+      filterStores: [],
       filterCategory: "",
       filterMinDiscount: "",
       filterPriceMin: "",
@@ -1221,7 +1221,7 @@ export default function DealsPage() {
       page: 1,
     });
     setFilterDraft({
-      store: "",
+      stores: [],
       category: "",
       minDiscount: "",
       priceMin: "",
@@ -1246,11 +1246,11 @@ export default function DealsPage() {
     updateAppliedState({ searchQuery: nextQuery, page: 1 });
   }
 
-  function removeFilterChip(type) {
+  function removeFilterChip(type, label) {
     trackAnalyticsEvent("filter_chip_remove", buildAnalyticsContext({
       filter_type: type,
     }));
-    if (type === "store") updateAppliedState({ filterStore: "", page: 1 });
+    if (type === "store") updateAppliedState({ filterStores: filterStores.filter((s) => s !== label), page: 1 });
     if (type === "category") updateAppliedState({ filterCategory: "", page: 1 });
     if (type === "sort") updateAppliedState({ sortValue: "", page: 1 });
     if (type === "minDiscount") updateAppliedState({ filterMinDiscount: "", page: 1 });
@@ -1331,7 +1331,7 @@ export default function DealsPage() {
   }
 
   const activeChips = [
-    filterStore && { type: "store", label: filterStore },
+    ...filterStores.map((s) => ({ type: "store", label: s })),
     filterCategory && { type: "category", label: filterCategory },
     filterMinDiscount && { type: "minDiscount", label: `${filterMinDiscount}%+ off` },
     (filterPriceMin || filterPriceMax) && {
@@ -1707,11 +1707,11 @@ export default function DealsPage() {
                       </span>
                     )}
                     {activeChips.map((chip) => (
-                      <span key={chip.type} className="flex items-center gap-2 rounded-[10px] border border-[#dfe7f5] bg-white px-3 py-2 shadow-sm">
+                      <span key={`${chip.type}-${chip.label}`} className="flex items-center gap-2 rounded-[10px] border border-[#dfe7f5] bg-white px-3 py-2 shadow-sm">
                         <span className="text-[13px] font-semibold text-slate-700">{chip.label}</span>
                         <button
                           type="button"
-                          onClick={() => removeFilterChip(chip.type)}
+                          onClick={() => removeFilterChip(chip.type, chip.label)}
                           className="flex items-center justify-center w-[18px] h-[18px] rounded-full bg-slate-100 text-slate-400 transition-colors hover:bg-slate-200 hover:text-slate-600"
                         >
                           <CloseIcon size={8} />
