@@ -9,6 +9,7 @@ const {
   getDealStoreId,
   seededShuffle,
 } = require("../services/deal-order");
+const { filterAndRankDealsByQuery } = require("../services/deal-search");
 const { trackEvent } = require("../services/event-tracker");
 const { formatBerlinDateKey } = require("../services/berlin-time");
 const { trackSearchQuery } = require("../services/search-tracker");
@@ -80,43 +81,6 @@ async function getCurrentDealsSnapshotContext() {
     expiresAt: Date.now() + SNAPSHOT_CONTEXT_TTL_MS,
   };
   return snapshotContext;
-}
-
-// Levenshtein distance — used for fuzzy token matching.
-function levenshtein(a, b) {
-  const m = a.length,
-    n = b.length;
-  if (m === 0) return n;
-  if (n === 0) return m;
-  const dp = Array.from({ length: m + 1 }, (_, i) => [i]);
-  for (let j = 1; j <= n; j++) dp[0][j] = j;
-  for (let i = 1; i <= m; i++) {
-    for (let j = 1; j <= n; j++) {
-      dp[i][j] =
-        a[i - 1] === b[j - 1]
-          ? dp[i - 1][j - 1]
-          : 1 + Math.min(dp[i - 1][j], dp[i][j - 1], dp[i - 1][j - 1]);
-    }
-  }
-  return dp[m][n];
-}
-
-// Returns true if any word in `text` fuzzy-matches `token`.
-// Exact substring match first; falls back to edit-distance tolerance
-// scaled by token length (1 error per 4 chars, min threshold 1).
-function fuzzyTokenMatch(text, token) {
-  if (!text || !token) return false;
-  if (text.includes(token)) return true;
-  const words = text.split(/\s+/);
-  const tolerance = Math.max(1, Math.floor(token.length / 4));
-  return words.some((w) => levenshtein(w, token) <= tolerance);
-}
-
-// Split query into tokens and require all to match somewhere in the target.
-function fuzzySearch(haystack, query) {
-  const tokens = query.toLowerCase().split(/\s+/).filter(Boolean);
-  const text = haystack.toLowerCase();
-  return tokens.every((tok) => fuzzyTokenMatch(text, tok));
 }
 
 function paginateSequential(deals, pageSize, pageNum) {
@@ -445,11 +409,11 @@ router.get("/", async (req, res, next) => {
     // Apply filters (all gated in frontend, server supports freely)
     let filtered = allDeals;
     if (searchQuery) {
-      filtered = filtered.filter((d) =>
-        fuzzySearch(
-          `${d.product_name || ""} ${d.store?.name || ""} ${d.product_category || ""}`,
-          searchQuery,
-        ),
+      filtered = filterAndRankDealsByQuery(
+        filtered,
+        searchQuery,
+        (deal) =>
+          `${deal?.product_name || ""} ${deal?.store?.name || ""} ${deal?.product_category || ""}`,
       );
     }
     if (filterStores.length > 0) {

@@ -8,6 +8,60 @@ const router = Router();
 
 router.use(requireAdminAuth);
 
+function realEmailSql(columnSql) {
+  const normalized = `lower(trim(coalesce(${columnSql}, '')))`;
+  return `(
+    ${normalized} <> ''
+    AND ${normalized} NOT LIKE '%@example.com'
+    AND ${normalized} NOT LIKE '%@example.org'
+    AND ${normalized} NOT LIKE '%@example.net'
+    AND ${normalized} NOT LIKE '%@desideals24.local'
+    AND ${normalized} NOT LIKE '%@localhost'
+  )`;
+}
+
+function realOrAnonymousSearchEmailSql(columnSql) {
+  const normalized = `lower(trim(coalesce(${columnSql}, '')))`;
+  return `(
+    ${normalized} = ''
+    OR (
+      ${normalized} NOT LIKE '%@example.com'
+      AND ${normalized} NOT LIKE '%@example.org'
+      AND ${normalized} NOT LIKE '%@example.net'
+      AND ${normalized} NOT LIKE '%@desideals24.local'
+      AND ${normalized} NOT LIKE '%@localhost'
+    )
+  )`;
+}
+
+function serializeDashboardUser(row) {
+  const normalizedUserType = String(row?.user_type || "")
+    .trim()
+    .toLowerCase();
+  let status = "signed_up";
+
+  if (Number(row?.is_admin) === 1) {
+    status = "admin";
+  } else if (normalizedUserType === "premium") {
+    status = "premium";
+  } else if (normalizedUserType === "basic") {
+    status = "basic";
+  } else if (row?.email_verified_at) {
+    status = "verified";
+  }
+
+  return {
+    email: row.email,
+    name: row.first_name || row.name || null,
+    created_at: row.created_at,
+    last_login_at: row.last_login_at || null,
+    email_verified: !!row.email_verified_at,
+    user_type: normalizedUserType || null,
+    is_admin: Number(row.is_admin) === 1,
+    status,
+  };
+}
+
 function isMissingSchemaError(error) {
   const message = String(error?.message || "").toLowerCase();
   return (
@@ -62,22 +116,36 @@ router.get("/stats", async (req, res) => {
       topSearchTerms,
       recentSearches,
       recentUsers,
+      allUsers,
       latestCrawlRun,
       recentCrawlRuns,
     ] = await Promise.all([
-      safeGet("SELECT COUNT(*) as count FROM users"),
       safeGet(
-        "SELECT COUNT(*) as count FROM users WHERE created_at >= datetime('now', '-30 days')",
+        `SELECT COUNT(*) as count
+         FROM users
+         WHERE ${realEmailSql("email")}`,
+      ),
+      safeGet(
+        `SELECT COUNT(*) as count
+         FROM users
+         WHERE ${realEmailSql("email")}
+           AND created_at >= datetime('now', '-30 days')`,
         [],
         { count: 0 },
       ),
       safeGet(
-        "SELECT COUNT(*) as count FROM search_queries WHERE created_at >= datetime('now', 'start of day')",
+        `SELECT COUNT(*) as count
+         FROM search_queries
+         WHERE created_at >= datetime('now', 'start of day')
+           AND ${realOrAnonymousSearchEmailSql("user_email")}`,
         [],
         { count: 0 },
       ),
       safeGet(
-        "SELECT COUNT(*) as count FROM search_queries WHERE created_at >= datetime('now', '-30 days')",
+        `SELECT COUNT(*) as count
+         FROM search_queries
+         WHERE created_at >= datetime('now', '-30 days')
+           AND ${realOrAnonymousSearchEmailSql("user_email")}`,
         [],
         { count: 0 },
       ),
@@ -92,6 +160,7 @@ router.get("/stats", async (req, res) => {
         ) as count
         FROM search_queries
         WHERE created_at >= datetime('now', '-30 days')
+          AND ${realOrAnonymousSearchEmailSql("user_email")}
       `,
         [],
         { count: 0 },
@@ -100,7 +169,8 @@ router.get("/stats", async (req, res) => {
         `
         SELECT date(created_at) as day, COUNT(*) as count
         FROM users
-        WHERE created_at >= date('now', '-30 days')
+        WHERE ${realEmailSql("email")}
+          AND created_at >= date('now', '-30 days')
         GROUP BY date(created_at)
         ORDER BY day ASC
       `,
@@ -110,6 +180,7 @@ router.get("/stats", async (req, res) => {
         SELECT date(created_at) as day, COUNT(*) as count
         FROM search_queries
         WHERE created_at >= date('now', '-30 days')
+          AND ${realOrAnonymousSearchEmailSql("user_email")}
         GROUP BY date(created_at)
         ORDER BY day ASC
       `,
@@ -129,6 +200,7 @@ router.get("/stats", async (req, res) => {
           ) as unique_searchers
         FROM search_queries
         WHERE created_at >= datetime('now', '-30 days')
+          AND ${realOrAnonymousSearchEmailSql("user_email")}
         GROUP BY normalized_query
         ORDER BY search_count DESC, normalized_query ASC
         LIMIT 15
@@ -138,16 +210,29 @@ router.get("/stats", async (req, res) => {
         `
         SELECT query, normalized_query, user_email, session_id, result_count, created_at
         FROM search_queries
+        WHERE ${realOrAnonymousSearchEmailSql("user_email")}
         ORDER BY created_at DESC
         LIMIT 30
       `,
       ),
       safeAll(
         `
-        SELECT email, first_name, name, created_at, last_login_at, email_verified_at
+        SELECT email, first_name, name, created_at, last_login_at, email_verified_at, user_type, is_admin
         FROM users
+        WHERE ${realEmailSql("email")}
         ORDER BY created_at DESC
         LIMIT 20
+      `,
+      ),
+      safeAll(
+        `
+        SELECT email, first_name, name, created_at, last_login_at, email_verified_at, user_type, is_admin
+        FROM users
+        WHERE ${realEmailSql("email")}
+        ORDER BY
+          COALESCE(last_login_at, created_at) DESC,
+          created_at DESC,
+          email ASC
       `,
       ),
       safeGet(
@@ -278,13 +363,8 @@ router.get("/stats", async (req, res) => {
         result_count: r.result_count == null ? null : Number(r.result_count),
         created_at: r.created_at,
       })),
-      recent_users: recentUsers.map((r) => ({
-        email: r.email,
-        name: r.first_name || r.name || null,
-        created_at: r.created_at,
-        last_login_at: r.last_login_at || null,
-        email_verified: !!r.email_verified_at,
-      })),
+      recent_users: recentUsers.map((r) => serializeDashboardUser(r)),
+      all_users: allUsers.map((r) => serializeDashboardUser(r)),
     });
   } catch (err) {
     console.error("[admin-dashboard] stats error:", err);

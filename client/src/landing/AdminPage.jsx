@@ -117,6 +117,34 @@ function StatusPill({ status }) {
   );
 }
 
+function UserStatusPill({ user }) {
+  const status = String(user?.status || "").toLowerCase();
+  let label = "Signed up";
+  let styles = "bg-slate-100 text-slate-500";
+
+  if (status === "admin") {
+    label = "Admin";
+    styles = "bg-violet-50 text-violet-700";
+  } else if (status === "premium") {
+    label = "Premium";
+    styles = "bg-amber-50 text-amber-700";
+  } else if (status === "basic") {
+    label = "Basic";
+    styles = "bg-emerald-50 text-emerald-700";
+  } else if (status === "verified") {
+    label = "Verified";
+    styles = "bg-green-50 text-green-700";
+  }
+
+  return (
+    <span
+      className={`shrink-0 px-2 py-0.5 rounded-full text-[10px] font-bold uppercase tracking-wide ${styles}`}
+    >
+      {label}
+    </span>
+  );
+}
+
 export default function AdminPage() {
   const navigate = useNavigate();
   const [stats, setStats] = useState(null);
@@ -209,7 +237,7 @@ export default function AdminPage() {
     searches_by_day,
     top_search_terms,
     recent_searches,
-    recent_users,
+    all_users,
   } = stats;
 
   return (
@@ -541,48 +569,49 @@ export default function AdminPage() {
 
         <div className="bg-white rounded-2xl border border-slate-100 shadow-sm px-6 py-5">
           <div className="text-[11px] font-bold uppercase tracking-[1.2px] text-slate-400 mb-4">
-            Recent users
+            All current users
           </div>
-          {recent_users.length === 0 ? (
+          {all_users.length === 0 ? (
             <div className="text-slate-300 text-sm py-4">No users yet</div>
           ) : (
-            <div className="space-y-3">
-              {recent_users.map((user) => (
-                <div
-                  key={user.email}
-                  className="flex items-center justify-between gap-3"
-                >
-                  <div className="min-w-0">
-                    <div className="text-[13px] font-medium text-slate-700 truncate">
-                      {user.name || user.email.split("@")[0]}
-                    </div>
-                    <div className="text-[11px] text-slate-400 truncate">
-                      {user.email}
-                    </div>
-                    {user.created_at && (
-                      <div className="text-[10px] text-slate-300 mt-0.5">
-                        Joined{" "}
-                        {new Date(user.created_at).toLocaleString("en-GB", {
-                          day: "2-digit",
-                          month: "short",
-                          year: "numeric",
-                          hour: "2-digit",
-                          minute: "2-digit",
-                        })}
-                      </div>
-                    )}
-                  </div>
-                  <span
-                    className={`shrink-0 px-2 py-0.5 rounded-full text-[10px] font-bold uppercase tracking-wide ${
-                      user.email_verified
-                        ? "bg-green-50 text-green-700"
-                        : "bg-slate-100 text-slate-500"
-                    }`}
-                  >
-                    {user.email_verified ? "Verified" : "Signed up"}
-                  </span>
-                </div>
-              ))}
+            <div className="overflow-x-auto">
+              <table className="w-full min-w-[720px] text-sm">
+                <thead>
+                  <tr className="text-left text-[10px] font-bold uppercase tracking-[1px] text-slate-400 border-b border-slate-100">
+                    <th className="pb-2 pr-4">User</th>
+                    <th className="pb-2 pr-4">Email</th>
+                    <th className="pb-2 pr-4">Status</th>
+                    <th className="pb-2 pr-4">Joined</th>
+                    <th className="pb-2">Last login</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {all_users.map((user) => (
+                    <tr
+                      key={user.email}
+                      className="border-b border-slate-50 last:border-0"
+                    >
+                      <td className="py-3 pr-4">
+                        <div className="font-medium text-slate-700">
+                          {user.name || user.email.split("@")[0]}
+                        </div>
+                      </td>
+                      <td className="py-3 pr-4 text-[12px] text-slate-500">
+                        {user.email}
+                      </td>
+                      <td className="py-3 pr-4">
+                        <UserStatusPill user={user} />
+                      </td>
+                      <td className="py-3 pr-4 text-[12px] text-slate-500">
+                        {formatDateTime(user.created_at)}
+                      </td>
+                      <td className="py-3 text-[12px] text-slate-500">
+                        {formatDateTime(user.last_login_at)}
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
             </div>
           )}
         </div>
