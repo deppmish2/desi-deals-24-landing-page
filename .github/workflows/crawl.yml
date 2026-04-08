@@ -2,8 +2,8 @@ name: Daily Crawl
 
 on:
   schedule:
-    - cron: "0 6 * * *"
-    - cron: "0 7 * * *"
+    - cron: "0 8 * * *"
+    - timezone: "Europe/Berlin"
   workflow_dispatch:
 
 concurrency:
@@ -13,7 +13,7 @@ concurrency:
 jobs:
   crawl:
     runs-on: ubuntu-latest
-    timeout-minutes: 90
+    timeout-minutes: 180
 
     steps:
       - name: Checkout
@@ -25,34 +25,10 @@ jobs:
           node-version: 20
           cache: npm
 
-      - name: Decide Berlin crawl window
-        id: gate
-        shell: bash
-        run: |
-          berlin_hour="$(TZ=Europe/Berlin date +%H)"
-          berlin_date="$(TZ=Europe/Berlin date +%F)"
-          echo "berlin_hour=$berlin_hour" >> "$GITHUB_OUTPUT"
-          echo "berlin_date=$berlin_date" >> "$GITHUB_OUTPUT"
-
-          if [ "${{ github.event_name }}" = "workflow_dispatch" ] || [ "$berlin_hour" = "08" ]; then
-            echo "should_run=true" >> "$GITHUB_OUTPUT"
-          else
-            echo "should_run=false" >> "$GITHUB_OUTPUT"
-          fi
-
-      - name: Skip outside Berlin window
-        if: steps.gate.outputs.should_run != 'true'
-        run: |
-          echo "Skipping crawl."
-          echo "Berlin date: ${{ steps.gate.outputs.berlin_date }}"
-          echo "Berlin hour: ${{ steps.gate.outputs.berlin_hour }}"
-
       - name: Install dependencies
-        if: steps.gate.outputs.should_run == 'true'
         run: npm ci
 
       - name: Run full daily crawl into Turso
-        if: steps.gate.outputs.should_run == 'true'
         env:
           TURSO_DATABASE_URL: ${{ secrets.TURSO_DATABASE_URL }}
           TURSO_AUTH_TOKEN: ${{ secrets.TURSO_AUTH_TOKEN }}
@@ -62,7 +38,6 @@ jobs:
         run: npm run crawl
 
       - name: Warm public deals cache
-        if: steps.gate.outputs.should_run == 'true'
         env:
           CLIENT_APP_URL: ${{ secrets.CLIENT_APP_URL }}
         shell: bash
