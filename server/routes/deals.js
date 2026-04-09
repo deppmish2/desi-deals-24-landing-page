@@ -481,12 +481,19 @@ router.get("/", async (req, res, next) => {
 
     const total = filtered.length;
     const uniqueStoreCount = new Set(filtered.map((deal) => getDealStoreId(deal) || "__unknown__")).size;
+    const DISPLAY_OPTS = {
+      maxStoreRatio: 0.25,
+      qualityFloorRatio: 0.40,
+      qualityMinDiscount: 25,
+      qualityPages: 2,
+    };
     const pageLayout = usesExplicitOrdering
       ? null
       : buildDiversifiedPages(
         filtered,
         limitNum,
         dateSeed(`${cacheKey}:${sort || "random"}:${limitNum}`),
+        DISPLAY_OPTS,
       );
     const orderedPage = usesExplicitOrdering
       ? paginateSequential(filtered, limitNum, pageNum)

@@ -484,7 +484,7 @@ async function refreshDailyDisplayOrder(db, crawlDate) {
 
   const activeRows = await db
     .prepare(
-      `SELECT id, store_id
+      `SELECT id, store_id, discount_percent
        FROM deals
        WHERE is_active = 1
          AND lower(coalesce(store_id, '')) NOT IN (${EXCLUDED_DISPLAY_STORE_IDS_SQL})
@@ -493,7 +493,14 @@ async function refreshDailyDisplayOrder(db, crawlDate) {
     )
     .all();
 
-  const orderedRows = buildStableDisplayOrder(activeRows, 20, dateSeed(crawlDate));
+  const PAGE_SIZE = 20;
+  const DISPLAY_OPTS = {
+    maxStoreRatio: 0.25,      // max 25% of any page from one store
+    qualityFloorRatio: 0.40,  // at least 40% of each early page has discount > 25%
+    qualityMinDiscount: 25,
+    qualityPages: 2,          // enforce floor on pages 1 and 2
+  };
+  const orderedRows = buildStableDisplayOrder(activeRows, PAGE_SIZE, dateSeed(crawlDate), DISPLAY_OPTS);
   if (orderedRows.length === 0) return 0;
 
   const statements = orderedRows.map((deal, index) => ({
