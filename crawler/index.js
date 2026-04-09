@@ -6,6 +6,9 @@ const { v4: uuidv4 } = require("uuid");
 
 const { parseBestBefore } = require("./utils/best-before-parser");
 const { acquireCrawlLock, releaseCrawlLock } = require("./utils/snapshot");
+const { loadPriorityCanonicals, autoMapDeals } = require("./utils/auto-mapper");
+const { runPass1 } = require("./utils/pass1-fetcher");
+const { recordStoreHistory, purgeOldHistory } = require("../server/services/price-history-recorder");
 const {
   logInfo,
   logWarn,
@@ -313,6 +316,56 @@ async function replaceDailyPriceHistoryForStore(
   return deals.length;
 }
 
+/**
+ * Insert Pass 1 non-deal price snapshots without deleting existing history.
+ * Uses INSERT OR IGNORE so products already recorded by Pass 2 (on-sale today)
+ * are skipped — keeping the is_deal=1 record from Pass 2.
+ */
+async function insertPass1Snapshots(db, snapshots, crawlDate) {
+  if (!Array.isArray(snapshots) || snapshots.length === 0) return 0;
+
+  const sql = `INSERT OR IGNORE INTO deal_price_history
+    (id, crawl_date, crawl_run_id, crawl_timestamp, store_id,
+     product_name, product_category, product_url,
+     weight_raw, weight_value, weight_unit,
+     sale_price, original_price, discount_percent,
+     price_per_kg, price_per_unit, currency, availability,
+     bulk_pricing, best_before, is_deal)
+   VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 0)`;
+
+  let written = 0;
+  for (const s of snapshots) {
+    try {
+      await db.execute(sql, [
+        s.id,
+        crawlDate,
+        s.crawl_run_id,
+        s.crawl_timestamp,
+        s.store_id,
+        s.product_name,
+        s.product_category,
+        s.product_url,
+        s.weight_raw,
+        s.weight_value,
+        s.weight_unit,
+        s.sale_price,
+        s.original_price,
+        s.discount_percent,
+        s.price_per_kg,
+        s.price_per_unit,
+        s.currency,
+        s.availability,
+        s.bulk_pricing,
+        s.best_before,
+      ]);
+      written++;
+    } catch (_) {
+      // UNIQUE constraint — product already recorded by Pass 2 today, skip
+    }
+  }
+  return written;
+}
+
 function buildNormalizedScrapedDeals(rawDeals, storeId, runId, crawlTimestamp) {
   const seenProductUrls = new Set();
 
@@ -539,6 +592,12 @@ async function runCrawl(db, options = {}) {
       )
       .run(runId, crawlDate, startedAt);
 
+    // Load priority canonical products once for auto-mapping during Pass 2
+    const priorityCanonicals = await loadPriorityCanonicals(db);
+    if (priorityCanonicals.length > 0) {
+      logInfo("run", `Pass 1 prep: ${priorityCanonicals.length} priority canonicals loaded`);
+    }
+
     for (const adapter of adapters) {
       storesAttempted += 1;
       const storeStartedAt = new Date().toISOString();
@@ -558,13 +617,23 @@ async function runCrawl(db, options = {}) {
           crawlTimestamp,
         );
         const stats = await reconcileStoreDeals(db, adapter.storeId, deals);
-        const historyCount = await replaceDailyPriceHistoryForStore(db, {
+        const historyCount = await recordStoreHistory(db, {
           crawlDate,
           crawlRunId: runId,
           crawlTimestamp,
           storeId: adapter.storeId,
           deals,
         });
+
+        // Auto-map scraped deals to priority canonical products for future Pass 1
+        if (priorityCanonicals.length > 0) {
+          const mapped = await autoMapDeals(db, deals, priorityCanonicals);
+          if (mapped > 0) {
+            logInfo("store", `Auto-mapped ${mapped} deals to priority canonicals`, {
+              store_id: adapter.storeId,
+            });
+          }
+        }
 
         await db
           .prepare(
@@ -640,6 +709,33 @@ async function runCrawl(db, options = {}) {
       if (adapters.indexOf(adapter) < adapters.length - 1) {
         await randomDelay();
       }
+    }
+
+    // Pass 1: fetch non-deal prices for priority products (after Pass 2 so
+    // INSERT OR IGNORE correctly defers to any is_deal=1 records written above)
+    try {
+      const crawlTimestampPass1 = new Date().toISOString();
+      const pass1Snapshots = await runPass1(db, {
+        crawlRunId: runId,
+        crawlDate,
+        crawlTimestamp: crawlTimestampPass1,
+        logInfo,
+        logWarn,
+      });
+      if (pass1Snapshots.length > 0) {
+        const pass1Written = await insertPass1Snapshots(db, pass1Snapshots, crawlDate);
+        historyRowsWritten += pass1Written;
+        logInfo("run", `Pass 1 complete: ${pass1Written} non-deal price snapshots written`);
+      }
+    } catch (pass1Error) {
+      logWarn("run", `Pass 1 failed: ${pass1Error.message}`);
+    }
+
+    // Purge price history older than 180 days
+    try {
+      await purgeOldHistory(db);
+    } catch (purgeError) {
+      logWarn("run", `History purge failed: ${purgeError.message}`);
     }
 
     const finishedAt = new Date().toISOString();

@@ -262,6 +262,7 @@ function DealCard({
   const [imgError, setImgError] = useState(false);
   const proxyImg = proxyImageUrl(deal?.image_url);
   const discountPct = deal?.discount_percent ? Math.round(deal.discount_percent) : null;
+  const realSavings = deal?.real_savings ?? null;
   const bestBeforeText = deal?.best_before ? formatBestBefore(deal.best_before) : null;
   const priceText = formatPrice(deal.sale_price, deal.currency);
   const originalPriceText = deal.original_price ? formatPrice(deal.original_price, deal.currency) : null;
@@ -332,6 +333,44 @@ function DealCard({
           </div>
         </div>
 
+        {realSavings ? (() => {
+          const realPct = Math.round(realSavings.real_discount_pct);
+          const gap = discountPct ? Math.abs(realSavings.real_discount_pct - discountPct) : 0;
+          const isGreat = realSavings.rating === "great";
+          const isGood  = realSavings.rating === "good";
+          return (
+            <div className={`flex items-center justify-between rounded-[14px] px-3.5 py-3 ${
+              isGreat || isGood ? "bg-[#f0fdf4] border border-[#bbf7d0]" : "bg-[#f8fafc] border border-[#e2e8f0]"
+            }`}>
+              <div className="flex items-center gap-2.5">
+                <div className={`shrink-0 w-7 h-7 rounded-full flex items-center justify-center ${
+                  isGreat || isGood ? "bg-[#16a34a]" : "bg-slate-300"
+                }`}>
+                  <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="3.2" strokeLinecap="round" strokeLinejoin="round">
+                    <polyline points="20 6 9 17 4 12"/>
+                  </svg>
+                </div>
+                <div>
+                  <p className={`text-[10px] font-extrabold uppercase tracking-[1.4px] leading-none mb-[3px] ${
+                    isGreat || isGood ? "text-[#15803d]" : "text-slate-400"
+                  }`}>Real Savings</p>
+                  <p className="text-[11px] text-slate-400 leading-none">
+                    {realSavings.reference_source === "store_original" ? "vs store's original price" : "vs market price"}
+                  </p>
+                </div>
+              </div>
+              <div className="text-right">
+                <p className={`text-[22px] font-extrabold leading-none ${
+                  isGreat || isGood ? "text-[#16a34a]" : "text-slate-500"
+                }`}>{realPct}%</p>
+                {gap >= 3 && discountPct && (
+                  <p className="text-[10px] text-slate-400 leading-none mt-1">store says {discountPct}%</p>
+                )}
+              </div>
+            </div>
+          );
+        })() : null}
+
         <div className="mt-auto flex items-center gap-2 pt-2">
           <a
             href={resolveUrl(deal, deal.product_url)}
@@ -401,6 +440,7 @@ const CATEGORIES = [
 
 const SORT_OPTIONS = [
   { value: "", label: "Random order", compactLabel: "Random order" },
+  { value: "real_savings", label: "Sort: Real Savings", compactLabel: "Real Savings" },
   { value: "discount", label: "Sort: Max Discount", compactLabel: "Max Discount" },
   { value: "price_per_kg", label: "Sort: Lowest /Kg Price", compactLabel: "Lowest Price / Kg" },
   { value: "price", label: "Sort: Lowest Price", compactLabel: "Lowest Price" },
@@ -609,7 +649,7 @@ function FiltersModal({ storeNames, draft, onChange, onClear, onApply, onClose, 
 }
 
 // ── Sort dropdown ─────────────────────────────────────────────────────────────
-function SortDropdown({ value, onChange, isLoggedIn, onRequireLogin }) {
+function SortDropdown({ value, onChange, isLoggedIn, onRequireLogin, toolbar = false }) {
   const [open, setOpen] = useState(false);
   const ref = useRef(null);
   const current = SORT_OPTIONS.find((o) => o.value === value);
@@ -639,33 +679,43 @@ function SortDropdown({ value, onChange, isLoggedIn, onRequireLogin }) {
 
   return (
     <div className="relative w-auto max-w-full" ref={ref}>
-      <button
-        type="button"
-        onClick={handleOpen}
-        className={`inline-flex max-w-full items-center justify-between gap-3 rounded-[24px] border px-4 py-3.5 text-left shadow-sm transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-[#17874a]/25 focus-visible:ring-offset-2 focus-visible:ring-offset-[#edf3ff] lg:bg-transparent lg:px-0 lg:py-0 lg:border-transparent lg:shadow-none lg:hover:border-transparent lg:hover:bg-transparent lg:focus-visible:ring-offset-0 ${
-          isActive
-            ? "border-[#17874a] bg-[#eff8f1] hover:bg-[#e6f4eb]"
-            : "border-[#dfe7f5] bg-white hover:border-[#b6c7e2] hover:bg-white"
-        }`}
-      >
-        <span className="flex min-w-0 items-center gap-2.5">
-          <span className={`text-[11px] font-extrabold uppercase tracking-[1.6px] sm:text-[12px] ${isActive ? "text-[#17874a]" : "text-slate-400"}`}>
-            <span className="sm:hidden">Sort By</span>
-            <span className="hidden sm:inline">{isActive ? "Sort By:" : "Sort By"}</span>
-          </span>
-          {/* Mobile: just a dot when active */}
+      {toolbar ? (
+        <button
+          type="button"
+          onClick={handleOpen}
+          className={`relative inline-flex min-h-[58px] items-center justify-center gap-2 rounded-[22px] border border-white/80 bg-white px-4 py-3.5 text-[14px] font-bold shadow-sm transition-colors hover:bg-slate-50 focus:outline-none ${
+            isActive ? "text-[#17874a]" : "text-slate-600"
+          }`}
+        >
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round">
+            <line x1="3" y1="6" x2="21" y2="6"/><line x1="7" y1="12" x2="17" y2="12"/><line x1="11" y1="18" x2="13" y2="18"/>
+          </svg>
+          <span>{isActive ? current?.compactLabel : "Sort By"}</span>
           {isActive && (
-            <span className="sm:hidden inline-block w-[7px] h-[7px] rounded-full bg-[#17874a]" />
+            <span className="absolute -top-1 -right-1 min-w-[8px] h-[8px] rounded-full bg-[#17874a]" />
           )}
-          {/* Desktop: show the active label */}
-          {isActive && (
-            <span className="hidden sm:inline text-[14px] font-extrabold text-[#17874a] sm:text-[16px]">
-              {current?.compactLabel}
+        </button>
+      ) : (
+        <button
+          type="button"
+          onClick={handleOpen}
+          className={`inline-flex max-w-full items-center justify-between gap-3 rounded-[24px] border px-4 py-3.5 text-left shadow-sm transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-[#17874a]/25 focus-visible:ring-offset-2 focus-visible:ring-offset-[#edf3ff] ${
+            isActive
+              ? "border-[#17874a] bg-[#eff8f1] hover:bg-[#e6f4eb]"
+              : "border-[#dfe7f5] bg-white hover:border-[#b6c7e2] hover:bg-white"
+          }`}
+        >
+          <span className="flex min-w-0 items-center gap-2.5">
+            <span className={`text-[11px] font-extrabold uppercase tracking-[1.6px] sm:text-[12px] ${isActive ? "text-[#17874a]" : "text-slate-400"}`}>
+              {isActive ? "Sort By:" : "Sort By"}
             </span>
-          )}
-        </span>
-        <ChevronDownIcon size={16} color={isActive ? "#17874a" : "#94a3b8"} />
-      </button>
+            {isActive && (
+              <span className="text-[14px] font-extrabold text-[#17874a]">{current?.compactLabel}</span>
+            )}
+          </span>
+          <ChevronDownIcon size={16} color={isActive ? "#17874a" : "#94a3b8"} />
+        </button>
+      )}
       {open && (
         <div className="absolute right-0 top-full z-20 mt-3 overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-xl min-w-[180px] w-max">
           {SORT_OPTIONS.map((opt) => {
@@ -1632,16 +1682,32 @@ export default function DealsPage() {
                   <button
                     type="button"
                     onClick={openFilters}
-                    className="relative hidden min-h-[58px] items-center justify-center gap-2 rounded-[22px] border border-white/80 bg-white px-4 py-3.5 text-[14px] font-bold text-slate-600 shadow-sm transition-colors hover:bg-slate-50 sm:inline-flex xl:min-w-[76px]"
+                    className="relative hidden min-h-[58px] items-center justify-center gap-2 rounded-[22px] border border-white/80 bg-white px-4 py-3.5 text-[14px] font-bold text-slate-600 shadow-sm transition-colors hover:bg-slate-50 sm:inline-flex"
                   >
                     <FilterIcon size={18} color="currentColor" />
-                    <span className="xl:hidden">Filters</span>
+                    <span>Filters</span>
                     {filterCount > 0 && (
                       <span className="absolute -top-1 -right-1 min-w-[22px] h-[22px] px-1 rounded-full bg-[#9a6500] text-white text-[11px] font-extrabold flex items-center justify-center leading-none">
                         {filterCount}
                       </span>
                     )}
                   </button>
+
+                  <div className="hidden sm:block">
+                    <SortDropdown
+                      toolbar
+                      value={isLoggedIn ? sortValue : ""}
+                      onChange={handleSortChange}
+                      isLoggedIn={isLoggedIn}
+                      onRequireLogin={(nextValue) =>
+                        requireLogin(
+                          "Sorting is for registered members only.",
+                          undefined,
+                          createResumeState({ sortValue: nextValue, page: 1 }),
+                        )
+                      }
+                    />
+                  </div>
 
                 </div>
               </div>
@@ -1674,7 +1740,7 @@ export default function DealsPage() {
                     </div>
                   </div>
 
-                  <div className="shrink-0">
+                  <div className="shrink-0 sm:hidden">
                     <SortDropdown
                       value={isLoggedIn ? sortValue : ""}
                       onChange={handleSortChange}

@@ -100,6 +100,7 @@ CREATE TABLE IF NOT EXISTS deal_price_history (
   availability      TEXT DEFAULT 'unknown',
   bulk_pricing      TEXT,
   best_before       TEXT,
+  is_deal           INTEGER DEFAULT 0,
   created_at        DATETIME DEFAULT CURRENT_TIMESTAMP,
   UNIQUE (crawl_date, store_id, product_url)
 );
@@ -264,6 +265,7 @@ CREATE TABLE IF NOT EXISTS canonical_products (
   base_unit       TEXT,
   image_url       TEXT,
   verified        INTEGER DEFAULT 0,
+  is_priority     INTEGER DEFAULT 0,
   created_at      DATETIME DEFAULT CURRENT_TIMESTAMP
 );
 

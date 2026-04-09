@@ -217,6 +217,8 @@ const ready = (async () => {
     "ALTER TABLE waitlist_referrals DROP COLUMN invited_user_id_user_id",
     "ALTER TABLE waitlist_referrals DROP COLUMN inviter_user_id_user_id",
     "ALTER TABLE users ADD COLUMN is_admin INTEGER NOT NULL DEFAULT 0",
+    "ALTER TABLE canonical_products ADD COLUMN is_priority INTEGER DEFAULT 0",
+    "ALTER TABLE deal_price_history ADD COLUMN is_deal INTEGER DEFAULT 0",
     `CREATE TABLE IF NOT EXISTS bookmarks (
       id TEXT PRIMARY KEY,
       user_id TEXT NOT NULL REFERENCES users(id) ON DELETE CASCADE,
