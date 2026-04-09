@@ -2,7 +2,7 @@ name: Daily Crawl
 
 on:
   schedule:
-    - cron: "0 7 * * *"  # 07:00 UTC = 08:00 CET / 09:00 CEST
+    - cron: "50 5 * * *" # start once daily, then wait until 08:00 Europe/Berlin
   workflow_dispatch:
 
 concurrency:
@@ -23,6 +23,30 @@ jobs:
         with:
           node-version: 20
           cache: npm
+
+      - name: Wait for 08:00 Europe/Berlin
+        shell: bash
+        run: |
+          berlin_date="$(TZ=Europe/Berlin date +%F)"
+          berlin_now="$(TZ=Europe/Berlin date '+%F %T %Z')"
+          target_epoch="$(TZ=Europe/Berlin date -d "$berlin_date 08:00:00" +%s)"
+          now_epoch="$(date +%s)"
+          sleep_seconds=$((target_epoch - now_epoch))
+
+          echo "Berlin now: $berlin_now"
+          echo "Berlin target date: $berlin_date"
+
+          if [ "${{ github.event_name }}" = "workflow_dispatch" ]; then
+            echo "Manual run detected; starting crawl immediately."
+            exit 0
+          fi
+
+          if [ "$sleep_seconds" -gt 0 ]; then
+            echo "Waiting $sleep_seconds seconds until 08:00 Europe/Berlin."
+            sleep "$sleep_seconds"
+          else
+            echo "Already at or past 08:00 Europe/Berlin; continuing immediately."
+          fi
 
       - name: Install dependencies
         run: npm ci
