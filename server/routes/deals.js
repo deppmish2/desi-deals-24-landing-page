@@ -451,28 +451,23 @@ router.get("/", async (req, res, next) => {
       );
     } else if (sort === "real_savings") {
       // Fetch real_savings for all filtered deals, then sort by real_discount_pct desc
-      const allUrls = filtered.map((d) => d.product_url);
-      const rsMap = await batchGetRealSavings(db, allUrls);
+      const rsMap = await batchGetRealSavings(db, filtered);
       const rsScores = new Map(
         filtered.map((d) => {
-          const hist = rsMap.get(d.product_url);
-          const rs = computeRealSavings(d, hist);
-          return [d.product_url + d.id, rs?.real_discount_pct ?? -1];
+          const rs = computeRealSavings(d, rsMap.get(d.id));
+          return [d.id, rs?.real_discount_pct ?? -1];
         }),
       );
       filtered = [...filtered].sort(
-        (a, b) =>
-          (rsScores.get(b.product_url + b.id) ?? -1) -
-          (rsScores.get(a.product_url + a.id) ?? -1),
+        (a, b) => (rsScores.get(b.id) ?? -1) - (rsScores.get(a.id) ?? -1),
       );
     }
 
     // Filter by minimum real savings gap (real_discount_pct vs stated discount_percent)
     if (realSavingsGap > 0) {
-      const allUrls = filtered.map((d) => d.product_url);
-      const rsMapForGap = await batchGetRealSavings(db, allUrls);
+      const rsMapForGap = await batchGetRealSavings(db, filtered);
       filtered = filtered.filter((d) => {
-        const rs = computeRealSavings(d, rsMapForGap.get(d.product_url));
+        const rs = computeRealSavings(d, rsMapForGap.get(d.id));
         if (!rs) return false;
         const stated = Number(d.discount_percent) || 0;
         return Math.abs(rs.real_discount_pct - stated) >= realSavingsGap;
@@ -506,10 +501,10 @@ router.get("/", async (req, res, next) => {
       : pageLayout.pages[pageNum - 1] || [];
 
     // Attach Real Savings ratings (graceful no-op if history table not yet populated)
-    const realSavingsMap = await batchGetRealSavings(db, data.map((d) => d.product_url));
+    const realSavingsMap = await batchGetRealSavings(db, data);
     const dataWithSavings = data.map((deal) => ({
       ...deal,
-      real_savings: computeRealSavings(deal, realSavingsMap.get(deal.product_url)),
+      real_savings: computeRealSavings(deal, realSavingsMap.get(deal.id)),
     }));
 
     // CDN caches for 5 min; serves stale up to 1h while revalidating.

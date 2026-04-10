@@ -2,19 +2,22 @@
 /**
  * real-savings.js
  *
- * Computes a "Real Savings" rating for a deal, answering:
- * "How good is this discount compared to what this product normally costs?"
+ * Computes a "Real Savings" rating for a deal answering:
+ * "How good is this discount compared to what this brand normally costs per kg?"
  *
- * Two evidence layers (used in priority order):
- *   Layer 1 — Historical median: median sale_price for this product_url
- *             over the last 90 days in deal_price_history (non-deal rows only).
- *   Layer 2 — Stated original_price: the original_price field from the deal
- *             itself (store-reported, less reliable).
+ * Reference price is canonical-level: we aggregate price_per_kg across ALL
+ * pack sizes of the same brand+product (e.g. all Aashirvaad Chakki Atta SKUs
+ * across all stores), then compare the deal's price_per_kg against that median.
+ * This correctly handles 2 kg vs 5 kg comparisons without needing separate
+ * canonicals per pack size.
  *
- * Returns null if there is insufficient evidence to compute a meaningful rating.
+ * Evidence layers (priority order):
+ *   Layer 1 — Canonical median price_per_kg: non-deal rows in deal_price_history
+ *             linked to the same canonical via deal_mappings, last 90 days.
+ *   Layer 2 — Stated original_price: store-reported, less reliable.
+ *             Only used when no canonical price_per_kg history exists.
  *
- * Requires deal_price_history.is_deal column (added by setup-real-savings-local.js
- * locally, or by the production migration when deployed).
+ * Returns null if there is insufficient evidence.
  */
 
 /** @param {number[]} values */
@@ -28,127 +31,163 @@ function median(values) {
 }
 
 /**
- * Batch-fetch Real Savings data for a page of deals.
+ * Batch-fetch Real Savings reference data for a page of deals.
  *
- * @param {object}   db          - The db shim from server/db/index.js
- * @param {string[]} productUrls - product_url values for the current page
- * @returns {Promise<Map<string, object|null>>} - productUrl → real_savings object or null
+ * For each deal that has a canonical mapping, fetches the median price_per_kg
+ * of non-deal historical rows for that canonical (all brands+sizes pooled by
+ * canonical = same brand+product). Falls back to product_url-level sale_price
+ * history when no canonical or no price_per_kg data exists.
+ *
+ * @param {object}   db    - DB shim from server/db/index.js
+ * @param {Array}    deals - Deal objects; each must have { id, product_url, price_per_kg }
+ * @returns {Promise<Map<string, object|null>>} - deal.id → reference data or null
  */
-async function batchGetRealSavings(db, productUrls) {
+async function batchGetRealSavings(db, deals) {
   const result = new Map();
-  if (!productUrls || productUrls.length === 0) return result;
+  if (!deals || deals.length === 0) return result;
 
-  // Deduplicate
-  const urls = [...new Set(productUrls.filter(Boolean))];
-  if (urls.length === 0) return result;
+  for (const deal of deals) result.set(deal.id, null);
 
-  const placeholders = urls.map(() => "?").join(", ");
+  // ── Layer 1: canonical price_per_kg history ──────────────────────────────
 
-  // Try with is_deal column first; fall back to query without it if column missing
-  let rows;
-  const baseQuery = `
-    SELECT product_url, sale_price, {IS_DEAL_COL}
-    FROM deal_price_history
-    WHERE product_url IN (${placeholders})
-      AND crawl_date >= date('now', '-90 days')
-      AND sale_price IS NOT NULL`;
+  // Fetch canonical mappings for all deals in one query
+  const dealIds = deals.map((d) => d.id).filter(Boolean);
+  if (dealIds.length === 0) return result;
 
+  let canonicalMap; // deal.id → canonical_id
   try {
-    const res = await db.execute(
-      baseQuery.replace("{IS_DEAL_COL}", "is_deal"),
-      urls,
+    const placeholders = dealIds.map(() => "?").join(", ");
+    const mappingRes = await db.execute(
+      `SELECT deal_id, canonical_id FROM deal_mappings WHERE deal_id IN (${placeholders})`,
+      dealIds,
     );
-    rows = res.rows ?? [];
-  } catch (e) {
-    if (!/no such column/i.test(e.message)) throw e;
-    // is_deal column not yet migrated — query without it, treat all rows as non-deal
+    canonicalMap = new Map((mappingRes.rows ?? []).map((r) => [r.deal_id, r.canonical_id]));
+  } catch (_) {
+    canonicalMap = new Map();
+  }
+
+  // Collect unique canonical_ids that have deals on this page
+  const canonicalIds = [...new Set([...canonicalMap.values()].filter(Boolean))];
+
+  if (canonicalIds.length > 0) {
     try {
-      const res = await db.execute(
-        baseQuery.replace("{IS_DEAL_COL}", "0 AS is_deal"),
-        urls,
+      const placeholders = canonicalIds.map(() => "?").join(", ");
+      // Join through deals table (product_url links deal_price_history ↔ deals)
+      const histRes = await db.execute(
+        `SELECT dm.canonical_id, dph.price_per_kg, dph.is_deal
+         FROM deal_price_history dph
+         JOIN deals d ON d.product_url = dph.product_url
+         JOIN deal_mappings dm ON dm.deal_id = d.id
+         WHERE dm.canonical_id IN (${placeholders})
+           AND dph.is_deal = 0
+           AND dph.crawl_date >= date('now', '-90 days')
+           AND dph.price_per_kg IS NOT NULL
+           AND dph.price_per_kg > 0`,
+        canonicalIds,
       );
-      rows = res.rows ?? [];
-    } catch (e2) {
-      if (/no such table/i.test(e2.message)) return result;
-      throw e2;
+
+      // Group non-deal price_per_kg values by canonical
+      const byCanonical = new Map();
+      for (const row of histRes.rows ?? []) {
+        const cid = row.canonical_id;
+        if (!byCanonical.has(cid)) byCanonical.set(cid, []);
+        const ppk = Number(row.price_per_kg);
+        if (Number.isFinite(ppk)) byCanonical.get(cid).push(ppk);
+      }
+
+      // Assign reference to each deal via its canonical
+      for (const deal of deals) {
+        const cid = canonicalMap.get(deal.id);
+        if (!cid) continue;
+        const prices = byCanonical.get(cid);
+        if (!prices || prices.length === 0) continue;
+        const refPpk = median(prices);
+        if (refPpk != null) {
+          result.set(deal.id, {
+            reference_price_per_kg: Math.round(refPpk * 100) / 100,
+            reference_source: "canonical_historical",
+            observations: prices.length,
+            canonical_id: cid,
+          });
+        }
+      }
+    } catch (_) {
+      // price_per_kg or deal_mappings not available — fall through to Layer 2
     }
   }
 
-  // Group by product_url
-  const byUrl = new Map();
-  for (const row of rows) {
-    const url = row.product_url;
-    if (!byUrl.has(url)) byUrl.set(url, { allPrices: [], nonDealPrices: [] });
-    const entry = byUrl.get(url);
-    const price = Number(row.sale_price);
-    if (!Number.isFinite(price)) continue;
-    entry.allPrices.push(price);
-    if (!row.is_deal) entry.nonDealPrices.push(price);
-  }
-
-  for (const url of urls) {
-    result.set(url, null); // default: no data
-    const entry = byUrl.get(url);
-    if (!entry) continue;
-
-    // Prefer median of non-deal prices; fall back to all-prices median (need ≥2 observations)
-    const refPrice =
-      median(entry.nonDealPrices) ??
-      (entry.allPrices.length >= 2 ? median(entry.allPrices) : null);
-
-    if (refPrice != null) {
-      result.set(url, {
-        reference_price: Math.round(refPrice * 100) / 100,
-        reference_source: entry.nonDealPrices.length > 0 ? "historical_non_deal" : "historical_all",
-        observations: entry.allPrices.length,
-      });
-    }
-  }
+  // ── Layer 2: fall back to stated original_price for deals without canonical data ──
+  // (handled in computeRealSavings — no DB query needed here)
 
   return result;
 }
 
 /**
- * Compute Real Savings rating for a single serialised deal object.
+ * Compute Real Savings rating for a single deal.
  *
- * @param {object}          deal              - Serialised deal (from serializeDeal)
- * @param {object|null}     historyData       - Entry from batchGetRealSavings map
+ * Compares price_per_kg when canonical history is available (Layer 1),
+ * otherwise falls back to comparing sale_price vs original_price (Layer 2).
+ *
+ * @param {object}      deal         - Serialised deal (from serializeDeal)
+ * @param {object|null} historyData  - Entry from batchGetRealSavings map
  * @returns {object|null}
  */
 function computeRealSavings(deal, historyData) {
+  // ── Layer 1: canonical price_per_kg comparison ───────────────────────────
+  if (historyData?.reference_price_per_kg) {
+    const dealPpk = Number(deal.price_per_kg);
+    if (!Number.isFinite(dealPpk) || dealPpk <= 0) {
+      // No price_per_kg on this deal — fall through to Layer 2
+    } else {
+      const refPpk = historyData.reference_price_per_kg;
+      if (refPpk <= dealPpk) return null; // not cheaper than reference
+
+      const realDiscountPct = ((refPpk - dealPpk) / refPpk) * 100;
+      const rounded = Math.round(realDiscountPct * 10) / 10;
+
+      let rating;
+      if (rounded >= 25) rating = "great";
+      else if (rounded >= 15) rating = "good";
+      else if (rounded >= 5) rating = "low";
+      else return null;
+
+      return {
+        reference_price_per_kg: refPpk,
+        reference_source: historyData.reference_source,
+        real_discount_pct: rounded,
+        rating,
+        observations: historyData.observations ?? null,
+        canonical_id: historyData.canonical_id ?? null,
+      };
+    }
+  }
+
+  // ── Layer 2: stated original_price fallback ──────────────────────────────
   const currentPrice = Number(deal.sale_price);
   if (!Number.isFinite(currentPrice) || currentPrice <= 0) return null;
 
-  // Determine reference price: historical median preferred, then original_price
-  let referencePrice = null;
-  let referenceSource = null;
+  if (deal.original_price && Number(deal.original_price) > currentPrice) {
+    const referencePrice = Number(deal.original_price);
+    const realDiscountPct = ((referencePrice - currentPrice) / referencePrice) * 100;
+    const rounded = Math.round(realDiscountPct * 10) / 10;
 
-  if (historyData?.reference_price) {
-    referencePrice = historyData.reference_price;
-    referenceSource = historyData.reference_source;
-  } else if (deal.original_price && Number(deal.original_price) > currentPrice) {
-    referencePrice = Number(deal.original_price);
-    referenceSource = "store_original";
+    let rating;
+    if (rounded >= 25) rating = "great";
+    else if (rounded >= 15) rating = "good";
+    else if (rounded >= 5) rating = "low";
+    else return null;
+
+    return {
+      reference_price: referencePrice,
+      reference_source: "store_original",
+      real_discount_pct: rounded,
+      rating,
+      observations: null,
+      canonical_id: null,
+    };
   }
 
-  if (!referencePrice || referencePrice <= currentPrice) return null;
-
-  const realDiscountPct = ((referencePrice - currentPrice) / referencePrice) * 100;
-  const rounded = Math.round(realDiscountPct * 10) / 10;
-
-  let rating;
-  if (rounded >= 25) rating = "great";
-  else if (rounded >= 15) rating = "good";
-  else if (rounded >= 5)  rating = "low";
-  else return null; // discount too small to surface
-
-  return {
-    reference_price: referencePrice,
-    reference_source: referenceSource,
-    real_discount_pct: rounded,
-    rating,
-    observations: historyData?.observations ?? null,
-  };
+  return null;
 }
 
 module.exports = { batchGetRealSavings, computeRealSavings };
