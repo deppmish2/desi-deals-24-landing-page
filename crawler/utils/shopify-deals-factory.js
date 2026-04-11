@@ -1,10 +1,6 @@
 "use strict";
 
-const {
-  parsePrice,
-  calcDiscount,
-  calcPricePerKg,
-} = require("./price-parser");
+const { parsePrice, calcDiscount, calcPricePerKg } = require("./price-parser");
 const { parseWeight } = require("./weight-parser");
 const { mapCategory } = require("./category-mapper");
 const {
@@ -98,7 +94,10 @@ function createShopifyDealsAdapter({
         if (seen.has(product.id)) continue;
         seen.add(product.id);
 
-        const deal = mapShopifyProduct({ storeId, storeName, storeUrl }, product);
+        const deal = mapShopifyProduct(
+          { storeId, storeName, storeUrl },
+          product,
+        );
         if (deal) deals.push(deal);
       }
     }

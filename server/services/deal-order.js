@@ -1,7 +1,7 @@
 "use strict";
 
 function seededRandom(seed) {
-  let s = (seed >>> 0) || 1;
+  let s = seed >>> 0 || 1;
   return function () {
     s ^= s << 13;
     s ^= s >> 17;
@@ -49,7 +49,8 @@ function scoreStoreCandidate(
   remaining,
   storePriority,
 ) {
-  const expectedPlaced = ((totalPerStore.get(storeId) || 0) / totalDeals) * position;
+  const expectedPlaced =
+    ((totalPerStore.get(storeId) || 0) / totalDeals) * position;
   const deficit = expectedPlaced - (placedPerStore.get(storeId) || 0);
   return {
     storeId,

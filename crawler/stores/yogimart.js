@@ -53,7 +53,9 @@ async function scrape() {
     seen.add(absoluteUrl);
 
     const originalPrice =
-      originalPriceRaw && originalPriceRaw > salePrice ? originalPriceRaw : null;
+      originalPriceRaw && originalPriceRaw > salePrice
+        ? originalPriceRaw
+        : null;
     const discountPercent = calcDiscount(salePrice, originalPrice);
     if (!originalPrice || !(discountPercent > 0)) return;
 

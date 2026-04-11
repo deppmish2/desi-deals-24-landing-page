@@ -190,7 +190,10 @@ async function startInMemoryApi(app) {
     return res;
   }
 
-  async function request(pathname, { method = "GET", headers = {}, body } = {}) {
+  async function request(
+    pathname,
+    { method = "GET", headers = {}, body } = {},
+  ) {
     const reqHeaders = {};
     for (const [key, value] of Object.entries(headers || {})) {
       reqHeaders[String(key).toLowerCase()] = value;
@@ -219,8 +222,11 @@ async function startInMemoryApi(app) {
 }
 
 function seedShareableDeal(db, { id, imageUrl }) {
-  db.prepare("INSERT INTO stores (id, name, url) VALUES (?, ?, ?)")
-    .run("store-1", "Test Store", "https://shop.example.com");
+  db.prepare("INSERT INTO stores (id, name, url) VALUES (?, ?, ?)").run(
+    "store-1",
+    "Test Store",
+    "https://shop.example.com",
+  );
 
   db.prepare(
     `INSERT INTO deals (

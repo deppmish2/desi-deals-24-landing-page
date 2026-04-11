@@ -86,13 +86,17 @@ function clientBuildExists() {
 }
 
 function escapeHtml(value) {
-  return String(value || "").replace(/[&<>"']/g, (char) => ({
-    "&": "&amp;",
-    "<": "&lt;",
-    ">": "&gt;",
-    '"': "&quot;",
-    "'": "&#39;",
-  })[char]);
+  return String(value || "").replace(
+    /[&<>"']/g,
+    (char) =>
+      ({
+        "&": "&amp;",
+        "<": "&lt;",
+        ">": "&gt;",
+        '"': "&quot;",
+        "'": "&#39;",
+      })[char],
+  );
 }
 
 function escapeRegex(value) {
@@ -118,15 +122,40 @@ function injectClientMeta(html, meta) {
   );
   next = replaceMetaContent(next, "name", "description", meta.description);
   next = replaceMetaContent(next, "property", "og:title", meta.title);
-  next = replaceMetaContent(next, "property", "og:description", meta.description);
+  next = replaceMetaContent(
+    next,
+    "property",
+    "og:description",
+    meta.description,
+  );
   next = replaceMetaContent(next, "property", "og:url", meta.url);
   next = replaceMetaContent(next, "property", "og:image", meta.image);
-  next = replaceMetaContent(next, "property", "og:image:alt", meta.imageAlt || meta.title);
-  next = replaceMetaContent(next, "property", "og:type", meta.type || "website");
+  next = replaceMetaContent(
+    next,
+    "property",
+    "og:image:alt",
+    meta.imageAlt || meta.title,
+  );
+  next = replaceMetaContent(
+    next,
+    "property",
+    "og:type",
+    meta.type || "website",
+  );
   next = replaceMetaContent(next, "name", "twitter:title", meta.title);
-  next = replaceMetaContent(next, "name", "twitter:description", meta.description);
+  next = replaceMetaContent(
+    next,
+    "name",
+    "twitter:description",
+    meta.description,
+  );
   next = replaceMetaContent(next, "name", "twitter:image", meta.image);
-  next = replaceMetaContent(next, "name", "twitter:image:alt", meta.imageAlt || meta.title);
+  next = replaceMetaContent(
+    next,
+    "name",
+    "twitter:image:alt",
+    meta.imageAlt || meta.title,
+  );
   return next;
 }
 
@@ -224,10 +253,12 @@ function buildDealOgImageUrl(baseUrl, deal) {
 }
 
 async function buildDealMeta(req, dealId, options = {}) {
-  const deal = options.deal || await getShareableDeal(dealId);
+  const deal = options.deal || (await getShareableDeal(dealId));
   if (!deal) return null;
   const baseUrl = getPublicBaseUrl(req);
-  const sharePath = String(options.sharePath || `/deal/${encodeURIComponent(String(deal.id))}`);
+  const sharePath = String(
+    options.sharePath || `/deal/${encodeURIComponent(String(deal.id))}`,
+  );
   const shareUrl = `${baseUrl}${sharePath.startsWith("/") ? "" : "/"}${sharePath}`;
   const imageUrl = buildDealOgImageUrl(baseUrl, deal);
   const salePrice = formatMoney(deal.sale_price, deal.currency) || "Live now";
@@ -237,7 +268,9 @@ async function buildDealMeta(req, dealId, options = {}) {
   const descriptionParts = [];
 
   if (discount > 0) {
-    descriptionParts.push(`Save ${Math.round(discount)}% on ${deal.product_name}.`);
+    descriptionParts.push(
+      `Save ${Math.round(discount)}% on ${deal.product_name}.`,
+    );
   } else {
     descriptionParts.push(`${deal.product_name} is live on DesiDeals24.`);
   }
@@ -377,11 +410,14 @@ function sendClientApp(res, options = {}) {
 }
 
 // Hashed assets get a 1-year immutable cache — no revalidation round-trips
-app.use("/assets", express.static(path.join(CLIENT_DIST, "assets"), {
-  maxAge: "1y",
-  immutable: true,
-  index: false,
-}));
+app.use(
+  "/assets",
+  express.static(path.join(CLIENT_DIST, "assets"), {
+    maxAge: "1y",
+    immutable: true,
+    index: false,
+  }),
+);
 app.use(express.static(CLIENT_DIST, { index: false }));
 app.get("/share/deal/:dealId", async (req, res, next) => {
   try {
@@ -422,9 +458,8 @@ app.get("/", async (req, res, next) => {
     return next(error);
   }
 });
-app.get(
-  ["/saved", "/admin", "/oauth/:provider/callback"],
-  (req, res) => sendClientApp(res),
+app.get(["/saved", "/admin", "/oauth/:provider/callback"], (req, res) =>
+  sendClientApp(res),
 );
 app.get("*", (req, res) => sendClientApp(res));
 
@@ -442,7 +477,9 @@ if (require.main === module) {
 
     // Pre-warm SQLite page cache so the first real request is fast
     db.ready
-      .then(() => db.prepare("SELECT COUNT(*) FROM deals WHERE is_active = 1").get())
+      .then(() =>
+        db.prepare("SELECT COUNT(*) FROM deals WHERE is_active = 1").get(),
+      )
       .catch(() => {});
 
     if (isServerless) {

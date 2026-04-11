@@ -73,14 +73,11 @@ export default function useDeals(filters = {}) {
 
           // Auto-poll while a crawl is running so deals appear without manual refresh
           if (res.meta?.crawling) {
-            pollRef.current = setTimeout(
-              () => {
-                if (requestIdRef.current === requestId) {
-                  setRetryCount((c) => c + 1);
-                }
-              },
-              CRAWL_POLL_INTERVAL,
-            );
+            pollRef.current = setTimeout(() => {
+              if (requestIdRef.current === requestId) {
+                setRetryCount((c) => c + 1);
+              }
+            }, CRAWL_POLL_INTERVAL);
           }
         } catch (e) {
           if (requestIdRef.current !== requestId) return;

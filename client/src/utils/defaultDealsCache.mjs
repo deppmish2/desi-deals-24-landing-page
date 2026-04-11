@@ -85,7 +85,12 @@ export function readCachedDefaultDeals() {
 
 export function writeCachedDefaultDeals(payload) {
   const storage = getStorage();
-  if (!storage || !payload || !Array.isArray(payload.data) || !payload.pagination) {
+  if (
+    !storage ||
+    !payload ||
+    !Array.isArray(payload.data) ||
+    !payload.pagination
+  ) {
     return;
   }
 

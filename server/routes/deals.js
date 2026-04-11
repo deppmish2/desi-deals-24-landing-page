@@ -9,6 +9,7 @@ const {
   getDealStoreId,
   seededShuffle,
 } = require("../services/deal-order");
+const { filterAndRankDealsByQuery } = require("../services/deal-search");
 const { trackEvent } = require("../services/event-tracker");
 const { formatBerlinDateKey } = require("../services/berlin-time");
 const { trackSearchQuery } = require("../services/search-tracker");
@@ -17,9 +18,9 @@ const { batchGetRealSavings, computeRealSavings } = require("../services/real-sa
 
 const router = express.Router();
 const EXCLUDED_STORE_IDS = ["dookan"];
-const EXCLUDED_STORE_IDS_SQL = EXCLUDED_STORE_IDS
-  .map((storeId) => `'${String(storeId).replace(/'/g, "''")}'`)
-  .join(", ");
+const EXCLUDED_STORE_IDS_SQL = EXCLUDED_STORE_IDS.map(
+  (storeId) => `'${String(storeId).replace(/'/g, "''")}'`,
+).join(", ");
 const DISPLAYABLE_DISCOUNT_SQL = `
   (
     coalesce(d.discount_percent, 0) > 0
@@ -52,10 +53,7 @@ function setMemCache(key, deals) {
 }
 
 async function getCurrentDealsSnapshotContext() {
-  if (
-    _snapshotContextCache &&
-    Date.now() < _snapshotContextCache.expiresAt
-  ) {
+  if (_snapshotContextCache && Date.now() < _snapshotContextCache.expiresAt) {
     return _snapshotContextCache.value;
   }
 
@@ -86,41 +84,6 @@ async function getCurrentDealsSnapshotContext() {
   return snapshotContext;
 }
 
-// Levenshtein distance — used for fuzzy token matching.
-function levenshtein(a, b) {
-  const m = a.length, n = b.length;
-  if (m === 0) return n;
-  if (n === 0) return m;
-  const dp = Array.from({ length: m + 1 }, (_, i) => [i]);
-  for (let j = 1; j <= n; j++) dp[0][j] = j;
-  for (let i = 1; i <= m; i++) {
-    for (let j = 1; j <= n; j++) {
-      dp[i][j] = a[i - 1] === b[j - 1]
-        ? dp[i - 1][j - 1]
-        : 1 + Math.min(dp[i - 1][j], dp[i][j - 1], dp[i - 1][j - 1]);
-    }
-  }
-  return dp[m][n];
-}
-
-// Returns true if any word in `text` fuzzy-matches `token`.
-// Exact substring match first; falls back to edit-distance tolerance
-// scaled by token length (1 error per 4 chars, min threshold 1).
-function fuzzyTokenMatch(text, token) {
-  if (!text || !token) return false;
-  if (text.includes(token)) return true;
-  const words = text.split(/\s+/);
-  const tolerance = Math.max(1, Math.floor(token.length / 4));
-  return words.some((w) => levenshtein(w, token) <= tolerance);
-}
-
-// Split query into tokens and require all to match somewhere in the target.
-function fuzzySearch(haystack, query) {
-  const tokens = query.toLowerCase().split(/\s+/).filter(Boolean);
-  const text = haystack.toLowerCase();
-  return tokens.every((tok) => fuzzyTokenMatch(text, tok));
-}
-
 function paginateSequential(deals, pageSize, pageNum) {
   const safeDeals = Array.isArray(deals) ? deals.filter(Boolean) : [];
   const totalPages = Math.max(1, Math.ceil(safeDeals.length / pageSize));
@@ -129,6 +92,13 @@ function paginateSequential(deals, pageSize, pageNum) {
     totalPages,
     data: safeDeals.slice(startIndex, startIndex + pageSize),
   };
+}
+
+function parseCsvList(value) {
+  return String(value || "")
+    .split(",")
+    .map((entry) => entry.trim())
+    .filter(Boolean);
 }
 
 function serializeDeal(row) {
@@ -186,6 +156,43 @@ const FAST_CURRENT_DEALS_WHERE_SQL = `
   AND ${DISPLAYABLE_DISCOUNT_SQL}
 `;
 
+router.get("/stores", async (req, res, next) => {
+  try {
+    const onlyInStock = req.query.in_stock !== "0";
+    const rows = await db
+      .prepare(
+        `SELECT
+           d.store_id,
+           s.name AS store_name,
+           COUNT(*) AS deal_count
+         FROM deals d
+         JOIN stores s ON s.id = d.store_id
+         WHERE d.is_active = 1
+           AND lower(d.store_id) NOT IN (${EXCLUDED_STORE_IDS_SQL})
+           AND ${DISPLAYABLE_DISCOUNT_SQL}
+           ${onlyInStock ? "AND lower(coalesce(d.availability, '')) = 'in_stock'" : ""}
+         GROUP BY d.store_id, s.name
+         ORDER BY s.name ASC`,
+      )
+      .all();
+
+    res.set(
+      "Cache-Control",
+      "public, s-maxage=300, stale-while-revalidate=3600",
+    );
+
+    res.json({
+      data: rows.map((row) => ({
+        id: row.store_id,
+        name: row.store_name,
+        deal_count: Number(row.deal_count || 0),
+      })),
+    });
+  } catch (error) {
+    next(error);
+  }
+});
+
 function resolveAccessSecret() {
   return (
     process.env.JWT_SECRET ||
@@ -195,9 +202,10 @@ function resolveAccessSecret() {
 }
 
 async function getOptionalRequestIdentity(req) {
-  const sessionId = String(req.headers["x-dd24-session-id"] || "")
-    .trim()
-    .slice(0, 128) || null;
+  const sessionId =
+    String(req.headers["x-dd24-session-id"] || "")
+      .trim()
+      .slice(0, 128) || null;
   const auth = String(req.headers.authorization || "");
   const token = auth.startsWith("Bearer ") ? auth.slice(7) : null;
 
@@ -242,15 +250,15 @@ router.get("/", async (req, res, next) => {
       1,
       Math.min(100, parseInt(req.query.limit || "24", 10) || 24),
     );
-    const rawSearchQuery = String(req.query.q || "").trim().replace(/\s+/g, " ");
-    const searchQuery = rawSearchQuery
+    const rawSearchQuery = String(req.query.q || "")
       .trim()
-      .toLowerCase();
+      .replace(/\s+/g, " ");
+    const searchQuery = rawSearchQuery.trim().toLowerCase();
     const shouldTrackSearch =
       Boolean(rawSearchQuery) &&
       pageNum === 1 &&
       String(req.query.track_search || "").trim() === "1";
-    const filterStore = String(req.query.store || "").trim();
+    const filterStores = parseCsvList(req.query.stores || req.query.store);
     const focusDealId = String(req.query.deal_id || "").trim();
     const { cacheKey, crawlDate } = await getCurrentDealsSnapshotContext();
 
@@ -312,7 +320,7 @@ router.get("/", async (req, res, next) => {
     const canUseFastPath = Boolean(
       !focusDealId &&
       !searchQuery &&
-      !filterStore &&
+      filterStores.length === 0 &&
       !filterCategory &&
       minDiscount <= 0 &&
       priceMin <= 0 &&
@@ -346,16 +354,16 @@ router.get("/", async (req, res, next) => {
       const total = rows.length
         ? Number(rows[0]?.total_count || 0)
         : Number(
-          (
-            await db
-              .prepare(
-                `SELECT COUNT(*) AS total
+            (
+              await db
+                .prepare(
+                  `SELECT COUNT(*) AS total
                  FROM deals d
                  WHERE ${FAST_CURRENT_DEALS_WHERE_SQL}`,
-              )
-              .get(crawlDate)
-          )?.total || 0,
-        );
+                )
+                .get(crawlDate)
+            )?.total || 0,
+          );
       if (total > 0) {
         const totalPages = Math.max(1, Math.ceil(total / limitNum));
         const data = rows.map(serializeDeal);
@@ -381,7 +389,9 @@ router.get("/", async (req, res, next) => {
               no_adjacent_same_store: true,
               max_per_store: Math.max(1, Math.floor(limitNum * 0.2)),
               cap_enforced: true,
-              unique_store_count: new Set(data.map((deal) => getDealStoreId(deal) || "__unknown__")).size,
+              unique_store_count: new Set(
+                data.map((deal) => getDealStoreId(deal) || "__unknown__"),
+              ).size,
               disabled_for_explicit_sort: false,
             },
           },
@@ -401,18 +411,24 @@ router.get("/", async (req, res, next) => {
     // Apply filters (all gated in frontend, server supports freely)
     let filtered = allDeals;
     if (searchQuery) {
-      filtered = filtered.filter((d) =>
-        fuzzySearch(`${d.product_name || ""} ${d.store?.name || ""} ${d.product_category || ""}`, searchQuery),
+      filtered = filterAndRankDealsByQuery(
+        filtered,
+        searchQuery,
+        (deal) =>
+          `${deal?.product_name || ""} ${deal?.store?.name || ""} ${deal?.product_category || ""}`,
       );
     }
-    if (filterStore) {
-      filtered = filtered.filter((d) => d.store?.name === filterStore);
+    if (filterStores.length > 0) {
+      const storeFilterSet = new Set(filterStores);
+      filtered = filtered.filter((d) => storeFilterSet.has(d.store?.name));
     }
     if (filterCategory) {
       filtered = filtered.filter((d) => d.product_category === filterCategory);
     }
     if (minDiscount > 0) {
-      filtered = filtered.filter((d) => (d.discount_percent || 0) >= minDiscount);
+      filtered = filtered.filter(
+        (d) => (d.discount_percent || 0) >= minDiscount,
+      );
     }
     if (priceMin > 0) {
       filtered = filtered.filter((d) => (d.sale_price || 0) >= priceMin);
@@ -425,7 +441,9 @@ router.get("/", async (req, res, next) => {
     }
     if (hideExpired) {
       const thisMonth = new Date().toISOString().slice(0, 7);
-      filtered = filtered.filter((d) => !d.best_before || d.best_before >= thisMonth);
+      filtered = filtered.filter(
+        (d) => !d.best_before || d.best_before >= thisMonth,
+      );
     }
 
     if (sort === "discount") {
@@ -433,21 +451,27 @@ router.get("/", async (req, res, next) => {
         (a, b) =>
           (b.discount_percent || 0) - (a.discount_percent || 0) ||
           (a.sale_price || 0) - (b.sale_price || 0) ||
-          String(a.product_name || "").localeCompare(String(b.product_name || "")),
+          String(a.product_name || "").localeCompare(
+            String(b.product_name || ""),
+          ),
       );
     } else if (sort === "price_per_kg") {
       filtered = [...filtered].sort(
         (a, b) =>
           (a.price_per_kg || Infinity) - (b.price_per_kg || Infinity) ||
           (b.discount_percent || 0) - (a.discount_percent || 0) ||
-          String(a.product_name || "").localeCompare(String(b.product_name || "")),
+          String(a.product_name || "").localeCompare(
+            String(b.product_name || ""),
+          ),
       );
     } else if (sort === "price") {
       filtered = [...filtered].sort(
         (a, b) =>
           (a.sale_price || 0) - (b.sale_price || 0) ||
           (b.discount_percent || 0) - (a.discount_percent || 0) ||
-          String(a.product_name || "").localeCompare(String(b.product_name || "")),
+          String(a.product_name || "").localeCompare(
+            String(b.product_name || ""),
+          ),
       );
     } else if (sort === "real_savings") {
       // Fetch real_savings for all filtered deals, then sort by real_discount_pct desc
@@ -565,6 +589,7 @@ router.get("/", async (req, res, next) => {
         limit: limitNum,
         sort: sort || "random",
         search: searchQuery || null,
+        store_filters: filterStores,
       },
     });
   } catch (error) {

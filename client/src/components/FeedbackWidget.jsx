@@ -1,10 +1,7 @@
 import React, { useEffect, useState } from "react";
 import { getAuthSession, postContact } from "../utils/api";
 import { trackAnalyticsEvent } from "../utils/analytics";
-import {
-  buildFeedbackMessage,
-  resolveFeedbackSender,
-} from "../utils/feedback";
+import { buildFeedbackMessage, resolveFeedbackSender } from "../utils/feedback";
 
 const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 

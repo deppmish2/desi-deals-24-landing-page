@@ -62,7 +62,9 @@ function parseProductCards(html) {
       .first();
     const productUrl = link.attr("href") || $el.find("a").first().attr("href");
     const name = $el
-      .find(".wd-entities-title, .woocommerce-loop-product__title, .product-title, h2, h3")
+      .find(
+        ".wd-entities-title, .woocommerce-loop-product__title, .product-title, h2, h3",
+      )
       .first()
       .text()
       .trim();
@@ -72,12 +74,21 @@ function parseProductCards(html) {
     // Prices — WooCommerce sale items show <ins> for sale, <del> for original
     const salePriceText =
       $el
-        .find(".price ins .woocommerce-Price-amount bdi, .price ins .woocommerce-Price-amount, .price ins bdi")
+        .find(
+          ".price ins .woocommerce-Price-amount bdi, .price ins .woocommerce-Price-amount, .price ins bdi",
+        )
         .first()
         .text() ||
-      $el.find(".price .woocommerce-Price-amount bdi, .price .woocommerce-Price-amount").first().text();
+      $el
+        .find(
+          ".price .woocommerce-Price-amount bdi, .price .woocommerce-Price-amount",
+        )
+        .first()
+        .text();
     const origPriceText = $el
-      .find(".price del .woocommerce-Price-amount bdi, .price del .woocommerce-Price-amount, .price del bdi")
+      .find(
+        ".price del .woocommerce-Price-amount bdi, .price del .woocommerce-Price-amount, .price del bdi",
+      )
       .first()
       .text();
 

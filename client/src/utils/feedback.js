@@ -15,7 +15,10 @@ export function resolveFeedbackSender({ user, name, email } = {}) {
   ).trim();
 
   return {
-    name: normalizedName || inferNameFromEmail(normalizedEmail) || "DesiDeals24 user",
+    name:
+      normalizedName ||
+      inferNameFromEmail(normalizedEmail) ||
+      "DesiDeals24 user",
     email: normalizedEmail,
     isRegistered: Boolean(user?.email),
     registeredAt: String(user?.created_at || "").trim(),

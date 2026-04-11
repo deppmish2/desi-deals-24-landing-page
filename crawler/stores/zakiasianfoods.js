@@ -48,11 +48,15 @@ function parseProductCards(html) {
     const name = $el.find(".product-body h2").first().text().trim();
     const salePriceText =
       $el
-        .find(".offer-price ins .woocommerce-Price-amount bdi, .offer-price ins .woocommerce-Price-amount, .offer-price .woocommerce-Price-amount bdi, .offer-price .woocommerce-Price-amount")
+        .find(
+          ".offer-price ins .woocommerce-Price-amount bdi, .offer-price ins .woocommerce-Price-amount, .offer-price .woocommerce-Price-amount bdi, .offer-price .woocommerce-Price-amount",
+        )
         .first()
         .text() || "";
     const origPriceText = $el
-      .find(".offer-price del .woocommerce-Price-amount bdi, .offer-price del .woocommerce-Price-amount, .offer-price del bdi")
+      .find(
+        ".offer-price del .woocommerce-Price-amount bdi, .offer-price del .woocommerce-Price-amount, .offer-price del bdi",
+      )
       .first()
       .text();
 
@@ -101,8 +105,8 @@ function parseProductCards(html) {
   return {
     deals,
     hasNextPage:
-      $("a.next.page-numbers, .next.page-numbers a, .page-numbers .next").length >
-      0,
+      $("a.next.page-numbers, .next.page-numbers a, .page-numbers .next")
+        .length > 0,
   };
 }
 

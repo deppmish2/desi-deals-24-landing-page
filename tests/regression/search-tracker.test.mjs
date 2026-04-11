@@ -16,9 +16,11 @@ test("trackSearchQuery stores user email when available", async () => {
   const db = createTestDb();
 
   try {
-    db.prepare(
-      "INSERT INTO users (id, email, postcode) VALUES (?, ?, ?)",
-    ).run("user-1", "buyer@example.com", "10115");
+    db.prepare("INSERT INTO users (id, email, postcode) VALUES (?, ?, ?)").run(
+      "user-1",
+      "buyer@example.com",
+      "10115",
+    );
 
     const inserted = await trackSearchQuery(db, {
       query: "  ghee  ",
@@ -36,14 +38,17 @@ test("trackSearchQuery stores user email when available", async () => {
       )
       .get();
 
-    assert.deepEqual({ ...row }, {
-      normalized_query: "ghee",
-      user_id: "user-1",
-      user_email: "buyer@example.com",
-      session_id: null,
-      route: "/deals?q=ghee",
-      result_count: 12,
-    });
+    assert.deepEqual(
+      { ...row },
+      {
+        normalized_query: "ghee",
+        user_id: "user-1",
+        user_email: "buyer@example.com",
+        session_id: null,
+        route: "/deals?q=ghee",
+        result_count: 12,
+      },
+    );
   } finally {
     db.close?.();
   }
@@ -66,13 +71,16 @@ test("trackSearchQuery stores anonymous session id when no user email exists", a
       )
       .get();
 
-    assert.deepEqual({ ...row }, {
-      normalized_query: "basmati rice",
-      user_id: null,
-      user_email: null,
-      session_id: "session-abc-123",
-      result_count: null,
-    });
+    assert.deepEqual(
+      { ...row },
+      {
+        normalized_query: "basmati rice",
+        user_id: null,
+        user_email: null,
+        session_id: "session-abc-123",
+        result_count: null,
+      },
+    );
   } finally {
     db.close?.();
   }

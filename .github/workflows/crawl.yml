@@ -2,8 +2,7 @@ name: Daily Crawl
 
 on:
   schedule:
-    - cron: "0 6 * * *"
-    - cron: "0 7 * * *"
+    - cron: "50 5 * * *" # start once daily, then wait until 08:00 Europe/Berlin
   workflow_dispatch:
 
 concurrency:
@@ -13,7 +12,7 @@ concurrency:
 jobs:
   crawl:
     runs-on: ubuntu-latest
-    timeout-minutes: 90
+    timeout-minutes: 180
 
     steps:
       - name: Checkout
@@ -25,34 +24,34 @@ jobs:
           node-version: 20
           cache: npm
 
-      - name: Decide Berlin crawl window
-        id: gate
+      - name: Wait for 08:00 Europe/Berlin
         shell: bash
         run: |
-          berlin_hour="$(TZ=Europe/Berlin date +%H)"
           berlin_date="$(TZ=Europe/Berlin date +%F)"
-          echo "berlin_hour=$berlin_hour" >> "$GITHUB_OUTPUT"
-          echo "berlin_date=$berlin_date" >> "$GITHUB_OUTPUT"
+          berlin_now="$(TZ=Europe/Berlin date '+%F %T %Z')"
+          target_epoch="$(TZ=Europe/Berlin date -d "$berlin_date 08:00:00" +%s)"
+          now_epoch="$(date +%s)"
+          sleep_seconds=$((target_epoch - now_epoch))
 
-          if [ "${{ github.event_name }}" = "workflow_dispatch" ] || [ "$berlin_hour" = "08" ]; then
-            echo "should_run=true" >> "$GITHUB_OUTPUT"
-          else
-            echo "should_run=false" >> "$GITHUB_OUTPUT"
+          echo "Berlin now: $berlin_now"
+          echo "Berlin target date: $berlin_date"
+
+          if [ "${{ github.event_name }}" = "workflow_dispatch" ]; then
+            echo "Manual run detected; starting crawl immediately."
+            exit 0
           fi
 
-      - name: Skip outside Berlin window
-        if: steps.gate.outputs.should_run != 'true'
-        run: |
-          echo "Skipping crawl."
-          echo "Berlin date: ${{ steps.gate.outputs.berlin_date }}"
-          echo "Berlin hour: ${{ steps.gate.outputs.berlin_hour }}"
+          if [ "$sleep_seconds" -gt 0 ]; then
+            echo "Waiting $sleep_seconds seconds until 08:00 Europe/Berlin."
+            sleep "$sleep_seconds"
+          else
+            echo "Already at or past 08:00 Europe/Berlin; continuing immediately."
+          fi
 
       - name: Install dependencies
-        if: steps.gate.outputs.should_run == 'true'
         run: npm ci
 
       - name: Run full daily crawl into Turso
-        if: steps.gate.outputs.should_run == 'true'
         env:
           TURSO_DATABASE_URL: ${{ secrets.TURSO_DATABASE_URL }}
           TURSO_AUTH_TOKEN: ${{ secrets.TURSO_AUTH_TOKEN }}
@@ -62,7 +61,6 @@ jobs:
         run: npm run crawl
 
       - name: Warm public deals cache
-        if: steps.gate.outputs.should_run == 'true'
         env:
           CLIENT_APP_URL: ${{ secrets.CLIENT_APP_URL }}
         shell: bash

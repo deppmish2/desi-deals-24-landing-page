@@ -4,6 +4,7 @@ const fs = require("fs");
 const path = require("path");
 
 const { createClient } = require("@libsql/client");
+const { getAdminEmailSet } = require("../utils/admin-access");
 
 // Local: file: URL pointing at the existing SQLite file
 // Vercel / any env with TURSO_DATABASE_URL: remote Turso DB
@@ -392,7 +393,11 @@ const ready = (async () => {
       "India Express Food",
       "https://www.india-express-food.de",
     ],
-    ["transfoodlev", "Transfood Lebensmittelvertrieb", "https://transfoodlev.com"],
+    [
+      "transfoodlev",
+      "Transfood Lebensmittelvertrieb",
+      "https://transfoodlev.com",
+    ],
     ["desistore", "Desi Store", "https://desistore.at"],
     [
       "asiatischer-lebensmittelladen",
@@ -400,11 +405,19 @@ const ready = (async () => {
       "https://www.asiatischer-lebensmittelladen.de",
     ],
     ["villagefoods", "Village Foods", "https://villagefoods.de"],
-    ["indianspicebasket", "Indian Spice Basket", "https://indianspicebasket.be"],
+    [
+      "indianspicebasket",
+      "Indian Spice Basket",
+      "https://indianspicebasket.be",
+    ],
     ["barkatfood", "Barkat Food", "https://barkatfood.de"],
     ["yogimart", "Yogi Mart", "https://yogimart.de"],
     ["bajwa-shop", "Bajwa Shop", "https://bajwa-shop.com"],
-    ["asiangrocerystore", "Asian Grocery Store", "https://www.asiangrocerystore.de"],
+    [
+      "asiangrocerystore",
+      "Asian Grocery Store",
+      "https://www.asiangrocerystore.de",
+    ],
     ["zakiasianfoods", "Zaki Asian Foods", "https://zakiasianfoods.de"],
     ["masimpex", "MAS Impex", "https://www.masimpex.com"],
   ];
@@ -427,14 +440,7 @@ const ready = (async () => {
   } catch (_) {}
 
   // Seed admin status for known admin accounts (configurable via ADMIN_EMAILS env var)
-  const adminEmails = (
-    process.env.ADMIN_EMAILS ||
-    "itsjustrahul@gmail.com,deppmish2@googlemail.com"
-  )
-    .split(",")
-    .map((e) => e.trim().toLowerCase())
-    .filter(Boolean);
-  for (const email of adminEmails) {
+  for (const email of getAdminEmailSet()) {
     try {
       await db.execute(`UPDATE users SET is_admin = 1 WHERE email = ?`, [
         email,

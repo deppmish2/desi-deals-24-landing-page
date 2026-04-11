@@ -8,7 +8,9 @@ function getPublicSiteOrigin() {
   if (typeof window === "undefined") return "https://desideals24.com";
 
   const runtimeOrigin = String(window.location.origin || "").trim();
-  const hostname = String(window.location.hostname || "").trim().toLowerCase();
+  const hostname = String(window.location.hostname || "")
+    .trim()
+    .toLowerCase();
   const metaUrl = readMetaContent('meta[property="og:url"]');
 
   if (metaUrl) {
@@ -58,7 +60,9 @@ export function buildDealShareUrl(dealId) {
 }
 
 function normalizeInlineText(value) {
-  return String(value || "").replace(/\s+/g, " ").trim();
+  return String(value || "")
+    .replace(/\s+/g, " ")
+    .trim();
 }
 
 export function buildWhatsAppShareUrl(text) {
@@ -73,7 +77,8 @@ export function buildWhatsAppDealShareText({
   storeName,
 } = {}) {
   const shareUrl = buildDealShareUrl(dealId);
-  const cleanName = normalizeInlineText(productName) || "this desi grocery deal";
+  const cleanName =
+    normalizeInlineText(productName) || "this desi grocery deal";
   const cleanPrice = normalizeInlineText(priceText);
   const cleanOriginalPrice = normalizeInlineText(originalPriceText);
   const cleanStore = normalizeInlineText(storeName);

@@ -7,9 +7,9 @@ const { verifyJwt } = require("../utils/jwt");
 
 const router = express.Router();
 const EXCLUDED_BOOKMARK_STORE_IDS = ["dookan"];
-const EXCLUDED_BOOKMARK_STORE_IDS_SQL = EXCLUDED_BOOKMARK_STORE_IDS
-  .map((storeId) => `'${String(storeId).replace(/'/g, "''")}'`)
-  .join(", ");
+const EXCLUDED_BOOKMARK_STORE_IDS_SQL = EXCLUDED_BOOKMARK_STORE_IDS.map(
+  (storeId) => `'${String(storeId).replace(/'/g, "''")}'`,
+).join(", ");
 const DISPLAYABLE_BOOKMARK_DISCOUNT_SQL = `
   (
     coalesce(d.discount_percent, 0) > 0

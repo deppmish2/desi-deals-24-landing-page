@@ -1,7 +1,11 @@
 import React, { useRef, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { fetchOAuthAuthUrl, getAuthSession } from "../utils/api";
-import { formatBestBefore, formatPrice, formatPricePerKg } from "../utils/formatters";
+import {
+  formatBestBefore,
+  formatPrice,
+  formatPricePerKg,
+} from "../utils/formatters";
 import { buildWhatsAppDealShareUrl } from "../utils/share";
 
 const POST_AUTH_REDIRECT_STORAGE_KEY = "dd24_post_auth_redirect";
@@ -9,8 +13,16 @@ const OAUTH_STATE_STORAGE_PREFIX = "dd24_oauth_state:";
 
 // Hero ATF panel — hardcoded to match the ad creative exactly
 const HERO_DEALS = [
-  { heroTitle: "Jeera / Cumin Powder 400g", price: "7,99", originalPrice: "11,99" },
-  { heroTitle: "Sona Masoori Rice 10Kg", price: "19,99", originalPrice: "26,99" },
+  {
+    heroTitle: "Jeera / Cumin Powder 400g",
+    price: "7,99",
+    originalPrice: "11,99",
+  },
+  {
+    heroTitle: "Sona Masoori Rice 10Kg",
+    price: "19,99",
+    originalPrice: "26,99",
+  },
   { heroTitle: "Aashirvaad Atta 5kg", price: "7,99", originalPrice: "11,99" },
 ];
 const TOTAL_SAVINGS = "15,00";
@@ -23,7 +35,8 @@ const FEATURED_DEALS = [
     sale_price: 7.99,
     original_price: 11.99,
     discount_percent: 33,
-    image_url: "https://cdn.shopify.com/s/files/1/0838/2834/3091/files/IMG_3665.jpg",
+    image_url:
+      "https://cdn.shopify.com/s/files/1/0838/2834/3091/files/IMG_3665.jpg",
     product_url: "https://www.nammamarkt.com/products/trs-cumin-powder-400g",
     weight_raw: "400g",
     price_per_kg: 19.98,
@@ -33,12 +46,15 @@ const FEATURED_DEALS = [
   },
   {
     id: "fa5bcc8a-cda4-4191-a72d-8c4c5cf71ab5",
-    product_name: "Annam Sona Masoori Rice 10kg (BBE: 05.2027) - Only 1 per Order",
+    product_name:
+      "Annam Sona Masoori Rice 10kg (BBE: 05.2027) - Only 1 per Order",
     sale_price: 19.99,
     original_price: 26.99,
     discount_percent: 26,
-    image_url: "https://cdn.shopify.com/s/files/1/0812/6205/1651/products/8026.jpg",
-    product_url: "https://www.zorastore.eu/products/annam-sona-masoori-rice-10kg-only-1-per-order",
+    image_url:
+      "https://cdn.shopify.com/s/files/1/0812/6205/1651/products/8026.jpg",
+    product_url:
+      "https://www.zorastore.eu/products/annam-sona-masoori-rice-10kg-only-1-per-order",
     weight_raw: "10kg",
     price_per_kg: 2,
     best_before: "2027-05",
@@ -51,8 +67,10 @@ const FEATURED_DEALS = [
     sale_price: 7.99,
     original_price: 11.99,
     discount_percent: 33,
-    image_url: "https://cdn.shopify.com/s/files/1/0812/6205/1651/products/4533.jpg",
-    product_url: "https://www.zorastore.eu/products/aashirvaad-atta-5kg-export-pack",
+    image_url:
+      "https://cdn.shopify.com/s/files/1/0812/6205/1651/products/4533.jpg",
+    product_url:
+      "https://www.zorastore.eu/products/aashirvaad-atta-5kg-export-pack",
     weight_raw: "5kg",
     price_per_kg: 1.6,
     best_before: "2026-11",
@@ -66,7 +84,9 @@ function resolveProductUrl(deal) {
   if (!raw) return "#";
   if (/^https?:\/\//i.test(raw)) return raw;
   const storeBase = String(deal?.store?.url || "").replace(/\/+$/, "");
-  return storeBase ? `${storeBase}${raw.startsWith("/") ? "" : "/"}${raw}` : raw;
+  return storeBase
+    ? `${storeBase}${raw.startsWith("/") ? "" : "/"}${raw}`
+    : raw;
 }
 
 function createOAuthState() {
@@ -78,10 +98,26 @@ function createOAuthState() {
 
 function DD24Icon() {
   return (
-    <svg width="14" height="16" viewBox="0 0 27 32" fill="none" aria-hidden="true">
-      <path d="M23.2324 28.8C16.8324 25.6 10.4324 19.2 8.83241 12.8C7.23241 6.39999 13.6324 3.2 20.0324 9.59999C23.2324 12.8 23.2324 28.8 23.2324 28.8Z" fill="currentColor"/>
-      <path d="M23.2324 32C13.6324 32 4.03241 28.8 0.832414 22.4C-2.36758 16 4.03241 12.8 13.6324 19.2C20.0324 22.4 23.2324 32 23.2324 32Z" fill="currentColor" fillOpacity="0.8"/>
-      <path d="M23.2324 25.6C18.4324 16 18.4324 6.39999 23.2324 0C28.0324 6.39999 28.0324 16 23.2324 25.6Z" fill="currentColor"/>
+    <svg
+      width="14"
+      height="16"
+      viewBox="0 0 27 32"
+      fill="none"
+      aria-hidden="true"
+    >
+      <path
+        d="M23.2324 28.8C16.8324 25.6 10.4324 19.2 8.83241 12.8C7.23241 6.39999 13.6324 3.2 20.0324 9.59999C23.2324 12.8 23.2324 28.8 23.2324 28.8Z"
+        fill="currentColor"
+      />
+      <path
+        d="M23.2324 32C13.6324 32 4.03241 28.8 0.832414 22.4C-2.36758 16 4.03241 12.8 13.6324 19.2C20.0324 22.4 23.2324 32 23.2324 32Z"
+        fill="currentColor"
+        fillOpacity="0.8"
+      />
+      <path
+        d="M23.2324 25.6C18.4324 16 18.4324 6.39999 23.2324 0C28.0324 6.39999 28.0324 16 23.2324 25.6Z"
+        fill="currentColor"
+      />
     </svg>
   );
 }
@@ -89,7 +125,13 @@ function DD24Icon() {
 function ArrowRightIcon() {
   return (
     <svg viewBox="0 0 24 24" className="h-4 w-4" fill="none" aria-hidden="true">
-      <path d="M5 12h14m-6-6 6 6-6 6" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round" />
+      <path
+        d="M5 12h14m-6-6 6 6-6 6"
+        stroke="currentColor"
+        strokeWidth="2.2"
+        strokeLinecap="round"
+        strokeLinejoin="round"
+      />
     </svg>
   );
 }
@@ -97,10 +139,22 @@ function ArrowRightIcon() {
 function GoogleIcon({ size = 20 }) {
   return (
     <svg width={size} height={size} viewBox="0 0 48 48" aria-hidden="true">
-      <path fill="#EA4335" d="M24 9.5c3.54 0 6.71 1.22 9.21 3.6l6.85-6.85C35.9 2.38 30.47 0 24 0 14.62 0 6.51 5.38 2.56 13.22l7.98 6.19C12.43 13.72 17.74 9.5 24 9.5z" />
-      <path fill="#4285F4" d="M46.98 24.55c0-1.57-.15-3.09-.38-4.55H24v9.02h12.94c-.58 2.96-2.26 5.48-4.78 7.18l7.73 6c4.51-4.18 7.09-10.36 7.09-17.65z" />
-      <path fill="#FBBC05" d="M10.53 28.59c-.48-1.45-.76-2.99-.76-4.59s.27-3.14.76-4.59l-7.98-6.19C.92 16.46 0 20.12 0 24c0 3.88.92 7.54 2.56 10.78l7.97-6.19z" />
-      <path fill="#34A853" d="M24 48c6.48 0 11.93-2.13 15.89-5.81l-7.73-6c-2.18 1.48-4.97 2.31-8.16 2.31-6.26 0-11.57-4.22-13.47-9.91l-7.98 6.19C6.51 42.62 14.62 48 24 48z" />
+      <path
+        fill="#EA4335"
+        d="M24 9.5c3.54 0 6.71 1.22 9.21 3.6l6.85-6.85C35.9 2.38 30.47 0 24 0 14.62 0 6.51 5.38 2.56 13.22l7.98 6.19C12.43 13.72 17.74 9.5 24 9.5z"
+      />
+      <path
+        fill="#4285F4"
+        d="M46.98 24.55c0-1.57-.15-3.09-.38-4.55H24v9.02h12.94c-.58 2.96-2.26 5.48-4.78 7.18l7.73 6c4.51-4.18 7.09-10.36 7.09-17.65z"
+      />
+      <path
+        fill="#FBBC05"
+        d="M10.53 28.59c-.48-1.45-.76-2.99-.76-4.59s.27-3.14.76-4.59l-7.98-6.19C.92 16.46 0 20.12 0 24c0 3.88.92 7.54 2.56 10.78l7.97-6.19z"
+      />
+      <path
+        fill="#34A853"
+        d="M24 48c6.48 0 11.93-2.13 15.89-5.81l-7.73-6c-2.18 1.48-4.97 2.31-8.16 2.31-6.26 0-11.57-4.22-13.47-9.91l-7.98 6.19C6.51 42.62 14.62 48 24 48z"
+      />
     </svg>
   );
 }
@@ -112,14 +166,20 @@ async function trackLandingSearch(query) {
         const k = "dd24_client_session_id";
         const ex = sessionStorage.getItem(k);
         if (ex) return ex;
-        const next = window.crypto?.randomUUID?.() || `dd24-${Math.random().toString(36).slice(2)}`;
+        const next =
+          window.crypto?.randomUUID?.() ||
+          `dd24-${Math.random().toString(36).slice(2)}`;
         sessionStorage.setItem(k, next);
         return next;
-      } catch { return "dd24-anon"; }
+      } catch {
+        return "dd24-anon";
+      }
     })();
     const url = `/api/v1/deals?search=${encodeURIComponent(query)}&track_search=1&limit=0`;
     await fetch(url, { headers: { "x-dd24-session-id": sessionId } });
-  } catch { /* fire-and-forget */ }
+  } catch {
+    /* fire-and-forget */
+  }
 }
 
 function LoginModal({ onClose, searchQuery = null }) {
@@ -159,7 +219,9 @@ function LoginModal({ onClose, searchQuery = null }) {
           <div className="flex h-14 w-14 items-center justify-center rounded-2xl bg-[#16a34a] shadow-[0_8px_24px_rgba(22,163,74,0.35)]">
             <DD24Icon />
           </div>
-          <p className="mt-3 text-[13px] font-bold tracking-[0.12em] text-white/60 uppercase">DesiDeals24</p>
+          <p className="mt-3 text-[13px] font-bold tracking-[0.12em] text-white/60 uppercase">
+            DesiDeals24
+          </p>
         </div>
 
         <div className="px-6 pb-6 pt-5">
@@ -199,23 +261,44 @@ function LoginModal({ onClose, searchQuery = null }) {
   );
 }
 
-const FALLBACK_IMG = 'data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" width="112" height="112" viewBox="0 0 112 112"><rect fill="%23ffffff" width="112" height="112"/><text fill="%2394a3b8" font-size="28" text-anchor="middle" dominant-baseline="middle" x="56" y="58">🛒</text></svg>';
+const FALLBACK_IMG =
+  'data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" width="112" height="112" viewBox="0 0 112 112"><rect fill="%23ffffff" width="112" height="112"/><text fill="%2394a3b8" font-size="28" text-anchor="middle" dominant-baseline="middle" x="56" y="58">🛒</text></svg>';
 
 function FeaturedDealCard({ deal, cardRef, onLoginRequired }) {
   const [imgError, setImgError] = useState(false);
 
   const pct = Math.round(deal.discount_percent || 0);
-  const badgeBg = pct > 50 ? "#ffe4e8" : pct >= 30 ? "#fff3e0" : pct >= 20 ? "#e8f0fe" : "#f1f5f9";
-  const badgeColor = pct > 50 ? "#e53e3e" : pct >= 30 ? "#c05200" : pct >= 20 ? "#1a56db" : "#1e293b";
+  const badgeBg =
+    pct > 50
+      ? "#ffe4e8"
+      : pct >= 30
+        ? "#fff3e0"
+        : pct >= 20
+          ? "#e8f0fe"
+          : "#f1f5f9";
+  const badgeColor =
+    pct > 50
+      ? "#e53e3e"
+      : pct >= 30
+        ? "#c05200"
+        : pct >= 20
+          ? "#1a56db"
+          : "#1e293b";
 
   const currency = deal.currency || "EUR";
   const priceStr = formatPrice(deal.sale_price, currency);
-  const originalPriceStr = deal.original_price ? formatPrice(deal.original_price, currency) : null;
+  const originalPriceStr = deal.original_price
+    ? formatPrice(deal.original_price, currency)
+    : null;
   const weightStr = [
     deal.weight_raw || null,
     deal.price_per_kg ? formatPricePerKg(deal.price_per_kg) : null,
-  ].filter(Boolean).join(" | ");
-  const bestBeforeStr = deal.best_before ? formatBestBefore(deal.best_before) : null;
+  ]
+    .filter(Boolean)
+    .join(" | ");
+  const bestBeforeStr = deal.best_before
+    ? formatBestBefore(deal.best_before)
+    : null;
   const productUrl = resolveProductUrl(deal);
 
   const waUrl = buildWhatsAppDealShareUrl({
@@ -240,8 +323,16 @@ function FeaturedDealCard({ deal, cardRef, onLoginRequired }) {
           onError={() => setImgError(true)}
         />
         {pct > 0 && (
-          <div className="absolute top-3 right-3 rounded-[8px] px-2.5 py-1" style={{ backgroundColor: badgeBg }}>
-            <span className="font-bold text-[13px] leading-none" style={{ color: badgeColor }}>-{pct}%</span>
+          <div
+            className="absolute top-3 right-3 rounded-[8px] px-2.5 py-1"
+            style={{ backgroundColor: badgeBg }}
+          >
+            <span
+              className="font-bold text-[13px] leading-none"
+              style={{ color: badgeColor }}
+            >
+              -{pct}%
+            </span>
           </div>
         )}
         {bestBeforeStr && (
@@ -261,9 +352,13 @@ function FeaturedDealCard({ deal, cardRef, onLoginRequired }) {
           </p>
           <div className="flex items-baseline justify-between gap-2">
             <div className="flex items-baseline gap-2">
-              <span className="text-[#1e293b] text-[22px] leading-[30px] font-extrabold">{priceStr}</span>
+              <span className="text-[#1e293b] text-[22px] leading-[30px] font-extrabold">
+                {priceStr}
+              </span>
               {originalPriceStr && (
-                <span className="text-[#94a3b8] text-[14px] leading-[20px] line-through">{originalPriceStr}</span>
+                <span className="text-[#94a3b8] text-[14px] leading-[20px] line-through">
+                  {originalPriceStr}
+                </span>
               )}
             </div>
             {weightStr && (
@@ -282,7 +377,9 @@ function FeaturedDealCard({ deal, cardRef, onLoginRequired }) {
             className="flex-1 justify-center bg-[#16a34a] hover:bg-[#15803d] transition-colors rounded-[14px] py-3 inline-flex items-center gap-2 text-white no-underline hover:no-underline"
             style={{ textDecoration: "none" }}
           >
-            <span className="text-[13px] leading-[16px] font-extrabold tracking-wide uppercase">Snatch Deal</span>
+            <span className="text-[13px] leading-[16px] font-extrabold tracking-wide uppercase">
+              Snatch Deal
+            </span>
           </a>
           <a
             href={waUrl}
@@ -292,8 +389,14 @@ function FeaturedDealCard({ deal, cardRef, onLoginRequired }) {
             title="Share on WhatsApp"
           >
             <svg width="18" height="18" viewBox="0 0 32 32" fill="none">
-              <path d="M16 3C9.373 3 4 8.373 4 15c0 2.385.67 4.61 1.832 6.5L4 29l7.697-1.803A12.94 12.94 0 0 0 16 27c6.627 0 12-5.373 12-12S22.627 3 16 3z" fill="#25D366"/>
-              <path d="M21.786 18.618c-.306-.153-1.81-.894-2.09-.994-.28-.1-.484-.153-.688.153-.204.306-.79.994-.968 1.198-.178.204-.356.23-.662.077-.306-.153-1.29-.476-2.458-1.516-.908-.81-1.522-1.81-1.7-2.116-.178-.306-.019-.47.134-.622.137-.136.306-.356.459-.535.153-.178.204-.306.306-.51.102-.204.051-.382-.025-.535-.077-.153-.688-1.658-.942-2.27-.248-.595-.5-.514-.688-.524l-.586-.01c-.204 0-.535.077-.816.382-.28.306-1.07 1.045-1.07 2.55s1.095 2.96 1.248 3.164c.153.204 2.154 3.29 5.22 4.614.73.315 1.3.503 1.744.644.733.233 1.4.2 1.927.121.588-.087 1.81-.74 2.065-1.455.255-.714.255-1.326.178-1.455-.076-.13-.28-.204-.586-.357z" fill="white"/>
+              <path
+                d="M16 3C9.373 3 4 8.373 4 15c0 2.385.67 4.61 1.832 6.5L4 29l7.697-1.803A12.94 12.94 0 0 0 16 27c6.627 0 12-5.373 12-12S22.627 3 16 3z"
+                fill="#25D366"
+              />
+              <path
+                d="M21.786 18.618c-.306-.153-1.81-.894-2.09-.994-.28-.1-.484-.153-.688.153-.204.306-.79.994-.968 1.198-.178.204-.356.23-.662.077-.306-.153-1.29-.476-2.458-1.516-.908-.81-1.522-1.81-1.7-2.116-.178-.306-.019-.47.134-.622.137-.136.306-.356.459-.535.153-.178.204-.306.306-.51.102-.204.051-.382-.025-.535-.077-.153-.688-1.658-.942-2.27-.248-.595-.5-.514-.688-.524l-.586-.01c-.204 0-.535.077-.816.382-.28.306-1.07 1.045-1.07 2.55s1.095 2.96 1.248 3.164c.153.204 2.154 3.29 5.22 4.614.73.315 1.3.503 1.744.644.733.233 1.4.2 1.927.121.588-.087 1.81-.74 2.065-1.455.255-.714.255-1.326.178-1.455-.076-.13-.28-.204-.586-.357z"
+                fill="white"
+              />
             </svg>
           </a>
           <button
@@ -302,8 +405,17 @@ function FeaturedDealCard({ deal, cardRef, onLoginRequired }) {
             className="shrink-0 inline-flex items-center justify-center w-[46px] h-[46px] rounded-[14px] border border-slate-200 bg-white hover:bg-slate-50 text-slate-500 transition-colors"
             title="Save deal"
           >
-            <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-              <path d="M19 21l-7-5-7 5V5a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2z"/>
+            <svg
+              width="17"
+              height="17"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              strokeWidth="2"
+              strokeLinecap="round"
+              strokeLinejoin="round"
+            >
+              <path d="M19 21l-7-5-7 5V5a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2z" />
             </svg>
           </button>
         </div>
@@ -321,7 +433,10 @@ export default function AdLandingPage() {
   const cardRefs = useRef(FEATURED_DEALS.map(() => React.createRef()));
 
   function scrollToCard(index) {
-    cardRefs.current[index]?.current?.scrollIntoView({ behavior: "smooth", block: "center" });
+    cardRefs.current[index]?.current?.scrollIntoView({
+      behavior: "smooth",
+      block: "center",
+    });
   }
 
   function handleUnlockDeals() {
@@ -363,7 +478,11 @@ export default function AdLandingPage() {
           <div className="relative mx-auto flex min-h-[88svh] max-w-md flex-col px-5 pb-16 pt-8">
             <div className="flex items-center justify-between">
               <div className="flex items-center gap-2.5">
-                <img src="/landing/dd24-logo.svg" alt="DesiDeals24" className="h-8 w-8 object-contain" />
+                <img
+                  src="/landing/dd24-logo.svg"
+                  alt="DesiDeals24"
+                  className="h-8 w-8 object-contain"
+                />
                 <span className="text-[17px] font-extrabold leading-none tracking-[-0.04em] text-white">
                   DesiDeals24
                 </span>
@@ -393,9 +512,13 @@ export default function AdLandingPage() {
                       onClick={() => scrollToCard(i)}
                       className="flex w-full items-center justify-between px-5 py-4 text-white text-left active:bg-white/5"
                     >
-                      <p className="text-[15px] font-bold leading-5">{deal.heroTitle}</p>
+                      <p className="text-[15px] font-bold leading-5">
+                        {deal.heroTitle}
+                      </p>
                       <div className="ml-4 flex shrink-0 items-center gap-2">
-                        <span className="text-sm text-white/45 line-through">{deal.originalPrice}€</span>
+                        <span className="text-sm text-white/45 line-through">
+                          {deal.originalPrice}€
+                        </span>
                         <span className="text-[1.6rem] font-black leading-none text-[#ffd54a]">
                           {deal.price}€
                         </span>
@@ -436,7 +559,9 @@ export default function AdLandingPage() {
             <div className="mb-5 flex items-end justify-between gap-4">
               <div>
                 <p className="inline-flex items-center gap-1.5 text-[11px] font-bold uppercase tracking-[0.26em] text-[#a46a2d]">
-                  <span className="text-[#16a34a]"><DD24Icon /></span>
+                  <span className="text-[#16a34a]">
+                    <DD24Icon />
+                  </span>
                   Today's deals
                 </p>
                 <h2 className="mt-2 text-[2rem] font-black leading-[1.05] text-[#173221]">
@@ -458,9 +583,27 @@ export default function AdLandingPage() {
 
             <form onSubmit={handleSearch} className="mt-6">
               <div className="flex items-center gap-3 rounded-full border border-[#e2e8f0] bg-white px-5 py-3.5 shadow-sm">
-                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" className="shrink-0 text-[#94a3b8]" aria-hidden="true">
-                  <circle cx="11" cy="11" r="7" stroke="currentColor" strokeWidth="2"/>
-                  <path d="m16.5 16.5 4 4" stroke="currentColor" strokeWidth="2" strokeLinecap="round"/>
+                <svg
+                  width="18"
+                  height="18"
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  className="shrink-0 text-[#94a3b8]"
+                  aria-hidden="true"
+                >
+                  <circle
+                    cx="11"
+                    cy="11"
+                    r="7"
+                    stroke="currentColor"
+                    strokeWidth="2"
+                  />
+                  <path
+                    d="m16.5 16.5 4 4"
+                    stroke="currentColor"
+                    strokeWidth="2"
+                    strokeLinecap="round"
+                  />
                 </svg>
                 <input
                   type="search"
@@ -492,15 +635,20 @@ export default function AdLandingPage() {
               These 3 deals are just the start.
             </h2>
             <p className="mt-4 text-[15px] leading-7 text-white/80">
-              There are 1,200+ live deals across Indian stores in Germany. Log in to see all of them.
+              There are 1,200+ live deals across Indian stores in Germany. Log
+              in to see all of them.
             </p>
             <div className="mt-5 grid grid-cols-2 gap-3 text-sm">
               <div className="rounded-2xl border border-white/10 bg-white/8 p-4">
-                <p className="text-[1.75rem] font-black leading-none text-[#ffd54a]">1200+</p>
+                <p className="text-[1.75rem] font-black leading-none text-[#ffd54a]">
+                  1200+
+                </p>
                 <p className="mt-2 text-white/75">Deals refreshed daily</p>
               </div>
               <div className="rounded-2xl border border-white/10 bg-white/8 p-4">
-                <p className="text-[1.75rem] font-black leading-none text-[#ffd54a]">24/7</p>
+                <p className="text-[1.75rem] font-black leading-none text-[#ffd54a]">
+                  24/7
+                </p>
                 <p className="mt-2 text-white/75">Access on your phone</p>
               </div>
             </div>
@@ -509,7 +657,9 @@ export default function AdLandingPage() {
               onClick={handleUnlockDeals}
               className="mt-6 flex w-full items-center justify-center gap-2 rounded-full bg-[#ffd54a] px-5 py-4 text-base font-black text-[#173221] shadow-[0_12px_35px_rgba(255,213,74,0.28)] transition-transform duration-150 hover:scale-[1.01]"
             >
-              {session?.accessToken ? "Open all deals" : "Log in to access more deals"}
+              {session?.accessToken
+                ? "Open all deals"
+                : "Log in to access more deals"}
               <ArrowRightIcon />
             </button>
             <p className="mt-3 text-center text-xs text-white/50">
@@ -521,7 +671,10 @@ export default function AdLandingPage() {
 
       {showLoginModal ? (
         <LoginModal
-          onClose={() => { setShowLoginModal(false); setLoginSearchQuery(null); }}
+          onClose={() => {
+            setShowLoginModal(false);
+            setLoginSearchQuery(null);
+          }}
           searchQuery={loginSearchQuery}
         />
       ) : null}

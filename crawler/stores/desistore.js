@@ -53,15 +53,21 @@ function parseProductCards(html) {
 
     const salePrice = parsePrice(priceText);
     const oldPriceMatch = priceText.match(/Old price:\s*€?\s*([\d.,]+)/i);
-    const originalPriceRaw = oldPriceMatch ? parsePrice(oldPriceMatch[1]) : null;
+    const originalPriceRaw = oldPriceMatch
+      ? parsePrice(oldPriceMatch[1])
+      : null;
 
     if (!link || !name || !salePrice) return;
 
     const originalPrice =
-      originalPriceRaw && originalPriceRaw > salePrice ? originalPriceRaw : null;
+      originalPriceRaw && originalPriceRaw > salePrice
+        ? originalPriceRaw
+        : null;
     const discountPercent =
       calcDiscount(salePrice, originalPrice) ||
-      parseDiscountBadge($el.find(".productbox-ribbon, .ribbon").first().text());
+      parseDiscountBadge(
+        $el.find(".productbox-ribbon, .ribbon").first().text(),
+      );
 
     if (!originalPrice && !(discountPercent > 0)) return;
 

@@ -3,12 +3,23 @@ export function parsePageParam(value) {
   return Number.isFinite(parsed) && parsed > 0 ? parsed : 1;
 }
 
+function parseCsvParam(value) {
+  return String(value || "")
+    .split(",")
+    .map((entry) => entry.trim())
+    .filter(Boolean);
+}
+
 export function readDealsViewState(searchParams) {
+  const filterStores = parseCsvParam(
+    searchParams.get("stores") || searchParams.get("store") || "",
+  );
+
   return {
     searchQuery: String(searchParams.get("q") || "").trim(),
     sortValue: String(searchParams.get("sort") || "").trim(),
     page: parsePageParam(searchParams.get("page")),
-    filterStore: String(searchParams.get("store") || "").trim(),
+    filterStores,
     filterCategory: String(searchParams.get("category") || "").trim(),
     filterMinDiscount: String(searchParams.get("min_discount") || "").trim(),
     filterPriceMin: String(searchParams.get("price_min") || "").trim(),
@@ -27,7 +38,12 @@ export function buildDealsSearchParams(searchParams, nextState, routeDealId) {
   if (nextState.searchQuery) nextParams.set("q", nextState.searchQuery);
   if (nextState.sortValue) nextParams.set("sort", nextState.sortValue);
   if (nextState.page > 1) nextParams.set("page", String(nextState.page));
-  if (nextState.filterStore) nextParams.set("store", nextState.filterStore);
+  if (
+    Array.isArray(nextState.filterStores) &&
+    nextState.filterStores.length > 0
+  ) {
+    nextParams.set("store", nextState.filterStores.join(","));
+  }
   if (nextState.filterCategory) {
     nextParams.set("category", nextState.filterCategory);
   }
