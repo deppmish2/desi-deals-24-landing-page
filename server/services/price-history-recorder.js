@@ -24,7 +24,7 @@ const { randomUUID } = require("crypto");
  * @param {Array}  opts.deals           - Normalised deal objects
  * @returns {Promise<number>}           - Number of rows written
  */
-async function recordStoreHistory(db, { crawlRunId, crawlDate, crawlTimestamp, storeId, deals }) {
+async function recordStoreHistory(db, { crawlRunId, crawlDate, crawlTimestamp, storeId, deals, defaultIsDeal = 0 }) {
   if (!Array.isArray(deals) || deals.length === 0) return 0;
 
   // Replace today's history for this store (same behaviour as crawler's existing logic)
@@ -43,7 +43,7 @@ async function recordStoreHistory(db, { crawlRunId, crawlDate, crawlTimestamp, s
         ? deal.is_deal
         : deal.original_price && deal.original_price > price
           ? 1
-          : 0;
+          : defaultIsDeal;
 
     try {
       await db.execute(
