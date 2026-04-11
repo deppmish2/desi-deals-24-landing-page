@@ -56,13 +56,17 @@ Categories: Rice & Grains, Flours & Baking, Lentils & Pulses, Spices & Masalas, 
 
 ## Weight parsing
 
-`crawler/utils/weight-parser.js` — extracts weight from product titles. Matches patterns like `500g`, `1kg`, `1.5 kg`, `2x500ml`.
+`crawler/utils/weight-parser.js` — extracts weight from product titles. Matches patterns like `500g`, `1kg`, `1.5 kg`, `2x500ml`, `480gm`.
+
+The `gm` (Indian abbreviation) pattern uses `matchAll` and returns the **last** match in the string. This ensures multi-pack titles like `(48pc x 10gm) 480gm` return the total weight (480g) rather than the per-unit weight (10g). Earlier versions used `match()` (first match only), causing phantom `€399/kg` reference prices for bouillon cubes.
 
 ## Canonical products & auto-mapping
 
 `crawler/utils/auto-mapper.js`:
 - `loadPriorityCanonicals(db)` — loads canonicals with `is_priority=1` from DB
 - `autoMapDeals(db, deals, canonicals)` — fuzzy-matches scraped deal names to canonical names; writes to `deal_mappings`
+
+**Brand anchor check (added 2026-04-11):** alias matches now require the first word of the canonical name (the brand, e.g. "knorr") to also appear in the deal's name. Without this, brand-free aliases like "bouillon cubes chicken" incorrectly matched competitor products (Jumbo → Knorr canonical), poisoning the reference price history.
 
 `crawler/utils/pass1-fetcher.js` — for each priority canonical, fetches the current (non-sale) price from the store. Used to compute "Real Savings" — how much you actually save vs. the everyday price, not just vs. an inflated `compare_at_price`.
 
