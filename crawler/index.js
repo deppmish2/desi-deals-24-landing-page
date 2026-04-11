@@ -630,6 +630,7 @@ async function runCrawl(db, options = {}) {
           crawlTimestamp,
           storeId: adapter.storeId,
           deals,
+          defaultIsDeal: 1, // Pass-2 deals from store collections are deals by definition
         });
 
         // Auto-map scraped deals to priority canonical products for future Pass 1

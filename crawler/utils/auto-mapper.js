@@ -69,10 +69,22 @@ async function autoMapDeals(db, deals, priorityCanonicals) {
     const normedName = norm(deal.product_name);
 
     for (const canon of priorityCanonicals) {
+      // Brand anchor = first word of the canonical name (e.g. "knorr").
+      // Alias terms that don't include the brand can accidentally match
+      // products from other brands, so we require the brand anchor to
+      // appear in the deal name whenever the matching term is an alias
+      // (not the canonical_name itself).
+      const brandAnchor = canon.normed.split(" ")[0];
       const terms = [canon.normed, ...canon.aliases].filter(Boolean);
-      const matched = terms.some(
-        (term) => term.length >= 4 && normedName.includes(term),
-      );
+      const matched = terms.some((term) => {
+        if (term.length < 4) return false;
+        if (!normedName.includes(term)) return false;
+        // For alias terms, also verify the brand is present in the deal name.
+        const isAlias = term !== canon.normed;
+        if (isAlias && brandAnchor && !normedName.includes(brandAnchor))
+          return false;
+        return true;
+      });
       if (!matched) continue;
 
       try {

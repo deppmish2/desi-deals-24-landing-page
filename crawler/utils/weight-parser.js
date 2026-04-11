@@ -19,10 +19,14 @@ const PATTERNS = [
       unit: normalizeUnit(m[2]),
     }),
   },
-  // "100 gm", "500gm" — Indian abbreviation for grams
+  // "100 gm", "500gm" — Indian abbreviation for grams.
+  // Use the LAST match so that multi-pack titles like
+  // "(48pc x 10gm) 480gm" return the total weight (480gm) not the
+  // per-unit weight (10gm).
   {
-    re: /(\d+(?:[.,]\d+)?)\s*gm\b/i,
+    re: /(\d+(?:[.,]\d+)?)\s*gm\b/gi,
     fn: (m) => ({ raw: m[0], value: parseGerman(m[1]), unit: "g" }),
+    last: true,
   },
   // "1 Liter"
   {
@@ -53,11 +57,22 @@ function normalizeUnit(u) {
  */
 function parseWeight(str) {
   if (!str) return null;
-  for (const { re, fn } of PATTERNS) {
-    const m = str.match(re);
-    if (m) {
-      const result = fn(m);
-      if (!isNaN(result.value) && result.value > 0) return result;
+  for (const { re, fn, last } of PATTERNS) {
+    if (last) {
+      // Collect all matches and use the last one (e.g. total weight after
+      // per-unit spec in "(48pc x 10gm) 480gm").
+      const matches = [...str.matchAll(re)];
+      if (matches.length > 0) {
+        const m = matches[matches.length - 1];
+        const result = fn(m);
+        if (!isNaN(result.value) && result.value > 0) return result;
+      }
+    } else {
+      const m = str.match(re);
+      if (m) {
+        const result = fn(m);
+        if (!isNaN(result.value) && result.value > 0) return result;
+      }
     }
   }
   return null;
