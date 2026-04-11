@@ -392,6 +392,11 @@ function buildDealAnalyticsPayload(deal, context = {}) {
 }
 
 // ── Deal card ─────────────────────────────────────────────────────────────────
+function proxyImageUrl(imageUrl) {
+  if (!imageUrl) return null;
+  return `/api/v1/admin/proxy/image?url=${encodeURIComponent(imageUrl)}`;
+}
+
 function dealPermalink(dealId) {
   return buildDealPageUrl(dealId);
 }
