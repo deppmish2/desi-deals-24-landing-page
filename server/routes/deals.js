@@ -14,6 +14,7 @@ const { trackEvent } = require("../services/event-tracker");
 const { formatBerlinDateKey } = require("../services/berlin-time");
 const { trackSearchQuery } = require("../services/search-tracker");
 const { verifyJwt } = require("../utils/jwt");
+const { batchGetRealSavings, computeRealSavings } = require("../services/real-savings");
 
 const router = express.Router();
 const EXCLUDED_STORE_IDS = ["dookan"];
@@ -312,9 +313,10 @@ router.get("/", async (req, res, next) => {
     const priceMax = parseFloat(req.query.price_max || "0") || 0;
     const inStock = req.query.in_stock === "1";
     const hideExpired = req.query.hide_expired === "1";
+    const realSavingsGap = parseFloat(req.query.real_savings_gap || "0") || 0;
     const sort = String(req.query.sort || "").trim();
     const usesExplicitOrdering =
-      sort === "discount" || sort === "price_per_kg" || sort === "price";
+      sort === "discount" || sort === "price_per_kg" || sort === "price" || sort === "real_savings";
     const canUseFastPath = Boolean(
       !focusDealId &&
       !searchQuery &&
@@ -471,19 +473,47 @@ router.get("/", async (req, res, next) => {
             String(b.product_name || ""),
           ),
       );
+    } else if (sort === "real_savings") {
+      // Fetch real_savings for all filtered deals, then sort by real_discount_pct desc
+      const rsMap = await batchGetRealSavings(db, filtered);
+      const rsScores = new Map(
+        filtered.map((d) => {
+          const rs = computeRealSavings(d, rsMap.get(d.id));
+          return [d.id, rs?.real_discount_pct ?? -1];
+        }),
+      );
+      filtered = [...filtered].sort(
+        (a, b) => (rsScores.get(b.id) ?? -1) - (rsScores.get(a.id) ?? -1),
+      );
+    }
+
+    // Filter by minimum real savings gap (real_discount_pct vs stated discount_percent)
+    if (realSavingsGap > 0) {
+      const rsMapForGap = await batchGetRealSavings(db, filtered);
+      filtered = filtered.filter((d) => {
+        const rs = computeRealSavings(d, rsMapForGap.get(d.id));
+        if (!rs) return false;
+        const stated = Number(d.discount_percent) || 0;
+        return Math.abs(rs.real_discount_pct - stated) >= realSavingsGap;
+      });
     }
 
     const total = filtered.length;
-    const uniqueStoreCount = new Set(
-      filtered.map((deal) => getDealStoreId(deal) || "__unknown__"),
-    ).size;
+    const uniqueStoreCount = new Set(filtered.map((deal) => getDealStoreId(deal) || "__unknown__")).size;
+    const DISPLAY_OPTS = {
+      maxStoreRatio: 0.25,
+      qualityFloorRatio: 0.40,
+      qualityMinDiscount: 25,
+      qualityPages: 2,
+    };
     const pageLayout = usesExplicitOrdering
       ? null
       : buildDiversifiedPages(
-          filtered,
-          limitNum,
-          dateSeed(`${cacheKey}:${sort || "random"}:${limitNum}`),
-        );
+        filtered,
+        limitNum,
+        dateSeed(`${cacheKey}:${sort || "random"}:${limitNum}`),
+        DISPLAY_OPTS,
+      );
     const orderedPage = usesExplicitOrdering
       ? paginateSequential(filtered, limitNum, pageNum)
       : null;
@@ -494,6 +524,13 @@ router.get("/", async (req, res, next) => {
       ? orderedPage.data
       : pageLayout.pages[pageNum - 1] || [];
 
+    // Attach Real Savings ratings (graceful no-op if history table not yet populated)
+    const realSavingsMap = await batchGetRealSavings(db, data);
+    const dataWithSavings = data.map((deal) => ({
+      ...deal,
+      real_savings: computeRealSavings(deal, realSavingsMap.get(deal.id)),
+    }));
+
     // CDN caches for 5 min; serves stale up to 1h while revalidating.
     res.set(
       "Cache-Control",
@@ -501,7 +538,7 @@ router.get("/", async (req, res, next) => {
     );
 
     res.json({
-      data,
+      data: dataWithSavings,
       pagination: {
         page: pageNum,
         limit: limitNum,
