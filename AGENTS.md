@@ -2,6 +2,10 @@
 
 This file provides guidance to Codex when working with the DesiDeals24 codebase.
 
+## Wiki
+
+Compiled project knowledge lives in `docs/wiki/`. Read `docs/wiki/index.md` before exploring the codebase — it maps what's already known: store adapters, DB schema, API routes, decisions, and more. Update the wiki after completing significant tasks (see `docs/wiki/WIKI.md` for maintenance conventions).
+
 ## Project Overview
 
 DesiDeals24 is a Node.js full-stack web app that crawls Indian grocery stores in Germany, aggregates their current deals, and displays them in a React + Tailwind frontend. This is a test version covering 5 of the 27 target stores from the PRD.
