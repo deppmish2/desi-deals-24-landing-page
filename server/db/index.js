@@ -160,6 +160,20 @@ function shouldBootstrapRuntimeDb() {
 // We can't await at module level in CJS, so we fire-and-forget.
 // This keeps local SQLite files and remote Turso schemas aligned.
 const ready = (async () => {
+  // Always-run migrations — idempotent ALTER TABLE columns that must exist on
+  // both local and remote Turso DBs regardless of the bootstrap flag.
+  const alwaysMigrations = [
+    "ALTER TABLE canonical_products ADD COLUMN is_priority INTEGER DEFAULT 0",
+    "ALTER TABLE deal_price_history ADD COLUMN is_deal INTEGER DEFAULT 0",
+  ];
+  for (const sql of alwaysMigrations) {
+    try {
+      await db.execute(sql);
+    } catch (_) {
+      // column already exists — ignore
+    }
+  }
+
   if (!shouldBootstrapRuntimeDb()) {
     return;
   }
