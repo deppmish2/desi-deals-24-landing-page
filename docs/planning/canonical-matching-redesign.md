@@ -1,10 +1,11 @@
 # Canonical Matching Redesign — Developer Review Document
 
 **Status:** Awaiting approval before execution  
-**Date:** 2026-04-11  
+**Date:** 2026-04-12  
 **Scope:** `crawler/utils/auto-mapper.js`, `scripts/seed-priority-canonicals.js`,
 `server/db/schema.sql`, `server/db/index.js`, `server/services/canonicalizer.js`,
-`crawler/utils/canonical-decomposer.js` (new), `scripts/migrate-canonical-slots.js` (new)
+`crawler/utils/canonical-decomposer.js` (new), `scripts/migrate-canonical-slots.js` (new),
+`scripts/run-automapper-all-deals.js` (new)
 
 ---
 
@@ -21,7 +22,7 @@ Aliases: `["aashirvaad chakki atta", "aashirvaad wheat flour", ...]`
 Deal title: `"Aashirvaad 2kg Chakki Atta"` → normed: `"aashirvaad 2kg chakki atta"`  
 Match? `"aashirvaad chakki atta"` ← NOT a substring (2kg breaks the sequence)
 
-### The three root failures
+### The four root failures
 
 **A — Word-order and weight placement sensitivity**  
 Jamoona and other German-language stores format titles as `"Brand - Xkg Product
@@ -41,6 +42,13 @@ the matcher. Additionally, all 8 current priority canonicals have NULL
 `common_aliases`, making even those 8 unmatchable. Real Savings falls back to
 Layer 2 (store-reported `compare_at_price`) for almost every deal.
 
+**D — Weight variants are not separate canonicals**  
+"Heer Basmati Rice Extra Long 5kg" and "Heer Basmati Rice Extra Long 500g" are
+different products with meaningfully different per-unit economics (bulk discount,
+minimum spend requirements). Collapsing them into one canonical conflates their
+`price_per_kg` reference pools and prevents accurate cross-store comparison for a
+customer who specifically needs the 5kg pack.
+
 ---
 
 ## 2. Proposed solution
@@ -55,9 +63,13 @@ base_product_slots: [ ["basmati", "basmatireis"], ["rice", "reis"] ]
 type_slots:         [ ["extra"], ["long", "lang", "extralang"] ]
 ```
 
-A deal matches a canonical if the deal title contains **at least one variant
-from every slot group**. Word order does not matter. Weight specs between brand
-and product are ignored.
+A deal matches a canonical if:
+1. The deal title contains **at least one variant from every slot group** (word
+   order does not matter; weight specs in the title are ignored during slot
+   matching), AND
+2. The deal's parsed `weight_value` matches the canonical's `weight_value` within
+   ±10% (rounding tolerance). If either side has no weight, the weight check is
+   skipped.
 
 Example — deal `"Daawat - 5kg Basmati Reis extra lang"`:
 
@@ -84,16 +96,55 @@ Same deal against `"Heer Basmati Rice Extra Long"` (brand_slots[0] = ["heer"]):
 This separation keeps Pass 1 bounded while allowing all 1,337 canonicals to
 participate in deal matching.
 
-### New `product_groups` table
+### Weight as canonical identity
 
-Groups brand-level canonicals for the same base product type. Enables cross-brand
-Real Savings comparisons and future price alerts per product type.
+Each weight variant of a product is a separate canonical row:
 
 ```
-product_groups: basmati-rice-extra-long
-  ├── Daawat Basmati Rice Extra Long
-  ├── Heer Basmati Rice Extra Long
-  └── (any future brand)
+canonical_products:
+  "Heer Basmati Rice Extra Long 5kg"   weight_value=5000 weight_unit=g
+  "Heer Basmati Rice Extra Long 500g"  weight_value=500  weight_unit=g
+```
+
+Both rows share the same `brand_slots`, `base_product_slots`, and `type_slots`.
+The auto-mapper's weight check routes each deal to exactly the right canonical.
+Real Savings Layer 1 uses only that canonical's own `deal_price_history` pool —
+a 5kg deal is compared against 5kg reference prices only, never against 500g
+prices (which would inflate savings because bulk is cheaper per-kg).
+
+### Substitution suggestions (data model only — UI deferred)
+
+The `product_group_id` on `canonical_products` is brand-agnostic and
+weight-agnostic (e.g., `"basmati-rice-extra-long"`). This allows querying
+weight-sibling canonicals for the same brand:
+
+```sql
+SELECT * FROM canonical_products
+WHERE product_group_id = ?
+  AND brand_slots LIKE ?   -- same brand
+  AND weight_value != ?    -- different weight
+ORDER BY weight_value
+```
+
+Example output for a 5kg deal:
+> "Buying 10 × Heer Basmati Rice Extra Long 500g (€X total, €Y/kg) is cheaper
+> than 1 × 5kg (€Z) — save €W"
+
+No new schema is needed beyond `product_group_id` + `weight_value` +
+`weight_unit` on `canonical_products`.
+
+### New `product_groups` table
+
+Groups canonicals across brands for the same base product type. Enables future
+cross-brand Real Savings and price alerts per product type.
+
+```
+product_groups: basmati-rice-extra-long  (brand-agnostic, weight-agnostic)
+  ├── Daawat Basmati Rice Extra Long 5kg
+  ├── Daawat Basmati Rice Extra Long 1kg
+  ├── Heer Basmati Rice Extra Long 5kg
+  ├── Heer Basmati Rice Extra Long 500g
+  └── (any future brand/size)
 ```
 
 ---
@@ -115,6 +166,8 @@ ALTER TABLE canonical_products ADD COLUMN brand_slots        TEXT;
 ALTER TABLE canonical_products ADD COLUMN base_product_slots TEXT;
 ALTER TABLE canonical_products ADD COLUMN type_slots         TEXT;
 ALTER TABLE canonical_products ADD COLUMN product_group_id   TEXT;
+ALTER TABLE canonical_products ADD COLUMN weight_value       REAL;
+ALTER TABLE canonical_products ADD COLUMN weight_unit        TEXT;
 
 CREATE TABLE IF NOT EXISTS product_groups (
   id         TEXT PRIMARY KEY,
@@ -123,6 +176,11 @@ CREATE TABLE IF NOT EXISTS product_groups (
   created_at DATETIME DEFAULT CURRENT_TIMESTAMP
 );
 ```
+
+`weight_value` stores the canonical's pack size in grams (e.g., 5000 for 5kg,
+500 for 500g). `weight_unit` is always `"g"` (normalised). Both are nullable —
+canonicals without a stated pack size (e.g., loose produce) skip the weight
+check entirely.
 
 All new columns are nullable. No existing rows or queries break.  
 **Turso:** Run these `ALTER TABLE` statements directly against the Turso DB via
@@ -138,18 +196,21 @@ Pure function used by both the migration script and the canonicalizer:
 
 ```js
 decomposeCanonical(canonicalName, commonAliases) → {
-  brandSlots, baseProductSlots, typeSlots, productGroupId
+  brandSlots, baseProductSlots, typeSlots, productGroupId,
+  weightValue, weightUnit   // extracted from canonical_name
 }
 ```
 
 Logic:
-1. Strip weight specs (`5kg`, `10gm`, `2x500ml`), dashes, and BBD notes from
-   `canonical_name`
-2. First remaining token = brand → `brand_slots[0]`
-3. Remaining tokens = base product words → each word becomes its own slot group
-   (word-level, not phrase-level, to handle any word order)
-4. Brand-free entries from `commonAliases` are distributed into matching slot groups
-5. `product_group_id` = slug of the base product name (without brand)
+1. Extract weight spec (`5kg`, `10gm`, `2x500ml`) from `canonical_name`;
+   normalise to grams → `weightValue` (REAL) + `weightUnit` (`"g"`)
+2. Strip the extracted weight, dashes, and BBD notes from the remaining name
+3. First remaining token = brand → `brand_slots[0]`
+4. Remaining tokens = base product words → one slot group per distinct concept
+   (e.g., `[["basmati","basmatireis"],["rice","reis"]]`)
+5. Brand-free entries from `commonAliases` distributed into matching slot groups
+6. `product_group_id` = slug of base product name without brand and without weight
+   (e.g., `"basmati-rice-extra-long"` — weight-agnostic for substitution queries)
 
 ---
 
@@ -157,11 +218,14 @@ Logic:
 **New file:** `scripts/migrate-canonical-slots.js`
 
 Runs once. For every row in `canonical_products`:
-- Calls `decomposeCanonical()` to compute slots
-- Upserts `brand_slots`, `base_product_slots`, `type_slots`, `product_group_id`
+- Calls `decomposeCanonical()` to compute slots and extract weight
+- Upserts `brand_slots`, `base_product_slots`, `type_slots`, `product_group_id`,
+  `weight_value`, `weight_unit`
 - Upserts into `product_groups`
 - Sets `is_match_priority = 1` for all rows (every canonical participates in matching)
 - Does NOT touch `is_priority` (Pass 1 scope unchanged)
+- Logs every weight extraction; rows where extraction fails get NULL `weight_value`
+  (graceful skip — weight check is bypassed for that canonical)
 - Runs in a single transaction; idempotent (safe to re-run)
 
 ---
@@ -174,7 +238,8 @@ Update `buildBrandCanonicals()` to:
   (heuristic: if a misspelling fuzzy-matches any known brand name → `brand_slots`;
   else → `base_product_slots`)
 - Build word-level slot arrays (not phrases) so matching is order-independent
-- Write `brand_slots`, `base_product_slots`, `type_slots`, `product_group_id` on INSERT
+- Write `brand_slots`, `base_product_slots`, `type_slots`, `product_group_id`,
+  `weight_value`, `weight_unit` on INSERT
 
 Also add German/regional variants to Search Variations for existing CSV rows
 covering products sold in German-language stores (Basmatireis, Reisflocken,
@@ -190,7 +255,16 @@ current CSV (Sona Masoori, Palakkadan Matta, Sella Basmati, Poha varieties, etc.
 
 - `loadPriorityCanonicals()` → now loads `is_match_priority = 1` (all 1,337)
   instead of `is_priority = 1` (8 only)
-- New `matchesCanonical(normedTitle, canon)` function using slot set membership
+- New `matchesCanonical(normedTitle, dealWeightValue, canon)` function:
+  1. **Slot check** — all slot groups must match (brand + base_product + type)
+  2. **Weight check** — if both `canon.weight_value` and `deal.weight_value` are
+     non-null, the ratio must be within ±10%; otherwise skip weight check
+  ```js
+  if (canon.weightValue != null && deal.weight_value != null) {
+    const ratio = deal.weight_value / canon.weightValue;
+    if (ratio < 0.9 || ratio > 1.1) return false;
+  }
+  ```
 - Legacy alias substring fallback retained for any canonical with NULL slots
   (transition safety — no deals drop during rollout)
 
@@ -199,9 +273,10 @@ current CSV (Sona Masoori, Palakkadan Matta, Sella Basmati, Poha varieties, etc.
 ### Step 6 — Canonicalizer: slots on new canonical creation
 **File:** `server/services/canonicalizer.js`
 
-Update `createCanonical()` to call `decomposeCanonical()` and write slot columns
-whenever a new canonical is created dynamically from a deal product name.
-Future auto-created canonicals immediately participate in slot-based matching.
+Update `createCanonical()` to call `decomposeCanonical()` and write all slot
+columns (including `weight_value`, `weight_unit`) whenever a new canonical is
+created dynamically from a deal product name. Future auto-created canonicals
+immediately participate in slot-based matching with correct weight routing.
 
 ---
 
@@ -222,11 +297,13 @@ node scripts/run-automapper-all-deals.js
 
 | Risk | Likelihood | Mitigation |
 |---|---|---|
-| Migration assigns incorrect slots to a manually curated canonical | Medium | Review all `verified = 1` canonicals before running; migration is logged |
+| Migration assigns incorrect slots to a manually curated canonical | Medium | Migration is additive; manual review of all `verified = 1` canonicals before running |
 | Brand misspelling heuristic misclassifies variants into wrong slot | Medium | Log every classification; review output before re-seeding |
-| Slot matcher produces more false positives than current system | Low–Medium | Run Step 5 in dry-run mode first; compare matched deal counts before/after |
-| `ALTER TABLE` on Turso fails silently; columns never created | Low | Verify with `PRAGMA table_info` on Turso after each ALTER |
-| Step 7 re-map creates duplicate deal_mappings | Low | `INSERT OR IGNORE` prevents duplicates |
+| Weight check produces false negatives (deal weight parsed differently from canonical weight) | Medium | ±10% tolerance handles rounding; canonical with NULL `weight_value` skips check entirely; monitor match rate after Step 7 |
+| Existing canonical rows have wrong or missing weight in `canonical_name` | Medium | Migration logs every weight extraction; rows where extraction fails get NULL `weight_value` (graceful skip) |
+| Slot-based matcher produces more false positives than current system | Low–Medium | Run Step 5 in dry-run mode first; compare matched deal counts before/after |
+| `ALTER TABLE` on Turso fails silently; columns never created | Low | Verify with `PRAGMA table_info(canonical_products)` on Turso after each ALTER |
+| Re-mapping in Step 7 creates duplicate deal_mappings | Low | `INSERT OR IGNORE` prevents duplicates |
 
 ---
 
@@ -235,7 +312,7 @@ node scripts/run-automapper-all-deals.js
 | Concern | Detail | Impact |
 |---|---|---|
 | Auto-mapper loads 1,337 canonicals vs 8 today | In-memory ~500KB | Negligible |
-| 5,000 deals × 1,337 canonicals × ~5 slot checks per crawl | ~33M `string.includes()` calls | Expected < 5s; benchmark after Step 5 |
+| 5,000 deals × 1,337 canonicals × ~5 slot checks + weight check per crawl | ~33M `string.includes()` calls + ~7M arithmetic ops | Expected < 5s; benchmark after Step 5 |
 | Pass 1 scope | Unchanged — still `is_priority = 1` only (8 rows) | No impact on crawl time |
 | Step 7 one-time re-map | Runs offline, not in crawl path | Acceptable one-time cost |
 
@@ -246,6 +323,9 @@ node scripts/run-automapper-all-deals.js
 - `is_priority` flag and Pass 1 fetching behaviour — unchanged
 - `deal_mappings` schema — unchanged; 9,797 verified mappings preserved
 - `common_aliases` column — kept and still written (used by search/display)
-- Real Savings computation — unchanged (benefits automatically from more mappings)
+- Real Savings computation — unchanged; Layer 1 reference pool remains per-canonical
+  (same weight only — a 5kg canonical's pool is never mixed with 500g prices)
+- Substitution suggestion UI — deferred; data model is ready via `product_group_id`
+  + `weight_value` + `weight_unit`
 - All existing admin endpoints — unchanged
 - All existing tests — no breaking changes to public interfaces
