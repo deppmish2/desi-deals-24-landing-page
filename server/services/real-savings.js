@@ -17,6 +17,10 @@
  *   Layer 2 — Stated original_price: store-reported, less reliable.
  *             Only used when no canonical price_per_kg history exists.
  *
+ * Requires ≥ 3 non-deal observations for Layer 1 — a single observation from the
+ * deal's own URL (same store, same product, previously not on sale) is not
+ * trustworthy enough to call "market price".
+ *
  * Returns null if there is insufficient evidence.
  */
 
@@ -100,7 +104,7 @@ async function batchGetRealSavings(db, deals) {
         const cid = canonicalMap.get(deal.id);
         if (!cid) continue;
         const prices = byCanonical.get(cid);
-        if (!prices || prices.length === 0) continue;
+        if (!prices || prices.length < 3) continue; // require ≥ 3 non-deal observations
         const refPpk = median(prices);
         if (refPpk != null) {
           result.set(deal.id, {

@@ -409,9 +409,10 @@ function DealCard({
   highlightRef,
   priority,
   analyticsContext,
+  isAdmin,
 }) {
   const [imgError, setImgError] = useState(false);
-  const proxyImg = proxyImageUrl(deal?.image_url);
+  const proxyImg = proxyDealImageUrl(deal?.image_url);
   const discountPct = deal?.discount_percent ? Math.round(deal.discount_percent) : null;
   const realSavings = deal?.real_savings ?? null;
   const bestBeforeText = deal?.best_before ? formatBestBefore(deal.best_before) : null;
@@ -430,7 +431,7 @@ function DealCard({
   return (
     <div
       ref={highlightRef}
-      className={`bg-white rounded-[20px] flex flex-col overflow-hidden transition-shadow ${
+      className={`bg-white rounded-[20px] flex flex-col transition-shadow ${
         highlighted ? "border-2 border-[#16a34a]" : "border border-[#f1f5f9]"
       }`}
       style={{
@@ -440,7 +441,7 @@ function DealCard({
       }}
     >
       {/* Image — not clickable */}
-      <div className="relative block w-full h-[200px] bg-white flex items-center justify-center p-5">
+      <div className="relative block w-full h-[200px] bg-white flex items-center justify-center p-5 overflow-hidden rounded-t-[20px]">
         <img
           src={
             imgError || !proxyImg
@@ -523,35 +524,86 @@ function DealCard({
           const gap = discountPct ? Math.abs(realSavings.real_discount_pct - discountPct) : 0;
           const isGreat = realSavings.rating === "great";
           const isGood  = realSavings.rating === "good";
+          const isLayer1 = realSavings.reference_source === "canonical_historical";
           return (
-            <div className={`flex items-center justify-between rounded-[14px] px-3.5 py-3 ${
-              isGreat || isGood ? "bg-[#f0fdf4] border border-[#bbf7d0]" : "bg-[#f8fafc] border border-[#e2e8f0]"
-            }`}>
-              <div className="flex items-center gap-2.5">
-                <div className={`shrink-0 w-7 h-7 rounded-full flex items-center justify-center ${
-                  isGreat || isGood ? "bg-[#16a34a]" : "bg-slate-300"
-                }`}>
-                  <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="3.2" strokeLinecap="round" strokeLinejoin="round">
-                    <polyline points="20 6 9 17 4 12"/>
-                  </svg>
+            <div className="relative group">
+              <div className={`flex items-center justify-between rounded-[14px] px-3.5 py-3 ${
+                isGreat || isGood ? "bg-[#f0fdf4] border border-[#bbf7d0]" : "bg-[#f8fafc] border border-[#e2e8f0]"
+              }`}>
+                <div className="flex items-center gap-2.5">
+                  <div className={`shrink-0 w-7 h-7 rounded-full flex items-center justify-center ${
+                    isGreat || isGood ? "bg-[#16a34a]" : "bg-slate-300"
+                  }`}>
+                    <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="3.2" strokeLinecap="round" strokeLinejoin="round">
+                      <polyline points="20 6 9 17 4 12"/>
+                    </svg>
+                  </div>
+                  <div>
+                    <p className={`text-[10px] font-extrabold uppercase tracking-[1.4px] leading-none mb-[3px] ${
+                      isGreat || isGood ? "text-[#15803d]" : "text-slate-400"
+                    }`}>Real Savings</p>
+                    <p className="text-[11px] text-slate-400 leading-none">
+                      {realSavings.reference_source === "store_original" ? "vs store's original price" : "vs market price"}
+                    </p>
+                  </div>
                 </div>
-                <div>
-                  <p className={`text-[10px] font-extrabold uppercase tracking-[1.4px] leading-none mb-[3px] ${
-                    isGreat || isGood ? "text-[#15803d]" : "text-slate-400"
-                  }`}>Real Savings</p>
-                  <p className="text-[11px] text-slate-400 leading-none">
-                    {realSavings.reference_source === "store_original" ? "vs store's original price" : "vs market price"}
-                  </p>
+                <div className="text-right">
+                  <p className={`text-[22px] font-extrabold leading-none ${
+                    isGreat || isGood ? "text-[#16a34a]" : "text-slate-500"
+                  }`}>{realPct}%</p>
+                  {gap >= 3 && discountPct && (
+                    <p className="text-[10px] text-slate-400 leading-none mt-1">store says {discountPct}%</p>
+                  )}
                 </div>
               </div>
-              <div className="text-right">
-                <p className={`text-[22px] font-extrabold leading-none ${
-                  isGreat || isGood ? "text-[#16a34a]" : "text-slate-500"
-                }`}>{realPct}%</p>
-                {gap >= 3 && discountPct && (
-                  <p className="text-[10px] text-slate-400 leading-none mt-1">store says {discountPct}%</p>
-                )}
-              </div>
+
+              {true && (
+                <div className="hidden md:block absolute bottom-full left-0 mb-2 w-64 bg-[#1e293b] text-white rounded-xl p-3.5 shadow-2xl z-50 opacity-0 group-hover:opacity-100 pointer-events-none transition-opacity duration-150">
+                  <p className="text-[10px] font-extrabold uppercase tracking-[1.2px] text-slate-400 mb-2.5">Real Savings Breakdown</p>
+                  <div className="flex flex-col gap-1.5">
+                    <div className="flex justify-between items-baseline">
+                      <span className="text-[11px] text-slate-400">Reference</span>
+                      <span className="text-[12px] font-semibold text-white">
+                        {isLayer1
+                          ? `€${realSavings.reference_price_per_kg?.toFixed(2)}/kg`
+                          : `€${realSavings.reference_price?.toFixed(2)}`}
+                      </span>
+                    </div>
+                    <div className="flex justify-between items-baseline">
+                      <span className="text-[11px] text-slate-400">Deal price</span>
+                      <span className="text-[12px] font-semibold text-white">
+                        {isLayer1 && deal.price_per_kg
+                          ? `€${Number(deal.price_per_kg).toFixed(2)}/kg`
+                          : `€${Number(deal.sale_price).toFixed(2)}`}
+                      </span>
+                    </div>
+                    <div className="flex justify-between items-baseline">
+                      <span className="text-[11px] text-slate-400">Real savings</span>
+                      <span className="text-[12px] font-bold text-emerald-400">{realSavings.real_discount_pct.toFixed(1)}%</span>
+                    </div>
+                    {discountPct && (
+                      <div className="flex justify-between items-baseline">
+                        <span className="text-[11px] text-slate-400">Store states</span>
+                        <span className="text-[12px] font-semibold text-white">{discountPct}%</span>
+                      </div>
+                    )}
+                  </div>
+                  <div className="border-t border-slate-600 mt-2.5 pt-2 flex flex-col gap-1">
+                    <div className="flex justify-between items-baseline">
+                      <span className="text-[10px] text-slate-500">Source</span>
+                      <span className="text-[10px] text-slate-400">
+                        {isLayer1 ? `market median (${realSavings.observations ?? "?"} obs)` : "store original"}
+                      </span>
+                    </div>
+                    {realSavings.canonical_id && (
+                      <div className="flex justify-between items-baseline gap-2">
+                        <span className="text-[10px] text-slate-500 shrink-0">Canonical</span>
+                        <span className="text-[10px] text-slate-400 text-right truncate">{realSavings.canonical_id}</span>
+                      </div>
+                    )}
+                  </div>
+                </div>
+              )}
             </div>
           );
         })() : null}
@@ -1355,6 +1407,7 @@ export default function DealsPage() {
 
   const [session, setSession] = useState(() => getAuthSession());
   const isLoggedIn = Boolean(session?.accessToken);
+  const isAdmin = Boolean(session?.user?.is_admin);
   const analyticsFilterCount =
     Number(filterStores.length > 0) +
     Number(Boolean(filterCategory)) +
@@ -2416,6 +2469,7 @@ export default function DealsPage() {
                 highlightRef={highlightDealId === deal.id ? highlightRef : null}
                 priority={index < 4}
                 analyticsContext={buildAnalyticsContext()}
+                isAdmin={isAdmin}
               />
             ))}
           </div>
