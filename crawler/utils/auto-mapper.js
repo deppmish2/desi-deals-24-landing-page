@@ -178,7 +178,8 @@ async function autoMapDeals(db, deals, priorityCanonicals) {
         await db.execute(
           `INSERT INTO deal_mappings (deal_id, canonical_id, match_method, match_confidence)
            VALUES (?, ?, 'slot_match', 0.85)
-           ON CONFLICT(deal_id, canonical_id) DO UPDATE SET match_confidence = 0.85`,
+           ON CONFLICT(deal_id, canonical_id) DO UPDATE SET
+             match_method = 'slot_match', match_confidence = 0.85`,
           [deal.id, canon.id],
         );
         mapped++;
