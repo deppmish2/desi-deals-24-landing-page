@@ -1,6 +1,7 @@
 "use strict";
 
 const { resolveName } = require("../../crawler/entity-resolution");
+const { decomposeCanonical } = require("../../crawler/utils/canonical-decomposer");
 
 function slugify(value) {
   const base = String(value || "")
@@ -73,11 +74,24 @@ async function createCanonical(
   const baseId = slugify(canonicalName || rawName);
   const canonicalId = await ensureUniqueCanonicalId(db, baseId);
 
+  // Decompose into token slots so the new canonical immediately participates
+  // in slot-based matching on the next crawl run.
+  const {
+    brandSlots,
+    baseProductSlots,
+    typeSlots,
+    productGroupId,
+    weightValue,
+    weightUnit,
+  } = decomposeCanonical(canonicalName || rawName || "");
+
   await db
     .prepare(
       `INSERT INTO canonical_products
-      (id, canonical_name, category, common_aliases, image_url, verified)
-     VALUES (?, ?, ?, ?, ?, 0)`,
+        (id, canonical_name, category, common_aliases, image_url, verified,
+         brand_slots, base_product_slots, type_slots, product_group_id,
+         weight_value, weight_unit, is_match_priority)
+       VALUES (?, ?, ?, ?, ?, 0, ?, ?, ?, ?, ?, ?, 1)`,
     )
     .run(
       canonicalId,
@@ -85,7 +99,25 @@ async function createCanonical(
       category || "Other",
       JSON.stringify(rawName ? [rawName] : []),
       imageUrl || null,
+      JSON.stringify(brandSlots),
+      JSON.stringify(baseProductSlots),
+      JSON.stringify(typeSlots),
+      productGroupId,
+      weightValue,
+      weightUnit,
     );
+
+  // Upsert the product group record
+  try {
+    await db
+      .prepare(
+        `INSERT OR IGNORE INTO product_groups (id, group_name, category)
+         VALUES (?, ?, ?)`,
+      )
+      .run(productGroupId, productGroupId.replace(/-/g, " "), category || null);
+  } catch (_) {
+    // product_groups table may not exist on older DBs — non-fatal
+  }
 
   return await db
     .prepare("SELECT * FROM canonical_products WHERE id = ? LIMIT 1")

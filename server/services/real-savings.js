@@ -132,7 +132,29 @@ async function batchGetRealSavings(db, deals) {
  * @param {object|null} historyData  - Entry from batchGetRealSavings map
  * @returns {object|null}
  */
+/**
+ * Apply badge suppression rules based on the store's stated discount_percent.
+ *
+ * Rules (both require a valid store discount to compare against):
+ *   1. Suppress if real savings > store discount — our data cannot be trusted
+ *      to claim a bigger discount than the store itself states.
+ *   2. Suppress if |real savings − store discount| < 5pp — the badge adds no
+ *      meaningful information when the numbers are nearly identical.
+ *
+ * @param {number} realPct         - computed real discount percentage (0-100)
+ * @param {number|null} statedPct  - store's discount_percent (0-100) or null
+ * @returns {boolean} true if the badge should be suppressed
+ */
+function shouldSuppressBadge(realPct, statedPct) {
+  if (statedPct == null || !Number.isFinite(statedPct) || statedPct <= 0) return false;
+  if (realPct > statedPct) return true;          // condition 2: real > store
+  if (statedPct - realPct < 5) return true;      // condition 1: gap < 5pp
+  return false;
+}
+
 function computeRealSavings(deal, historyData) {
+  const statedDiscount = Number(deal.discount_percent) || null;
+
   // ── Layer 1: canonical price_per_kg comparison ───────────────────────────
   if (historyData?.reference_price_per_kg) {
     const dealPpk = Number(deal.price_per_kg);
@@ -150,6 +172,8 @@ function computeRealSavings(deal, historyData) {
       else if (rounded >= 15) rating = "good";
       else if (rounded >= 5) rating = "low";
       else return null;
+
+      if (shouldSuppressBadge(rounded, statedDiscount)) return null;
 
       return {
         reference_price_per_kg: refPpk,
@@ -176,6 +200,8 @@ function computeRealSavings(deal, historyData) {
     else if (rounded >= 15) rating = "good";
     else if (rounded >= 5) rating = "low";
     else return null;
+
+    if (shouldSuppressBadge(rounded, statedDiscount)) return null;
 
     return {
       reference_price: referencePrice,

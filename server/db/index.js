@@ -219,6 +219,19 @@ const ready = (async () => {
     "ALTER TABLE waitlist_referrals DROP COLUMN inviter_user_id_user_id",
     "ALTER TABLE users ADD COLUMN is_admin INTEGER NOT NULL DEFAULT 0",
     "ALTER TABLE canonical_products ADD COLUMN is_priority INTEGER DEFAULT 0",
+    "ALTER TABLE canonical_products ADD COLUMN is_match_priority INTEGER DEFAULT 0",
+    "ALTER TABLE canonical_products ADD COLUMN brand_slots TEXT",
+    "ALTER TABLE canonical_products ADD COLUMN base_product_slots TEXT",
+    "ALTER TABLE canonical_products ADD COLUMN type_slots TEXT",
+    "ALTER TABLE canonical_products ADD COLUMN product_group_id TEXT",
+    "ALTER TABLE canonical_products ADD COLUMN weight_value REAL",
+    "ALTER TABLE canonical_products ADD COLUMN weight_unit TEXT",
+    `CREATE TABLE IF NOT EXISTS product_groups (
+      id         TEXT PRIMARY KEY,
+      group_name TEXT NOT NULL,
+      category   TEXT,
+      created_at DATETIME DEFAULT CURRENT_TIMESTAMP
+    )`,
     "ALTER TABLE deal_price_history ADD COLUMN is_deal INTEGER DEFAULT 0",
     `CREATE TABLE IF NOT EXISTS bookmarks (
       id TEXT PRIMARY KEY,
