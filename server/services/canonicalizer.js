@@ -74,6 +74,13 @@ async function createCanonical(
   const baseId = slugify(canonicalName || rawName);
   const canonicalId = await ensureUniqueCanonicalId(db, baseId);
 
+  // Load brands for decomposition
+  const brandRows = await db.prepare(`SELECT name, aliases FROM known_brands`).all().catch(() => []);
+  const brands = brandRows.map((r) => ({
+    name: r.name,
+    aliases: JSON.parse(String(r.aliases || "[]")),
+  }));
+
   // Decompose into token slots so the new canonical immediately participates
   // in slot-based matching on the next crawl run.
   const {
@@ -83,7 +90,7 @@ async function createCanonical(
     productGroupId,
     weightValue,
     weightUnit,
-  } = decomposeCanonical(canonicalName || rawName || "");
+  } = decomposeCanonical(canonicalName || rawName || "", [], brands);
 
   await db
     .prepare(
