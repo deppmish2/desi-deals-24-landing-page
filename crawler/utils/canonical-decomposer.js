@@ -16,8 +16,10 @@
 
 const { parseWeight } = require("./weight-parser");
 
-// Patterns to strip before processing: "Best before 12/2025", "BBD 2025", "MHD 12.25", etc.
-const BBD_RE = /\b(?:best\s+before|best\s+by|bb[d]?|exp\.?|expires?|mhd)\b[\s:]*[\d\/\.\-a-zA-Z]*/gi;
+// Non-anchored regex covering all BBD/expiry keyword variants (aligns with best-before-parser.js KW).
+// Matches keyword + optional date fragment and strips mid-string occurrences.
+const BBD_RE =
+  /\b(?:mhd|bbe|b\.b\.e|best[\s-]?before|bbd|bb|expiry(?:[\s-]?date)?|exp\.?|mhb|mindestens[\s-]?haltbar[\s-]?bis|mindesthaltbarkeitsdatum|haltbarkeitsdatum|mindesthaltbarkeit|ablauf)\b[\s:]*[\d/.\-a-zA-Z]*/gi;
 
 function normalizeWeight(value, unit) {
   switch (unit) {
@@ -82,7 +84,7 @@ function decomposeCanonical(canonicalName, commonAliases = [], brands = []) {
   outer: for (let i = 0; i < tokens.length; i++) {
     const t = tokens[i];
     for (const b of brands) {
-      if (b.aliases.some((alias) => t === alias)) {
+      if (b.aliases.some((alias) => t === alias.toLowerCase())) {
         brandEntry = b;
         brandTokenIndex = i;
         break outer;
