@@ -316,3 +316,23 @@ export async function startEmailAuth({ email, referral_code } = {}) {
   if (!res.ok) throw new Error(await parseError(res));
   return res.json();
 }
+
+export function fetchBrands() {
+  return authRequest("/admin-dashboard/brands");
+}
+
+export function triggerBrandRemap(brands) {
+  return authRequest("/admin-dashboard/brands/remap", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ brands }),
+  });
+}
+
+export function fetchRemapStatus(jobId) {
+  return authRequest(`/admin-dashboard/brands/remap-status/${jobId}`);
+}
+
+export function fetchCanonicalStats() {
+  return authRequest("/admin-dashboard/canonical-stats");
+}

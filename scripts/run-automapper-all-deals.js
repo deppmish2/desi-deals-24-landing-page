@@ -70,16 +70,7 @@ async function main() {
           canon,
         );
         if (result === true) { wouldMap++; break; }
-        if (result === null) {
-          const normed = norm(deal.product_name);
-          const brand = canon.normed.split(" ")[0];
-          const matched = [canon.normed, ...canon.aliases].filter(Boolean).some((t) => {
-            if (t.length < 4 || !normed.includes(t)) return false;
-            if (t !== canon.normed && brand && !normed.includes(brand)) return false;
-            return true;
-          });
-          if (matched) { wouldMap++; break; }
-        }
+        // null = no slots → skip (no legacy fallback)
       }
     }
     console.log(`[run-automapper] Would create up to ${wouldMap} new mappings`);

@@ -3,13 +3,11 @@
  * auto-mapper.js
  *
  * After each store's deals are scraped, attempts to match them against
- * canonical products. Supports two matching modes:
+ * canonical products using slot-based matching only:
  *
- *  1. Slot-based (new): uses brand_slots, base_product_slots, type_slots +
- *     weight check. Loads canonicals with is_match_priority = 1.
- *
- *  2. Legacy substring (fallback): for canonicals where slot columns are NULL,
- *     falls back to the original brand-anchored alias substring check.
+ *  - Uses brand_slots, base_product_slots, type_slots + weight check.
+ *  - Loads only canonicals with is_match_priority = 1 AND brand_slots IS NOT NULL.
+ *  - Canonicals without slots are skipped entirely (no legacy fallback).
  *
  * Upserts confirmed matches into deal_mappings so Real Savings can compute
  * Layer 1 savings from canonical price history.
@@ -92,18 +90,20 @@ function matchesCanonical(normedTitle, dealWeightValue, dealWeightUnit, canon) {
 /**
  * Load all is_match_priority = 1 canonical products once per crawl run.
  * Falls back to is_priority = 1 if is_match_priority column does not exist yet.
+ * Only loads canonicals that have brand_slots set (slot-only matching).
  *
- * Returns array of canonical objects with both slot arrays and legacy fields.
+ * Returns array of canonical objects with slot arrays.
  */
 async function loadPriorityCanonicals(db) {
   let rows;
   try {
     const res = await db.execute(
-      `SELECT id, canonical_name, common_aliases,
+      `SELECT id, canonical_name,
               brand_slots, base_product_slots, type_slots,
               weight_value, weight_unit
        FROM canonical_products
-       WHERE is_match_priority = 1`,
+       WHERE is_match_priority = 1
+         AND brand_slots IS NOT NULL`,
     );
     rows = res.rows ?? [];
   } catch (e) {
@@ -111,11 +111,12 @@ async function loadPriorityCanonicals(db) {
       // is_match_priority not yet added — fall back to is_priority
       try {
         const res2 = await db.execute(
-          `SELECT id, canonical_name, common_aliases,
+          `SELECT id, canonical_name,
                   brand_slots, base_product_slots, type_slots,
                   weight_value, weight_unit
            FROM canonical_products
-           WHERE is_priority = 1`,
+           WHERE is_priority = 1
+             AND brand_slots IS NOT NULL`,
         );
         rows = res2.rows ?? [];
       } catch (e2) {
@@ -128,34 +129,25 @@ async function loadPriorityCanonicals(db) {
   }
 
   return rows.map((r) => {
-    // Legacy alias array for fallback path
-    const aliases = r.common_aliases
-      ? String(r.common_aliases).split(",").map((a) => norm(a.trim())).filter(Boolean)
-      : [];
-
-    // Parse JSON slot columns
-    const brandSlots = parseSlots(r.brand_slots);
+    const brandSlots       = parseSlots(r.brand_slots);
     const baseProductSlots = parseSlots(r.base_product_slots);
-    const typeSlots = parseSlots(r.type_slots) || [];
+    const typeSlots        = parseSlots(r.type_slots) || [];
 
     return {
       id: r.id,
       canonical_name: r.canonical_name,
-      normed: norm(r.canonical_name),
-      aliases,
       brandSlots,
       baseProductSlots,
       typeSlots,
       weightValue: r.weight_value ?? null,
-      weightUnit: r.weight_unit ?? null,
+      weightUnit:  r.weight_unit  ?? null,
     };
   });
 }
 
 /**
- * For each scraped deal, attempt to match it to a canonical using:
- *   1. Slot-based matching (if canonical has slot columns set)
- *   2. Legacy brand-anchored alias substring matching (fallback)
+ * For each scraped deal, attempt to match it to a canonical using slot-based
+ * matching only. Canonicals without slots are skipped (no legacy fallback).
  *
  * Upserts confirmed matches into deal_mappings.
  *
@@ -177,39 +169,22 @@ async function autoMapDeals(db, deals, priorityCanonicals) {
     const dealWeightUnit = deal.weight_unit ?? null;
 
     for (const canon of priorityCanonicals) {
-      let matched = false;
-
-      // --- Path 1: Slot-based matching (new) ---
       const slotResult = matchesCanonical(normedName, dealWeightValue, dealWeightUnit, canon);
 
-      if (slotResult === null) {
-        // --- Path 2: Legacy brand-anchored alias substring matching ---
-        const brandAnchor = canon.normed.split(" ")[0];
-        const terms = [canon.normed, ...canon.aliases].filter(Boolean);
-        matched = terms.some((term) => {
-          if (term.length < 4) return false;
-          if (!normedName.includes(term)) return false;
-          const isAlias = term !== canon.normed;
-          if (isAlias && brandAnchor && !normedName.includes(brandAnchor))
-            return false;
-          return true;
-        });
-      } else {
-        matched = slotResult;
-      }
-
-      if (!matched) continue;
+      // null = no slots → skip (no legacy fallback)
+      if (slotResult !== true) continue;
 
       try {
         await db.execute(
           `INSERT INTO deal_mappings (deal_id, canonical_id, match_method, match_confidence)
            VALUES (?, ?, 'slot_match', 0.85)
-           ON CONFLICT(deal_id, canonical_id) DO UPDATE SET match_confidence = 0.85`,
+           ON CONFLICT(deal_id, canonical_id) DO UPDATE SET
+             match_method = 'slot_match', match_confidence = 0.85`,
           [deal.id, canon.id],
         );
         mapped++;
       } catch (_) {
-        // deal_id or canonical_id FK violation — skip
+        // FK violation — skip
       }
       break; // one canonical per deal
     }

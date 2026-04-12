@@ -5,6 +5,7 @@ import React, {
   useRef,
   useState,
 } from "react";
+import { createPortal } from "react-dom";
 import {
   Link,
   useNavigate,
@@ -412,6 +413,9 @@ function DealCard({
   isAdmin,
 }) {
   const [imgError, setImgError] = useState(false);
+  const [showAdminTooltip, setShowAdminTooltip] = useState(false);
+  const [tooltipPos, setTooltipPos] = useState({ top: 0, left: 0 });
+  const badgeRef = useRef(null);
   const proxyImg = proxyDealImageUrl(deal);
   const discountPct = deal?.discount_percent ? Math.round(deal.discount_percent) : null;
   const realSavings = deal?.real_savings ?? null;
@@ -526,7 +530,17 @@ function DealCard({
           const isGood  = realSavings.rating === "good";
           const isLayer1 = realSavings.reference_source === "canonical_historical";
           return (
-            <div className="relative group">
+            <div
+              ref={badgeRef}
+              className="relative"
+              onMouseEnter={() => {
+                if (!isAdmin) return;
+                const rect = badgeRef.current?.getBoundingClientRect();
+                if (rect) setTooltipPos({ top: rect.top, left: rect.left });
+                setShowAdminTooltip(true);
+              }}
+              onMouseLeave={() => setShowAdminTooltip(false)}
+            >
               <div className={`flex items-center justify-between rounded-[14px] px-3.5 py-3 ${
                 isGreat || isGood ? "bg-[#f0fdf4] border border-[#bbf7d0]" : "bg-[#f8fafc] border border-[#e2e8f0]"
               }`}>
@@ -557,8 +571,17 @@ function DealCard({
                 </div>
               </div>
 
-              {isAdmin && (
-                <div className="hidden md:block absolute bottom-full left-0 mb-2 w-64 bg-[#1e293b] text-white rounded-xl p-3.5 shadow-2xl z-50 opacity-0 group-hover:opacity-100 pointer-events-none transition-opacity duration-150">
+              {isAdmin && showAdminTooltip && createPortal(
+                <div
+                  className="w-64 bg-[#1e293b] text-white rounded-xl p-3.5 shadow-2xl pointer-events-none"
+                  style={{
+                    position: "fixed",
+                    top: tooltipPos.top - 8,
+                    left: tooltipPos.left,
+                    transform: "translateY(-100%)",
+                    zIndex: 9999,
+                  }}
+                >
                   <p className="text-[10px] font-extrabold uppercase tracking-[1.2px] text-slate-400 mb-2.5">Real Savings Breakdown</p>
                   <div className="flex flex-col gap-1.5">
                     <div className="flex justify-between items-baseline">
@@ -602,7 +625,8 @@ function DealCard({
                       </div>
                     )}
                   </div>
-                </div>
+                </div>,
+                document.body,
               )}
             </div>
           );
@@ -1407,7 +1431,7 @@ export default function DealsPage() {
 
   const [session, setSession] = useState(() => getAuthSession());
   const isLoggedIn = Boolean(session?.accessToken);
-  const isAdmin = Boolean(session?.user?.is_admin);
+  const isAdmin = Boolean(session?.user?.is_admin) || import.meta.env.DEV;
   const analyticsFilterCount =
     Number(filterStores.length > 0) +
     Number(Boolean(filterCategory)) +

@@ -23,6 +23,14 @@ const DRY_RUN = process.argv.includes("--dry-run");
 async function main() {
   await db.ready;
 
+  // Load brands from DB
+  const brandRows = await db.prepare(`SELECT name, aliases FROM known_brands`).all();
+  const brands = brandRows.map((r) => ({
+    name: r.name,
+    aliases: JSON.parse(String(r.aliases || "[]")),
+  }));
+  console.log(`[migrate-canonical-slots] Loaded ${brands.length} known brands`);
+
   const rows = await db.prepare(
     `SELECT id, canonical_name, common_aliases FROM canonical_products`,
   ).all();
@@ -31,6 +39,7 @@ async function main() {
   if (DRY_RUN) console.log("[migrate-canonical-slots] DRY RUN — no writes will be made");
 
   let updated = 0;
+  let deleted = 0;
   let weightExtracted = 0;
   let weightMissed = 0;
   const productGroupsSeen = new Set();
@@ -42,7 +51,7 @@ async function main() {
 
     let decomposed;
     try {
-      decomposed = decomposeCanonical(row.canonical_name, aliases);
+      decomposed = decomposeCanonical(row.canonical_name, aliases, brands);
     } catch (err) {
       console.warn(`[migrate] SKIP id=${row.id} name="${row.canonical_name}" error=${err.message}`);
       continue;
@@ -56,6 +65,19 @@ async function main() {
       weightValue,
       weightUnit,
     } = decomposed;
+
+    if (brandSlots === null) {
+      if (DRY_RUN) {
+        console.log(`[dry-run] WOULD DELETE (no brand): "${row.canonical_name}"`);
+      } else {
+        // Clear canonical_id on deals first (no ON DELETE CASCADE on this FK)
+        await db.execute(`UPDATE deals SET canonical_id = NULL WHERE canonical_id = ?`, [row.id]);
+        await db.execute(`DELETE FROM canonical_products WHERE id = ?`, [row.id]);
+        console.log(`[migrate] DELETED (no brand): "${row.canonical_name}"`);
+        deleted++;
+      }
+      continue;
+    }
 
     if (weightValue != null) {
       weightExtracted++;
@@ -114,6 +136,7 @@ async function main() {
 
   console.log(`[migrate-canonical-slots] Done.`);
   console.log(`  updated:          ${updated} / ${rows.length}`);
+  console.log(`  deleted:          ${deleted}`);
   console.log(`  weight extracted: ${weightExtracted}`);
   console.log(`  weight missed:    ${weightMissed}`);
   console.log(`  product groups:   ${productGroupsSeen.size}`);

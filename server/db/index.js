@@ -165,12 +165,62 @@ const ready = (async () => {
   const alwaysMigrations = [
     "ALTER TABLE canonical_products ADD COLUMN is_priority INTEGER DEFAULT 0",
     "ALTER TABLE deal_price_history ADD COLUMN is_deal INTEGER DEFAULT 0",
+    // Ensure brand management tables exist on both local and remote paths
+    // before the seed block below runs.
+    `CREATE TABLE IF NOT EXISTS known_brands (
+      id      INTEGER PRIMARY KEY AUTOINCREMENT,
+      name    TEXT NOT NULL UNIQUE,
+      aliases TEXT NOT NULL DEFAULT '[]'
+    )`,
+    `CREATE TABLE IF NOT EXISTS brand_remap_jobs (
+      id          INTEGER PRIMARY KEY AUTOINCREMENT,
+      status      TEXT NOT NULL DEFAULT 'running'
+                    CHECK (status IN ('running', 'completed', 'failed')),
+      started_at  DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+      finished_at DATETIME,
+      stats       TEXT,
+      error       TEXT
+    )`,
+    `CREATE INDEX IF NOT EXISTS idx_brand_remap_jobs_status
+       ON brand_remap_jobs(status, started_at)`,
   ];
   for (const sql of alwaysMigrations) {
     try {
       await db.execute(sql);
     } catch (_) {
       // column already exists — ignore
+    }
+  }
+
+  // Seed known_brands with initial brand list (INSERT OR IGNORE — safe to re-run)
+  const SEED_BRANDS = [
+    { name: "Aachi",        aliases: ["aachi"] },
+    { name: "Aashirvaad",   aliases: ["aashirvaad", "aashirwad", "ashirwad"] },
+    { name: "Bambino",      aliases: ["bambino"] },
+    { name: "Daawat",       aliases: ["daawat", "dawat"] },
+    { name: "Gits",         aliases: ["gits"] },
+    { name: "Haldiram's",   aliases: ["haldiram", "haldirams"] },
+    { name: "Heer",         aliases: ["heer"] },
+    { name: "ITC",          aliases: ["itc"] },
+    { name: "Knorr",        aliases: ["knorr"] },
+    { name: "LKK",          aliases: ["lkk"] },
+    { name: "Maggi",        aliases: ["maggi"] },
+    { name: "MTR",          aliases: ["mtr"] },
+    { name: "Nanak",        aliases: ["nanak"] },
+    { name: "Priya",        aliases: ["priya"] },
+    { name: "Shan",         aliases: ["shan"] },
+    { name: "Swad",         aliases: ["swad"] },
+  ];
+  for (const brand of SEED_BRANDS) {
+    try {
+      await db.execute(
+        `INSERT OR IGNORE INTO known_brands (name, aliases) VALUES (?, ?)`,
+        [brand.name, JSON.stringify(brand.aliases)],
+      );
+    } catch (err) {
+      if (!err.message?.includes("no such table")) {
+        console.warn("[db] known_brands seed warning:", err.message);
+      }
     }
   }
 

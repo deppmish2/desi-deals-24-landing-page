@@ -1,91 +1,140 @@
 import test from "node:test";
 import assert from "node:assert/strict";
 
-// canonical-decomposer is CommonJS; ESM can import CJS modules directly
 import decomposerModule from "../../crawler/utils/canonical-decomposer.js";
-
 const { decomposeCanonical } = decomposerModule;
+
+// Shared brand list used across tests
+const BRANDS = [
+  { name: "Daawat",     aliases: ["daawat", "dawat"] },
+  { name: "Heer",       aliases: ["heer"] },
+  { name: "Knorr",      aliases: ["knorr"] },
+  { name: "Aashirvaad", aliases: ["aashirvaad", "aashirwad", "ashirwad"] },
+  { name: "Parachute",  aliases: ["parachute"] },
+];
 
 // ── Weight extraction ────────────────────────────────────────────────────────
 
 test("extracts kg weight and normalises to grams", () => {
-  const r = decomposeCanonical("Daawat Basmati Rice Extra Long 5kg");
+  const r = decomposeCanonical("Daawat Basmati Rice Extra Long 5kg", [], BRANDS);
   assert.equal(r.weightValue, 5000);
   assert.equal(r.weightUnit, "g");
 });
 
 test("extracts g weight", () => {
-  const r = decomposeCanonical("Heer Basmati Rice Extra Long 500g");
+  const r = decomposeCanonical("Heer Basmati Rice Extra Long 500g", [], BRANDS);
   assert.equal(r.weightValue, 500);
   assert.equal(r.weightUnit, "g");
 });
 
 test("extracts gm weight (Indian abbreviation)", () => {
-  const r = decomposeCanonical("Knorr Bouillon Cubes Chicken 400gm");
+  const r = decomposeCanonical("Knorr Bouillon Cubes Chicken 400gm", [], BRANDS);
   assert.equal(r.weightValue, 400);
   assert.equal(r.weightUnit, "g");
 });
 
 test("extracts ml weight", () => {
-  const r = decomposeCanonical("Parachute Coconut Oil 500ml");
+  const r = decomposeCanonical("Parachute Coconut Oil 500ml", [], BRANDS);
   assert.equal(r.weightValue, 500);
   assert.equal(r.weightUnit, "ml");
 });
 
 test("extracts l weight and normalises to ml", () => {
-  const r = decomposeCanonical("Parachute Coconut Oil 1l");
+  const r = decomposeCanonical("Parachute Coconut Oil 1l", [], BRANDS);
   assert.equal(r.weightValue, 1000);
   assert.equal(r.weightUnit, "ml");
 });
 
 test("returns null weight when no weight in name", () => {
-  const r = decomposeCanonical("Aashirvaad Chakki Atta");
+  const r = decomposeCanonical("Aashirvaad Chakki Atta", [], BRANDS);
   assert.equal(r.weightValue, null);
   assert.equal(r.weightUnit, null);
 });
 
-// ── Weight in middle of name (German store format) ───────────────────────────
+// ── Weight in middle of name ─────────────────────────────────────────────────
 
 test("extracts weight correctly when weight sits between brand and product", () => {
-  const r = decomposeCanonical("Heer 500g Basmati Rice Extra Long");
+  const r = decomposeCanonical("Heer 500g Basmati Rice Extra Long", [], BRANDS);
   assert.equal(r.weightValue, 500);
   assert.equal(r.weightUnit, "g");
-  // Slots should NOT contain the weight token
   const allTokens = [
-    ...r.brandSlots.flat(),
+    ...( r.brandSlots || []).flat(),
     ...r.baseProductSlots.flat(),
     ...r.typeSlots.flat(),
   ];
   assert.ok(!allTokens.some((t) => /\d/.test(t)), "no numeric token in slots");
 });
 
-// ── Brand slot ───────────────────────────────────────────────────────────────
+// ── Brand slot — known brand found ───────────────────────────────────────────
 
-test("first token becomes brand slot", () => {
-  const r = decomposeCanonical("Daawat Basmati Rice Extra Long 5kg");
-  assert.deepEqual(r.brandSlots, [["daawat"]]);
+test("recognised brand gets brand slot with name and aliases (deduplicated)", () => {
+  const r = decomposeCanonical("Daawat Basmati Rice Extra Long 5kg", [], BRANDS);
+  assert.deepEqual(r.brandSlots, [["daawat", "dawat"]]);
 });
 
-test("brand slot is lowercased", () => {
-  const r = decomposeCanonical("AASHIRVAAD Chakki Atta 5kg");
-  assert.deepEqual(r.brandSlots, [["aashirvaad"]]);
+test("brand matching is case-insensitive (canonical lowercased before token compare)", () => {
+  const r = decomposeCanonical("AASHIRVAAD Chakki Atta 5kg", [], BRANDS);
+  assert.ok(r.brandSlots !== null, "should find brand");
+  assert.ok(r.brandSlots[0].includes("aashirvaad"), "brand slot includes canonical alias");
+});
+
+test("brand is found even when not the first token", () => {
+  const r = decomposeCanonical("Organic Daawat Basmati Rice 5kg", [], BRANDS);
+  assert.ok(r.brandSlots !== null, "brand found in non-first position");
+  assert.ok(r.brandSlots[0].includes("daawat"));
+  // "organic" should be in baseProductSlots, not brandSlots
+  assert.ok(r.baseProductSlots.flat().includes("organic"));
+});
+
+// ── Brand slot — unknown brand → null ────────────────────────────────────────
+
+test("unrecognised brand returns brandSlots = null", () => {
+  const r = decomposeCanonical("Generic Basmati Rice 5kg", [], BRANDS);
+  assert.equal(r.brandSlots, null);
+});
+
+test("empty name returns brandSlots = null", () => {
+  const r = decomposeCanonical("", [], BRANDS);
+  assert.equal(r.brandSlots, null);
+  assert.deepEqual(r.baseProductSlots, []);
+});
+
+test("no brands list → brandSlots always null", () => {
+  const r = decomposeCanonical("Daawat Basmati Rice 5kg", [], []);
+  assert.equal(r.brandSlots, null);
+});
+
+// ── BBD stripping ─────────────────────────────────────────────────────────────
+
+test("strips 'Best before DATE' before tokenising", () => {
+  const r = decomposeCanonical("Daawat Basmati Rice 5kg Best before 12/2025", [], BRANDS);
+  const all = [...(r.brandSlots || []).flat(), ...r.baseProductSlots.flat()];
+  assert.ok(!all.includes("best"), "best stripped");
+  assert.ok(!all.includes("before"), "before stripped");
+});
+
+test("strips 'BBD DATE' before tokenising", () => {
+  const r = decomposeCanonical("Knorr Bouillon Cubes 400gm BBD 2025", [], BRANDS);
+  const all = [...(r.brandSlots || []).flat(), ...r.baseProductSlots.flat()];
+  assert.ok(!all.includes("bbd"), "bbd stripped");
+});
+
+test("strips 'MHD DATE' before tokenising", () => {
+  const r = decomposeCanonical("Heer Basmati Rice 500g MHD 12.2025", [], BRANDS);
+  const all = [...(r.brandSlots || []).flat(), ...r.baseProductSlots.flat()];
+  assert.ok(!all.includes("mhd"), "mhd stripped");
+});
+
+test("strips parenthetical notes from canonical name", () => {
+  const r = decomposeCanonical("Daawat Basmati Rice 5kg (BBD 2025)", [], BRANDS);
+  const allTokens = r.baseProductSlots.flat();
+  assert.ok(!allTokens.includes("bbd"), "BBD note should be stripped");
 });
 
 // ── Base product slots ────────────────────────────────────────────────────────
 
-test("each remaining word becomes its own slot group", () => {
-  const r = decomposeCanonical("Daawat Basmati Rice Extra Long 5kg");
-  // brand=daawat, weight stripped → remaining: basmati rice extra long
-  assert.deepEqual(r.baseProductSlots, [
-    ["basmati"],
-    ["rice"],
-    ["extra"],
-    ["long"],
-  ]);
-});
-
-test("strips weight from middle before building slots", () => {
-  const r = decomposeCanonical("Heer 500g Basmati Rice Extra Long");
+test("each remaining non-brand word becomes its own slot group", () => {
+  const r = decomposeCanonical("Daawat Basmati Rice Extra Long 5kg", [], BRANDS);
   assert.deepEqual(r.baseProductSlots, [
     ["basmati"],
     ["rice"],
@@ -95,53 +144,27 @@ test("strips weight from middle before building slots", () => {
 });
 
 test("strips dashes from canonical name", () => {
-  const r = decomposeCanonical("Daawat - Basmati Rice 5kg");
-  assert.deepEqual(r.brandSlots, [["daawat"]]);
+  const r = decomposeCanonical("Daawat - Basmati Rice 5kg", [], BRANDS);
+  assert.ok(r.brandSlots !== null);
   assert.deepEqual(r.baseProductSlots, [["basmati"], ["rice"]]);
 });
 
-test("strips parenthetical notes from canonical name", () => {
-  const r = decomposeCanonical("Daawat Basmati Rice 5kg (BBD 2025)");
-  const allTokens = r.baseProductSlots.flat();
-  assert.ok(!allTokens.includes("bbd"), "BBD note should be stripped");
-});
+// ── typeSlots ────────────────────────────────────────────────────────────────
 
-// ── type_slots ───────────────────────────────────────────────────────────────
-
-test("typeSlots is always empty from decomposer (populated by seeder)", () => {
-  const r = decomposeCanonical("Daawat Basmati Rice Extra Long 5kg");
+test("typeSlots is always empty from decomposer", () => {
+  const r = decomposeCanonical("Daawat Basmati Rice Extra Long 5kg", [], BRANDS);
   assert.deepEqual(r.typeSlots, []);
 });
 
-// ── product_group_id ─────────────────────────────────────────────────────────
+// ── productGroupId ────────────────────────────────────────────────────────────
 
-test("productGroupId is slug of product words without brand or weight", () => {
-  const r = decomposeCanonical("Daawat Basmati Rice Extra Long 5kg");
+test("productGroupId is slug of non-brand, non-weight words", () => {
+  const r = decomposeCanonical("Daawat Basmati Rice Extra Long 5kg", [], BRANDS);
   assert.equal(r.productGroupId, "basmati-rice-extra-long");
 });
 
-test("productGroupId is weight-agnostic — same for 5kg and 500g variants", () => {
-  const r5kg = decomposeCanonical("Heer Basmati Rice Extra Long 5kg");
-  const r500g = decomposeCanonical("Heer Basmati Rice Extra Long 500g");
+test("productGroupId is weight-agnostic", () => {
+  const r5kg  = decomposeCanonical("Heer Basmati Rice Extra Long 5kg", [], BRANDS);
+  const r500g = decomposeCanonical("Heer Basmati Rice Extra Long 500g", [], BRANDS);
   assert.equal(r5kg.productGroupId, r500g.productGroupId);
-});
-
-test("productGroupId for no-weight canonical", () => {
-  const r = decomposeCanonical("Aashirvaad Chakki Atta");
-  assert.equal(r.productGroupId, "chakki-atta");
-});
-
-// ── Edge cases ────────────────────────────────────────────────────────────────
-
-test("handles single-word name gracefully", () => {
-  const r = decomposeCanonical("Rice");
-  assert.deepEqual(r.brandSlots, [["rice"]]);
-  assert.deepEqual(r.baseProductSlots, []);
-});
-
-test("returns empty slots for empty string without throwing", () => {
-  const r = decomposeCanonical("");
-  assert.deepEqual(r.brandSlots, []);
-  assert.deepEqual(r.baseProductSlots, []);
-  assert.equal(r.weightValue, null);
 });

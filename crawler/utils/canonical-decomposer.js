@@ -2,69 +2,41 @@
 /**
  * canonical-decomposer.js
  *
- * Decomposes a canonical product name into token-slot arrays used for
- * order-independent, weight-aware matching in the auto-mapper.
+ * Decomposes a canonical product name into token-slot arrays for matching.
  *
  * Used by:
- *  - scripts/migrate-canonical-slots.js  (one-time backfill)
- *  - scripts/seed-priority-canonicals.js (seeder)
- *  - server/services/canonicalizer.js    (dynamic canonical creation)
+ *  - scripts/migrate-canonical-slots.js
+ *  - server/services/canonicalizer.js
+ *  - server/routes/admin-dashboard.js (remap job)
+ *
+ * @param {string}   canonicalName
+ * @param {string[]} commonAliases  - reserved for future use
+ * @param {Array}    brands         - from known_brands table: [{name, aliases: string[]}]
  */
 
 const { parseWeight } = require("./weight-parser");
 
-/**
- * Slugify a string to a hyphen-separated identifier.
- */
-function slugify(str) {
-  return String(str || "")
-    .toLowerCase()
-    .replace(/[^a-z0-9\s]/g, " ")
-    .replace(/\s+/g, "-")
-    .replace(/-+/g, "-")
-    .replace(/^-|-$/g, "");
-}
+// Non-anchored regex covering all BBD/expiry keyword variants (aligns with best-before-parser.js KW).
+// Matches keyword + optional date fragment and strips mid-string occurrences.
+const BBD_RE =
+  /\b(?:mhd|bbe|b\.b\.e|best[\s-]?before|bbd|bb|expiry(?:[\s-]?date)?|exp\.?|mhb|mindestens[\s-]?haltbar[\s-]?bis|mindesthaltbarkeitsdatum|haltbarkeitsdatum|mindesthaltbarkeit|ablauf)\b[\s:]*[\d/.\-a-zA-Z]*/gi;
 
-/**
- * Normalise a parsed weight to a canonical unit:
- *   g / gm / kg  → grams  (weightUnit = "g")
- *   ml / l       → millilitres (weightUnit = "ml")
- */
 function normalizeWeight(value, unit) {
   switch (unit) {
-    case "g":
-      return { weightValue: value, weightUnit: "g" };
-    case "kg":
-      return { weightValue: value * 1000, weightUnit: "g" };
-    case "ml":
-      return { weightValue: value, weightUnit: "ml" };
-    case "l":
-      return { weightValue: value * 1000, weightUnit: "ml" };
-    default:
-      return { weightValue: null, weightUnit: null };
+    case "g":  return { weightValue: value,        weightUnit: "g" };
+    case "kg": return { weightValue: value * 1000, weightUnit: "g" };
+    case "ml": return { weightValue: value,        weightUnit: "ml" };
+    case "l":  return { weightValue: value * 1000, weightUnit: "ml" };
+    default:   return { weightValue: null,         weightUnit: null };
   }
 }
 
-/**
- * Decompose a canonical product name into token slots for matching.
- *
- * @param {string}   canonicalName   - e.g. "Daawat Basmati Rice Extra Long 5kg"
- * @param {string[]} [commonAliases] - optional alias strings (reserved for future use)
- * @returns {{
- *   brandSlots:       string[][],   // e.g. [["daawat", "dawat"]]
- *   baseProductSlots: string[][],   // e.g. [["basmati","basmatireis"],["rice","reis"],...]
- *   typeSlots:        string[][],   // always [] from decomposer; populated by seeder
- *   productGroupId:   string,       // weight-agnostic slug, e.g. "basmati-rice-extra-long"
- *   weightValue:      number|null,  // pack size in grams or ml
- *   weightUnit:       string|null   // "g" or "ml"
- * }}
- */
-function decomposeCanonical(canonicalName, commonAliases = []) {
-  const name = String(canonicalName || "");
+function decomposeCanonical(canonicalName, commonAliases = [], brands = []) {
+  let name = String(canonicalName || "");
 
   if (!name.trim()) {
     return {
-      brandSlots: [],
+      brandSlots: null,
       baseProductSlots: [],
       typeSlots: [],
       productGroupId: "unknown",
@@ -73,21 +45,21 @@ function decomposeCanonical(canonicalName, commonAliases = []) {
     };
   }
 
-  // 1. Extract weight — reuse the crawler's weight parser
+  // 1. Strip BBD/expiry patterns before any tokenisation
+  name = name.replace(BBD_RE, " ");
+
+  // 2. Extract weight
   const wt = parseWeight(name);
   const { weightValue, weightUnit } = wt
     ? normalizeWeight(wt.value, wt.unit)
     : { weightValue: null, weightUnit: null };
 
-  // 2. Strip weight raw string, parenthetical notes, dashes, then normalise
+  // 3. Strip weight, parentheticals, dashes — then normalise
   let stripped = name;
-  if (wt && wt.raw) {
-    // Replace only the first occurrence of the exact raw match
-    stripped = stripped.replace(wt.raw, " ");
-  }
+  if (wt && wt.raw) stripped = stripped.replace(wt.raw, " ");
   stripped = stripped
-    .replace(/\([^)]*\)/g, " ") // remove (BBD 2025), (48pc x ...), etc.
-    .replace(/-+/g, " ")        // dashes → space
+    .replace(/\([^)]*\)/g, " ")
+    .replace(/-+/g, " ")
     .toLowerCase()
     .replace(/[^a-z0-9\s]/g, " ")
     .replace(/\s+/g, " ")
@@ -97,7 +69,7 @@ function decomposeCanonical(canonicalName, commonAliases = []) {
 
   if (tokens.length === 0) {
     return {
-      brandSlots: [[slugify(name)]],
+      brandSlots: null,
       baseProductSlots: [],
       typeSlots: [],
       productGroupId: "unknown",
@@ -106,22 +78,37 @@ function decomposeCanonical(canonicalName, commonAliases = []) {
     };
   }
 
-  // 3. First token = brand; remaining = product words
-  const [brand, ...productTokens] = tokens;
+  // 4. Scan ALL tokens for a known brand alias match
+  let brandEntry = null;
+  let brandTokenIndex = -1;
+  outer: for (let i = 0; i < tokens.length; i++) {
+    const t = tokens[i];
+    for (const b of brands) {
+      if (b.aliases.some((alias) => t === alias.toLowerCase())) {
+        brandEntry = b;
+        brandTokenIndex = i;
+        break outer;
+      }
+    }
+  }
 
-  // 4. Each product word becomes its own slot group (word-level, order-independent)
-  //    Seeder/admin can later expand each group with language variants.
+  // 5. Build slot arrays
+  const productTokens = tokens.filter((_, i) => i !== brandTokenIndex);
+
+  // Deduplicate in case name.toLowerCase() already appears in aliases
+  const brandSlots = brandEntry
+    ? [[...new Set([brandEntry.name.toLowerCase(), ...brandEntry.aliases])]]
+    : null;
+
   const baseProductSlots = productTokens.map((t) => [t]);
 
-  // 5. product_group_id: weight-agnostic slug of all product words (no brand)
-  const productGroupId = productTokens.length > 0
-    ? productTokens.join("-")
-    : "unknown";
+  const productGroupId =
+    productTokens.length > 0 ? productTokens.join("-") : "unknown";
 
   return {
-    brandSlots: [[brand]],
+    brandSlots,
     baseProductSlots,
-    typeSlots: [], // populated by seeder for curated canonicals
+    typeSlots: [],
     productGroupId,
     weightValue,
     weightUnit,
