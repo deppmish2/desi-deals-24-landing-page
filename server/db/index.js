@@ -165,6 +165,24 @@ const ready = (async () => {
   const alwaysMigrations = [
     "ALTER TABLE canonical_products ADD COLUMN is_priority INTEGER DEFAULT 0",
     "ALTER TABLE deal_price_history ADD COLUMN is_deal INTEGER DEFAULT 0",
+    // Ensure brand management tables exist on both local and remote paths
+    // before the seed block below runs.
+    `CREATE TABLE IF NOT EXISTS known_brands (
+      id      INTEGER PRIMARY KEY AUTOINCREMENT,
+      name    TEXT NOT NULL UNIQUE,
+      aliases TEXT NOT NULL DEFAULT '[]'
+    )`,
+    `CREATE TABLE IF NOT EXISTS brand_remap_jobs (
+      id          INTEGER PRIMARY KEY AUTOINCREMENT,
+      status      TEXT NOT NULL DEFAULT 'running'
+                    CHECK (status IN ('running', 'completed', 'failed')),
+      started_at  DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+      finished_at DATETIME,
+      stats       TEXT,
+      error       TEXT
+    )`,
+    `CREATE INDEX IF NOT EXISTS idx_brand_remap_jobs_status
+       ON brand_remap_jobs(status, started_at)`,
   ];
   for (const sql of alwaysMigrations) {
     try {
@@ -199,8 +217,10 @@ const ready = (async () => {
         `INSERT OR IGNORE INTO known_brands (name, aliases) VALUES (?, ?)`,
         [brand.name, JSON.stringify(brand.aliases)],
       );
-    } catch (_) {
-      // table may not exist yet on very first boot before schema runs — ignore
+    } catch (err) {
+      if (!err.message?.includes("no such table")) {
+        console.warn("[db] known_brands seed warning:", err.message);
+      }
     }
   }
 
