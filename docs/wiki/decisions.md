@@ -65,9 +65,10 @@ Key decisions made in the DesiDeals24 codebase — the what, why, and trade-offs
 **Trade-off:** Pass 1 adds extra requests per crawl run. Only priority canonicals (tagged `is_priority=1`) are fetched in Pass 1 — this keeps the overhead bounded.
 
 **Real Savings computation** (`server/services/real-savings.js`):
-- **Layer 1** (preferred): median `price_per_kg` from `deal_price_history` rows where `is_deal=0` (Pass 1 non-deal prices), joined via `deal_mappings → canonical_products`. `realSavings = (refPpk − dealPpk) / refPpk × 100`.
+- **Layer 1** (preferred): median `price_per_kg` from `deal_price_history` rows where `is_deal=0` (Pass 1 non-deal prices), joined via `deal_mappings → canonical_products`. `realSavings = (refPpk − dealPpk) / refPpk × 100`. Requires **≥ 3 non-deal observations** — a single observation from the deal's own URL (same store, same product, previously not on sale) is not trustworthy enough to call "market price".
 - **Layer 2** (fallback): `(original_price − sale_price) / original_price × 100` from the store-reported `compare_at_price`.
 - Ratings: ≥ 25% → "great", ≥ 15% → "good", ≥ 5% → "low", < 5% → null.
+- Badge suppression: hidden when real savings > store-stated discount (our data can't claim a bigger saving than the store states) or when |real − stated| < 5pp (adds no information).
 
 **`is_deal` flag in `deal_price_history`:** Pass 2 records use `is_deal=1`; Pass 1 records use `is_deal=0`. The `recordStoreHistory()` function accepts a `defaultIsDeal` option (default `0`); the Pass-2 crawl call passes `defaultIsDeal: 1` so deal-collection products without `compare_at_price` are not mistakenly treated as reference prices.
 
