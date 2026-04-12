@@ -412,3 +412,20 @@ CREATE INDEX IF NOT EXISTS idx_search_queries_created ON search_queries(created_
 CREATE INDEX IF NOT EXISTS idx_search_queries_normalized ON search_queries(normalized_query);
 CREATE INDEX IF NOT EXISTS idx_search_queries_user_email ON search_queries(user_email);
 CREATE INDEX IF NOT EXISTS idx_search_queries_session_id ON search_queries(session_id);
+
+-- Known brands whitelist — source of truth for canonical brand-slot matching
+CREATE TABLE IF NOT EXISTS known_brands (
+  id      INTEGER PRIMARY KEY AUTOINCREMENT,
+  name    TEXT NOT NULL UNIQUE,
+  aliases TEXT NOT NULL DEFAULT '[]'  -- JSON array of lowercase strings
+);
+
+-- Tracks async brand remap jobs triggered from admin panel
+CREATE TABLE IF NOT EXISTS brand_remap_jobs (
+  id          INTEGER PRIMARY KEY AUTOINCREMENT,
+  status      TEXT NOT NULL DEFAULT 'running',  -- running | completed | failed
+  started_at  DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  finished_at DATETIME,
+  stats       TEXT,   -- JSON: {canonicalsRedecomposed, canonicalsDeleted, newlyMapped, stillUnmapped, duration_ms}
+  error       TEXT
+);
