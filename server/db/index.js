@@ -174,6 +174,36 @@ const ready = (async () => {
     }
   }
 
+  // Seed known_brands with initial brand list (INSERT OR IGNORE — safe to re-run)
+  const SEED_BRANDS = [
+    { name: "Aachi",        aliases: ["aachi"] },
+    { name: "Aashirvaad",   aliases: ["aashirvaad", "aashirwad", "ashirwad"] },
+    { name: "Bambino",      aliases: ["bambino"] },
+    { name: "Daawat",       aliases: ["daawat", "dawat"] },
+    { name: "Gits",         aliases: ["gits"] },
+    { name: "Haldiram's",   aliases: ["haldiram", "haldirams"] },
+    { name: "Heer",         aliases: ["heer"] },
+    { name: "ITC",          aliases: ["itc"] },
+    { name: "Knorr",        aliases: ["knorr"] },
+    { name: "LKK",          aliases: ["lkk"] },
+    { name: "Maggi",        aliases: ["maggi"] },
+    { name: "MTR",          aliases: ["mtr"] },
+    { name: "Nanak",        aliases: ["nanak"] },
+    { name: "Priya",        aliases: ["priya"] },
+    { name: "Shan",         aliases: ["shan"] },
+    { name: "Swad",         aliases: ["swad"] },
+  ];
+  for (const brand of SEED_BRANDS) {
+    try {
+      await db.execute(
+        `INSERT OR IGNORE INTO known_brands (name, aliases) VALUES (?, ?)`,
+        [brand.name, JSON.stringify(brand.aliases)],
+      );
+    } catch (_) {
+      // table may not exist yet on very first boot before schema runs — ignore
+    }
+  }
+
   if (!shouldBootstrapRuntimeDb()) {
     return;
   }
