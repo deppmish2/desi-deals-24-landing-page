@@ -67,11 +67,15 @@ async function main() {
     } = decomposed;
 
     if (brandSlots === null) {
-      // Clear canonical_id on deals first (no ON DELETE CASCADE on this FK)
-      await db.execute(`UPDATE deals SET canonical_id = NULL WHERE canonical_id = ?`, [row.id]);
-      await db.execute(`DELETE FROM canonical_products WHERE id = ?`, [row.id]);
-      console.log(`[migrate] DELETED (no brand): "${row.canonical_name}"`);
-      deleted++;
+      if (DRY_RUN) {
+        console.log(`[dry-run] WOULD DELETE (no brand): "${row.canonical_name}"`);
+      } else {
+        // Clear canonical_id on deals first (no ON DELETE CASCADE on this FK)
+        await db.execute(`UPDATE deals SET canonical_id = NULL WHERE canonical_id = ?`, [row.id]);
+        await db.execute(`DELETE FROM canonical_products WHERE id = ?`, [row.id]);
+        console.log(`[migrate] DELETED (no brand): "${row.canonical_name}"`);
+        deleted++;
+      }
       continue;
     }
 

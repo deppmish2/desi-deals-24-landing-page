@@ -70,16 +70,10 @@ async function ensureUniqueCanonicalId(db, baseId) {
 async function createCanonical(
   db,
   { canonicalName, category, imageUrl, rawName },
+  brands = [],
 ) {
   const baseId = slugify(canonicalName || rawName);
   const canonicalId = await ensureUniqueCanonicalId(db, baseId);
-
-  // Load brands for decomposition
-  const brandRows = await db.prepare(`SELECT name, aliases FROM known_brands`).all().catch(() => []);
-  const brands = brandRows.map((r) => ({
-    name: r.name,
-    aliases: JSON.parse(String(r.aliases || "[]")),
-  }));
 
   // Decompose into token slots so the new canonical immediately participates
   // in slot-based matching on the next crawl run.
@@ -263,6 +257,13 @@ async function canonicalizeDeals(db, { runId } = {}) {
     )
     .all(...params);
 
+  // Load brands once for the entire run — passed into createCanonical for decomposition
+  const brandRows = await db.prepare(`SELECT name, aliases FROM known_brands`).all().catch(() => []);
+  const brands = brandRows.map((r) => ({
+    name: r.name,
+    aliases: JSON.parse(String(r.aliases || "[]")),
+  }));
+
   const canonicalRows = await loadCanonicalRows(db);
   const canonicalByName = new Map(
     canonicalRows.map((row) => [row.canonical_name, row]),
@@ -290,7 +291,7 @@ async function canonicalizeDeals(db, { runId } = {}) {
         category: deal.product_category,
         imageUrl: deal.image_url,
         rawName: deal.product_name,
-      });
+      }, brands);
       canonicalByName.set(canonicalRow.canonical_name, canonicalRow);
       stats.created += 1;
     }
