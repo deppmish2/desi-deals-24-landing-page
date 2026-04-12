@@ -557,7 +557,7 @@ function DealCard({
                 </div>
               </div>
 
-              {true && (
+              {isAdmin && (
                 <div className="hidden md:block absolute bottom-full left-0 mb-2 w-64 bg-[#1e293b] text-white rounded-xl p-3.5 shadow-2xl z-50 opacity-0 group-hover:opacity-100 pointer-events-none transition-opacity duration-150">
                   <p className="text-[10px] font-extrabold uppercase tracking-[1.2px] text-slate-400 mb-2.5">Real Savings Breakdown</p>
                   <div className="flex flex-col gap-1.5">

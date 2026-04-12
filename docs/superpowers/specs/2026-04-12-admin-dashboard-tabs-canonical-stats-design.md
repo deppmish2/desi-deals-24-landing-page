@@ -60,18 +60,25 @@ module.exports = [
 
 **File:** `crawler/utils/canonical-decomposer.js`
 
-**Change:** Before assigning `brand_slots`, check the first token against the known brands list.
+**Changes:**
+1. Strip BBD/expiry information before tokenising.
+2. Scan ALL tokens for a known brand match (not just the first token).
 
 ```
 decomposeCanonical(canonicalName, commonAliases):
-  1. Extract and normalise weight → weightValue, weightUnit
-  2. Strip weight, parentheticals, dashes from name
-  3. Lowercase and tokenise remaining name
-  4. firstToken = tokens[0]
-  5. Look up firstToken in known-brands (match against any alias):
-       - FOUND  → brand_slots = [[name, ...aliases]]  (all variants as one slot group)
-       - NOT FOUND → brand_slots = null
-  6. base_product_slots = [[token] for each remaining token]
+  1. Strip BBD/expiry patterns from canonicalName before any other processing.
+       Patterns to remove (case-insensitive):
+         "Best before <DATE>", "Best By <DATE>", "BB <DATE>", "BBD <DATE>",
+         "Exp <DATE>", "Exp. <DATE>", "Expires <DATE>", "MHD <DATE>"
+       DATE matches a wide range: day/month/year combos, month-year, year-only.
+  2. Extract and normalise weight → weightValue, weightUnit
+  3. Strip weight, parentheticals, dashes from remaining name
+  4. Lowercase and tokenise remaining name
+  5. Scan ALL tokens in order looking for one that matches a known brand alias:
+       - FOUND  → brand_slots = [[name, ...aliases]] for that brand;
+                  remove matched token from product token list
+       - NOT FOUND (no token matches any known brand) → brand_slots = null
+  6. base_product_slots = [[token] for each remaining non-brand token]
   7. typeSlots = []  (still populated by seeder only)
   8. productGroupId = remaining tokens joined by "-"
 ```
