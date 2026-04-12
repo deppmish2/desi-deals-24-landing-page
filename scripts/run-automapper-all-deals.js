@@ -3,16 +3,17 @@
 /**
  * run-automapper-all-deals.js
  *
- * One-time post-migration step: loads all active deals and all
- * is_match_priority=1 canonicals, then runs autoMapDeals to create new
- * deal_mappings for previously unmatched deals.
- *
- * Uses INSERT OR IGNORE — does NOT wipe existing mappings.
- * Rows with verified_at IS NOT NULL are preserved unconditionally.
+ * Loads all active deals and all is_match_priority=1 canonicals, then runs
+ * autoMapDeals to create deal_mappings using the slot-based matcher.
  *
  * Usage:
  *   node scripts/run-automapper-all-deals.js
  *   node scripts/run-automapper-all-deals.js --dry-run
+ *   node scripts/run-automapper-all-deals.js --reset   (wipe all mappings first, then re-map)
+ *
+ * --reset: deletes all existing deal_mappings and clears deals.canonical_id,
+ *   then re-maps every active deal through the slot-based system. Use this to
+ *   purge legacy name_substring matches and start clean.
  */
 
 require("dotenv").config();
@@ -20,9 +21,23 @@ const db = require("../server/db");
 const { loadPriorityCanonicals, autoMapDeals } = require("../crawler/utils/auto-mapper");
 
 const DRY_RUN = process.argv.includes("--dry-run");
+const RESET   = process.argv.includes("--reset");
 
 async function main() {
   await db.ready;
+
+  if (RESET) {
+    if (DRY_RUN) {
+      const count = await db.execute("SELECT COUNT(*) as n FROM deal_mappings");
+      console.log(`[run-automapper] DRY RUN --reset: would delete ${count.rows[0].n} deal_mappings and clear deals.canonical_id`);
+    } else {
+      console.log("[run-automapper] --reset: deleting all deal_mappings…");
+      const del = await db.execute("DELETE FROM deal_mappings");
+      console.log(`[run-automapper] Deleted all deal_mappings`);
+      await db.execute("UPDATE deals SET canonical_id = NULL WHERE is_active = 1");
+      console.log("[run-automapper] Cleared deals.canonical_id for all active deals");
+    }
+  }
 
   console.log("[run-automapper] Loading is_match_priority canonicals…");
   const canonicals = await loadPriorityCanonicals(db);
@@ -43,7 +58,6 @@ async function main() {
 
   if (DRY_RUN) {
     console.log("[run-automapper] DRY RUN — no writes will be made");
-    // Simulate matching without DB writes
     let wouldMap = 0;
     const { matchesCanonical } = require("../crawler/utils/auto-mapper");
     const norm = (s) => String(s || "").toLowerCase().replace(/[^a-z0-9\s]/g, " ").replace(/\s+/g, " ").trim();
@@ -56,7 +70,6 @@ async function main() {
           canon,
         );
         if (result === true) { wouldMap++; break; }
-        // Legacy path
         if (result === null) {
           const normed = norm(deal.product_name);
           const brand = canon.normed.split(" ")[0];
@@ -74,7 +87,19 @@ async function main() {
   }
 
   const mapped = await autoMapDeals(db, deals, canonicals);
-  console.log(`[run-automapper] Created ${mapped} new deal_mappings (INSERT OR IGNORE)`);
+  console.log(`[run-automapper] Created ${mapped} new deal_mappings`);
+
+  // Sync deals.canonical_id from the new mappings (first mapping per deal wins)
+  await db.execute(`
+    UPDATE deals
+    SET canonical_id = (
+      SELECT canonical_id FROM deal_mappings
+      WHERE deal_id = deals.id
+      LIMIT 1
+    )
+    WHERE is_active = 1
+  `);
+  console.log("[run-automapper] Synced deals.canonical_id from new mappings");
 }
 
 main().catch((e) => {
