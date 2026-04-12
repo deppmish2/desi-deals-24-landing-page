@@ -258,15 +258,31 @@ CREATE TABLE IF NOT EXISTS delivery_options (
 
 -- Canonical product registry (scaffold for entity-resolution epic)
 CREATE TABLE IF NOT EXISTS canonical_products (
-  id              TEXT PRIMARY KEY,
-  canonical_name  TEXT NOT NULL,
-  category        TEXT,
-  common_aliases  TEXT,
-  base_unit       TEXT,
-  image_url       TEXT,
-  verified        INTEGER DEFAULT 0,
-  is_priority     INTEGER DEFAULT 0,
-  created_at      DATETIME DEFAULT CURRENT_TIMESTAMP
+  id                TEXT PRIMARY KEY,
+  canonical_name    TEXT NOT NULL,
+  category          TEXT,
+  common_aliases    TEXT,
+  base_unit         TEXT,
+  image_url         TEXT,
+  verified          INTEGER DEFAULT 0,
+  is_priority       INTEGER DEFAULT 0,
+  is_match_priority INTEGER DEFAULT 0,
+  brand_slots       TEXT,
+  base_product_slots TEXT,
+  type_slots        TEXT,
+  product_group_id  TEXT,
+  weight_value      REAL,
+  weight_unit       TEXT,
+  created_at        DATETIME DEFAULT CURRENT_TIMESTAMP
+);
+
+-- Product type groups (brand-agnostic, weight-agnostic) for cross-brand comparisons
+-- and substitution suggestions (e.g. 10x500g ≈ 5kg)
+CREATE TABLE IF NOT EXISTS product_groups (
+  id         TEXT PRIMARY KEY,
+  group_name TEXT NOT NULL,
+  category   TEXT,
+  created_at DATETIME DEFAULT CURRENT_TIMESTAMP
 );
 
 -- Maps deal rows to canonical products

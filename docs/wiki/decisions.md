@@ -64,6 +64,18 @@ Key decisions made in the DesiDeals24 codebase — the what, why, and trade-offs
 
 **Trade-off:** Pass 1 adds extra requests per crawl run. Only priority canonicals (tagged `is_priority=1`) are fetched in Pass 1 — this keeps the overhead bounded.
 
+**Real Savings computation** (`server/services/real-savings.js`):
+- **Layer 1** (preferred): median `price_per_kg` from `deal_price_history` rows where `is_deal=0` (Pass 1 non-deal prices), joined via `deal_mappings → canonical_products`. `realSavings = (refPpk − dealPpk) / refPpk × 100`.
+- **Layer 2** (fallback): `(original_price − sale_price) / original_price × 100` from the store-reported `compare_at_price`.
+- Ratings: ≥ 25% → "great", ≥ 15% → "good", ≥ 5% → "low", < 5% → null.
+
+**`is_deal` flag in `deal_price_history`:** Pass 2 records use `is_deal=1`; Pass 1 records use `is_deal=0`. The `recordStoreHistory()` function accepts a `defaultIsDeal` option (default `0`); the Pass-2 crawl call passes `defaultIsDeal: 1` so deal-collection products without `compare_at_price` are not mistakenly treated as reference prices.
+
+**Known past bugs fixed 2026-04-11:**
+1. Weight parser matched first `gm` occurrence (per-unit) instead of last (total) in multi-pack titles → inflated `price_per_kg` poisoned reference history
+2. Auto-mapper alias without brand matched wrong-brand products → cross-contaminated canonical reference prices
+3. `recordStoreHistory` defaulted `is_deal=0` for Pass-2 products lacking `compare_at_price` → deal prices leaked into the reference price pool
+
 ---
 
 ## Price parsing: dual format support
