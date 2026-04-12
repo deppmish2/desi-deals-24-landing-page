@@ -412,7 +412,7 @@ function DealCard({
   isAdmin,
 }) {
   const [imgError, setImgError] = useState(false);
-  const proxyImg = proxyDealImageUrl(deal?.image_url);
+  const proxyImg = proxyDealImageUrl(deal);
   const discountPct = deal?.discount_percent ? Math.round(deal.discount_percent) : null;
   const realSavings = deal?.real_savings ?? null;
   const bestBeforeText = deal?.best_before ? formatBestBefore(deal.best_before) : null;
