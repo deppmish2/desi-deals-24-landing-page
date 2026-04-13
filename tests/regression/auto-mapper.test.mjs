@@ -12,6 +12,11 @@ function makeDb() {
       if (/INSERT INTO deal_mappings/i.test(sql)) inserts.push(params);
       return { rows: [] };
     },
+    batch: async (stmts) => {
+      for (const { sql, args } of stmts) {
+        if (/INSERT INTO deal_mappings/i.test(sql)) inserts.push(args);
+      }
+    },
   };
 }
 

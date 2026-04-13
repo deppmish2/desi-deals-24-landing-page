@@ -476,18 +476,19 @@ router.post("/brands/remap", async (req, res) => {
     (async () => {
       const startedAt = Date.now();
       try {
-        const freshBrands = brands.map((b) => ({
-          name: String(b.name || "").trim(),
-          aliases: (b.aliases || []).map((a) => String(a).toLowerCase().trim()).filter(Boolean),
+        const freshBrands = [...deduped.values()].map((b) => ({
+          name: b.name,
+          aliases: b.aliases.map((a) => String(a).toLowerCase().trim()).filter(Boolean),
         }));
 
-        // Re-decompose all canonicals
+        // Re-decompose all canonicals — collect statements, then flush in one batch
         const canonicals = await db.prepare(
           `SELECT id, canonical_name, common_aliases FROM canonical_products`,
         ).all();
 
         let canonicalsRedecomposed = 0;
         let canonicalsDeleted = 0;
+        const redecomposeStmts = [];
 
         for (const canonical of canonicals) {
           const aliases = canonical.common_aliases
@@ -499,29 +500,29 @@ router.post("/brands/remap", async (req, res) => {
           );
 
           if (decomposed.brandSlots === null) {
-            await db.execute(
-              `UPDATE deals SET canonical_id = NULL WHERE canonical_id = ?`,
-              [canonical.id],
-            );
-            await db.execute(
-              `DELETE FROM canonical_products WHERE id = ?`,
-              [canonical.id],
+            redecomposeStmts.push(
+              { sql: `UPDATE deals SET canonical_id = NULL WHERE canonical_id = ?`, args: [canonical.id] },
+              { sql: `DELETE FROM canonical_products WHERE id = ?`, args: [canonical.id] },
             );
             canonicalsDeleted++;
           } else {
-            await db.execute(
-              `UPDATE canonical_products
-               SET brand_slots = ?, base_product_slots = ?, product_group_id = ?
-               WHERE id = ?`,
-              [
+            redecomposeStmts.push({
+              sql: `UPDATE canonical_products
+                    SET brand_slots = ?, base_product_slots = ?, product_group_id = ?
+                    WHERE id = ?`,
+              args: [
                 JSON.stringify(decomposed.brandSlots),
                 JSON.stringify(decomposed.baseProductSlots),
                 decomposed.productGroupId,
                 canonical.id,
               ],
-            );
+            });
             canonicalsRedecomposed++;
           }
+        }
+
+        if (redecomposeStmts.length > 0) {
+          await db.batch(redecomposeStmts, "write");
         }
 
         // Load unmapped active deals only

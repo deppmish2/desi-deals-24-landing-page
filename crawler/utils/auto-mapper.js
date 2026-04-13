@@ -159,38 +159,30 @@ async function loadPriorityCanonicals(db) {
 async function autoMapDeals(db, deals, priorityCanonicals) {
   if (!priorityCanonicals.length || !deals.length) return 0;
 
-  let mapped = 0;
+  // Compute all matches in memory (pure JS — no DB calls per deal)
+  const stmts = [];
   for (const deal of deals) {
     if (!deal.product_url || !deal.product_name) continue;
     const normedName = norm(deal.product_name);
-
-    // Normalise deal weight for matching
     const dealWeightValue = deal.weight_value ?? null;
     const dealWeightUnit = deal.weight_unit ?? null;
 
     for (const canon of priorityCanonicals) {
-      const slotResult = matchesCanonical(normedName, dealWeightValue, dealWeightUnit, canon);
-
-      // null = no slots → skip (no legacy fallback)
-      if (slotResult !== true) continue;
-
-      try {
-        await db.execute(
-          `INSERT INTO deal_mappings (deal_id, canonical_id, match_method, match_confidence)
-           VALUES (?, ?, 'slot_match', 0.85)
-           ON CONFLICT(deal_id, canonical_id) DO UPDATE SET
-             match_method = 'slot_match', match_confidence = 0.85`,
-          [deal.id, canon.id],
-        );
-        mapped++;
-      } catch (_) {
-        // FK violation — skip
-      }
+      if (matchesCanonical(normedName, dealWeightValue, dealWeightUnit, canon) !== true) continue;
+      stmts.push({
+        sql: `INSERT INTO deal_mappings (deal_id, canonical_id, match_method, match_confidence)
+              VALUES (?, ?, 'slot_match', 0.85)
+              ON CONFLICT(deal_id, canonical_id) DO UPDATE SET
+                match_method = 'slot_match', match_confidence = 0.85`,
+        args: [deal.id, canon.id],
+      });
       break; // one canonical per deal
     }
   }
 
-  return mapped;
+  if (stmts.length === 0) return 0;
+  await db.batch(stmts, "write");
+  return stmts.length;
 }
 
 module.exports = { loadPriorityCanonicals, autoMapDeals, matchesCanonical };
