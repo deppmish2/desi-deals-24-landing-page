@@ -1,6 +1,6 @@
 ---
 title: Architecture Decisions
-last_updated: 2026-04-11
+last_updated: 2026-04-13
 source_count: 2
 ---
 
@@ -92,6 +92,38 @@ Key decisions made in the DesiDeals24 codebase — the what, why, and trade-offs
 **Decision:** Dookan (`store_id = 'dookan'`) is excluded from the homepage `display_order` ranking.
 
 **Why:** Dookan's products appear in browse/search but not in the curated homepage deal feed. The exclusion is hardcoded in `crawler/index.js` via `EXCLUDED_DISPLAY_STORE_IDS_SQL`.
+
+---
+
+## No background async in Vercel serverless functions
+
+**Decision:** Long-running work (brand remap) runs synchronously within the HTTP request and returns the result in the response body. It does not use fire-and-forget `(async () => { ... })()`.
+
+**Why:** Vercel terminates the Node.js process once the HTTP response is sent. Any background async work is killed at that point. Three prior remap jobs were permanently stuck at `status='running'` because the code that marked them `completed` never ran. The fix was to `await` all work before calling `res.json()`.
+
+**Constraint:** The Vercel `maxDuration` for the API function is 300s. The remap uses `db.batch()` for all writes (see below), completing in seconds even at scale. If work ever grows beyond 5 minutes, it must be offloaded to GitHub Actions (same pattern as the crawler), not a background async.
+
+---
+
+## `db.batch()` for bulk DB writes
+
+**Decision:** All bulk write operations (remap re-decompose, deal mapping inserts) collect SQL statements into an array and flush with a single `db.batch(stmts, "write")` call rather than individual `await db.execute()` per row.
+
+**Why:** Each `await db.execute()` is an async round-trip to Turso. Sequential per-row awaits serialise into N × network latency. With thousands of deals or canonicals this was the primary cause of 20+ minute remap times. A single `db.batch()` sends all statements in one round-trip.
+
+**Rule:** Any loop that writes to the DB must use the batch pattern. Never `await` inside a write loop.
+
+---
+
+## Brand management via `known_brands` table
+
+**Decision:** Brand identity is maintained in a `known_brands` table (editable via admin panel), not hardcoded. `decomposeCanonical()` uses this list to identify the brand token in a canonical name and populate `brand_slots`.
+
+**Why:** Brand coverage expands over time as new stores and products are added. Hardcoding brands in source code would require a code deploy per addition. The admin panel allows non-engineers to add brands and trigger a remap instantly.
+
+**Alias map pattern:** When calling `decomposeCanonical()` in a loop (e.g. re-decompose all canonicals), build a `Map<alias → brand>` once with `buildBrandAliasMap(brands)` and pass it as the 4th argument. Without this, the inner brand scan is O(tokens × brands × aliases) — at 10k aliases across 1k canonicals, ~100M string comparisons. With the map it is O(tokens) per canonical.
+
+**Pre-compiled slot regexes:** `loadPriorityCanonicals()` pre-compiles one `RegExp` per slot group (joining all variants with `|`) when building the canonical objects. `matchesCanonical()` uses `re.test(title)` instead of `slotGroup.some(v => title.includes(v))`. At 10k aliases, avoids up to 100M substring checks during the mapping pass.
 
 ---
 

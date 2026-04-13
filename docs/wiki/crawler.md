@@ -1,6 +1,6 @@
 ---
 title: Crawler
-last_updated: 2026-04-11
+last_updated: 2026-04-13
 source_count: 2
 ---
 
@@ -63,10 +63,17 @@ The `gm` (Indian abbreviation) pattern uses `matchAll` and returns the **last** 
 ## Canonical products & auto-mapping
 
 `crawler/utils/auto-mapper.js`:
-- `loadPriorityCanonicals(db)` — loads canonicals with `is_priority=1` from DB
-- `autoMapDeals(db, deals, canonicals)` — fuzzy-matches scraped deal names to canonical names; writes to `deal_mappings`
+- `loadPriorityCanonicals(db)` — loads canonicals where `is_match_priority=1 AND brand_slots IS NOT NULL`. For each canonical, **pre-compiles one `RegExp` per slot group** (brand, base-product, type) by joining all variants with `|`. This avoids per-alias `.includes()` iteration inside `matchesCanonical()`.
+- `autoMapDeals(db, deals, canonicals)` — slot-based matching only (no legacy fallback). Computes all matches in memory (pure JS, no DB per deal), then flushes all `INSERT INTO deal_mappings` statements in a **single `db.batch()` call**.
+- `matchesCanonical(title, weightValue, weightUnit, canon)` — uses pre-compiled regexes when available (loaded path), falls back to `.some()` iteration for ad-hoc use (tests).
 
-**Brand anchor check (added 2026-04-11):** alias matches now require the first word of the canonical name (the brand, e.g. "knorr") to also appear in the deal's name. Without this, brand-free aliases like "bouillon cubes chicken" incorrectly matched competitor products (Jumbo → Knorr canonical), poisoning the reference price history.
+**Slot-based matching:** A deal matches a canonical when every slot group has at least one variant present in the normalised title, and the weight is within ±10% (when both are known and share the same unit). Brand slot is checked first — fails fast when the brand isn't in the title.
+
+**Brand anchor check (added 2026-04-11):** alias matches require the brand token to appear in the deal name. Without this, brand-free aliases incorrectly matched competitor products (Jumbo → Knorr canonical), poisoning reference price history.
+
+`crawler/utils/canonical-decomposer.js`:
+- `decomposeCanonical(name, aliases, brands, aliasMap?)` — strips BBD patterns, extracts weight, tokenises, finds brand via alias lookup, builds `brand_slots`, `base_product_slots`, `product_group_id`.
+- `buildBrandAliasMap(brands)` — builds a `Map<lowercase_alias → brand>` from the brands array. **Pass this into `decomposeCanonical` as the 4th argument** when calling in a loop (e.g. the remap re-decompose step) — avoids rebuilding the map per canonical. Without this, the inner brand scan is O(tokens × brands × aliases_per_brand); with the map it is O(tokens).
 
 `crawler/utils/pass1-fetcher.js` — for each priority canonical, fetches the current (non-sale) price from the store. Used to compute "Real Savings" — how much you actually save vs. the everyday price, not just vs. an inflated `compare_at_price`.
 

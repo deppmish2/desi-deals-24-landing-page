@@ -316,23 +316,15 @@ function CanonicalStatsTab({
 
       {/* Brand Manager */}
       <div className="bg-white rounded-2xl border border-slate-100 shadow-sm px-6 py-5">
-        <div className="flex items-center justify-between mb-4">
-          <div className="flex items-center gap-2">
-            <span className="text-[11px] font-bold uppercase tracking-[1.2px] text-slate-400">
-              Known Brands
+        <div className="flex items-center gap-2 mb-4">
+          <span className="text-[11px] font-bold uppercase tracking-[1.2px] text-slate-400">
+            Known Brands
+          </span>
+          {brandDraft && (
+            <span className="px-2 py-0.5 rounded-full bg-slate-100 text-slate-500 text-[10px] font-bold">
+              {brandDraft.filter((b) => !deletedBrandIds.has(b.id)).length} brands
             </span>
-            {brandDraft && (
-              <span className="px-2 py-0.5 rounded-full bg-slate-100 text-slate-500 text-[10px] font-bold">
-                {brandDraft.filter((b) => !deletedBrandIds.has(b.id)).length} brands
-              </span>
-            )}
-          </div>
-          <button
-            onClick={onAddBrand}
-            className="text-xs font-bold text-green-700 hover:text-green-900 transition-colors"
-          >
-            + Add brand
-          </button>
+          )}
         </div>
 
         {brandDraft && (
@@ -353,6 +345,12 @@ function CanonicalStatsTab({
                 onUndoDelete={onUndoDelete}
               />
             ))}
+            <button
+              onClick={onAddBrand}
+              className="mt-1 text-xs font-bold text-green-700 hover:text-green-900 transition-colors"
+            >
+              + Add brand
+            </button>
           </div>
         )}
 

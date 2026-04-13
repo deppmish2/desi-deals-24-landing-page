@@ -1,6 +1,6 @@
 ---
 title: Wiki Index
-last_updated: 2026-04-11
+last_updated: 2026-04-13
 ---
 
 DesiDeals24 wiki — compiled project knowledge maintained by Claude. Read this before exploring the codebase. See [WIKI.md](WIKI.md) for maintenance conventions.

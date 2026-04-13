@@ -125,10 +125,35 @@ test("strips 'MHD DATE' before tokenising", () => {
   assert.ok(!all.includes("mhd"), "mhd stripped");
 });
 
-test("strips parenthetical notes from canonical name", () => {
+test("strips noise parenthetical with digits (pack size / BBD)", () => {
   const r = decomposeCanonical("Daawat Basmati Rice 5kg (BBD 2025)", [], BRANDS);
   const allTokens = r.baseProductSlots.flat();
   assert.ok(!allTokens.includes("bbd"), "BBD note should be stripped");
+  assert.ok(!allTokens.includes("2025"), "year should be stripped");
+});
+
+test("strips noise parenthetical with logistics words (Export Pack)", () => {
+  const r = decomposeCanonical("Aashirvaad Atta (Export Pack) 5kg", [], BRANDS);
+  const allTokens = r.baseProductSlots.flat();
+  assert.ok(!allTokens.includes("export"), "export stripped as noise");
+  assert.ok(!allTokens.includes("pack"), "pack stripped as noise");
+});
+
+test("preserves signal parenthetical as required baseProductSlot", () => {
+  const BRITANNIA = [{ name: "Britannia", aliases: ["britannia"] }];
+  const r = decomposeCanonical("Britannia Good Day (Butter) 216g", [], BRITANNIA);
+  const allTokens = r.baseProductSlots.flat();
+  assert.ok(allTokens.includes("butter"), "butter from parens becomes a required slot");
+});
+
+test("different flavour canonicals do not share slots — Butter vs Pistachio", () => {
+  const BRITANNIA = [{ name: "Britannia", aliases: ["britannia"] }];
+  const butter    = decomposeCanonical("Britannia Good Day (Butter) 216g", [], BRITANNIA);
+  const pistachio = decomposeCanonical("Britannia Good Day (Pistachio Almond) 216g", [], BRITANNIA);
+  assert.ok(butter.baseProductSlots.flat().includes("butter"),       "butter canonical has butter slot");
+  assert.ok(!butter.baseProductSlots.flat().includes("pistachio"),   "butter canonical has no pistachio slot");
+  assert.ok(pistachio.baseProductSlots.flat().includes("pistachio"), "pistachio canonical has pistachio slot");
+  assert.ok(!pistachio.baseProductSlots.flat().includes("butter"),   "pistachio canonical has no butter slot");
 });
 
 // ── Base product slots ────────────────────────────────────────────────────────
