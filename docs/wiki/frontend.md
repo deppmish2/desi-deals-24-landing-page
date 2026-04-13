@@ -1,6 +1,6 @@
 ---
 title: Frontend
-last_updated: 2026-04-11
+last_updated: 2026-04-13
 source_count: 3
 ---
 
@@ -45,6 +45,9 @@ Key functions:
 - `fetchDeals(params)` — `GET /api/v1/deals` with query params
 - `fetchDealById(dealId)` — fetches a single deal by ID
 - `authRequest(path, options)` — authenticated request with JWT; auto-refreshes the access token on 401 using the stored refresh token
+- `fetchBrands()` — `GET /admin-dashboard/brands`
+- `fetchCanonicalStats()` — `GET /admin-dashboard/canonical-stats`
+- `triggerBrandRemap(brands)` — `POST /admin-dashboard/brands/remap`; returns completed result directly (no polling needed)
 - Auth session stored in `localStorage` under key `dd24_auth_session` (JSON: `{ accessToken, refreshToken, user }`)
 - Client session ID (analytics) stored in `sessionStorage` under `dd24_client_session_id`; sent as `X-DD24-Session-Id` header on every request
 
@@ -63,6 +66,30 @@ Auth endpoints: email magic link (`startEmailAuth`, `completeEmailAuth`), Google
 ## Build
 
 `cd client && npm run build` → outputs to `client/dist/`. Backend serves `client/dist/` as static files in production. Hashed asset filenames enable long-term caching.
+
+## Admin page (`client/src/landing/AdminPage.jsx`)
+
+Three-tab layout: **User Stats → Crawl Stats → Canonical Stats**.
+
+### Canonical Stats tab
+
+- **KPI row**: total canonicals, mapped deals count + %, unmapped product count + %.
+- **Mapping health bar**: green/red proportional bar.
+- **Brand Manager**: full CRUD for `known_brands`. Uses `BrandRow` component with local `aliasText` state — aliases are free-text while typing, parsed (split on `,`, trim, lowercase) only on `onBlur`. This prevents comma/space being stripped mid-type (the controlled-input anti-pattern). New brands get `_key: crypto.randomUUID()` for stable React keys. Delete requires `window.confirm`.
+- **Suggestion chips**: derived from the first word of each unmapped product, deduped, filtered against existing brands, sorted by count descending. Each chip shows the count of unmapped products with that first word.
+  - **Click chip label** → filters the unmapped products table to that word (toggle; clicking again deselects).
+  - **Click `+`** → adds the word as a new brand entry.
+  - Active chip is highlighted green; a filter badge appears in the table header with `×` to clear.
+- **Fuzzy misspelling detection**: when a chip filter is active, the unmapped products table splits into two sections: "Possible misspellings" (Levenshtein distance ≤ `min(3, ceil(chipLength/4))`) shown first in amber, then "Exact matches" below. Uses an inline `levenshtein(a, b)` function (no dependency).
+- **Save & Re-map**: sends all brands to `POST /brands/remap`, awaits the synchronous response, then refreshes canonical stats and brand list. No polling.
+
+### Real Savings badge tooltip
+
+In `DealsPage`, the "Real Savings" badge uses `createPortal` (rendered into `document.body`) with `position: fixed` coords from `getBoundingClientRect()`. This bypasses CSS stacking context and `overflow: hidden` clipping. Visible to admins only: `isAdmin = Boolean(session?.user?.is_admin) || import.meta.env.DEV`.
+
+### Image proxy
+
+`proxyDealImageUrl(deal)` takes the **full deal object** (not `deal.image_url` string) — it needs `deal.store.url` to resolve relative image paths. Passing the string instead of the object silently breaks image display.
 
 ## Related pages
 

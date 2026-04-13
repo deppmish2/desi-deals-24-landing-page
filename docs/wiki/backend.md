@@ -1,6 +1,6 @@
 ---
 title: Backend
-last_updated: 2026-04-11
+last_updated: 2026-04-13
 source_count: 3
 ---
 
@@ -33,6 +33,10 @@ Static assets: `client/dist/assets/` served with `Cache-Control: max-age=1y, imm
 | `GET/POST/DELETE /api/v1/bookmarks` | `server/routes/bookmarks.js` | Saved deals per user |
 | `GET /api/v1/health` | `server/routes/health.js` | Health check (no auth) |
 | `GET /api/v1/admin-dashboard/stats` | `server/routes/admin-dashboard.js` | Admin stats (auth required) |
+| `GET /api/v1/admin-dashboard/canonical-stats` | `server/routes/admin-dashboard.js` | Mapping health: total canonicals, mapped/unmapped deal counts, unmapped product list |
+| `GET /api/v1/admin-dashboard/brands` | `server/routes/admin-dashboard.js` | Returns all `known_brands` rows |
+| `POST /api/v1/admin-dashboard/brands/remap` | `server/routes/admin-dashboard.js` | Replaces brand list, re-decomposes all canonicals, maps unmapped deals. Runs **synchronously** — returns result in response body. |
+| `GET /api/v1/admin-dashboard/brands/remap-status/:jobId` | `server/routes/admin-dashboard.js` | Reads `brand_remap_jobs` row by id (retained for legacy polling clients) |
 | `GET /api/v1/member-count` | inline in `server/index.js` | Display member count |
 | `POST /api/v1/contact` | `server/routes/contact.js` | Contact form |
 | `POST /api/v1/waitlist` | `server/routes/waitlist.js` | Waitlist signup |
@@ -59,6 +63,8 @@ Schema: `server/db/schema.sql` — auto-applied on startup. Key tables:
 | `canonical_products` | Canonical product registry (entity resolution) |
 | `deal_mappings` | Maps deal rows to canonical products |
 | `entity_resolution_queue` | Ambiguous mappings pending admin review |
+| `known_brands` | Brand whitelist used for canonical slot decomposition. `name TEXT UNIQUE`, `aliases TEXT` (JSON array of lowercase strings). Source of truth for which tokens are brand identifiers. |
+| `brand_remap_jobs` | Audit log for admin-triggered remap runs. `status`: running/completed/failed. `stats` JSON: `{canonicalsRedecomposed, canonicalsDeleted, newlyMapped, stillUnmapped, duration_ms}`. |
 | `users` | User accounts (email, Google OAuth, postcode, preferences) |
 | `email_auth_tokens` | Passwordless email magic links |
 | `refresh_tokens` | JWT refresh token sessions |
@@ -80,6 +86,18 @@ OAuth: Google only. Two URL patterns supported for compatibility with older fron
 ## Scheduling
 
 In non-serverless mode (`!process.env.VERCEL`), `server/index.js` starts `crawler/scheduler.js` which runs the crawl on a Berlin-time morning schedule. In production, GitHub Actions handles this — the server explicitly skips the scheduler.
+
+## Brand remap endpoint (`POST /brands/remap`)
+
+Accepts `{ brands: [{name, aliases}] }`. Steps:
+
+1. **Deduplicate** by lowercase name — merges aliases when the same name appears twice (e.g. chip-added "aashirvaad" + existing "Aashirvaad"). Prevents `UNIQUE constraint` errors.
+2. **Replace `known_brands`** — DELETE all, INSERT deduped set.
+3. **Re-decompose canonicals** — for every `canonical_products` row, calls `decomposeCanonical()` with fresh brands. Canonicals that no longer resolve a brand slot are deleted (and their `deals.canonical_id` NULLed). Others get updated `brand_slots`, `base_product_slots`, `product_group_id`. All writes go through a single `db.batch()` call.
+4. **Map unmapped deals** — loads all active deals with no `deal_mappings` entry, runs `autoMapDeals()`, batch-inserts new mappings.
+5. Returns `{ jobId, status: "completed", stats }` synchronously.
+
+**Critical:** This runs synchronously within the HTTP request. Do **not** convert it back to a background async — Vercel kills background work when the response is sent. All prior stuck jobs (status='running' forever) were caused by the background-async pattern.
 
 ## Related pages
 

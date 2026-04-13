@@ -5,6 +5,12 @@ Parseable: `grep "^## \[" docs/wiki/log.md | tail -10`
 
 ---
 
+## [2026-04-13] auto-update | Brand management, admin panel remap, perf optimisations
+Pages touched: backend.md, crawler.md, frontend.md, decisions.md
+Sources: server/routes/admin-dashboard.js, crawler/utils/auto-mapper.js, crawler/utils/canonical-decomposer.js, client/src/landing/AdminPage.jsx, client/src/pages/DealsPage.jsx, client/src/utils/api.js, server/db/schema.sql
+
+---
+
 ## [2026-04-11] auto-update | Real Savings bug investigation + three-bug fix
 Pages touched: crawler.md, decisions.md
 Sources: server/services/real-savings.js, server/services/price-history-recorder.js, crawler/utils/weight-parser.js, crawler/utils/auto-mapper.js, crawler/index.js, Turso production DB query
