@@ -31,7 +31,22 @@ function normalizeWeight(value, unit) {
   }
 }
 
-function decomposeCanonical(canonicalName, commonAliases = [], brands = []) {
+/**
+ * Build a flat Map<lowercase_alias → brand> from a brands array.
+ * Pass the result into decomposeCanonical to avoid rebuilding per call.
+ */
+function buildBrandAliasMap(brands) {
+  const map = new Map();
+  for (const b of brands) {
+    map.set(b.name.toLowerCase(), b);
+    for (const alias of b.aliases) {
+      if (alias) map.set(alias.toLowerCase(), b);
+    }
+  }
+  return map;
+}
+
+function decomposeCanonical(canonicalName, commonAliases = [], brands = [], aliasMap = null) {
   let name = String(canonicalName || "");
 
   if (!name.trim()) {
@@ -78,18 +93,13 @@ function decomposeCanonical(canonicalName, commonAliases = [], brands = []) {
     };
   }
 
-  // 4. Scan ALL tokens for a known brand alias match
+  // 4. Scan ALL tokens for a known brand alias match — O(1) per token via Map
+  const lookup = aliasMap || buildBrandAliasMap(brands);
   let brandEntry = null;
   let brandTokenIndex = -1;
-  outer: for (let i = 0; i < tokens.length; i++) {
-    const t = tokens[i];
-    for (const b of brands) {
-      if (b.aliases.some((alias) => t === alias.toLowerCase())) {
-        brandEntry = b;
-        brandTokenIndex = i;
-        break outer;
-      }
-    }
+  for (let i = 0; i < tokens.length; i++) {
+    const match = lookup.get(tokens[i]);
+    if (match) { brandEntry = match; brandTokenIndex = i; break; }
   }
 
   // 5. Build slot arrays
@@ -115,4 +125,4 @@ function decomposeCanonical(canonicalName, commonAliases = [], brands = []) {
   };
 }
 
-module.exports = { decomposeCanonical };
+module.exports = { decomposeCanonical, buildBrandAliasMap };

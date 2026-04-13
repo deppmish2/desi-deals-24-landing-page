@@ -3,7 +3,7 @@
 const { Router } = require("express");
 const db = require("../db");
 const requireAdminAuth = require("../middleware/user-admin-auth");
-const { decomposeCanonical } = require("../../crawler/utils/canonical-decomposer");
+const { decomposeCanonical, buildBrandAliasMap } = require("../../crawler/utils/canonical-decomposer");
 const { loadPriorityCanonicals, autoMapDeals } = require("../../crawler/utils/auto-mapper");
 
 const router = Router();
@@ -483,6 +483,9 @@ router.post("/brands/remap", async (req, res) => {
         `SELECT id, canonical_name, common_aliases FROM canonical_products`,
       ).all();
 
+      // Build alias map once — O(total_aliases), then O(1) per token lookup in decompose
+      const aliasMap = buildBrandAliasMap(freshBrands);
+
       let canonicalsRedecomposed = 0;
       let canonicalsDeleted = 0;
       const redecomposeStmts = [];
@@ -493,7 +496,7 @@ router.post("/brands/remap", async (req, res) => {
           : [];
 
         const decomposed = decomposeCanonical(
-          canonical.canonical_name, aliases, freshBrands,
+          canonical.canonical_name, aliases, freshBrands, aliasMap,
         );
 
         if (decomposed.brandSlots === null) {
