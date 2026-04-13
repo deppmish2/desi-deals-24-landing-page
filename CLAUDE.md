@@ -1,5 +1,11 @@
 # CLAUDE.md
 
+
+## Coding Style
+Write very strict programmaing code, don't be verbose
+Use existing standard node or python libraries for implementation instead of writing it from scratch.
+Writing tests should cover MVP for the objective, strict and exact. 
+
 This file provides guidance to Claude Code when working with the DesiDeals24 codebase.
 
 ## Wiki
