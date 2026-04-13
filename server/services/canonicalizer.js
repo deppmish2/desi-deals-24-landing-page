@@ -241,18 +241,23 @@ async function resolveQueryToCanonicalId(
   };
 }
 
-async function canonicalizeDeals(db, { runId } = {}) {
+async function canonicalizeDeals(db, { runId, unmappedOnly } = {}) {
   const params = [];
   let where = "d.is_active = 1";
   if (runId) {
     where += " AND d.crawl_run_id = ?";
     params.push(runId);
   }
+  const join = unmappedOnly
+    ? "LEFT JOIN deal_mappings dm ON dm.deal_id = d.id"
+    : "";
+  if (unmappedOnly) where += " AND dm.deal_id IS NULL";
 
   const deals = await db
     .prepare(
       `SELECT d.id, d.product_name, d.product_category, d.image_url
      FROM deals d
+     ${join}
      WHERE ${where}`,
     )
     .all(...params);
