@@ -51,6 +51,13 @@ function parseSlots(raw) {
  * @param {string|null} dealWeightUnit  - "g" or "ml" (or null)
  * @param {object}      canon           - canonical object with slot arrays
  */
+/** Normalise kg→g and l→ml so cross-unit weight comparisons work correctly. */
+function toBaseUnit(value, unit) {
+  if (unit === "kg") return { value: value * 1000, unit: "g" };
+  if (unit === "l")  return { value: value * 1000, unit: "ml" };
+  return { value, unit };
+}
+
 function matchesCanonical(normedTitle, dealWeightValue, dealWeightUnit, canon) {
   const brandSlots = parseSlots(canon.brandSlots);
   const baseProductSlots = parseSlots(canon.baseProductSlots);
@@ -76,16 +83,19 @@ function matchesCanonical(normedTitle, dealWeightValue, dealWeightUnit, canon) {
     }
   }
 
-  // Weight check: only when both canonical and deal have a weight AND same unit
+  // Weight check: normalize kg→g and l→ml so cross-unit comparisons work.
+  // Skipped only for truly incompatible units (g vs ml).
   const canonWeight = canon.weightValue ?? canon.weight_value ?? null;
   const canonUnit = canon.weightUnit ?? canon.weight_unit ?? null;
 
   if (canonWeight != null && dealWeightValue != null) {
-    if (canonUnit === dealWeightUnit) {
-      const ratio = dealWeightValue / canonWeight;
+    const dw = toBaseUnit(dealWeightValue, dealWeightUnit);
+    const cw = toBaseUnit(canonWeight, canonUnit);
+    if (dw.unit === cw.unit) {
+      const ratio = dw.value / cw.value;
       if (ratio < 0.9 || ratio > 1.1) return false;
     }
-    // Different units (g vs ml) → skip weight check
+    // Truly incompatible units (g vs ml) → skip
   }
 
   return true;
