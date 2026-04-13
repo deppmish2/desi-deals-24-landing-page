@@ -441,13 +441,25 @@ router.post("/brands/remap", async (req, res) => {
   }
 
   try {
-    // 1. Replace known_brands table
-    await db.execute(`DELETE FROM known_brands`);
+    // 1. Replace known_brands table — dedupe by lowercase name, merge aliases
+    const deduped = new Map();
     for (const brand of brands) {
-      if (!brand.name) continue;
+      const name = String(brand.name || "").trim();
+      if (!name) continue;
+      const key = name.toLowerCase();
+      if (deduped.has(key)) {
+        const existing = deduped.get(key);
+        const merged = [...new Set([...existing.aliases, ...(brand.aliases || [])])];
+        deduped.set(key, { name: existing.name, aliases: merged });
+      } else {
+        deduped.set(key, { name, aliases: brand.aliases || [] });
+      }
+    }
+    await db.execute(`DELETE FROM known_brands`);
+    for (const { name, aliases } of deduped.values()) {
       await db.execute(
         `INSERT INTO known_brands (name, aliases) VALUES (?, ?)`,
-        [String(brand.name).trim(), JSON.stringify(brand.aliases || [])],
+        [name, JSON.stringify(aliases)],
       );
     }
 
