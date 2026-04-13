@@ -469,100 +469,97 @@ router.post("/brands/remap", async (req, res) => {
     ).run();
     const jobId = Number(jobResult.lastInsertRowid);
 
-    // 3. Return 202 immediately
-    res.status(202).json({ jobId });
+    // 3. Do all work synchronously within the request — background async is
+    //    not reliable on serverless (Vercel kills the process after response).
+    const startedAt = Date.now();
+    try {
+      const freshBrands = [...deduped.values()].map((b) => ({
+        name: b.name,
+        aliases: b.aliases.map((a) => String(a).toLowerCase().trim()).filter(Boolean),
+      }));
 
-    // 4. Continue working asynchronously — re-decompose, delete unbranded, map unmapped
-    (async () => {
-      const startedAt = Date.now();
-      try {
-        const freshBrands = brands.map((b) => ({
-          name: String(b.name || "").trim(),
-          aliases: (b.aliases || []).map((a) => String(a).toLowerCase().trim()).filter(Boolean),
-        }));
+      // Re-decompose all canonicals — collect statements, flush in one batch
+      const canonicals = await db.prepare(
+        `SELECT id, canonical_name, common_aliases FROM canonical_products`,
+      ).all();
 
-        // Re-decompose all canonicals
-        const canonicals = await db.prepare(
-          `SELECT id, canonical_name, common_aliases FROM canonical_products`,
-        ).all();
+      let canonicalsRedecomposed = 0;
+      let canonicalsDeleted = 0;
+      const redecomposeStmts = [];
 
-        let canonicalsRedecomposed = 0;
-        let canonicalsDeleted = 0;
+      for (const canonical of canonicals) {
+        const aliases = canonical.common_aliases
+          ? String(canonical.common_aliases).split(",").map((a) => a.trim()).filter(Boolean)
+          : [];
 
-        for (const canonical of canonicals) {
-          const aliases = canonical.common_aliases
-            ? String(canonical.common_aliases).split(",").map((a) => a.trim()).filter(Boolean)
-            : [];
-
-          const decomposed = decomposeCanonical(
-            canonical.canonical_name, aliases, freshBrands,
-          );
-
-          if (decomposed.brandSlots === null) {
-            await db.execute(
-              `UPDATE deals SET canonical_id = NULL WHERE canonical_id = ?`,
-              [canonical.id],
-            );
-            await db.execute(
-              `DELETE FROM canonical_products WHERE id = ?`,
-              [canonical.id],
-            );
-            canonicalsDeleted++;
-          } else {
-            await db.execute(
-              `UPDATE canonical_products
-               SET brand_slots = ?, base_product_slots = ?, product_group_id = ?
-               WHERE id = ?`,
-              [
-                JSON.stringify(decomposed.brandSlots),
-                JSON.stringify(decomposed.baseProductSlots),
-                decomposed.productGroupId,
-                canonical.id,
-              ],
-            );
-            canonicalsRedecomposed++;
-          }
-        }
-
-        // Load unmapped active deals only
-        const unmappedDeals = await db.prepare(
-          `SELECT d.id, d.product_url, d.product_name,
-                  d.weight_value, d.weight_unit
-           FROM deals d
-           LEFT JOIN deal_mappings dm ON dm.deal_id = d.id
-           WHERE d.is_active = 1 AND dm.deal_id IS NULL`,
-        ).all();
-
-        // Load updated priority canonicals (brand_slots IS NOT NULL enforced inside)
-        const priorityCanonicals = await loadPriorityCanonicals(db);
-
-        const newlyMapped = await autoMapDeals(db, unmappedDeals, priorityCanonicals);
-        const stillUnmapped = unmappedDeals.length - newlyMapped;
-
-        await db.execute(
-          `UPDATE brand_remap_jobs
-           SET status = 'completed', finished_at = CURRENT_TIMESTAMP, stats = ?
-           WHERE id = ?`,
-          [
-            JSON.stringify({
-              canonicalsRedecomposed,
-              canonicalsDeleted,
-              newlyMapped,
-              stillUnmapped,
-              duration_ms: Date.now() - startedAt,
-            }),
-            jobId,
-          ],
+        const decomposed = decomposeCanonical(
+          canonical.canonical_name, aliases, freshBrands,
         );
-      } catch (err) {
-        await db.execute(
-          `UPDATE brand_remap_jobs
-           SET status = 'failed', finished_at = CURRENT_TIMESTAMP, error = ?
-           WHERE id = ?`,
-          [String(err.message), jobId],
-        ).catch(() => {});
+
+        if (decomposed.brandSlots === null) {
+          redecomposeStmts.push(
+            { sql: `UPDATE deals SET canonical_id = NULL WHERE canonical_id = ?`, args: [canonical.id] },
+            { sql: `DELETE FROM canonical_products WHERE id = ?`, args: [canonical.id] },
+          );
+          canonicalsDeleted++;
+        } else {
+          redecomposeStmts.push({
+            sql: `UPDATE canonical_products
+                  SET brand_slots = ?, base_product_slots = ?, product_group_id = ?
+                  WHERE id = ?`,
+            args: [
+              JSON.stringify(decomposed.brandSlots),
+              JSON.stringify(decomposed.baseProductSlots),
+              decomposed.productGroupId,
+              canonical.id,
+            ],
+          });
+          canonicalsRedecomposed++;
+        }
       }
-    })();
+
+      if (redecomposeStmts.length > 0) {
+        await db.batch(redecomposeStmts, "write");
+      }
+
+      // Load unmapped active deals only
+      const unmappedDeals = await db.prepare(
+        `SELECT d.id, d.product_url, d.product_name,
+                d.weight_value, d.weight_unit
+         FROM deals d
+         LEFT JOIN deal_mappings dm ON dm.deal_id = d.id
+         WHERE d.is_active = 1 AND dm.deal_id IS NULL`,
+      ).all();
+
+      const priorityCanonicals = await loadPriorityCanonicals(db);
+      const newlyMapped = await autoMapDeals(db, unmappedDeals, priorityCanonicals);
+      const stillUnmapped = unmappedDeals.length - newlyMapped;
+
+      const stats = {
+        canonicalsRedecomposed,
+        canonicalsDeleted,
+        newlyMapped,
+        stillUnmapped,
+        duration_ms: Date.now() - startedAt,
+      };
+
+      await db.execute(
+        `UPDATE brand_remap_jobs
+         SET status = 'completed', finished_at = CURRENT_TIMESTAMP, stats = ?
+         WHERE id = ?`,
+        [JSON.stringify(stats), jobId],
+      );
+
+      res.status(200).json({ jobId, status: "completed", stats });
+    } catch (workErr) {
+      await db.execute(
+        `UPDATE brand_remap_jobs
+         SET status = 'failed', finished_at = CURRENT_TIMESTAMP, error = ?
+         WHERE id = ?`,
+        [String(workErr.message), jobId],
+      ).catch(() => {});
+      res.status(500).json({ error: workErr.message });
+    }
   } catch (err) {
     res.status(500).json({ error: err.message });
   }

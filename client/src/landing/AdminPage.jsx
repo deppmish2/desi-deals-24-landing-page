@@ -685,35 +685,28 @@ export default function AdminPage() {
       }));
 
     try {
-      const { jobId } = await triggerBrandRemap(finalBrands);
-      setRemapJobId(jobId);
+      // Endpoint now runs synchronously and returns the result directly
+      const result = await triggerBrandRemap(finalBrands);
       setBrandsDirty(false);
 
-      const poll = setInterval(async () => {
-        try {
-          const result = await fetchRemapStatus(jobId);
-          if (result.status === "completed") {
-            clearInterval(poll);
-            setRemapStatus("completed");
-            setRemapStats(result.stats);
-            setRemapToast(
-              `${result.stats?.newlyMapped ?? 0} newly mapped · ` +
-              `${result.stats?.stillUnmapped ?? 0} still unmapped · ` +
-              `${result.stats?.canonicalsDeleted ?? 0} canonicals deleted`,
-            );
-            const [freshStats, freshBrands] = await Promise.all([
-              fetchCanonicalStats(),
-              fetchBrands(),
-            ]);
-            setCanonicalStats(freshStats);
-            setBrandDraft(freshBrands);
-          } else if (result.status === "failed") {
-            clearInterval(poll);
-            setRemapStatus("failed");
-            setRemapError(result.error || "Remap failed");
-          }
-        } catch (_) {}
-      }, 3000);
+      if (result.status === "completed") {
+        setRemapStatus("completed");
+        setRemapStats(result.stats);
+        setRemapToast(
+          `${result.stats?.newlyMapped ?? 0} newly mapped · ` +
+          `${result.stats?.stillUnmapped ?? 0} still unmapped · ` +
+          `${result.stats?.canonicalsDeleted ?? 0} canonicals deleted`,
+        );
+        const [freshStats, freshBrands] = await Promise.all([
+          fetchCanonicalStats(),
+          fetchBrands(),
+        ]);
+        setCanonicalStats(freshStats);
+        setBrandDraft(freshBrands);
+      } else {
+        setRemapStatus("failed");
+        setRemapError(result.error || "Remap failed");
+      }
     } catch (err) {
       setRemapStatus(null);
       setRemapError(String(err?.message || "Failed to start remap"));
