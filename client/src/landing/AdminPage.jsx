@@ -1,5 +1,19 @@
 import React, { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
+
+function levenshtein(a, b) {
+  const m = a.length, n = b.length;
+  const dp = Array.from({ length: m + 1 }, (_, i) =>
+    Array.from({ length: n + 1 }, (_, j) => (i === 0 ? j : j === 0 ? i : 0))
+  );
+  for (let i = 1; i <= m; i++)
+    for (let j = 1; j <= n; j++)
+      dp[i][j] = a[i-1] === b[j-1]
+        ? dp[i-1][j-1]
+        : 1 + Math.min(dp[i-1][j], dp[i][j-1], dp[i-1][j-1]);
+  return dp[m][n];
+}
+
 import {
   fetchAdminStats,
   fetchBrands,
@@ -153,11 +167,56 @@ function UserStatusPill({ user }) {
   );
 }
 
+function aliasesToText(aliases) {
+  return Array.isArray(aliases) ? aliases.join(", ") : String(aliases || "");
+}
+
+function parseAliases(raw) {
+  return raw.split(",").map((a) => a.trim().toLowerCase()).filter(Boolean);
+}
+
+function BrandRow({ brand, index, isDeleted, onBrandFieldChange, onDeleteBrand, onUndoDelete }) {
+  const [aliasText, setAliasText] = useState(() => aliasesToText(brand.aliases));
+
+  function commitAliases(raw) {
+    const aliases = parseAliases(raw);
+    onBrandFieldChange(index, "aliases", aliases);
+    setAliasText(aliases.join(", "));
+  }
+
+  return (
+    <div className={`grid grid-cols-[1fr_2fr_auto] gap-2 items-center py-1 ${isDeleted ? "opacity-40 line-through" : ""}`}>
+      <input
+        className="text-sm border border-slate-200 rounded-lg px-2 py-1 focus:outline-none focus:border-green-500"
+        value={brand.name}
+        disabled={isDeleted}
+        onChange={(e) => onBrandFieldChange(index, "name", e.target.value)}
+      />
+      <input
+        className="text-sm border border-slate-200 rounded-lg px-2 py-1 focus:outline-none focus:border-green-500 font-mono text-xs"
+        value={aliasText}
+        disabled={isDeleted}
+        placeholder="e.g. haldiram, sona masoori"
+        onChange={(e) => setAliasText(e.target.value)}
+        onBlur={(e) => commitAliases(e.target.value)}
+      />
+      {isDeleted ? (
+        <button onClick={() => onUndoDelete(brand.id)} className="text-xs text-slate-400 hover:text-slate-700">Undo</button>
+      ) : (
+        <button onClick={() => onDeleteBrand(index)} className="text-xs text-red-400 hover:text-red-600">✕</button>
+      )}
+    </div>
+  );
+}
+
 function CanonicalStatsTab({
   loading, error, stats, brandDraft, brandsDirty, deletedBrandIds,
   remapStatus, remapError, remapToast,
   onBrandFieldChange, onAddBrand, onDeleteBrand, onUndoDelete, onSaveAndRemap,
+  onAddBrandFromSuggestion,
 }) {
+  const [selectedChip, setSelectedChip] = useState(null);
+
   if (loading) {
     return (
       <div className="flex items-center justify-center py-20 text-slate-400 text-sm">
@@ -179,6 +238,25 @@ function CanonicalStatsTab({
     : 0;
   const unmappedCount = stats.total_active_deals - stats.mapped_deals;
   const unmappedPct = 100 - mappedPct;
+
+  // Derive suggested brand names from unmapped products (first word, deduped, not already in draft)
+  const existingTokens = new Set(
+    (brandDraft || []).flatMap((b) => [
+      String(b.name).toLowerCase(),
+      ...(Array.isArray(b.aliases) ? b.aliases.map((a) => String(a).toLowerCase()) : []),
+    ]),
+  );
+  const chipCounts = {};
+  for (const p of stats.unmapped_products || []) {
+    const first = (p.product_name || "").split(/\s+/)[0].replace(/[^a-zA-Z0-9'&.-]/g, "").trim();
+    if (first.length < 2) continue;
+    const lower = first.toLowerCase();
+    chipCounts[lower] = (chipCounts[lower] || 0) + 1;
+  }
+  const suggestions = Object.entries(chipCounts)
+    .filter(([lower]) => !existingTokens.has(lower))
+    .sort((a, b) => b[1] - a[1])
+    .map(([lower, count]) => ({ name: lower, count }));
 
   return (
     <div className="space-y-8">
@@ -264,51 +342,70 @@ function CanonicalStatsTab({
               <span>Aliases (comma-separated)</span>
               <span />
             </div>
-            {brandDraft.map((brand, i) => {
-              const isDeleted = deletedBrandIds.has(brand.id);
-              return (
-                <div
-                  key={brand.id ?? `new-${i}`}
-                  className={`grid grid-cols-[1fr_2fr_auto] gap-2 items-center py-1 ${
-                    isDeleted ? "opacity-40 line-through" : ""
-                  }`}
-                >
-                  <input
-                    className="text-sm border border-slate-200 rounded-lg px-2 py-1 focus:outline-none focus:border-green-500"
-                    value={brand.name}
-                    disabled={isDeleted}
-                    onChange={(e) => onBrandFieldChange(i, "name", e.target.value)}
-                  />
-                  <input
-                    className="text-sm border border-slate-200 rounded-lg px-2 py-1 focus:outline-none focus:border-green-500 font-mono text-xs"
-                    value={Array.isArray(brand.aliases) ? brand.aliases.join(", ") : brand.aliases}
-                    disabled={isDeleted}
-                    onChange={(e) =>
-                      onBrandFieldChange(
-                        i,
-                        "aliases",
-                        e.target.value.split(",").map((a) => a.trim().toLowerCase()).filter(Boolean),
-                      )
-                    }
-                  />
-                  {isDeleted ? (
+            {brandDraft.map((brand, i) => (
+              <BrandRow
+                key={brand.id ?? brand._key ?? `new-${i}`}
+                brand={brand}
+                index={i}
+                isDeleted={deletedBrandIds.has(brand.id)}
+                onBrandFieldChange={onBrandFieldChange}
+                onDeleteBrand={onDeleteBrand}
+                onUndoDelete={onUndoDelete}
+              />
+            ))}
+          </div>
+        )}
+
+        {/* Suggestions from unmapped products */}
+        {suggestions.length > 0 && (
+          <div className="mt-4 pt-4 border-t border-slate-100">
+            <div className="text-[10px] font-bold uppercase tracking-[1px] text-slate-400 mb-2">
+              Suggested from unmapped — click to filter · + to add as brand
+            </div>
+            <div className="flex flex-wrap gap-1.5">
+              {suggestions.map(({ name, count }) => {
+                const isActive = selectedChip === name;
+                return (
+                  <span
+                    key={name}
+                    className={`inline-flex items-center rounded-full text-xs font-medium overflow-hidden border transition-colors ${
+                      isActive
+                        ? "bg-green-100 border-green-400 text-green-800"
+                        : "bg-slate-100 border-slate-200 text-slate-600"
+                    }`}
+                  >
                     <button
-                      onClick={() => onUndoDelete(brand.id)}
-                      className="text-xs text-slate-400 hover:text-slate-700"
+                      onClick={() =>
+                        setSelectedChip((prev) => prev === name ? null : name)
+                      }
+                      className={`px-2.5 py-1 transition-colors ${
+                        isActive ? "hover:bg-green-200" : "hover:bg-slate-200"
+                      }`}
+                      title="Filter unmapped products by this word"
                     >
-                      Undo
+                      {name}
+                      <span className={`ml-1 text-[10px] font-bold ${isActive ? "text-green-600" : "text-slate-400"}`}>
+                        {count}
+                      </span>
                     </button>
-                  ) : (
                     <button
-                      onClick={() => onDeleteBrand(i)}
-                      className="text-xs text-red-400 hover:text-red-600"
+                      onClick={() => {
+                        onAddBrandFromSuggestion(name);
+                        if (selectedChip === name) setSelectedChip(null);
+                      }}
+                      className={`px-1.5 py-1 border-l transition-colors ${
+                        isActive
+                          ? "border-green-300 hover:bg-green-200"
+                          : "border-slate-300 hover:bg-green-100 hover:text-green-800"
+                      }`}
+                      title="Add as brand"
                     >
-                      ✕
+                      +
                     </button>
-                  )}
-                </div>
-              );
-            })}
+                  </span>
+                );
+              })}
+            </div>
           </div>
         )}
 
@@ -341,54 +438,112 @@ function CanonicalStatsTab({
 
       {/* Unmapped products table */}
       <div className="bg-white rounded-2xl border border-slate-100 shadow-sm px-6 py-5">
-        <div className="text-[11px] font-bold uppercase tracking-[1.2px] text-slate-400 mb-4">
-          Unmapped products
+        <div className="flex items-center gap-3 mb-4">
+          <div className="text-[11px] font-bold uppercase tracking-[1.2px] text-slate-400">
+            Unmapped products
+          </div>
+          {selectedChip && (
+            <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-green-100 text-green-800 text-[10px] font-bold">
+              {selectedChip}
+              <button
+                onClick={() => setSelectedChip(null)}
+                className="hover:text-green-600 leading-none"
+                title="Clear filter"
+              >
+                ×
+              </button>
+            </span>
+          )}
         </div>
         {stats.unmapped_products.length === 0 ? (
           <div className="flex items-center gap-2 text-green-700 text-sm font-medium py-4">
             <span className="text-lg">✓</span> All active products are mapped
           </div>
-        ) : (
+        ) : (() => {
+          let exact = stats.unmapped_products;
+          let similar = [];
+          if (selectedChip) {
+            const threshold = Math.min(3, Math.ceil(selectedChip.length / 4));
+            const exactSet = new Set();
+            exact = [];
+            for (const p of stats.unmapped_products) {
+              const first = (p.product_name || "").split(/\s+/)[0].replace(/[^a-zA-Z0-9'&.-]/g, "").trim().toLowerCase();
+              if (first === selectedChip) { exact.push(p); exactSet.add(p.id); }
+            }
+            for (const p of stats.unmapped_products) {
+              if (exactSet.has(p.id)) continue;
+              const first = (p.product_name || "").split(/\s+/)[0].replace(/[^a-zA-Z0-9'&.-]/g, "").trim().toLowerCase();
+              if (levenshtein(first, selectedChip) <= threshold) similar.push(p);
+            }
+          }
+          const hasResults = exact.length > 0 || similar.length > 0;
+
+          function ProductRow({ p }) {
+            return (
+              <tr key={p.id} className="border-b border-slate-50 last:border-0">
+                <td className="py-2.5 pr-4 font-medium text-slate-700 max-w-[260px] truncate">{p.product_name}</td>
+                <td className="py-2.5 pr-4 text-slate-500 text-xs">{p.store_name}</td>
+                <td className="py-2.5 pr-4 text-slate-400 text-xs">{p.product_category}</td>
+                <td className="py-2.5 pr-4 text-slate-700 text-xs">
+                  {p.sale_price != null ? `${p.currency || "€"} ${Number(p.sale_price).toFixed(2)}` : "—"}
+                </td>
+                <td className="py-2.5">
+                  <a href={p.product_url} target="_blank" rel="noopener noreferrer"
+                    className="text-xs text-green-700 font-bold hover:underline whitespace-nowrap">
+                    View ↗
+                  </a>
+                </td>
+              </tr>
+            );
+          }
+
+          const thead = (
+            <tr className="text-left text-[10px] font-bold uppercase tracking-[1px] text-slate-400 border-b border-slate-100">
+              <th className="pb-2 pr-4">Product</th>
+              <th className="pb-2 pr-4">Store</th>
+              <th className="pb-2 pr-4">Category</th>
+              <th className="pb-2 pr-4">Price</th>
+              <th className="pb-2">Link</th>
+            </tr>
+          );
+
+          return (
           <div className="overflow-x-auto">
-            <table className="w-full text-sm min-w-[640px]">
-              <thead>
-                <tr className="text-left text-[10px] font-bold uppercase tracking-[1px] text-slate-400 border-b border-slate-100">
-                  <th className="pb-2 pr-4">Product</th>
-                  <th className="pb-2 pr-4">Store</th>
-                  <th className="pb-2 pr-4">Category</th>
-                  <th className="pb-2 pr-4">Price</th>
-                  <th className="pb-2">Link</th>
-                </tr>
-              </thead>
-              <tbody>
-                {stats.unmapped_products.map((p) => (
-                  <tr key={p.id} className="border-b border-slate-50 last:border-0">
-                    <td className="py-2.5 pr-4 font-medium text-slate-700 max-w-[260px] truncate">
-                      {p.product_name}
-                    </td>
-                    <td className="py-2.5 pr-4 text-slate-500 text-xs">{p.store_name}</td>
-                    <td className="py-2.5 pr-4 text-slate-400 text-xs">{p.product_category}</td>
-                    <td className="py-2.5 pr-4 text-slate-700 text-xs">
-                      {p.sale_price != null
-                        ? `${(p.currency || "€")} ${Number(p.sale_price).toFixed(2)}`
-                        : "—"}
-                    </td>
-                    <td className="py-2.5">
-                      <a
-                        href={p.product_url}
-                        target="_blank"
-                        rel="noopener noreferrer"
-                        className="text-xs text-green-700 font-bold hover:underline whitespace-nowrap"
-                      >
-                        View ↗
-                      </a>
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
+            {!hasResults ? (
+              <div className="text-sm text-slate-400 py-4 text-center">
+                No unmapped products match "{selectedChip}"
+              </div>
+            ) : (
+              <>
+                {similar.length > 0 && (
+                  <>
+                    <div className="text-[10px] font-bold uppercase tracking-[1px] text-amber-500 mb-1">
+                      Possible misspellings ({similar.length})
+                    </div>
+                    <table className="w-full text-sm min-w-[640px] mb-4">
+                      <thead>{thead}</thead>
+                      <tbody>{similar.map((p) => <ProductRow key={p.id} p={p} />)}</tbody>
+                    </table>
+                  </>
+                )}
+                {exact.length > 0 && (
+                  <>
+                    {similar.length > 0 && (
+                      <div className="text-[10px] font-bold uppercase tracking-[1px] text-slate-400 mb-1">
+                        Exact matches ({exact.length})
+                      </div>
+                    )}
+                    <table className="w-full text-sm min-w-[640px]">
+                      <thead>{thead}</thead>
+                      <tbody>{exact.map((p) => <ProductRow key={p.id} p={p} />)}</tbody>
+                    </table>
+                  </>
+                )}
+              </>
+            )}
           </div>
-        )}
+          );
+        })()}
       </div>
     </div>
   );
@@ -477,7 +632,15 @@ export default function AdminPage() {
   }
 
   function handleAddBrand() {
-    setBrandDraft((prev) => [...(prev || []), { id: null, name: "", aliases: [] }]);
+    setBrandDraft((prev) => [...(prev || []), { id: null, _key: crypto.randomUUID(), name: "", aliases: [] }]);
+    setBrandsDirty(true);
+  }
+
+  function handleAddBrandFromSuggestion(name) {
+    setBrandDraft((prev) => [
+      ...(prev || []),
+      { id: null, _key: crypto.randomUUID(), name, aliases: [name.toLowerCase()] },
+    ]);
     setBrandsDirty(true);
   }
 
@@ -1039,6 +1202,7 @@ export default function AdminPage() {
             remapToast={remapToast}
             onBrandFieldChange={handleBrandFieldChange}
             onAddBrand={handleAddBrand}
+            onAddBrandFromSuggestion={handleAddBrandFromSuggestion}
             onDeleteBrand={handleDeleteBrand}
             onUndoDelete={handleUndoDelete}
             onSaveAndRemap={handleSaveAndRemap}
