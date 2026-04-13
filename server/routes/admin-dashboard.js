@@ -4,7 +4,7 @@ const { Router } = require("express");
 const db = require("../db");
 const requireAdminAuth = require("../middleware/user-admin-auth");
 const { decomposeCanonical, buildBrandAliasMap } = require("../../crawler/utils/canonical-decomposer");
-const { loadPriorityCanonicals, autoMapDeals } = require("../../crawler/utils/auto-mapper");
+const { loadPriorityCanonicals, autoMapDeals, matchesCanonical, norm } = require("../../crawler/utils/auto-mapper");
 
 const router = Router();
 
@@ -525,7 +525,50 @@ router.post("/brands/remap", async (req, res) => {
         await db.batch(redecomposeStmts, "write");
       }
 
-      // Load unmapped active deals only
+      // 2b. Re-validate ALL existing deal_mappings against the freshly-redecomposed
+      //     canonical slots. Purge any mapping where the deal no longer matches
+      //     (e.g. flavour slots tightened after paren-signal fix).
+      const priorityCanonicals = await loadPriorityCanonicals(db);
+      const canonMap = new Map(priorityCanonicals.map((c) => [c.id, c]));
+
+      const existingMappings = await db.prepare(
+        `SELECT dm.deal_id, dm.canonical_id,
+                d.product_name, d.weight_value, d.weight_unit
+         FROM deal_mappings dm
+         JOIN deals d ON d.id = dm.deal_id
+         WHERE d.is_active = 1`,
+      ).all();
+
+      const purgeStmts = [];
+      for (const m of existingMappings) {
+        const canon = canonMap.get(m.canonical_id);
+        if (!canon) {
+          purgeStmts.push({
+            sql: `DELETE FROM deal_mappings WHERE deal_id = ? AND canonical_id = ?`,
+            args: [m.deal_id, m.canonical_id],
+          });
+          continue;
+        }
+        const result = matchesCanonical(
+          norm(m.product_name),
+          m.weight_value ?? null,
+          m.weight_unit ?? null,
+          canon,
+        );
+        if (result !== true) {
+          purgeStmts.push({
+            sql: `DELETE FROM deal_mappings WHERE deal_id = ? AND canonical_id = ?`,
+            args: [m.deal_id, m.canonical_id],
+          });
+        }
+      }
+
+      if (purgeStmts.length > 0) {
+        await db.batch(purgeStmts, "write");
+      }
+      const stalePurged = purgeStmts.length;
+
+      // 2c. Auto-map previously-unmapped active deals
       const unmappedDeals = await db.prepare(
         `SELECT d.id, d.product_url, d.product_name,
                 d.weight_value, d.weight_unit
@@ -534,13 +577,13 @@ router.post("/brands/remap", async (req, res) => {
          WHERE d.is_active = 1 AND dm.deal_id IS NULL`,
       ).all();
 
-      const priorityCanonicals = await loadPriorityCanonicals(db);
       const newlyMapped = await autoMapDeals(db, unmappedDeals, priorityCanonicals);
       const stillUnmapped = unmappedDeals.length - newlyMapped;
 
       const stats = {
         canonicalsRedecomposed,
         canonicalsDeleted,
+        stalePurged,
         newlyMapped,
         stillUnmapped,
         duration_ms: Date.now() - startedAt,

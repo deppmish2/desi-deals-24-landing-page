@@ -213,4 +213,4 @@ async function autoMapDeals(db, deals, priorityCanonicals) {
   return stmts.length;
 }
 
-module.exports = { loadPriorityCanonicals, autoMapDeals, matchesCanonical };
+module.exports = { loadPriorityCanonicals, autoMapDeals, matchesCanonical, norm };

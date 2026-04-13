@@ -239,6 +239,42 @@ const KNORR_CANON_LEGACY = {
   weightUnit: null,
 };
 
+test("autoMapDeals does NOT cross-match Good Day flavour variants", async () => {
+  const db = makeDb();
+  // Two canonicals: Butter 216g and Pistachio Almond 231g
+  // Slots reflect paren-signal fix: "butter" / "pistachio","almond" are required
+  const GOOD_DAY_BUTTER = {
+    id: "canon-good-day-butter",
+    canonical_name: "Britannia Good Day (Butter) 216g",
+    brandSlots: [["britannia"]],
+    baseProductSlots: [["good"], ["day"], ["butter"]],
+    typeSlots: [],
+    weightValue: 216,
+    weightUnit: "g",
+  };
+  const GOOD_DAY_PISTACHIO = {
+    id: "canon-good-day-pistachio",
+    canonical_name: "Britannia Good Day (Pistachio Almond) 231g",
+    brandSlots: [["britannia"]],
+    baseProductSlots: [["good"], ["day"], ["pistachio"], ["almond"]],
+    typeSlots: [],
+    weightValue: 231,
+    weightUnit: "g",
+  };
+  const deals = [
+    {
+      id: "deal-pistachio",
+      product_url: "https://example.com/good-day-pistachio",
+      product_name: "Britannia Good Day Pistachio Almond Cookies Stay Fresh Pack 231g",
+      weight_value: 231,
+      weight_unit: "g",
+    },
+  ];
+  await autoMapDeals(db, deals, [GOOD_DAY_BUTTER, GOOD_DAY_PISTACHIO]);
+  assert.equal(db.inserts.length, 1, "should match exactly one canonical");
+  assert.equal(db.inserts[0][1], "canon-good-day-pistachio", "pistachio deal must not match butter canonical");
+});
+
 test("autoMapDeals legacy fallback: brand-free alias still does not match wrong brand", async () => {
   const db = makeDb();
   const deals = [
