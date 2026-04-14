@@ -336,3 +336,7 @@ export function fetchRemapStatus(jobId) {
 export function fetchCanonicalStats() {
   return authRequest("/admin-dashboard/canonical-stats");
 }
+
+export function fetchMappedProducts() {
+  return authRequest("/admin-dashboard/mapped-products");
+}
