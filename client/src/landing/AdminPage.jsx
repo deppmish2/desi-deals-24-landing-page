@@ -18,6 +18,7 @@ import {
   fetchAdminStats,
   fetchBrands,
   fetchCanonicalStats,
+  fetchMappedProducts,
   fetchRemapStatus,
   triggerBrandRemap,
   getAuthSession,
@@ -209,11 +210,157 @@ function BrandRow({ brand, index, isDeleted, onBrandFieldChange, onDeleteBrand, 
   );
 }
 
+function MappedProductsTable({ products, loading, error, onRetry }) {
+  const [search, setSearch] = useState("");
+  const [expandedIds, setExpandedIds] = useState(new Set());
+
+  if (loading) {
+    return (
+      <div className="flex items-center justify-center py-10 text-slate-400 text-sm">
+        Loading…
+      </div>
+    );
+  }
+  if (error) {
+    return (
+      <div className="flex flex-col items-center gap-3 py-10">
+        <span className="text-red-500 text-sm">{error}</span>
+        <button
+          onClick={onRetry}
+          className="text-xs font-bold text-green-700 hover:text-green-900"
+        >
+          Retry
+        </button>
+      </div>
+    );
+  }
+  if (!products) return null;
+  if (products.length === 0) {
+    return (
+      <div className="text-sm text-slate-400 py-6 text-center">
+        No mapped products yet
+      </div>
+    );
+  }
+
+  const q = search.toLowerCase();
+  const filtered = q
+    ? products.filter((p) => p.canonical_name.toLowerCase().includes(q))
+    : products;
+
+  function toggleRow(id) {
+    setExpandedIds((prev) => {
+      const next = new Set(prev);
+      if (next.has(id)) next.delete(id);
+      else next.add(id);
+      return next;
+    });
+  }
+
+  return (
+    <>
+      <div className="flex items-center gap-3 mb-3">
+        <input
+          type="text"
+          value={search}
+          onChange={(e) => setSearch(e.target.value)}
+          placeholder="Search canonical name…"
+          className="border border-slate-200 rounded-lg px-3 py-1.5 text-xs text-slate-600 outline-none focus:border-green-400 max-w-[240px]"
+        />
+        <span className="text-[11px] text-slate-400">
+          Showing {filtered.length} of {products.length}
+        </span>
+      </div>
+      <div className="overflow-x-auto">
+        <table className="w-full text-sm min-w-[560px] border-collapse">
+          <thead>
+            <tr className="text-left text-[10px] font-bold uppercase tracking-[1px] text-slate-400 border-b border-slate-100">
+              <th className="pb-2 pr-4">Canonical name</th>
+              <th className="pb-2 pr-4">Status</th>
+              <th className="pb-2 pr-4">Stores</th>
+              <th className="pb-2 w-6" />
+            </tr>
+          </thead>
+          <tbody>
+            {filtered.map((item) => {
+              const isOpen = expandedIds.has(item.canonical_id);
+              return (
+                <React.Fragment key={item.canonical_id}>
+                  <tr
+                    className="border-b border-slate-50 last:border-0 cursor-pointer hover:bg-slate-50"
+                    onClick={() => toggleRow(item.canonical_id)}
+                  >
+                    <td className="py-2.5 pr-4 font-semibold text-slate-700 max-w-[280px]">
+                      {item.canonical_name}
+                    </td>
+                    <td className="py-2.5 pr-4">
+                      {item.has_active_deal ? (
+                        <span className="inline-flex items-center gap-1 bg-green-50 text-green-700 text-[10px] font-bold rounded-full px-2 py-0.5">
+                          <span className="w-1.5 h-1.5 rounded-full bg-green-500 inline-block" />
+                          Active
+                        </span>
+                      ) : (
+                        <span className="inline-flex items-center gap-1 bg-slate-100 text-slate-400 text-[10px] font-bold rounded-full px-2 py-0.5">
+                          <span className="w-1.5 h-1.5 rounded-full bg-slate-400 inline-block" />
+                          Inactive
+                        </span>
+                      )}
+                    </td>
+                    <td className="py-2.5 pr-4 text-xs text-slate-500 font-semibold">
+                      {item.store_count} {item.store_count === 1 ? "store" : "stores"}
+                    </td>
+                    <td className="py-2.5 text-slate-300 text-[11px] select-none w-6">
+                      {isOpen ? "▼" : "▶"}
+                    </td>
+                  </tr>
+                  {isOpen && (
+                    <tr className="border-b border-slate-50">
+                      <td colSpan={4} className="pb-2">
+                        <div className="bg-slate-50 rounded-lg overflow-hidden">
+                          <div className="grid grid-cols-[140px_1fr_72px] gap-3 px-3 py-1.5 text-[10px] font-bold uppercase tracking-[1px] text-slate-400 border-b border-slate-200">
+                            <span>Store</span>
+                            <span>Product name on store</span>
+                            <span>Link</span>
+                          </div>
+                          {item.deals.map((deal, i) => (
+                            <div
+                              key={i}
+                              className="grid grid-cols-[140px_1fr_72px] gap-3 px-3 py-1.5 text-xs border-b border-slate-100 last:border-0 items-center"
+                            >
+                              <span className="text-slate-500 font-semibold truncate">{deal.store_name}</span>
+                              <span className="text-slate-700">{deal.product_name}</span>
+                              <a
+                                href={deal.product_url}
+                                target="_blank"
+                                rel="noopener noreferrer"
+                                onClick={(e) => e.stopPropagation()}
+                                className="text-[11px] text-green-700 font-bold hover:underline whitespace-nowrap"
+                              >
+                                View ↗
+                              </a>
+                            </div>
+                          ))}
+                        </div>
+                      </td>
+                    </tr>
+                  )}
+                </React.Fragment>
+              );
+            })}
+          </tbody>
+        </table>
+      </div>
+    </>
+  );
+}
+
 function CanonicalStatsTab({
   loading, error, stats, brandDraft, brandsDirty, deletedBrandIds,
   remapStatus, remapError, remapToast,
   onBrandFieldChange, onAddBrand, onDeleteBrand, onUndoDelete, onSaveAndRemap,
   onAddBrandFromSuggestion,
+  mappedSubTab, mappedProducts, mappedLoading, mappedError,
+  onMappedTabOpen, onRetryMapped,
 }) {
   const [selectedChip, setSelectedChip] = useState(null);
 
@@ -434,10 +581,53 @@ function CanonicalStatsTab({
         </div>
       </div>
 
-      {/* Unmapped products table */}
+      {/* Unmapped / Mapped sub-tabs */}
       <div className="bg-white rounded-2xl border border-slate-100 shadow-sm px-6 py-5">
+        {/* Sub-tab switcher */}
+        <div className="flex gap-0 border-b-2 border-slate-100 mb-4">
+          <button
+            onClick={() => {}}
+            className={`pb-2 px-4 text-[11px] font-bold uppercase tracking-[1px] border-b-2 -mb-[2px] transition-colors ${
+              mappedSubTab === "unmapped"
+                ? "text-green-700 border-green-600"
+                : "text-slate-400 border-transparent hover:text-slate-600"
+            }`}
+          >
+            Unmapped
+            <span className={`ml-1.5 px-1.5 py-0.5 rounded-full text-[10px] font-bold ${
+              mappedSubTab === "unmapped" ? "bg-green-50 text-green-700" : "bg-slate-100 text-slate-500"
+            }`}>
+              {stats.total_active_deals - stats.mapped_deals}
+            </span>
+          </button>
+          <button
+            onClick={onMappedTabOpen}
+            className={`pb-2 px-4 text-[11px] font-bold uppercase tracking-[1px] border-b-2 -mb-[2px] transition-colors ${
+              mappedSubTab === "mapped"
+                ? "text-green-700 border-green-600"
+                : "text-slate-400 border-transparent hover:text-slate-600"
+            }`}
+          >
+            Mapped
+            <span className={`ml-1.5 px-1.5 py-0.5 rounded-full text-[10px] font-bold ${
+              mappedSubTab === "mapped" ? "bg-green-50 text-green-700" : "bg-slate-100 text-slate-500"
+            }`}>
+              {mappedProducts ? mappedProducts.length : stats.total_canonicals}
+            </span>
+          </button>
+        </div>
+
+        {mappedSubTab === "mapped" ? (
+          <MappedProductsTable
+            products={mappedProducts}
+            loading={mappedLoading}
+            error={mappedError}
+            onRetry={onRetryMapped}
+          />
+        ) : (
+        <>
         <div className="flex items-center gap-3 mb-4">
-          <div className="text-[11px] font-bold uppercase tracking-[1.2px] text-slate-400">
+          <div className="text-[11px] font-bold uppercase tracking-[1.2px] text-slate-400 sr-only">
             Unmapped products
           </div>
           {selectedChip && (
@@ -542,6 +732,8 @@ function CanonicalStatsTab({
           </div>
           );
         })()}
+        </>
+        )}
       </div>
     </div>
   );
@@ -559,6 +751,12 @@ export default function AdminPage() {
   const [canonicalStats, setCanonicalStats] = useState(null);
   const [canonicalLoading, setCanonicalLoading] = useState(false);
   const [canonicalError, setCanonicalError] = useState(null);
+
+  // Mapped products sub-tab state
+  const [mappedSubTab, setMappedSubTab] = useState("unmapped");
+  const [mappedProducts, setMappedProducts] = useState(null);
+  const [mappedLoading, setMappedLoading] = useState(false);
+  const [mappedError, setMappedError] = useState(null);
 
   // Brand manager draft state
   const [brandDraft, setBrandDraft] = useState(null);
@@ -620,6 +818,28 @@ export default function AdminPage() {
   function handleTabChange(newTab) {
     setTab(newTab);
     if (newTab === "canonical") handleCanonicalTabOpen();
+  }
+
+  async function loadMappedProducts() {
+    setMappedLoading(true);
+    setMappedError(null);
+    try {
+      const data = await fetchMappedProducts();
+      setMappedProducts(data);
+    } catch (err) {
+      setMappedError(String(err?.message || "Failed to load"));
+    } finally {
+      setMappedLoading(false);
+    }
+  }
+
+  function handleMappedTabOpen() {
+    setMappedSubTab("mapped");
+    if (!mappedProducts && !mappedLoading) loadMappedProducts();
+  }
+
+  function handleRetryMapped() {
+    loadMappedProducts();
   }
 
   function handleBrandFieldChange(index, field, value) {
@@ -692,6 +912,7 @@ export default function AdminPage() {
         setRemapStats(result.stats);
         setRemapToast(
           `${result.stats?.newlyMapped ?? 0} newly mapped · ` +
+          `${result.stats?.canonicalsCreated ?? 0} canonicals created · ` +
           `${result.stats?.stillUnmapped ?? 0} still unmapped · ` +
           `${result.stats?.canonicalsDeleted ?? 0} canonicals deleted`,
         );
@@ -1197,6 +1418,12 @@ export default function AdminPage() {
             onDeleteBrand={handleDeleteBrand}
             onUndoDelete={handleUndoDelete}
             onSaveAndRemap={handleSaveAndRemap}
+            mappedSubTab={mappedSubTab}
+            mappedProducts={mappedProducts}
+            mappedLoading={mappedLoading}
+            mappedError={mappedError}
+            onMappedTabOpen={handleMappedTabOpen}
+            onRetryMapped={handleRetryMapped}
           />
         )}
 

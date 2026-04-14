@@ -86,6 +86,63 @@ router.get("/canonical-stats", async (req, res) => {
   }
 });
 
+// ── Mapped products ───────────────────────────────────────────────────────────
+
+router.get("/mapped-products", async (req, res) => {
+  try {
+    const rows = await safeAll(
+      `SELECT
+         cp.id AS canonical_id,
+         cp.canonical_name,
+         d.is_active,
+         s.id AS store_id,
+         s.name AS store_name,
+         d.product_name,
+         d.product_url
+       FROM canonical_products cp
+       JOIN deal_mappings dm ON dm.canonical_id = cp.id
+       JOIN deals d ON d.id = dm.deal_id
+       JOIN stores s ON s.id = d.store_id
+       ORDER BY cp.canonical_name, s.name`,
+      [],
+    );
+
+    const grouped = new Map();
+    for (const row of rows) {
+      if (!grouped.has(row.canonical_id)) {
+        grouped.set(row.canonical_id, {
+          canonical_id: row.canonical_id,
+          canonical_name: row.canonical_name,
+          has_active_deal: false,
+          storeIds: new Set(),
+          deals: [],
+        });
+      }
+      const entry = grouped.get(row.canonical_id);
+      if (row.is_active) entry.has_active_deal = true;
+      entry.storeIds.add(row.store_id);
+      entry.deals.push({
+        store_name: row.store_name,
+        product_name: row.product_name,
+        product_url: row.product_url,
+        is_active: row.is_active,
+      });
+    }
+
+    const result = Array.from(grouped.values()).map((entry) => ({
+      canonical_id: entry.canonical_id,
+      canonical_name: entry.canonical_name,
+      has_active_deal: entry.has_active_deal,
+      store_count: entry.storeIds.size,
+      deals: entry.deals,
+    }));
+
+    res.json(result);
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
 // ── Brand remap ───────────────────────────────────────────────────────────────
 
 router.post("/brands/remap", async (req, res) => {
@@ -208,7 +265,7 @@ router.post("/brands/remap", async (req, res) => {
       // Phase 4: create new canonical products for deals still without a mapping
       const canonStats = await canonicalizeDeals(db, { unmappedOnly: true });
 
-      const stillUnmapped = unmappedDeals.length - newlyMapped - canonStats.created;
+      const stillUnmapped = unmappedDeals.length - newlyMapped - canonStats.mapped;
       const stats = { canonicalsRedecomposed, canonicalsDeleted, stalePurged, newlyMapped, canonicalsCreated: canonStats.created, stillUnmapped, duration_ms: Date.now() - startedAt };
       await db.execute(
         `UPDATE brand_remap_jobs SET status = 'completed', finished_at = CURRENT_TIMESTAMP, stats = ? WHERE id = ?`,
