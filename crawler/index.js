@@ -457,7 +457,7 @@ async function reconcileStoreDeals(db, storeId, scrapedDeals) {
 
   await markDealsInactive(db, deactivateIds);
   await insertDeals(db, inserts);
-  return stats;
+  return { stats, insertedDeals: inserts };
 }
 
 async function previousCompletedCrawl(db, excludeRunId) {
@@ -624,7 +624,7 @@ async function runCrawl(db, options = {}) {
           runId,
           crawlTimestamp,
         );
-        const stats = await reconcileStoreDeals(db, adapter.storeId, deals);
+        const { stats, insertedDeals } = await reconcileStoreDeals(db, adapter.storeId, deals);
         const historyCount = await recordStoreHistory(db, {
           crawlDate,
           crawlRunId: runId,
@@ -636,7 +636,7 @@ async function runCrawl(db, options = {}) {
 
         // Auto-map scraped deals to priority canonical products for future Pass 1
         if (priorityCanonicals.length > 0) {
-          const mapped = await autoMapDeals(db, deals, priorityCanonicals);
+          const mapped = await autoMapDeals(db, insertedDeals, priorityCanonicals);
           if (mapped > 0) {
             logInfo("store", `Auto-mapped ${mapped} deals to priority canonicals`, {
               store_id: adapter.storeId,
