@@ -5,6 +5,7 @@ const db = require("../db");
 const requireAdminAuth = require("../middleware/user-admin-auth");
 const { decomposeCanonical, buildBrandAliasMap } = require("../../crawler/utils/canonical-decomposer");
 const { loadPriorityCanonicals, autoMapDeals, matchesCanonical, norm } = require("../../crawler/utils/auto-mapper");
+const { canonicalizeDeals } = require("../services/canonicalizer");
 
 const router = Router();
 router.use(requireAdminAuth);
@@ -203,9 +204,12 @@ router.post("/brands/remap", async (req, res) => {
       ).all();
 
       const newlyMapped = await autoMapDeals(db, unmappedDeals, priorityCanonicals);
-      const stillUnmapped = unmappedDeals.length - newlyMapped;
 
-      const stats = { canonicalsRedecomposed, canonicalsDeleted, stalePurged, newlyMapped, stillUnmapped, duration_ms: Date.now() - startedAt };
+      // Phase 4: create new canonical products for deals still without a mapping
+      const canonStats = await canonicalizeDeals(db, { unmappedOnly: true });
+
+      const stillUnmapped = unmappedDeals.length - newlyMapped - canonStats.created;
+      const stats = { canonicalsRedecomposed, canonicalsDeleted, stalePurged, newlyMapped, canonicalsCreated: canonStats.created, stillUnmapped, duration_ms: Date.now() - startedAt };
       await db.execute(
         `UPDATE brand_remap_jobs SET status = 'completed', finished_at = CURRENT_TIMESTAMP, stats = ? WHERE id = ?`,
         [JSON.stringify(stats), jobId],

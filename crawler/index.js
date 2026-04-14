@@ -7,6 +7,7 @@ const { v4: uuidv4 } = require("uuid");
 const { parseBestBefore } = require("./utils/best-before-parser");
 const { acquireCrawlLock, releaseCrawlLock } = require("./utils/snapshot");
 const { loadPriorityCanonicals, autoMapDeals } = require("./utils/auto-mapper");
+const { canonicalizeDeals } = require("../server/services/canonicalizer");
 const { runPass1 } = require("./utils/pass1-fetcher");
 const { recordStoreHistory, purgeOldHistory } = require("../server/services/price-history-recorder");
 const {
@@ -744,6 +745,17 @@ async function runCrawl(db, options = {}) {
       await purgeOldHistory(db);
     } catch (purgeError) {
       logWarn("run", `History purge failed: ${purgeError.message}`);
+    }
+
+    // Canonicalize: create new canonical products for any active deals that
+    // slot-based auto-mapping couldn't match (unmappedOnly avoids redundant AI calls).
+    try {
+      const canonStats = await canonicalizeDeals(db, { runId, unmappedOnly: true });
+      if (canonStats.scanned > 0) {
+        logInfo("run", `Canonicalization: scanned=${canonStats.scanned} created=${canonStats.created} mapped=${canonStats.mapped} manual=${canonStats.manual_review}`);
+      }
+    } catch (canonError) {
+      logWarn("run", `Canonicalization failed: ${canonError.message}`);
     }
 
     const finishedAt = new Date().toISOString();
