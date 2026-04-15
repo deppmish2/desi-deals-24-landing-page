@@ -1065,7 +1065,7 @@ function ReviewQueueTab() {
                         <button
                           onClick={() => {
                             setCreateForm(null);
-                            const slots = (s) => { try { return JSON.parse(s || "[]").join(" "); } catch { return ""; } };
+                            const slots = (s) => { try { return JSON.parse(s || "[]").map((g) => Array.isArray(g) ? g[0] : g).filter(Boolean).join(" "); } catch { return ""; } };
                             setEditFields({
                               brand: slots(item.brand_slots),
                               baseProduct: slots(item.base_product_slots),

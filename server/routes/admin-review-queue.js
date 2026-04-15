@@ -170,11 +170,12 @@ router.post("/review-queue/canonical", async (req, res) => {
 
     // Override slots with explicit admin input if provided
     if (brand !== undefined || base_product !== undefined || product_type !== undefined) {
-      const tok = (s) => normalise(String(s || "")).split(/\s+/).filter(Boolean);
+      const tok = (s) => normalise(String(s || "")).split(/\s+/).filter(Boolean).map((w) => [w]);
+      const first = (slots) => slots.map((g) => (Array.isArray(g) ? g[0] : g)).filter(Boolean);
       if (brand !== undefined) brandSlots = tok(brand);
       if (base_product !== undefined) baseProductSlots = tok(base_product);
       if (product_type !== undefined) typeSlots = tok(product_type);
-      productGroupId = [...brandSlots, ...baseProductSlots, ...typeSlots].sort().join("-") || productGroupId;
+      productGroupId = [...first(brandSlots || []), ...first(baseProductSlots), ...first(typeSlots)].join("-") || productGroupId;
     }
 
     await db
@@ -282,11 +283,12 @@ router.patch("/review-queue/canonical/:id", async (req, res) => {
       .get(id);
     if (!existing) return res.status(404).json({ error: "Canonical not found" });
 
-    const tok = (s) => normalise(String(s || "")).split(/\s+/).filter(Boolean);
+    const tok = (s) => normalise(String(s || "")).split(/\s+/).filter(Boolean).map((w) => [w]);
+    const first = (slots) => slots.map((g) => (Array.isArray(g) ? g[0] : g)).filter(Boolean);
     const brandSlots = brand !== undefined ? tok(brand) : JSON.parse(existing.brand_slots || "[]");
     const baseProductSlots = base_product !== undefined ? tok(base_product) : JSON.parse(existing.base_product_slots || "[]");
     const typeSlots = product_type !== undefined ? tok(product_type) : JSON.parse(existing.type_slots || "[]");
-    const productGroupId = [...brandSlots, ...baseProductSlots, ...typeSlots].sort().join("-") || existing.product_group_id;
+    const productGroupId = [...first(brandSlots), ...first(baseProductSlots), ...first(typeSlots)].join("-") || existing.product_group_id;
     const resolvedCategory = category || existing.category;
 
     await db
