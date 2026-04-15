@@ -282,6 +282,7 @@ function MappedProductsTable({ products, loading, error, onRetry }) {
           <thead>
             <tr className="text-left text-[10px] font-bold uppercase tracking-[1px] text-slate-400 border-b border-slate-100">
               <th className="pb-2 pr-4">Canonical name</th>
+              <th className="pb-2 pr-4">ID</th>
               <th className="pb-2 pr-4">Status</th>
               <th className="pb-2 pr-4">Stores</th>
               <th className="pb-2 w-6" />
@@ -298,6 +299,9 @@ function MappedProductsTable({ products, loading, error, onRetry }) {
                   >
                     <td className="py-2.5 pr-4 font-semibold text-slate-700 max-w-[280px]">
                       {item.canonical_name}
+                    </td>
+                    <td className="py-2.5 pr-4 font-mono text-[11px] text-slate-400 max-w-[160px] truncate" title={item.canonical_id}>
+                      {item.canonical_id}
                     </td>
                     <td className="py-2.5 pr-4">
                       {item.has_active_deal ? (
@@ -1021,6 +1025,7 @@ function ReviewQueueTab() {
                 <th className="text-left p-2 border-b">Category</th>
                 <th className="text-right p-2 border-b">Confidence</th>
                 <th className="text-left p-2 border-b">Suggested</th>
+                <th className="text-left p-2 border-b">ID</th>
                 <th className="text-left p-2 border-b">Actions</th>
               </tr>
             </thead>
@@ -1036,6 +1041,9 @@ function ReviewQueueTab() {
                   </td>
                   <td className="p-2 text-slate-600 max-w-[160px] truncate" title={item.suggested_canonical_name_normalised || item.suggested_canonical_name}>
                     {item.suggested_canonical_name_normalised || item.suggested_canonical_name || "—"}
+                  </td>
+                  <td className="p-2 font-mono text-[11px] text-slate-400 max-w-[120px] truncate" title={item.suggested_canonical_id}>
+                    {item.suggested_canonical_id || "—"}
                   </td>
                   <td className="p-2">
                     <div className="flex gap-1 flex-wrap">
