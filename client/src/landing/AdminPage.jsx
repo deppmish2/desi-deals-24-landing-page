@@ -878,7 +878,12 @@ function ReviewQueueTab() {
       {createForm && (
         <form onSubmit={handleCreateCanonical} className="mb-4 p-4 bg-green-50 border border-green-200 rounded-xl space-y-3">
           <div className="flex items-center justify-between">
-            <span className="text-sm font-semibold text-slate-700">New canonical for: <span className="text-green-700">{createForm.rawName}</span></span>
+            <div className="space-y-0.5">
+              <div className="text-sm font-semibold text-slate-700">New canonical for: <span className="text-green-700">{createForm.rawName}</span></div>
+              {createForm.suggestedName && (
+                <div className="text-xs text-slate-500">Closest match (rejected): <span className="font-medium text-slate-600">{createForm.suggestedName}</span></div>
+              )}
+            </div>
             <button type="button" onClick={() => setCreateForm(null)} className="text-slate-400 hover:text-slate-600 text-xs">Cancel</button>
           </div>
           <div className="grid grid-cols-2 gap-2">
@@ -944,7 +949,12 @@ function ReviewQueueTab() {
       {editForm && (
         <form onSubmit={handleEditCanonical} className="mb-4 p-4 bg-amber-50 border border-amber-200 rounded-xl space-y-3">
           <div className="flex items-center justify-between">
-            <span className="text-sm font-semibold text-slate-700">Edit canonical for: <span className="text-amber-700">{editForm.rawName}</span></span>
+            <div className="space-y-0.5">
+              <div className="text-sm font-semibold text-slate-700">Edit canonical for: <span className="text-amber-700">{editForm.rawName}</span></div>
+              {editForm.canonicalName && (
+                <div className="text-xs text-slate-500">Current canonical: <span className="font-medium text-slate-600">{editForm.canonicalName}</span></div>
+              )}
+            </div>
             <button type="button" onClick={() => setEditForm(null)} className="text-slate-400 hover:text-slate-600 text-xs">Cancel</button>
           </div>
           <div className="grid grid-cols-2 gap-2">
@@ -1045,7 +1055,7 @@ function ReviewQueueTab() {
                           Dismiss
                         </button>
                         <button
-                          onClick={() => { setEditForm(null); setCreateForm({ queueItemId: item.id, rawName: item.raw_name, category: item.category }); setCreateFields({ name: item.raw_name || "", brand: "", baseProduct: "", productType: "", category: item.category || "Other" }); }}
+                          onClick={() => { setEditForm(null); setCreateForm({ queueItemId: item.id, rawName: item.raw_name, category: item.category, suggestedName: item.suggested_canonical_name }); setCreateFields({ name: item.raw_name || "", brand: "", baseProduct: "", productType: "", category: item.category || "Other" }); }}
                           className="text-xs bg-green-100 text-green-700 px-2 py-0.5 rounded hover:bg-green-200"
                         >
                           Create
@@ -1062,7 +1072,7 @@ function ReviewQueueTab() {
                               productType: slots(item.type_slots),
                               category: item.canonical_category || item.category || "Other",
                             });
-                            setEditForm({ canonicalId: item.suggested_canonical_id, rawName: item.raw_name });
+                            setEditForm({ canonicalId: item.suggested_canonical_id, rawName: item.raw_name, canonicalName: item.suggested_canonical_name });
                           }}
                           className="text-xs bg-amber-100 text-amber-700 px-2 py-0.5 rounded hover:bg-amber-200"
                         >
