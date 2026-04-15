@@ -133,30 +133,6 @@ router.patch("/review-queue/:id", async (req, res) => {
   }
 });
 
-// POST /review-queue/:id/dismiss
-router.post("/review-queue/:id/dismiss", async (req, res) => {
-  try {
-    const { id } = req.params;
-
-    const item = await db
-      .prepare("SELECT * FROM entity_resolution_queue WHERE id = ? LIMIT 1")
-      .get(id);
-
-    if (!item) {
-      return res.status(404).json({ error: "Queue item not found" });
-    }
-
-    await db
-      .prepare("UPDATE entity_resolution_queue SET status = 'dismissed' WHERE id = ?")
-      .run(id);
-
-    res.json({ ok: true });
-  } catch (err) {
-    console.error("[review-queue] POST dismiss error:", err);
-    res.status(500).json({ error: err.message });
-  }
-});
-
 // POST /review-queue/canonical — create new canonical + re-scan pending in same category
 router.post("/review-queue/canonical", async (req, res) => {
   try {
@@ -273,6 +249,30 @@ router.post("/review-queue/canonical", async (req, res) => {
     res.json({ ok: true, canonical_id: newId, auto_confirmed: autoConfirmed });
   } catch (err) {
     console.error("[review-queue] POST canonical error:", err);
+    res.status(500).json({ error: err.message });
+  }
+});
+
+// POST /review-queue/:id/dismiss
+router.post("/review-queue/:id/dismiss", async (req, res) => {
+  try {
+    const { id } = req.params;
+
+    const item = await db
+      .prepare("SELECT * FROM entity_resolution_queue WHERE id = ? LIMIT 1")
+      .get(id);
+
+    if (!item) {
+      return res.status(404).json({ error: "Queue item not found" });
+    }
+
+    await db
+      .prepare("UPDATE entity_resolution_queue SET status = 'dismissed' WHERE id = ?")
+      .run(id);
+
+    res.json({ ok: true });
+  } catch (err) {
+    console.error("[review-queue] POST dismiss error:", err);
     res.status(500).json({ error: err.message });
   }
 });
