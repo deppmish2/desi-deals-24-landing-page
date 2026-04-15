@@ -63,6 +63,8 @@ router.get("/review-queue", async (req, res) => {
                 eq.status, eq.store_id, eq.category, eq.created_at,
                 eq.suggested_canonical_id,
                 cp.canonical_name as suggested_canonical_name,
+                cp.brand_slots, cp.base_product_slots, cp.type_slots,
+                cp.category as canonical_category,
                 s.name as store_name
          FROM entity_resolution_queue eq
          LEFT JOIN canonical_products cp ON cp.id = eq.suggested_canonical_id
@@ -265,6 +267,44 @@ router.post("/review-queue/canonical", async (req, res) => {
     res.json({ ok: true, canonical_id: newId, auto_confirmed: autoConfirmed });
   } catch (err) {
     console.error("[review-queue] POST canonical error:", err);
+    res.status(500).json({ error: err.message });
+  }
+});
+
+// PATCH /review-queue/canonical/:id — update brand/base_product/type/category on existing canonical
+router.patch("/review-queue/canonical/:id", async (req, res) => {
+  try {
+    const { id } = req.params;
+    const { brand, base_product, product_type, category } = req.body || {};
+
+    const existing = await db
+      .prepare("SELECT * FROM canonical_products WHERE id = ? LIMIT 1")
+      .get(id);
+    if (!existing) return res.status(404).json({ error: "Canonical not found" });
+
+    const tok = (s) => normalise(String(s || "")).split(/\s+/).filter(Boolean);
+    const brandSlots = brand !== undefined ? tok(brand) : JSON.parse(existing.brand_slots || "[]");
+    const baseProductSlots = base_product !== undefined ? tok(base_product) : JSON.parse(existing.base_product_slots || "[]");
+    const typeSlots = product_type !== undefined ? tok(product_type) : JSON.parse(existing.type_slots || "[]");
+    const productGroupId = [...brandSlots, ...baseProductSlots, ...typeSlots].sort().join("-") || existing.product_group_id;
+    const resolvedCategory = category || existing.category;
+
+    await db
+      .prepare(
+        `UPDATE canonical_products SET brand_slots=?, base_product_slots=?, type_slots=?, product_group_id=?, category=? WHERE id=?`,
+      )
+      .run(
+        JSON.stringify(brandSlots),
+        JSON.stringify(baseProductSlots),
+        JSON.stringify(typeSlots),
+        productGroupId,
+        resolvedCategory,
+        id,
+      );
+
+    res.json({ ok: true });
+  } catch (err) {
+    console.error("[review-queue] PATCH canonical error:", err);
     res.status(500).json({ error: err.message });
   }
 });

@@ -28,6 +28,7 @@ import {
   confirmQueueItem,
   dismissQueueItem,
   createCanonicalFromQueue,
+  updateCanonical,
 } from "../utils/api";
 
 function BarChart({ data }) {
@@ -772,6 +773,8 @@ function ReviewQueueTab() {
   const [actionError, setActionError] = useState(null);
   const [createForm, setCreateForm] = useState(null);
   const [createFields, setCreateFields] = useState({ name: "", brand: "", baseProduct: "", productType: "", category: "" });
+  const [editForm, setEditForm] = useState(null); // { canonicalId, rawName }
+  const [editFields, setEditFields] = useState({ brand: "", baseProduct: "", productType: "", category: "" });
 
   const CATEGORIES = ["Rice & Grains","Flours & Baking","Lentils & Pulses","Spices & Masalas","Oils & Ghee","Sauces & Pastes","Snacks & Sweets","Beverages","Dairy & Paneer","Frozen Foods","Fresh Produce","Noodles & Pasta","Canned & Packaged","Personal Care","Household","Other"];
   const PAGE_SIZE = 50;
@@ -827,6 +830,24 @@ function ReviewQueueTab() {
       });
       setCreateForm(null);
       setCreateFields({ name: "", brand: "", baseProduct: "", productType: "", category: "" });
+      load();
+    } catch (e) {
+      setActionError(e.message);
+    }
+  }
+
+  async function handleEditCanonical(e) {
+    e.preventDefault();
+    if (!editForm) return;
+    setActionError(null);
+    try {
+      await updateCanonical(editForm.canonicalId, {
+        brand: editFields.brand.trim(),
+        base_product: editFields.baseProduct.trim(),
+        product_type: editFields.productType.trim(),
+        category: editFields.category,
+      });
+      setEditForm(null);
       load();
     } catch (e) {
       setActionError(e.message);
@@ -920,6 +941,61 @@ function ReviewQueueTab() {
         </form>
       )}
 
+      {editForm && (
+        <form onSubmit={handleEditCanonical} className="mb-4 p-4 bg-amber-50 border border-amber-200 rounded-xl space-y-3">
+          <div className="flex items-center justify-between">
+            <span className="text-sm font-semibold text-slate-700">Edit canonical for: <span className="text-amber-700">{editForm.rawName}</span></span>
+            <button type="button" onClick={() => setEditForm(null)} className="text-slate-400 hover:text-slate-600 text-xs">Cancel</button>
+          </div>
+          <div className="grid grid-cols-2 gap-2">
+            <div>
+              <label className="block text-xs text-slate-500 mb-0.5">Brand</label>
+              <input
+                type="text"
+                value={editFields.brand}
+                onChange={(e) => setEditFields((f) => ({ ...f, brand: e.target.value }))}
+                placeholder="e.g. Heera"
+                className="w-full border border-slate-300 rounded px-2 py-1.5 text-sm"
+                autoFocus
+              />
+            </div>
+            <div>
+              <label className="block text-xs text-slate-500 mb-0.5">Base Product</label>
+              <input
+                type="text"
+                value={editFields.baseProduct}
+                onChange={(e) => setEditFields((f) => ({ ...f, baseProduct: e.target.value }))}
+                placeholder="e.g. Soan Papdi"
+                className="w-full border border-slate-300 rounded px-2 py-1.5 text-sm"
+              />
+            </div>
+            <div>
+              <label className="block text-xs text-slate-500 mb-0.5">Type / Variant</label>
+              <input
+                type="text"
+                value={editFields.productType}
+                onChange={(e) => setEditFields((f) => ({ ...f, productType: e.target.value }))}
+                placeholder="e.g. Classic, Mango"
+                className="w-full border border-slate-300 rounded px-2 py-1.5 text-sm"
+              />
+            </div>
+            <div>
+              <label className="block text-xs text-slate-500 mb-0.5">Category</label>
+              <select
+                value={editFields.category}
+                onChange={(e) => setEditFields((f) => ({ ...f, category: e.target.value }))}
+                className="w-full border border-slate-300 rounded px-2 py-1.5 text-sm bg-white"
+              >
+                {CATEGORIES.map((c) => <option key={c} value={c}>{c}</option>)}
+              </select>
+            </div>
+          </div>
+          <button type="submit" className="bg-amber-600 text-white px-4 py-1.5 rounded text-sm font-medium hover:bg-amber-700">
+            Save Changes
+          </button>
+        </form>
+      )}
+
       {loading ? (
         <div className="text-slate-400 text-sm">Loading…</div>
       ) : items.length === 0 ? (
@@ -952,8 +1028,8 @@ function ReviewQueueTab() {
                     {item.suggested_canonical_name || "—"}
                   </td>
                   <td className="p-2">
-                    {status === "pending" && (
-                      <div className="flex gap-1">
+                    <div className="flex gap-1 flex-wrap">
+                      {status === "pending" && (<>
                         {item.suggested_canonical_id && (
                           <button
                             onClick={() => handleConfirm(item.id, item.suggested_canonical_id)}
@@ -963,19 +1039,37 @@ function ReviewQueueTab() {
                           </button>
                         )}
                         <button
-                          onClick={() => { setCreateForm({ queueItemId: item.id, rawName: item.raw_name, category: item.category }); setCreateFields({ name: item.raw_name || "", brand: "", baseProduct: "", productType: "", category: item.category || "Other" }); }}
-                          className="text-xs bg-green-100 text-green-700 px-2 py-0.5 rounded hover:bg-green-200"
-                        >
-                          Create
-                        </button>
-                        <button
                           onClick={() => handleDismiss(item.id)}
                           className="text-xs bg-slate-100 text-slate-600 px-2 py-0.5 rounded hover:bg-slate-200"
                         >
                           Dismiss
                         </button>
-                      </div>
-                    )}
+                        <button
+                          onClick={() => { setEditForm(null); setCreateForm({ queueItemId: item.id, rawName: item.raw_name, category: item.category }); setCreateFields({ name: item.raw_name || "", brand: "", baseProduct: "", productType: "", category: item.category || "Other" }); }}
+                          className="text-xs bg-green-100 text-green-700 px-2 py-0.5 rounded hover:bg-green-200"
+                        >
+                          Create
+                        </button>
+                      </>)}
+                      {(status === "confirmed" || status === "dismissed") && item.suggested_canonical_id && (
+                        <button
+                          onClick={() => {
+                            setCreateForm(null);
+                            const slots = (s) => { try { return JSON.parse(s || "[]").join(" "); } catch { return ""; } };
+                            setEditFields({
+                              brand: slots(item.brand_slots),
+                              baseProduct: slots(item.base_product_slots),
+                              productType: slots(item.type_slots),
+                              category: item.canonical_category || item.category || "Other",
+                            });
+                            setEditForm({ canonicalId: item.suggested_canonical_id, rawName: item.raw_name });
+                          }}
+                          className="text-xs bg-amber-100 text-amber-700 px-2 py-0.5 rounded hover:bg-amber-200"
+                        >
+                          Edit
+                        </button>
+                      )}
+                    </div>
                   </td>
                 </tr>
               ))}
