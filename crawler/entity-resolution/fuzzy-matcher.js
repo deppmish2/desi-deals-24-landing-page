@@ -91,15 +91,8 @@ function fuzzyMatch(normalisedName, candidates) {
   }
 
   if (!best) return null;
-  if (best.score >= 0.78) {
+  if (best.score >= 0.90) {
     return { match: best.candidate, confidence: best.score, method: "fuzzy" };
-  }
-  if (best.score >= 0.58) {
-    return {
-      match: best.candidate,
-      confidence: best.score,
-      method: "ambiguous",
-    };
   }
   return null;
 }
