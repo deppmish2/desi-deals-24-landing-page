@@ -277,7 +277,7 @@ router.post("/review-queue/canonical", async (req, res) => {
 router.patch("/review-queue/canonical/:id", async (req, res) => {
   try {
     const { id } = req.params;
-    const { brand, base_product, product_type, category } = req.body || {};
+    const { brand, base_product, product_type, category, canonical_name } = req.body || {};
 
     const existing = await db
       .prepare("SELECT * FROM canonical_products WHERE id = ? LIMIT 1")
@@ -291,21 +291,34 @@ router.patch("/review-queue/canonical/:id", async (req, res) => {
     const typeSlots = product_type !== undefined ? tok(product_type) : JSON.parse(existing.type_slots || "[]");
     const productGroupId = [...first(brandSlots), ...first(baseProductSlots), ...first(typeSlots)].join("-") || existing.product_group_id;
     const resolvedCategory = category || existing.category;
+    const resolvedName = canonical_name ? canonical_name.trim() : existing.canonical_name;
 
-    await db
-      .prepare(
-        `UPDATE canonical_products SET brand_slots=?, base_product_slots=?, type_slots=?, product_group_id=?, category=? WHERE id=?`,
-      )
-      .run(
-        JSON.stringify(brandSlots),
-        JSON.stringify(baseProductSlots),
-        JSON.stringify(typeSlots),
-        productGroupId,
-        resolvedCategory,
-        id,
-      );
+    // Rename id if canonical_name changed
+    const newId = canonical_name ? await ensureUniqueCanonicalId(db, slugify(resolvedName)) : id;
+    const idChanged = newId !== id;
 
-    res.json({ ok: true });
+    if (idChanged) {
+      // Insert new record
+      await db.prepare(
+        `INSERT INTO canonical_products (id, canonical_name, category, common_aliases, base_unit, image_url, verified,
+          is_priority, is_match_priority, brand_slots, base_product_slots, type_slots, product_group_id, weight_value, weight_unit, created_at)
+         SELECT ?, ?, ?, common_aliases, base_unit, image_url, verified,
+          is_priority, is_match_priority, ?, ?, ?, ?, weight_value, weight_unit, created_at
+         FROM canonical_products WHERE id = ?`,
+      ).run(newId, resolvedName, resolvedCategory,
+        JSON.stringify(brandSlots), JSON.stringify(baseProductSlots), JSON.stringify(typeSlots), productGroupId, id);
+      // Cascade references
+      await db.prepare(`UPDATE deal_mappings SET canonical_id = ? WHERE canonical_id = ?`).run(newId, id);
+      await db.prepare(`UPDATE entity_resolution_queue SET suggested_canonical_id = ? WHERE suggested_canonical_id = ?`).run(newId, id);
+      await db.prepare(`UPDATE deals SET canonical_id = ? WHERE canonical_id = ?`).run(newId, id);
+      await db.prepare(`DELETE FROM canonical_products WHERE id = ?`).run(id);
+    } else {
+      await db.prepare(
+        `UPDATE canonical_products SET canonical_name=?, brand_slots=?, base_product_slots=?, type_slots=?, product_group_id=?, category=? WHERE id=?`,
+      ).run(resolvedName, JSON.stringify(brandSlots), JSON.stringify(baseProductSlots), JSON.stringify(typeSlots), productGroupId, resolvedCategory, id);
+    }
+
+    res.json({ ok: true, new_id: newId });
   } catch (err) {
     console.error("[review-queue] PATCH canonical error:", err);
     res.status(500).json({ error: err.message });

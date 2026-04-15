@@ -365,11 +365,11 @@ export function dismissQueueItem(id) {
   });
 }
 
-export function updateCanonical(canonicalId, { brand, base_product, product_type, category }) {
+export function updateCanonical(canonicalId, { canonical_name, brand, base_product, product_type, category }) {
   return authRequest(`/admin-dashboard/review-queue/canonical/${canonicalId}`, {
     method: "PATCH",
     headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({ brand, base_product, product_type, category }),
+    body: JSON.stringify({ canonical_name, brand, base_product, product_type, category }),
   });
 }
 

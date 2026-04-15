@@ -777,8 +777,8 @@ function ReviewQueueTab() {
   const [actionError, setActionError] = useState(null);
   const [createForm, setCreateForm] = useState(null);
   const [createFields, setCreateFields] = useState({ name: "", brand: "", baseProduct: "", productType: "", category: "" });
-  const [editForm, setEditForm] = useState(null); // { canonicalId, rawName }
-  const [editFields, setEditFields] = useState({ brand: "", baseProduct: "", productType: "", category: "" });
+  const [editForm, setEditForm] = useState(null); // { canonicalId, rawName, canonicalName }
+  const [editFields, setEditFields] = useState({ canonicalName: "", brand: "", baseProduct: "", productType: "", category: "" });
 
   const CATEGORIES = ["Rice & Grains","Flours & Baking","Lentils & Pulses","Spices & Masalas","Oils & Ghee","Sauces & Pastes","Snacks & Sweets","Beverages","Dairy & Paneer","Frozen Foods","Fresh Produce","Noodles & Pasta","Canned & Packaged","Personal Care","Household","Other"];
   const PAGE_SIZE = 50;
@@ -846,6 +846,7 @@ function ReviewQueueTab() {
     setActionError(null);
     try {
       await updateCanonical(editForm.canonicalId, {
+        canonical_name: editFields.canonicalName.trim(),
         brand: editFields.brand.trim(),
         base_product: editFields.baseProduct.trim(),
         product_type: editFields.productType.trim(),
@@ -962,6 +963,18 @@ function ReviewQueueTab() {
             <button type="button" onClick={() => setEditForm(null)} className="text-slate-400 hover:text-slate-600 text-xs">Cancel</button>
           </div>
           <div className="grid grid-cols-2 gap-2">
+            <div className="col-span-2">
+              <label className="block text-xs text-slate-500 mb-0.5">Canonical Name *</label>
+              <input
+                type="text"
+                value={editFields.canonicalName}
+                onChange={(e) => setEditFields((f) => ({ ...f, canonicalName: e.target.value }))}
+                placeholder="e.g. Heera Soan Papdi 500g"
+                className="w-full border border-slate-300 rounded px-2 py-1.5 text-sm"
+                autoFocus
+                required
+              />
+            </div>
             <div>
               <label className="block text-xs text-slate-500 mb-0.5">Brand</label>
               <input
@@ -970,7 +983,6 @@ function ReviewQueueTab() {
                 onChange={(e) => setEditFields((f) => ({ ...f, brand: e.target.value }))}
                 placeholder="e.g. Heera"
                 className="w-full border border-slate-300 rounded px-2 py-1.5 text-sm"
-                autoFocus
               />
             </div>
             <div>
@@ -1075,6 +1087,7 @@ function ReviewQueueTab() {
                             setCreateForm(null);
                             const slots = (s) => { try { return JSON.parse(s || "[]").map((g) => Array.isArray(g) ? g[0] : g).filter(Boolean).join(" "); } catch { return ""; } };
                             setEditFields({
+                              canonicalName: item.suggested_canonical_name || "",
                               brand: slots(item.brand_slots),
                               baseProduct: slots(item.base_product_slots),
                               productType: slots(item.type_slots),
