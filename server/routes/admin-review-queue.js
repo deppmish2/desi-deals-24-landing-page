@@ -143,7 +143,7 @@ router.patch("/review-queue/:id", async (req, res) => {
 // POST /review-queue/canonical — create new canonical + re-scan pending in same category
 router.post("/review-queue/canonical", async (req, res) => {
   try {
-    const { queue_item_id, canonical_name, category, image_url } = req.body || {};
+    const { queue_item_id, canonical_name, category, image_url, brand, base_product, product_type } = req.body || {};
 
     if (!canonical_name || !queue_item_id) {
       return res
@@ -163,8 +163,17 @@ router.post("/review-queue/canonical", async (req, res) => {
     const baseId = slugify(canonical_name);
     const newId = await ensureUniqueCanonicalId(db, baseId);
 
-    const { brandSlots, baseProductSlots, typeSlots, productGroupId, weightValue, weightUnit } =
+    let { brandSlots, baseProductSlots, typeSlots, productGroupId, weightValue, weightUnit } =
       decomposeCanonical(canonical_name, [], []);
+
+    // Override slots with explicit admin input if provided
+    if (brand !== undefined || base_product !== undefined || product_type !== undefined) {
+      const tok = (s) => normalise(String(s || "")).split(/\s+/).filter(Boolean);
+      if (brand !== undefined) brandSlots = tok(brand);
+      if (base_product !== undefined) baseProductSlots = tok(base_product);
+      if (product_type !== undefined) typeSlots = tok(product_type);
+      productGroupId = [...brandSlots, ...baseProductSlots, ...typeSlots].sort().join("-") || productGroupId;
+    }
 
     await db
       .prepare(

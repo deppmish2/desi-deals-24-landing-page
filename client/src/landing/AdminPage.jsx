@@ -771,7 +771,9 @@ function ReviewQueueTab() {
   const [error, setError] = useState(null);
   const [actionError, setActionError] = useState(null);
   const [createForm, setCreateForm] = useState(null);
-  const [newCanonicalName, setNewCanonicalName] = useState("");
+  const [createFields, setCreateFields] = useState({ name: "", brand: "", baseProduct: "", productType: "", category: "" });
+
+  const CATEGORIES = ["Rice & Grains","Flours & Baking","Lentils & Pulses","Spices & Masalas","Oils & Ghee","Sauces & Pastes","Snacks & Sweets","Beverages","Dairy & Paneer","Frozen Foods","Fresh Produce","Noodles & Pasta","Canned & Packaged","Personal Care","Household","Other"];
   const PAGE_SIZE = 50;
 
   async function load() {
@@ -812,16 +814,19 @@ function ReviewQueueTab() {
 
   async function handleCreateCanonical(e) {
     e.preventDefault();
-    if (!newCanonicalName.trim() || !createForm) return;
+    if (!createFields.name.trim() || !createForm) return;
     setActionError(null);
     try {
       await createCanonicalFromQueue({
         queue_item_id: createForm.queueItemId,
-        canonical_name: newCanonicalName.trim(),
-        category: createForm.category,
+        canonical_name: createFields.name.trim(),
+        category: createFields.category || createForm.category,
+        brand: createFields.brand.trim(),
+        base_product: createFields.baseProduct.trim(),
+        product_type: createFields.productType.trim(),
       });
       setCreateForm(null);
-      setNewCanonicalName("");
+      setCreateFields({ name: "", brand: "", baseProduct: "", productType: "", category: "" });
       load();
     } catch (e) {
       setActionError(e.message);
@@ -850,18 +855,68 @@ function ReviewQueueTab() {
       {actionError && <div className="text-red-600 text-sm mb-2">{actionError}</div>}
 
       {createForm && (
-        <form onSubmit={handleCreateCanonical} className="mb-4 p-3 bg-green-50 border border-green-200 rounded flex gap-2 items-center">
-          <span className="text-sm text-slate-600">New canonical for: <strong>{createForm.rawName}</strong></span>
-          <input
-            type="text"
-            value={newCanonicalName}
-            onChange={(e) => setNewCanonicalName(e.target.value)}
-            placeholder="Canonical name"
-            className="border border-slate-300 rounded px-2 py-1 text-sm flex-1"
-            autoFocus
-          />
-          <button type="submit" className="bg-green-600 text-white px-3 py-1 rounded text-sm">Create</button>
-          <button type="button" onClick={() => setCreateForm(null)} className="text-slate-500 text-sm px-2">Cancel</button>
+        <form onSubmit={handleCreateCanonical} className="mb-4 p-4 bg-green-50 border border-green-200 rounded-xl space-y-3">
+          <div className="flex items-center justify-between">
+            <span className="text-sm font-semibold text-slate-700">New canonical for: <span className="text-green-700">{createForm.rawName}</span></span>
+            <button type="button" onClick={() => setCreateForm(null)} className="text-slate-400 hover:text-slate-600 text-xs">Cancel</button>
+          </div>
+          <div className="grid grid-cols-2 gap-2">
+            <div className="col-span-2">
+              <label className="block text-xs text-slate-500 mb-0.5">Canonical Name *</label>
+              <input
+                type="text"
+                value={createFields.name}
+                onChange={(e) => setCreateFields((f) => ({ ...f, name: e.target.value }))}
+                placeholder="e.g. Heera Soan Papdi 500g"
+                className="w-full border border-slate-300 rounded px-2 py-1.5 text-sm"
+                autoFocus
+                required
+              />
+            </div>
+            <div>
+              <label className="block text-xs text-slate-500 mb-0.5">Brand</label>
+              <input
+                type="text"
+                value={createFields.brand}
+                onChange={(e) => setCreateFields((f) => ({ ...f, brand: e.target.value }))}
+                placeholder="e.g. Heera"
+                className="w-full border border-slate-300 rounded px-2 py-1.5 text-sm"
+              />
+            </div>
+            <div>
+              <label className="block text-xs text-slate-500 mb-0.5">Base Product</label>
+              <input
+                type="text"
+                value={createFields.baseProduct}
+                onChange={(e) => setCreateFields((f) => ({ ...f, baseProduct: e.target.value }))}
+                placeholder="e.g. Soan Papdi"
+                className="w-full border border-slate-300 rounded px-2 py-1.5 text-sm"
+              />
+            </div>
+            <div>
+              <label className="block text-xs text-slate-500 mb-0.5">Type / Variant</label>
+              <input
+                type="text"
+                value={createFields.productType}
+                onChange={(e) => setCreateFields((f) => ({ ...f, productType: e.target.value }))}
+                placeholder="e.g. Classic, Mango, Cardamom"
+                className="w-full border border-slate-300 rounded px-2 py-1.5 text-sm"
+              />
+            </div>
+            <div>
+              <label className="block text-xs text-slate-500 mb-0.5">Category</label>
+              <select
+                value={createFields.category || createForm.category || "Other"}
+                onChange={(e) => setCreateFields((f) => ({ ...f, category: e.target.value }))}
+                className="w-full border border-slate-300 rounded px-2 py-1.5 text-sm bg-white"
+              >
+                {CATEGORIES.map((c) => <option key={c} value={c}>{c}</option>)}
+              </select>
+            </div>
+          </div>
+          <button type="submit" className="bg-green-600 text-white px-4 py-1.5 rounded text-sm font-medium hover:bg-green-700">
+            Create Canonical
+          </button>
         </form>
       )}
 
@@ -908,7 +963,7 @@ function ReviewQueueTab() {
                           </button>
                         )}
                         <button
-                          onClick={() => { setCreateForm({ queueItemId: item.id, rawName: item.raw_name, category: item.category }); setNewCanonicalName(item.raw_name || ""); }}
+                          onClick={() => { setCreateForm({ queueItemId: item.id, rawName: item.raw_name, category: item.category }); setCreateFields({ name: item.raw_name || "", brand: "", baseProduct: "", productType: "", category: item.category || "Other" }); }}
                           className="text-xs bg-green-100 text-green-700 px-2 py-0.5 rounded hover:bg-green-200"
                         >
                           Create
