@@ -291,23 +291,35 @@ router.patch("/review-queue/canonical/:id", async (req, res) => {
     const typeSlots = product_type !== undefined ? tok(product_type) : JSON.parse(existing.type_slots || "[]");
     const productGroupId = [...first(brandSlots), ...first(baseProductSlots), ...first(typeSlots)].join("-") || existing.product_group_id;
     const resolvedCategory = category || existing.category;
-    const resolvedName = canonical_name ? canonical_name.trim() : existing.canonical_name;
-
-    // Rename id if canonical_name changed
-    const newId = canonical_name ? await ensureUniqueCanonicalId(db, slugify(resolvedName)) : id;
+    const resolvedName = (canonical_name || "").trim() || existing.canonical_name;
+    const newId = await ensureUniqueCanonicalId(db, slugify(resolvedName));
     const idChanged = newId !== id;
 
     if (idChanged) {
-      // Insert new record
+      // Explicit INSERT to avoid INSERT...SELECT param issues with libsql
       await db.prepare(
-        `INSERT INTO canonical_products (id, canonical_name, category, common_aliases, base_unit, image_url, verified,
-          is_priority, is_match_priority, brand_slots, base_product_slots, type_slots, product_group_id, weight_value, weight_unit, created_at)
-         SELECT ?, ?, ?, common_aliases, base_unit, image_url, verified,
-          is_priority, is_match_priority, ?, ?, ?, ?, weight_value, weight_unit, created_at
-         FROM canonical_products WHERE id = ?`,
-      ).run(newId, resolvedName, resolvedCategory,
-        JSON.stringify(brandSlots), JSON.stringify(baseProductSlots), JSON.stringify(typeSlots), productGroupId, id);
-      // Cascade references
+        `INSERT INTO canonical_products
+          (id, canonical_name, category, common_aliases, base_unit, image_url, verified,
+           is_priority, is_match_priority, brand_slots, base_product_slots, type_slots,
+           product_group_id, weight_value, weight_unit, created_at)
+         VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+      ).run(
+        newId, resolvedName, resolvedCategory,
+        existing.common_aliases ?? null,
+        existing.base_unit ?? null,
+        existing.image_url ?? null,
+        existing.verified ?? 0,
+        existing.is_priority ?? 0,
+        existing.is_match_priority ?? 1,
+        JSON.stringify(brandSlots),
+        JSON.stringify(baseProductSlots),
+        JSON.stringify(typeSlots),
+        productGroupId,
+        existing.weight_value ?? null,
+        existing.weight_unit ?? null,
+        existing.created_at ?? new Date().toISOString(),
+      );
+      // Cascade references before deleting old record
       await db.prepare(`UPDATE deal_mappings SET canonical_id = ? WHERE canonical_id = ?`).run(newId, id);
       await db.prepare(`UPDATE entity_resolution_queue SET suggested_canonical_id = ? WHERE suggested_canonical_id = ?`).run(newId, id);
       await db.prepare(`UPDATE deals SET canonical_id = ? WHERE canonical_id = ?`).run(newId, id);

@@ -888,6 +888,9 @@ function ReviewQueueTab() {
               {createForm.suggestedName && (
                 <div className="text-xs text-slate-500">Closest match (rejected): <span className="font-medium text-slate-600">{createForm.suggestedName}</span></div>
               )}
+              {createFields.name && (
+                <div className="text-xs text-slate-400">New ID: <span className="font-mono text-slate-500">{createFields.name.toLowerCase().replace(/[^a-z0-9\s-]/g, "").replace(/\s+/g, "-").replace(/-+/g, "-").replace(/^-|-$/g, "")}</span></div>
+              )}
             </div>
             <button type="button" onClick={() => setCreateForm(null)} className="text-slate-400 hover:text-slate-600 text-xs">Cancel</button>
           </div>
@@ -958,6 +961,9 @@ function ReviewQueueTab() {
               <div className="text-sm font-semibold text-slate-700">Edit canonical for: <span className="text-amber-700">{editForm.rawName}</span></div>
               {editForm.canonicalName && (
                 <div className="text-xs text-slate-500">Current canonical: <span className="font-medium text-slate-600">{editForm.canonicalName}</span></div>
+              )}
+              {editForm.currentId && (
+                <div className="text-xs text-slate-400">Current ID: <span className="font-mono text-slate-500">{editForm.currentId}</span></div>
               )}
             </div>
             <button type="button" onClick={() => setEditForm(null)} className="text-slate-400 hover:text-slate-600 text-xs">Cancel</button>
@@ -1093,7 +1099,7 @@ function ReviewQueueTab() {
                               productType: slots(item.type_slots),
                               category: item.canonical_category || item.category || "Other",
                             });
-                            setEditForm({ canonicalId: item.suggested_canonical_id, rawName: item.raw_name, canonicalName: item.suggested_canonical_name });
+                            setEditForm({ canonicalId: item.suggested_canonical_id, rawName: item.raw_name, canonicalName: item.suggested_canonical_name, currentId: item.suggested_canonical_id });
                           }}
                           className="text-xs bg-amber-100 text-amber-700 px-2 py-0.5 rounded hover:bg-amber-200"
                         >
