@@ -168,8 +168,8 @@ async function enqueueManualReview(
   await db
     .prepare(
       `INSERT INTO entity_resolution_queue
-      (deal_id, suggested_canonical_id, confidence, raw_name, normalised_name, status)
-     VALUES (?, ?, ?, ?, ?, 'pending')`,
+      (deal_id, suggested_canonical_id, confidence, raw_name, normalised_name, status, store_id, category)
+     VALUES (?, ?, ?, ?, ?, 'pending', ?, ?)`,
     )
     .run(
       deal.id,
@@ -177,6 +177,8 @@ async function enqueueManualReview(
       confidence == null ? null : Number(confidence),
       deal.product_name,
       normalisedName || null,
+      deal.store_id || null,
+      deal.product_category || null,
     );
 }
 
@@ -255,7 +257,7 @@ async function canonicalizeDeals(db, { runId, unmappedOnly } = {}) {
 
   const deals = await db
     .prepare(
-      `SELECT d.id, d.product_name, d.product_category, d.image_url
+      `SELECT d.id, d.product_name, d.product_category, d.image_url, d.store_id
      FROM deals d
      ${join}
      WHERE ${where}`,
@@ -263,7 +265,8 @@ async function canonicalizeDeals(db, { runId, unmappedOnly } = {}) {
     .all(...params);
 
   // Load brands once for the entire run — passed into createCanonical for decomposition
-  const brandRows = await db.prepare(`SELECT name, aliases FROM known_brands`).all().catch(() => []);
+  let brandRows = [];
+  try { brandRows = await db.prepare(`SELECT name, aliases FROM known_brands`).all(); } catch (_) {}
   const brands = brandRows.map((r) => ({
     name: r.name,
     aliases: JSON.parse(String(r.aliases || "[]")),
@@ -285,43 +288,31 @@ async function canonicalizeDeals(db, { runId, unmappedOnly } = {}) {
     const canonicalNames = Array.from(canonicalByName.keys());
     const resolved = await resolveName(deal.product_name, canonicalNames);
 
-    let canonicalRow = null;
-    if (resolved.match) {
-      canonicalRow = canonicalByName.get(resolved.match) || null;
+    // Only auto-map exact or high-confidence fuzzy matches (≥0.90)
+    if (resolved.match && (resolved.method === "exact" || resolved.method === "fuzzy")) {
+      const canonicalRow = canonicalByName.get(resolved.match);
+      if (canonicalRow) {
+        await addAliasToCanonical(db, canonicalRow.id, deal.product_name);
+        await upsertDealMapping(db, {
+          dealId: deal.id,
+          canonicalId: canonicalRow.id,
+          method: resolved.method,
+          confidence: resolved.confidence == null ? null : Number(resolved.confidence),
+        });
+        stats.mapped += 1;
+        continue;
+      }
     }
 
-    if (!canonicalRow) {
-      canonicalRow = await createCanonical(db, {
-        canonicalName: deal.product_name,
-        category: deal.product_category,
-        imageUrl: deal.image_url,
-        rawName: deal.product_name,
-      }, brands);
-      canonicalByName.set(canonicalRow.canonical_name, canonicalRow);
-      stats.created += 1;
-    }
-
-    await addAliasToCanonical(db, canonicalRow.id, deal.product_name);
-    await upsertDealMapping(db, {
-      dealId: deal.id,
-      canonicalId: canonicalRow.id,
-      method: resolved.method || "new",
-      confidence:
-        resolved.confidence == null ? null : Number(resolved.confidence),
-    });
-
-    if (resolved.method === "manual_review") {
-      await enqueueManualReview(
-        db,
-        deal,
-        canonicalRow.id,
-        resolved.confidence,
-        resolved.normalised,
-      );
-      stats.manual_review += 1;
-    }
-
-    stats.mapped += 1;
+    // Everything else (no match or below threshold) → queue for admin review
+    await enqueueManualReview(
+      db,
+      deal,
+      null,
+      resolved.confidence,
+      resolved.normalised,
+    );
+    stats.manual_review += 1;
   }
 
   if (stats.scanned > 0) {
