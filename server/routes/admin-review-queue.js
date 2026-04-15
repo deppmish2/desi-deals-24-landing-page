@@ -3,7 +3,7 @@
 const express = require("express");
 const router = express.Router();
 const db = require("../db");
-const requireAdminAuth = require("../middleware/auth");
+const requireAdminAuth = require("../middleware/user-admin-auth");
 const { normalise } = require("../../crawler/entity-resolution/normaliser");
 const { fuzzyMatch } = require("../../crawler/entity-resolution/fuzzy-matcher");
 const { decomposeCanonical } = require("../../crawler/utils/canonical-decomposer");
@@ -78,6 +78,13 @@ router.get("/review-queue", async (req, res) => {
         `SELECT COUNT(*) as c FROM entity_resolution_queue eq WHERE ${where}`,
       )
       .get(...params);
+
+    items.forEach((item) => {
+      item.normalised_name = normalise(item.raw_name || "");
+      if (item.suggested_canonical_name) {
+        item.suggested_canonical_name = normalise(item.suggested_canonical_name);
+      }
+    });
 
     res.json({ items, total: countRow.c, page, pageSize });
   } catch (err) {

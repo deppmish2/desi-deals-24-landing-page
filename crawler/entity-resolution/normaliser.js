@@ -2,7 +2,8 @@
 
 const synonyms = require("./synonyms.json");
 
-const BBD_RE = /\b(best\s+before|best\s+by|use\s+by|bbd)\b/g;
+const BBD_RE = /\b(best\s+before|best\s+by|use\s+by|bbd|expiry|expiry\s+date|exp)\b/g;
+const DATE_FRAG_RE = /\b\d{1,2}[\s./]\d{1,2}(\s*\d{2,4})?\b/g;
 const YEAR_RE = /\b20\d{2}\b/g;
 const UNIT_RE = /\b(kg|kilo|kilogram|g|gram|ml|ltr|litre|liter|l|oz|lb)\b/g;
 const QUALIFIER_RE =
@@ -29,6 +30,7 @@ function normalise(rawName) {
     source
       .replace(/[^a-z0-9\s]/g, " ")
       .replace(BBD_RE, " ")
+      .replace(DATE_FRAG_RE, " ")
       .replace(YEAR_RE, " ")
       .replace(UNIT_RE, " ")
       .replace(QUALIFIER_RE, " ")
