@@ -122,7 +122,9 @@ async function loadPriorityCanonicals(db) {
               weight_value, weight_unit
        FROM canonical_products
        WHERE is_match_priority = 1
-         AND brand_slots IS NOT NULL`,
+         AND brand_slots IS NOT NULL
+         AND brand_slots != 'null'
+         AND brand_slots != '[]'`,
     );
     rows = res.rows ?? [];
   } catch (e) {
@@ -135,7 +137,9 @@ async function loadPriorityCanonicals(db) {
                   weight_value, weight_unit
            FROM canonical_products
            WHERE is_priority = 1
-             AND brand_slots IS NOT NULL`,
+             AND brand_slots IS NOT NULL
+             AND brand_slots != 'null'
+             AND brand_slots != '[]'`,
         );
         rows = res2.rows ?? [];
       } catch (e2) {

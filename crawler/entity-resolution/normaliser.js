@@ -2,6 +2,8 @@
 
 const synonyms = require("./synonyms.json");
 
+const BBD_RE = /\b(best\s+before|best\s+by|use\s+by|bbd)\b/g;
+const YEAR_RE = /\b20\d{2}\b/g;
 const UNIT_RE = /\b(kg|kilo|kilogram|g|gram|ml|ltr|litre|liter|l|oz|lb)\b/g;
 const QUALIFIER_RE =
   /\b(organic|premium|extra|special|fresh|pure|whole|split|hulled)\b/g;
@@ -26,6 +28,8 @@ function normalise(rawName) {
   return applySynonyms(
     source
       .replace(/[^a-z0-9\s]/g, " ")
+      .replace(BBD_RE, " ")
+      .replace(YEAR_RE, " ")
       .replace(UNIT_RE, " ")
       .replace(QUALIFIER_RE, " ")
       .replace(PACK_RE, " "),

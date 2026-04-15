@@ -602,9 +602,7 @@ async function runCrawl(db, options = {}) {
 
     // Load priority canonical products once for auto-mapping during Pass 2
     const priorityCanonicals = await loadPriorityCanonicals(db);
-    if (priorityCanonicals.length > 0) {
-      logInfo("run", `Pass 1 prep: ${priorityCanonicals.length} priority canonicals loaded`);
-    }
+    logInfo("run", `Pass 1 prep: ${priorityCanonicals.length} priority canonicals loaded`);
 
     for (const adapter of adapters) {
       storesAttempted += 1;
@@ -750,12 +748,14 @@ async function runCrawl(db, options = {}) {
     // Canonicalize: create new canonical products for any active deals that
     // slot-based auto-mapping couldn't match (unmappedOnly avoids redundant AI calls).
     try {
-      const canonStats = await canonicalizeDeals(db, { runId, unmappedOnly: true });
-      if (canonStats.scanned > 0) {
-        logInfo("run", `Canonicalization: scanned=${canonStats.scanned} created=${canonStats.created} mapped=${canonStats.mapped} manual=${canonStats.manual_review}`);
-      }
+      const canonStats = await canonicalizeDeals(db, { unmappedOnly: true });
+      logInfo("run", `Canonicalization: scanned=${canonStats.scanned} created=${canonStats.created} mapped=${canonStats.mapped} manual=${canonStats.manual_review}`);
     } catch (canonError) {
       logWarn("run", `Canonicalization failed: ${canonError.message}`);
+      await db.execute(
+        `UPDATE crawl_runs SET errors = json_patch(COALESCE(errors, '[]'), json_array(json_object('store_id', 'canonicalize', 'error_message', ?))) WHERE id = ?`,
+        [canonError.message, runId],
+      ).catch(() => {});
     }
 
     const finishedAt = new Date().toISOString();
