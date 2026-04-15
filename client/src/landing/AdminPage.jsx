@@ -19,10 +19,15 @@ import {
   fetchBrands,
   fetchCanonicalStats,
   fetchMappedProducts,
+  reprocessUnmapped,
   fetchRemapStatus,
   triggerBrandRemap,
   getAuthSession,
   logoutUser,
+  fetchReviewQueue,
+  confirmQueueItem,
+  dismissQueueItem,
+  createCanonicalFromQueue,
 } from "../utils/api";
 
 function BarChart({ data }) {
@@ -361,6 +366,7 @@ function CanonicalStatsTab({
   onAddBrandFromSuggestion,
   mappedSubTab, mappedProducts, mappedLoading, mappedError,
   onMappedTabOpen, onRetryMapped,
+  reprocessing, reprocessToast, onReprocessUnmapped,
 }) {
   const [selectedChip, setSelectedChip] = useState(null);
 
@@ -584,7 +590,7 @@ function CanonicalStatsTab({
       {/* Unmapped / Mapped sub-tabs */}
       <div className="bg-white rounded-2xl border border-slate-100 shadow-sm px-6 py-5">
         {/* Sub-tab switcher */}
-        <div className="flex gap-0 border-b-2 border-slate-100 mb-4">
+        <div className="flex items-end gap-0 border-b-2 border-slate-100 mb-4">
           <button
             onClick={() => {}}
             className={`pb-2 px-4 text-[11px] font-bold uppercase tracking-[1px] border-b-2 -mb-[2px] transition-colors ${
@@ -615,7 +621,24 @@ function CanonicalStatsTab({
               {mappedProducts ? mappedProducts.length : stats.total_canonicals}
             </span>
           </button>
+          <button
+            onClick={onReprocessUnmapped}
+            disabled={reprocessing}
+            className="ml-auto mb-1 px-3 py-1 text-[11px] font-semibold rounded-lg bg-green-600 text-white hover:bg-green-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+          >
+            {reprocessing ? "Processing…" : "Reprocess Unmapped"}
+          </button>
         </div>
+
+        {reprocessToast && (
+          <div className={`mb-3 px-3 py-2 rounded-lg text-xs font-medium ${
+            reprocessToast.type === "success"
+              ? "bg-green-50 text-green-700 border border-green-200"
+              : "bg-red-50 text-red-700 border border-red-200"
+          }`}>
+            {reprocessToast.msg}
+          </div>
+        )}
 
         {mappedSubTab === "mapped" ? (
           <MappedProductsTable
@@ -739,6 +762,196 @@ function CanonicalStatsTab({
   );
 }
 
+function ReviewQueueTab() {
+  const [items, setItems] = useState([]);
+  const [total, setTotal] = useState(0);
+  const [page, setPage] = useState(1);
+  const [status, setStatus] = useState("pending");
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState(null);
+  const [actionError, setActionError] = useState(null);
+  const [createForm, setCreateForm] = useState(null);
+  const [newCanonicalName, setNewCanonicalName] = useState("");
+  const PAGE_SIZE = 50;
+
+  async function load() {
+    setLoading(true);
+    setError(null);
+    try {
+      const data = await fetchReviewQueue({ status, page });
+      setItems(data.items || []);
+      setTotal(data.total || 0);
+    } catch (e) {
+      setError(e.message);
+    } finally {
+      setLoading(false);
+    }
+  }
+
+  useEffect(() => { load(); }, [status, page]);
+
+  async function handleConfirm(id, canonicalId) {
+    setActionError(null);
+    try {
+      await confirmQueueItem(id, canonicalId);
+      load();
+    } catch (e) {
+      setActionError(e.message);
+    }
+  }
+
+  async function handleDismiss(id) {
+    setActionError(null);
+    try {
+      await dismissQueueItem(id);
+      load();
+    } catch (e) {
+      setActionError(e.message);
+    }
+  }
+
+  async function handleCreateCanonical(e) {
+    e.preventDefault();
+    if (!newCanonicalName.trim() || !createForm) return;
+    setActionError(null);
+    try {
+      await createCanonicalFromQueue({
+        queue_item_id: createForm.queueItemId,
+        canonical_name: newCanonicalName.trim(),
+        category: createForm.category,
+      });
+      setCreateForm(null);
+      setNewCanonicalName("");
+      load();
+    } catch (e) {
+      setActionError(e.message);
+    }
+  }
+
+  const totalPages = Math.ceil(total / PAGE_SIZE);
+
+  return (
+    <div className="bg-white rounded-2xl border border-slate-100 shadow-sm px-6 py-5">
+      <div className="flex items-center gap-4 mb-4">
+        <h2 className="text-lg font-semibold text-slate-700">Review Queue</h2>
+        <select
+          value={status}
+          onChange={(e) => { setStatus(e.target.value); setPage(1); }}
+          className="text-sm border border-slate-200 rounded px-2 py-1"
+        >
+          <option value="pending">Pending</option>
+          <option value="confirmed">Confirmed</option>
+          <option value="dismissed">Dismissed</option>
+        </select>
+        <span className="text-sm text-slate-500">{total} items</span>
+      </div>
+
+      {error && <div className="text-red-600 text-sm mb-2">{error}</div>}
+      {actionError && <div className="text-red-600 text-sm mb-2">{actionError}</div>}
+
+      {createForm && (
+        <form onSubmit={handleCreateCanonical} className="mb-4 p-3 bg-green-50 border border-green-200 rounded flex gap-2 items-center">
+          <span className="text-sm text-slate-600">New canonical for: <strong>{createForm.rawName}</strong></span>
+          <input
+            type="text"
+            value={newCanonicalName}
+            onChange={(e) => setNewCanonicalName(e.target.value)}
+            placeholder="Canonical name"
+            className="border border-slate-300 rounded px-2 py-1 text-sm flex-1"
+            autoFocus
+          />
+          <button type="submit" className="bg-green-600 text-white px-3 py-1 rounded text-sm">Create</button>
+          <button type="button" onClick={() => setCreateForm(null)} className="text-slate-500 text-sm px-2">Cancel</button>
+        </form>
+      )}
+
+      {loading ? (
+        <div className="text-slate-400 text-sm">Loading…</div>
+      ) : items.length === 0 ? (
+        <div className="text-slate-400 text-sm">No items</div>
+      ) : (
+        <div className="overflow-x-auto">
+          <table className="w-full text-sm border-collapse">
+            <thead>
+              <tr className="bg-slate-50 text-slate-500 text-xs uppercase">
+                <th className="text-left p-2 border-b">Raw Name</th>
+                <th className="text-left p-2 border-b">Normalised</th>
+                <th className="text-left p-2 border-b">Store</th>
+                <th className="text-left p-2 border-b">Category</th>
+                <th className="text-right p-2 border-b">Confidence</th>
+                <th className="text-left p-2 border-b">Suggested</th>
+                <th className="text-left p-2 border-b">Actions</th>
+              </tr>
+            </thead>
+            <tbody>
+              {items.map((item) => (
+                <tr key={item.id} className="border-b hover:bg-slate-50">
+                  <td className="p-2 max-w-[200px] truncate" title={item.raw_name}>{item.raw_name}</td>
+                  <td className="p-2 max-w-[180px] truncate text-slate-500" title={item.normalised_name}>{item.normalised_name || "—"}</td>
+                  <td className="p-2 text-slate-500">{item.store_name || item.store_id || "—"}</td>
+                  <td className="p-2 text-slate-500">{item.category || "—"}</td>
+                  <td className="p-2 text-right tabular-nums">
+                    {item.confidence != null ? (item.confidence * 100).toFixed(0) + "%" : "—"}
+                  </td>
+                  <td className="p-2 text-slate-600 max-w-[160px] truncate" title={item.suggested_canonical_name}>
+                    {item.suggested_canonical_name || "—"}
+                  </td>
+                  <td className="p-2">
+                    {status === "pending" && (
+                      <div className="flex gap-1">
+                        {item.suggested_canonical_id && (
+                          <button
+                            onClick={() => handleConfirm(item.id, item.suggested_canonical_id)}
+                            className="text-xs bg-blue-100 text-blue-700 px-2 py-0.5 rounded hover:bg-blue-200"
+                          >
+                            Confirm
+                          </button>
+                        )}
+                        <button
+                          onClick={() => { setCreateForm({ queueItemId: item.id, rawName: item.raw_name, category: item.category }); setNewCanonicalName(item.raw_name || ""); }}
+                          className="text-xs bg-green-100 text-green-700 px-2 py-0.5 rounded hover:bg-green-200"
+                        >
+                          Create
+                        </button>
+                        <button
+                          onClick={() => handleDismiss(item.id)}
+                          className="text-xs bg-slate-100 text-slate-600 px-2 py-0.5 rounded hover:bg-slate-200"
+                        >
+                          Dismiss
+                        </button>
+                      </div>
+                    )}
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+      )}
+
+      {totalPages > 1 && (
+        <div className="flex gap-2 mt-3 items-center text-sm">
+          <button
+            onClick={() => setPage((p) => Math.max(1, p - 1))}
+            disabled={page === 1}
+            className="px-3 py-1 rounded border disabled:opacity-40"
+          >
+            Prev
+          </button>
+          <span>{page} / {totalPages}</span>
+          <button
+            onClick={() => setPage((p) => Math.min(totalPages, p + 1))}
+            disabled={page === totalPages}
+            className="px-3 py-1 rounded border disabled:opacity-40"
+          >
+            Next
+          </button>
+        </div>
+      )}
+    </div>
+  );
+}
+
 export default function AdminPage() {
   const navigate = useNavigate();
   const [stats, setStats] = useState(null);
@@ -757,6 +970,8 @@ export default function AdminPage() {
   const [mappedProducts, setMappedProducts] = useState(null);
   const [mappedLoading, setMappedLoading] = useState(false);
   const [mappedError, setMappedError] = useState(null);
+  const [reprocessing, setReprocessing] = useState(false);
+  const [reprocessToast, setReprocessToast] = useState(null);
 
   // Brand manager draft state
   const [brandDraft, setBrandDraft] = useState(null);
@@ -840,6 +1055,24 @@ export default function AdminPage() {
 
   function handleRetryMapped() {
     loadMappedProducts();
+  }
+
+  async function handleReprocessUnmapped() {
+    setReprocessing(true);
+    setReprocessToast(null);
+    try {
+      const result = await reprocessUnmapped();
+      const s = result?.stats || {};
+      setReprocessToast({
+        type: "success",
+        msg: `Done: ${s.mapped ?? 0} mapped · ${s.created ?? 0} new canonicals · ${s.manual_review ?? 0} queued for review`,
+      });
+      fetchCanonicalStats().then(setCanonicalStats).catch(() => {});
+    } catch (err) {
+      setReprocessToast({ type: "error", msg: String(err?.message || "Reprocess failed") });
+    } finally {
+      setReprocessing(false);
+    }
   }
 
   function handleBrandFieldChange(index, field, value) {
@@ -1018,6 +1251,7 @@ export default function AdminPage() {
             { id: "user",      label: "User Stats"      },
             { id: "crawl",     label: "Crawl Stats"     },
             { id: "canonical", label: "Canonical Stats" },
+            { id: "queue",     label: "Review Queue"    },
           ].map(({ id, label }) => (
             <button
               key={id}
@@ -1424,7 +1658,14 @@ export default function AdminPage() {
             mappedError={mappedError}
             onMappedTabOpen={handleMappedTabOpen}
             onRetryMapped={handleRetryMapped}
+            reprocessing={reprocessing}
+            reprocessToast={reprocessToast}
+            onReprocessUnmapped={handleReprocessUnmapped}
           />
+        )}
+
+        {tab === "queue" && (
+          <ReviewQueueTab />
         )}
 
       </div>

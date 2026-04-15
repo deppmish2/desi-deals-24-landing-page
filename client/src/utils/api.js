@@ -340,3 +340,35 @@ export function fetchCanonicalStats() {
 export function fetchMappedProducts() {
   return authRequest("/admin-dashboard/mapped-products");
 }
+
+export function reprocessUnmapped() {
+  return authRequest("/admin-dashboard/reprocess-unmapped", { method: "POST" });
+}
+
+export function fetchReviewQueue({ status = "pending", category = "", page = 1 } = {}) {
+  const params = new URLSearchParams({ status, page });
+  if (category) params.set("category", category);
+  return authRequest(`/admin-dashboard/review-queue?${params}`);
+}
+
+export function confirmQueueItem(id, canonicalId) {
+  return authRequest(`/admin-dashboard/review-queue/${id}`, {
+    method: "PATCH",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ canonical_id: canonicalId }),
+  });
+}
+
+export function dismissQueueItem(id) {
+  return authRequest(`/admin-dashboard/review-queue/${id}/dismiss`, {
+    method: "POST",
+  });
+}
+
+export function createCanonicalFromQueue({ queue_item_id, canonical_name, category, image_url }) {
+  return authRequest("/admin-dashboard/review-queue/canonical", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ queue_item_id, canonical_name, category, image_url }),
+  });
+}
