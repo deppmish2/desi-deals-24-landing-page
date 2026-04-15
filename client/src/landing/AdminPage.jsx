@@ -1034,8 +1034,8 @@ function ReviewQueueTab() {
                   <td className="p-2 text-right tabular-nums">
                     {item.confidence != null ? (item.confidence * 100).toFixed(0) + "%" : "—"}
                   </td>
-                  <td className="p-2 text-slate-600 max-w-[160px] truncate" title={item.suggested_canonical_name}>
-                    {item.suggested_canonical_name || "—"}
+                  <td className="p-2 text-slate-600 max-w-[160px] truncate" title={item.suggested_canonical_name_normalised || item.suggested_canonical_name}>
+                    {item.suggested_canonical_name_normalised || item.suggested_canonical_name || "—"}
                   </td>
                   <td className="p-2">
                     <div className="flex gap-1 flex-wrap">

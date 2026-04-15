@@ -84,7 +84,8 @@ router.get("/review-queue", async (req, res) => {
     items.forEach((item) => {
       item.normalised_name = normalise(item.raw_name || "");
       if (item.suggested_canonical_name) {
-        item.suggested_canonical_name = normalise(item.suggested_canonical_name);
+        item.suggested_canonical_name_normalised = normalise(item.suggested_canonical_name);
+        // keep suggested_canonical_name as original for edit form display
       }
     });
 
