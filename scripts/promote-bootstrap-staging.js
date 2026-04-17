@@ -48,14 +48,9 @@ function getClient() {
     console.log(`DB: local file ${abs}`);
     return require("@libsql/client").createClient({ url: `file:${abs}` });
   }
-  const url = process.env.DESI_DEALS_DB_TURSO_DATABASE_URL || process.env.TURSO_DATABASE_URL;
-  const authToken = process.env.DESI_DEALS_DB_TURSO_AUTH_TOKEN || process.env.TURSO_AUTH_TOKEN;
-  if (!url || !url.includes("turso.io")) {
-    console.error("ABORT: No --db-file given and DESI_DEALS_DB_TURSO_DATABASE_URL not set.");
-    process.exit(1);
-  }
-  console.log(`DB: Turso ${url}`);
-  return require("@libsql/client").createClient({ url, authToken });
+  const abs = require("path").resolve(process.env.DB_FILE || "data/prod_local.db");
+  console.log(`DB: ${abs}`);
+  return require("@libsql/client").createClient({ url: `file:${abs}` });
 }
 
 const isDryRun = !process.argv.includes("--execute");
@@ -65,17 +60,8 @@ console.log(`Mode: ${isDryRun ? "DRY RUN" : "EXECUTE"} (add --execute to apply)`
 console.log("");
 
 async function main() {
-  // Guard: only abort if --execute and canonical_products has rows
-  if (!isDryRun) {
-    const guardResult = await client.execute("SELECT COUNT(*) as cnt FROM canonical_products");
-    const cnt = guardResult.rows[0].cnt;
-    if (cnt > 0) {
-      console.error(
-        `ABORT: canonical_products has ${cnt} rows. Run wipe script first.`
-      );
-      process.exit(1);
-    }
-  }
+  // No guard needed — query filters WHERE needs_review=0 AND promoted=0,
+  // so already-promoted rows are skipped automatically on re-runs.
 
   // Fetch staging rows
   const stagingResult = await client.execute(
@@ -113,8 +99,9 @@ async function main() {
   let mappingsInserted = 0;
   let dealsUpdated = 0;
 
-  // Track generated canonical IDs to avoid conflicts
-  const usedCanonicalIds = new Set();
+  // Seed usedCanonicalIds with all existing canonical_products IDs
+  const existingIds = await client.execute(`SELECT id FROM canonical_products`);
+  const usedCanonicalIds = new Set(existingIds.rows.map(r => r.id));
 
   if (!isDryRun) {
     const tx = await client.transaction("write");
@@ -212,27 +199,92 @@ async function main() {
     console.log(`  canonical_products inserted: ${canonicalsInserted}`);
     console.log(`  deal_mappings inserted:      ${mappingsInserted}`);
     console.log(`  deals.canonical_id updated:  ${dealsUpdated}`);
-  } else {
-    console.log(`DONE:`);
-    console.log(`  canonical_products inserted: ${canonicalsInserted}`);
-    console.log(`  deal_mappings inserted:      ${mappingsInserted}`);
-    console.log(`  deals.canonical_id updated:  ${dealsUpdated}`);
-
-    // Print coverage
-    const covResult = await client.execute(
-      `SELECT COUNT(*) as cnt FROM deals WHERE is_active=1 AND canonical_id IS NOT NULL`
-    );
-    const totalResult = await client.execute(
-      `SELECT COUNT(*) as cnt FROM deals WHERE is_active=1`
-    );
-    const activeDealsCov = covResult.rows[0].cnt;
-    const activeDealsTotal = totalResult.rows[0].cnt;
-    const coverage =
-      activeDealsTotal > 0
-        ? Math.round((activeDealsCov / activeDealsTotal) * 100)
-        : 0;
-    console.log(`  Coverage: ${activeDealsCov}/${activeDealsTotal} (${coverage}%)`);
+    return;
   }
+
+  console.log(`DONE:`);
+  console.log(`  canonical_products inserted: ${canonicalsInserted}`);
+  console.log(`  deal_mappings inserted:      ${mappingsInserted}`);
+  console.log(`  deals.canonical_id updated:  ${dealsUpdated}`);
+
+  // ── Broad sweep: link ALL deals (active + inactive) by product name ──────
+  // For each canonical, collect all known raw product names from source
+  // products, then match against every deal in the table regardless of
+  // is_active status.
+  console.log(`\nBroad sweep: linking all deals by product name...`);
+
+  const canonicalNames = await client.execute(
+    `SELECT cp.id AS canonical_id, sp.raw_product_name
+     FROM canonical_products cp
+     JOIN canonical_bootstrap_source_products sp
+       ON sp.staging_id IN (
+         SELECT id FROM canonical_bootstrap_staging WHERE promoted_canonical_id = cp.id
+       )
+     GROUP BY cp.id, sp.raw_product_name`
+  );
+
+  // Build map: canonical_id → Set of lowercased raw names
+  const namesByCanonical = new Map();
+  for (const r of canonicalNames.rows) {
+    if (!namesByCanonical.has(r.canonical_id)) namesByCanonical.set(r.canonical_id, new Set());
+    namesByCanonical.get(r.canonical_id).add(r.raw_product_name.toLowerCase().trim());
+  }
+
+  const now = new Date().toISOString();
+  let broadMappings = 0;
+  let broadDeals = 0;
+  let processed = 0;
+  const total = namesByCanonical.size;
+
+  for (const [canonicalId, rawNames] of namesByCanonical) {
+    if (rawNames.size === 0) continue;
+
+    // Fetch all deals matching any of the raw names (case-insensitive)
+    const placeholders = [...rawNames].map(() => "?").join(", ");
+    const matchedDeals = await client.execute({
+      sql: `SELECT id FROM deals
+            WHERE LOWER(TRIM(product_name)) IN (${placeholders})
+              AND canonical_id IS NULL`,
+      args: [...rawNames],
+    });
+
+    if (matchedDeals.rows.length === 0) { processed++; continue; }
+
+    const tx2 = await client.transaction("write");
+    try {
+      for (const deal of matchedDeals.rows) {
+        await tx2.execute({
+          sql: `INSERT INTO deal_mappings (deal_id, canonical_id, match_method, match_confidence, verified_at)
+                VALUES (?, ?, 'bootstrap-name-sweep', 0.85, ?)
+                ON CONFLICT(deal_id, canonical_id) DO NOTHING`,
+          args: [deal.id, canonicalId, now],
+        });
+        await tx2.execute({
+          sql: `UPDATE deals SET canonical_id = ? WHERE id = ? AND canonical_id IS NULL`,
+          args: [canonicalId, deal.id],
+        });
+        broadMappings++;
+        broadDeals++;
+      }
+      await tx2.commit();
+    } catch (e) {
+      await tx2.rollback();
+      console.error(`  ✗ Broad sweep failed for ${canonicalId}: ${e.message}`);
+    }
+
+    processed++;
+    if (processed % 200 === 0) console.log(`  Progress: ${processed}/${total} canonicals swept...`);
+  }
+
+  console.log(`  Broad sweep done: ${broadMappings} additional deal_mappings, ${broadDeals} deals linked`);
+
+  // Final coverage
+  const covResult   = await client.execute(`SELECT COUNT(*) as cnt FROM deals WHERE canonical_id IS NOT NULL`);
+  const totalResult = await client.execute(`SELECT COUNT(*) as cnt FROM deals`);
+  const linkedDeals = covResult.rows[0].cnt;
+  const totalDeals  = totalResult.rows[0].cnt;
+  const coverage    = totalDeals > 0 ? Math.round((linkedDeals / totalDeals) * 100) : 0;
+  console.log(`\nFinal coverage: ${linkedDeals}/${totalDeals} all deals (${coverage}%)`);
 }
 
 main().catch((err) => {

@@ -8,9 +8,11 @@ const { getAdminEmailSet } = require("../utils/admin-access");
 
 // Local: file: URL pointing at the existing SQLite file
 // Vercel / any env with TURSO_DATABASE_URL: remote Turso DB
+const dbFileOverride = process.env.DB_FILE;
 const tursoUrl =
-  process.env.TURSO_DATABASE_URL ||
-  process.env.DESI_DEALS_DB_TURSO_DATABASE_URL;
+  !dbFileOverride &&
+  (process.env.TURSO_DATABASE_URL ||
+  process.env.DESI_DEALS_DB_TURSO_DATABASE_URL);
 const tursoAuthToken =
   process.env.TURSO_AUTH_TOKEN || process.env.DESI_DEALS_DB_TURSO_AUTH_TOKEN;
 const usingRemoteDb = Boolean(tursoUrl);
@@ -20,7 +22,7 @@ const client = tursoUrl
       authToken: tursoAuthToken,
     })
   : createClient({
-      url: `file:${path.resolve("./data/desiDeals24.db")}`,
+      url: `file:${path.resolve(dbFileOverride || "./data/desiDeals24.db")}`,
     });
 
 /**

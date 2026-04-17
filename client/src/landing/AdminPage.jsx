@@ -772,6 +772,8 @@ function ReviewQueueTab() {
   const [total, setTotal] = useState(0);
   const [page, setPage] = useState(1);
   const [status, setStatus] = useState("pending");
+  const [search, setSearch] = useState("");
+  const [searchInput, setSearchInput] = useState("");
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
   const [actionError, setActionError] = useState(null);
@@ -787,7 +789,7 @@ function ReviewQueueTab() {
     setLoading(true);
     setError(null);
     try {
-      const data = await fetchReviewQueue({ status, page });
+      const data = await fetchReviewQueue({ status, page, search });
       setItems(data.items || []);
       setTotal(data.total || 0);
     } catch (e) {
@@ -797,7 +799,15 @@ function ReviewQueueTab() {
     }
   }
 
-  useEffect(() => { load(); }, [status, page]);
+  useEffect(() => { load(); }, [status, page, search]);
+
+  useEffect(() => {
+    const t = setTimeout(() => {
+      setSearch(searchInput);
+      setPage(1);
+    }, 350);
+    return () => clearTimeout(t);
+  }, [searchInput]);
 
   async function handleConfirm(id, canonicalId) {
     setActionError(null);
@@ -863,7 +873,7 @@ function ReviewQueueTab() {
 
   return (
     <div className="bg-white rounded-2xl border border-slate-100 shadow-sm px-6 py-5">
-      <div className="flex items-center gap-4 mb-4">
+      <div className="flex items-center gap-4 mb-4 flex-wrap">
         <h2 className="text-lg font-semibold text-slate-700">Review Queue</h2>
         <select
           value={status}
@@ -874,6 +884,13 @@ function ReviewQueueTab() {
           <option value="confirmed">Confirmed</option>
           <option value="dismissed">Dismissed</option>
         </select>
+        <input
+          type="text"
+          value={searchInput}
+          onChange={(e) => setSearchInput(e.target.value)}
+          placeholder="Search raw name…"
+          className="text-sm border border-slate-200 rounded px-2 py-1 w-52"
+        />
         <span className="text-sm text-slate-500">{total} items</span>
       </div>
 

@@ -1,7 +1,7 @@
 ---
 title: Crawler
-last_updated: 2026-04-13
-source_count: 2
+last_updated: 2026-04-17
+source_count: 3
 ---
 
 The crawler is a sequential Node.js orchestrator (`crawler/index.js`) that runs all store adapters in order, normalizes their output, reconciles against the existing DB, and updates display ordering. It uses a two-pass architecture: Pass 2 (the main crawl) fetches on-sale products; Pass 1 fetches non-sale prices for priority canonical products to enable Real Savings comparisons.
@@ -76,6 +76,38 @@ The `gm` (Indian abbreviation) pattern uses `matchAll` and returns the **last** 
 - `buildBrandAliasMap(brands)` — builds a `Map<lowercase_alias → brand>` from the brands array. **Pass this into `decomposeCanonical` as the 4th argument** when calling in a loop (e.g. the remap re-decompose step) — avoids rebuilding the map per canonical. Without this, the inner brand scan is O(tokens × brands × aliases_per_brand); with the map it is O(tokens).
 
 `crawler/utils/pass1-fetcher.js` — for each priority canonical, fetches the current (non-sale) price from the store. Used to compute "Real Savings" — how much you actually save vs. the everyday price, not just vs. an inflated `compare_at_price`.
+
+## Pending queue batch processing
+
+`scripts/process-pending-queue-openai-batch.js` submits `data/pending-queue.csv` to the OpenAI Batch API using `gpt-4o-mini` in batches of 25 raw product names per request.
+
+- Loads credentials from `.env` / `.env.local`
+- Clusters likely sibling names before batching by stripping expiry text and packaging weights from the grouping key, so weight variants like `500g` and `1kg` are more likely to land in the same model request
+- Writes a JSONL batch input file plus a manifest under `logs/openai-pending-queue-batches/`
+- Supports `prepare`, `submit`, `status`, `wait`, and `download` commands
+- Uses `/v1/chat/completions` batch requests with the grocery-catalogue system prompt and asks the model to return CSV directly
+- On download, combines per-request CSV outputs into one consolidated CSV file while preserving the shared header row
+
+`scripts/cleanup-pending-queue-batch-output.js` performs a deterministic cleanup pass on the combined batch CSV.
+
+- Normalizes `null` / blank fields, confidence values, and `needs_review`
+- Rebuilds missing `canonical_name` / `product_type` values from the raw names when the model output is malformed
+- Re-infers category using the project taxonomy and keyword rules, then recomputes the most common per-product weight from `raw_names_matched`
+- Merges duplicate canonicals after cleanup and writes a smaller review-only CSV for rows that still need human attention
+
+`scripts/prune-pending-queue-review-junk.js` removes obvious marketplace contamination from the cleaned CSV.
+
+- Only prunes rows that still have `needs_review=1`
+- Targets unrelated electronics, watches, bags, toys, vouchers, and clearly non-catalog makeup rows
+- Explicitly preserves Indian catalogue-adjacent religious goods such as `pooja`, `diya`, `toran`, `rakhi`, and `ganesha` items
+- Writes both a pruned main CSV and a rejected-junk CSV with the prune reason appended to `review_note`
+
+`scripts/refine-pending-queue-manual-review.js` performs a final pass to shrink the human-review queue.
+
+- Reclassifies categories for obvious `pooja`, `mix`, `cookies`, and personal-care rows using keyword rules
+- Auto-clears `needs_review` when the only remaining issue is weak brand confidence but the product identity is now clear enough
+- Separately rejects another layer of obvious non-catalog junk that survived the earlier prune step
+- Produces a refined main CSV plus a compact manual-review CSV containing only the truly ambiguous leftovers
 
 ## Crawl warnings
 

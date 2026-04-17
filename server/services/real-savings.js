@@ -62,7 +62,7 @@ async function batchGetRealSavings(db, deals) {
   try {
     const placeholders = dealIds.map(() => "?").join(", ");
     const mappingRes = await db.execute(
-      `SELECT deal_id, canonical_id FROM deal_mappings WHERE deal_id IN (${placeholders})`,
+      `SELECT id AS deal_id, canonical_id FROM deals WHERE id IN (${placeholders}) AND canonical_id IS NOT NULL`,
       dealIds,
     );
     canonicalMap = new Map((mappingRes.rows ?? []).map((r) => [r.deal_id, r.canonical_id]));
@@ -220,4 +220,46 @@ function computeRealSavings(deal, historyData) {
   return null;
 }
 
-module.exports = { batchGetRealSavings, computeRealSavings };
+/**
+ * Explain why real savings badge is absent for a deal.
+ * Call only when computeRealSavings(deal, historyData) returns null.
+ *
+ * @param {object}      deal        - Serialised deal
+ * @param {object|null} historyData - Entry from batchGetRealSavings map
+ * @returns {string} reason code
+ */
+function explainRealSavings(deal, historyData) {
+  if (computeRealSavings(deal, historyData) !== null) return null;
+
+  if (!deal.canonical_id) return "no_canonical";
+
+  const statedDiscount = Number(deal.discount_percent) || null;
+
+  // Trace Layer 1
+  if (historyData?.reference_price_per_kg) {
+    const dealPpk = Number(deal.price_per_kg);
+    if (Number.isFinite(dealPpk) && dealPpk > 0) {
+      const refPpk = historyData.reference_price_per_kg;
+      if (refPpk <= dealPpk) return "not_cheaper";
+      const realPct = Math.round(((refPpk - dealPpk) / refPpk) * 1000) / 10;
+      if (realPct < 5) return "rating_too_low";
+      if (shouldSuppressBadge(realPct, statedDiscount)) return "badge_suppressed";
+    }
+    // no price_per_kg — fall through to Layer 2
+  }
+
+  // Layer 2
+  const currentPrice = Number(deal.sale_price);
+  if (!Number.isFinite(currentPrice) || currentPrice <= 0) return "no_price_data";
+  if (!deal.original_price || Number(deal.original_price) <= currentPrice) {
+    return historyData ? "no_original_price" : "no_history";
+  }
+  const refPrice = Number(deal.original_price);
+  const realPct = Math.round(((refPrice - currentPrice) / refPrice) * 1000) / 10;
+  if (realPct < 5) return "rating_too_low";
+  if (shouldSuppressBadge(realPct, statedDiscount)) return "badge_suppressed";
+
+  return "unknown";
+}
+
+module.exports = { batchGetRealSavings, computeRealSavings, explainRealSavings };

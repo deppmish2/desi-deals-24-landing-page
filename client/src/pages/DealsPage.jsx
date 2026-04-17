@@ -21,6 +21,7 @@ import {
 import {
   addBookmark,
   fetchBookmarks,
+  fetchCanonicalPriceData,
   fetchDealStores,
   fetchDeals,
   fetchOAuthAuthUrl,
@@ -392,6 +393,18 @@ function buildDealAnalyticsPayload(deal, context = {}) {
   };
 }
 
+const REAL_SAVINGS_DEBUG_LABELS = {
+  no_canonical:      "Not matched to any canonical product",
+  no_history:        "No price history for this canonical",
+  not_cheaper:       "Deal price ≥ market median",
+  rating_too_low:    "Discount < 5% (below threshold)",
+  badge_suppressed:  "Too close to store's stated discount",
+  no_price_per_kg:   "Missing price-per-kg on this deal",
+  no_original_price: "No original price data",
+  no_price_data:     "No sale price data",
+  unknown:           "Unknown reason",
+};
+
 // ── Deal card ─────────────────────────────────────────────────────────────────
 function proxyImageUrl(imageUrl) {
   if (!imageUrl) return null;
@@ -415,6 +428,10 @@ function DealCard({
   const [imgError, setImgError] = useState(false);
   const [showAdminTooltip, setShowAdminTooltip] = useState(false);
   const [tooltipPos, setTooltipPos] = useState({ top: 0, left: 0 });
+  const [canonicalData, setCanonicalData] = useState(null);
+  const [loadingCanonical, setLoadingCanonical] = useState(false);
+  const [showImageDebug, setShowImageDebug] = useState(false);
+  const [imageDebugPos, setImageDebugPos] = useState({ top: 0, left: 0 });
   const badgeRef = useRef(null);
   const proxyImg = proxyDealImageUrl(deal);
   const discountPct = deal?.discount_percent ? Math.round(deal.discount_percent) : null;
@@ -445,7 +462,15 @@ function DealCard({
       }}
     >
       {/* Image — not clickable */}
-      <div className="relative block w-full h-[200px] bg-white flex items-center justify-center p-5 overflow-hidden rounded-t-[20px]">
+      <div
+        className="relative block w-full h-[200px] bg-white flex items-center justify-center p-5 overflow-hidden rounded-t-[20px]"
+        onMouseEnter={isAdmin && !realSavings && deal.real_savings_debug ? (e) => {
+          const rect = e.currentTarget.getBoundingClientRect();
+          setImageDebugPos({ top: rect.top, left: rect.left });
+          setShowImageDebug(true);
+        } : undefined}
+        onMouseLeave={isAdmin && !realSavings && deal.real_savings_debug ? () => setShowImageDebug(false) : undefined}
+      >
         <img
           src={
             imgError || !proxyImg
@@ -458,6 +483,33 @@ function DealCard({
           className="w-full h-full object-contain"
           onError={() => setImgError(true)}
         />
+        {isAdmin && !realSavings && deal.real_savings_debug && (
+          <div className="absolute bottom-2 right-2 w-5 h-5 bg-slate-600/70 rounded-full flex items-center justify-center pointer-events-none">
+            <span className="text-white text-[10px] font-bold leading-none">?</span>
+          </div>
+        )}
+        {isAdmin && showImageDebug && !realSavings && deal.real_savings_debug && createPortal(
+          <div
+            className="bg-[#1e293b] text-white rounded-xl p-3 shadow-2xl pointer-events-none"
+            style={{ position: "fixed", top: imageDebugPos.top + 8, left: imageDebugPos.left + 8, zIndex: 9999, maxWidth: 260 }}
+          >
+            <p className="text-[10px] font-extrabold uppercase tracking-[1.2px] text-slate-400 mb-1.5">Real Savings Debug</p>
+            <p className="text-[12px] text-slate-200">
+              {REAL_SAVINGS_DEBUG_LABELS[deal.real_savings_debug] || deal.real_savings_debug}
+            </p>
+            <div className="border-t border-slate-600 mt-2 pt-1.5 flex flex-col gap-1">
+              {deal.canonical_id ? (
+                <div className="flex justify-between items-baseline gap-2">
+                  <span className="text-[10px] text-slate-500 shrink-0">Canonical</span>
+                  <span className="text-[10px] text-slate-400 text-right truncate">{deal.canonical_id}</span>
+                </div>
+              ) : (
+                <p className="text-[10px] text-slate-500">deal #{deal.id} · no canonical</p>
+              )}
+            </div>
+          </div>,
+          document.body,
+        )}
         {discountPct > 0 && (
           <div
             className="absolute top-3 right-3 rounded-[8px] px-2.5 py-1"
@@ -538,6 +590,13 @@ function DealCard({
                 const rect = badgeRef.current?.getBoundingClientRect();
                 if (rect) setTooltipPos({ top: rect.top, left: rect.left });
                 setShowAdminTooltip(true);
+                if (realSavings.canonical_id && !canonicalData && !loadingCanonical) {
+                  setLoadingCanonical(true);
+                  fetchCanonicalPriceData(realSavings.canonical_id)
+                    .then((data) => setCanonicalData(data))
+                    .catch(() => {})
+                    .finally(() => setLoadingCanonical(false));
+                }
               }}
               onMouseLeave={() => setShowAdminTooltip(false)}
             >
@@ -573,7 +632,7 @@ function DealCard({
 
               {isAdmin && showAdminTooltip && createPortal(
                 <div
-                  className="w-64 bg-[#1e293b] text-white rounded-xl p-3.5 shadow-2xl pointer-events-none"
+                  className="w-72 bg-[#1e293b] text-white rounded-xl p-3.5 shadow-2xl pointer-events-none"
                   style={{
                     position: "fixed",
                     top: tooltipPos.top - 8,
@@ -583,6 +642,8 @@ function DealCard({
                   }}
                 >
                   <p className="text-[10px] font-extrabold uppercase tracking-[1.2px] text-slate-400 mb-2.5">Real Savings Breakdown</p>
+
+                  {/* Calculation */}
                   <div className="flex flex-col gap-1.5">
                     <div className="flex justify-between items-baseline">
                       <span className="text-[11px] text-slate-400">Reference</span>
@@ -611,6 +672,8 @@ function DealCard({
                       </div>
                     )}
                   </div>
+
+                  {/* Source + canonical */}
                   <div className="border-t border-slate-600 mt-2.5 pt-2 flex flex-col gap-1">
                     <div className="flex justify-between items-baseline">
                       <span className="text-[10px] text-slate-500">Source</span>
@@ -623,6 +686,40 @@ function DealCard({
                         <span className="text-[10px] text-slate-500 shrink-0">Canonical</span>
                         <span className="text-[10px] text-slate-400 text-right truncate">{realSavings.canonical_id}</span>
                       </div>
+                    )}
+                  </div>
+
+                  {/* Market prices across stores */}
+                  <div className="border-t border-slate-600 mt-2.5 pt-2">
+                    <p className="text-[10px] font-extrabold uppercase tracking-[1.2px] text-slate-500 mb-1.5">Market Prices</p>
+                    {loadingCanonical && (
+                      <p className="text-[10px] text-slate-500 italic">Loading…</p>
+                    )}
+                    {canonicalData && (
+                      <>
+                        {canonicalData.canonical_name && (
+                          <p className="text-[10px] text-slate-300 mb-1.5 truncate">{canonicalData.canonical_name}</p>
+                        )}
+                        <div className="flex flex-col gap-1">
+                          {canonicalData.stores.map((s) => (
+                            <div key={s.store_name} className="flex justify-between items-baseline">
+                              <span className="text-[11px] text-slate-400 truncate max-w-[140px]">{s.store_name}</span>
+                              <span className="text-[11px] font-semibold text-white shrink-0 ml-2">
+                                {s.min_price === s.max_price
+                                  ? `€${s.min_price.toFixed(2)}`
+                                  : `€${s.min_price.toFixed(2)}–${s.max_price.toFixed(2)}`}
+                                {s.count > 1 && <span className="text-[10px] text-slate-500 ml-1">×{s.count}</span>}
+                              </span>
+                            </div>
+                          ))}
+                        </div>
+                        <p className="text-[10px] text-slate-600 mt-1.5">
+                          {canonicalData.total_active} active · {canonicalData.total_all} total deals
+                        </p>
+                      </>
+                    )}
+                    {!loadingCanonical && !canonicalData && (
+                      <p className="text-[10px] text-slate-600">No market data</p>
                     )}
                   </div>
                 </div>,
@@ -1432,6 +1529,7 @@ export default function DealsPage() {
   const [session, setSession] = useState(() => getAuthSession());
   const isLoggedIn = Boolean(session?.accessToken);
   const isAdmin = Boolean(session?.user?.is_admin) || import.meta.env.DEV;
+  const [includeInactive, setIncludeInactive] = useState(false);
   const analyticsFilterCount =
     Number(filterStores.length > 0) +
     Number(Boolean(filterCategory)) +
@@ -1620,8 +1718,9 @@ export default function DealsPage() {
       filterMinDiscount && isLoggedIn ? filterMinDiscount : undefined,
     price_min: filterPriceMin && isLoggedIn ? filterPriceMin : undefined,
     price_max: filterPriceMax && isLoggedIn ? filterPriceMax : undefined,
-    in_stock: "1",
+    in_stock: includeInactive ? undefined : "1",
     hide_expired: filterHideExpired && isLoggedIn ? "1" : undefined,
+    include_inactive: isAdmin && includeInactive ? "1" : undefined,
   });
 
   const displayDeals = useMemo(
@@ -2449,6 +2548,22 @@ export default function DealsPage() {
             </form>
           </div>
         </section>
+
+        {/* Admin: include inactive toggle */}
+        {isAdmin && import.meta.env.DEV && (
+          <div className="flex items-center gap-2 mb-2">
+            <button
+              onClick={() => setIncludeInactive((v) => !v)}
+              className={`text-[11px] font-semibold px-3 py-1 rounded-full border transition-colors ${
+                includeInactive
+                  ? "bg-amber-100 border-amber-400 text-amber-700"
+                  : "bg-slate-100 border-slate-300 text-slate-500"
+              }`}
+            >
+              {includeInactive ? "Showing all deals (incl. inactive)" : "Show inactive deals"}
+            </button>
+          </div>
+        )}
 
         {/* Deals grid */}
         {loading && (

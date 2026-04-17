@@ -43,6 +43,7 @@ router.get("/review-queue", async (req, res) => {
   try {
     const status = req.query.status || "pending";
     const category = req.query.category || "";
+    const search = (req.query.search || "").trim();
     const page = Math.max(1, parseInt(req.query.page, 10) || 1);
     const pageSize = 50;
     const offset = (page - 1) * pageSize;
@@ -53,6 +54,11 @@ router.get("/review-queue", async (req, res) => {
     if (category) {
       conditions.push("eq.category = ?");
       params.push(category);
+    }
+
+    if (search) {
+      conditions.push("eq.raw_name LIKE ?");
+      params.push(`%${search}%`);
     }
 
     const where = conditions.join(" AND ");
@@ -357,6 +363,63 @@ router.post("/review-queue/:id/dismiss", async (req, res) => {
     res.json({ ok: true });
   } catch (err) {
     console.error("[review-queue] POST dismiss error:", err);
+    res.status(500).json({ error: err.message });
+  }
+});
+
+// GET /review-queue/canonical/:id/price-data — market prices for admin tooltip
+router.get("/review-queue/canonical/:id/price-data", async (req, res) => {
+  try {
+    const { id } = req.params;
+
+    const canonical = await db
+      .prepare("SELECT id, canonical_name, category FROM canonical_products WHERE id = ? LIMIT 1")
+      .get(id);
+    if (!canonical) return res.status(404).json({ error: "Canonical not found" });
+
+    const deals = await db
+      .prepare(
+        `SELECT d.id, d.product_name, d.sale_price, d.price_per_kg, d.currency,
+                s.name AS store_name,
+                dm.match_method, dm.match_confidence
+         FROM deals d
+         JOIN stores s ON s.id = d.store_id
+         LEFT JOIN deal_mappings dm ON dm.deal_id = d.id AND dm.canonical_id = ?
+         WHERE d.canonical_id = ? AND d.is_active = 1
+         ORDER BY d.sale_price ASC`,
+      )
+      .all(id, id);
+
+    // Group by store
+    const storeMap = new Map();
+    for (const deal of deals) {
+      if (!storeMap.has(deal.store_name)) {
+        storeMap.set(deal.store_name, { store_name: deal.store_name, prices: [] });
+      }
+      storeMap.get(deal.store_name).prices.push(deal.sale_price);
+    }
+
+    const stores = [...storeMap.values()].map((s) => ({
+      store_name: s.store_name,
+      min_price: Math.min(...s.prices),
+      max_price: Math.max(...s.prices),
+      count: s.prices.length,
+    }));
+
+    const totalAllRow = await db
+      .prepare("SELECT COUNT(*) AS n FROM deals WHERE canonical_id = ?")
+      .get(id);
+
+    res.json({
+      canonical_id: id,
+      canonical_name: canonical.canonical_name,
+      category: canonical.category,
+      stores,
+      total_active: deals.length,
+      total_all: totalAllRow.n,
+    });
+  } catch (err) {
+    console.error("[review-queue] GET canonical price-data error:", err);
     res.status(500).json({ error: err.message });
   }
 });

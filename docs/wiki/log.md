@@ -11,6 +11,30 @@ Sources: server/routes/admin-dashboard.js, crawler/utils/auto-mapper.js, crawler
 
 ---
 
+## [2026-04-17] auto-update | OpenAI batch processing for pending canonical queue
+Pages touched: crawler.md
+Sources: scripts/process-pending-queue-openai-batch.js, package.json
+
+---
+
+## [2026-04-17] auto-update | Cleanup pass for OpenAI pending-queue batch output
+Pages touched: crawler.md
+Sources: scripts/cleanup-pending-queue-batch-output.js, package.json
+
+---
+
+## [2026-04-17] auto-update | Pruned obvious junk from pending-queue review output
+Pages touched: crawler.md
+Sources: scripts/prune-pending-queue-review-junk.js, package.json
+
+---
+
+## [2026-04-17] auto-update | Final refinement pass for pending-queue manual review
+Pages touched: crawler.md
+Sources: scripts/refine-pending-queue-manual-review.js, package.json
+
+---
+
 ## [2026-04-11] auto-update | Real Savings bug investigation + three-bug fix
 Pages touched: crawler.md, decisions.md
 Sources: server/services/real-savings.js, server/services/price-history-recorder.js, crawler/utils/weight-parser.js, crawler/utils/auto-mapper.js, crawler/index.js, Turso production DB query

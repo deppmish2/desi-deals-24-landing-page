@@ -345,9 +345,10 @@ export function reprocessUnmapped() {
   return authRequest("/admin-dashboard/reprocess-unmapped", { method: "POST" });
 }
 
-export function fetchReviewQueue({ status = "pending", category = "", page = 1 } = {}) {
+export function fetchReviewQueue({ status = "pending", category = "", page = 1, search = "" } = {}) {
   const params = new URLSearchParams({ status, page });
   if (category) params.set("category", category);
+  if (search) params.set("search", search);
   return authRequest(`/admin-dashboard/review-queue?${params}`);
 }
 
@@ -379,4 +380,8 @@ export function createCanonicalFromQueue({ queue_item_id, canonical_name, catego
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify({ queue_item_id, canonical_name, category, image_url, brand, base_product, product_type }),
   });
+}
+
+export function fetchCanonicalPriceData(canonicalId) {
+  return authRequest(`/admin-dashboard/review-queue/canonical/${canonicalId}/price-data`);
 }
