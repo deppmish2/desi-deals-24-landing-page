@@ -423,7 +423,7 @@ router.get("/", async (req, res, next) => {
         filtered,
         searchQuery,
         (deal) =>
-          `${deal?.product_name || ""} ${deal?.store?.name || ""} ${deal?.product_category || ""}`,
+          `${deal?.product_name || ""} ${deal?.store?.name || ""}`,
       );
       if (filtered.length === 0) {
         filtered = await phoneticFallback(db, allDeals, searchQuery);
