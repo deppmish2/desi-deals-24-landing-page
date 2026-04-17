@@ -78,7 +78,7 @@ function scoreWordMatch(hayWord, queryWord) {
       }
 
       if (
-        queryVariant.length >= 4 &&
+        queryVariant.length >= 4 && hayVariant.length >= 4 &&
         (hayVariant.startsWith(queryVariant) || queryVariant.startsWith(hayVariant))
       ) {
         best = Math.max(best, 92);
@@ -86,7 +86,7 @@ function scoreWordMatch(hayWord, queryWord) {
       }
 
       if (
-        queryVariant.length >= 5 &&
+        queryVariant.length >= 5 && hayVariant.length >= 4 &&
         (hayVariant.includes(queryVariant) || queryVariant.includes(hayVariant))
       ) {
         best = Math.max(best, 84);
