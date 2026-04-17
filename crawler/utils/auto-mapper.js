@@ -155,7 +155,10 @@ async function loadPriorityCanonicals(db) {
     // Pre-compile one regex per slot group — avoids per-deal alias iteration
     function slotRegexes(groups) {
       if (!groups) return null;
-      return groups.map((g) => new RegExp(g.map(escapeRe).join("|")));
+      return groups.map((g) => {
+        const aliases = Array.isArray(g) ? g : [g];
+        return new RegExp(aliases.map(escapeRe).join("|"));
+      });
     }
 
     return {
