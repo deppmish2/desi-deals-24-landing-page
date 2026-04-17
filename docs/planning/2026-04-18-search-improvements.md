@@ -1,7 +1,7 @@
 # Search Improvements Plan
 
 **Created:** 2026-04-18  
-**Status:** Pending
+**Status:** Steps 1, 3, 4 done (2026-04-18)
 
 ## Problem
 
