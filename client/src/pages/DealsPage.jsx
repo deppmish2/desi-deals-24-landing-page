@@ -436,6 +436,7 @@ function DealCard({
   const proxyImg = proxyDealImageUrl(deal);
   const discountPct = deal?.discount_percent ? Math.round(deal.discount_percent) : null;
   const realSavings = deal?.real_savings ?? null;
+  const isUsualPrice = deal?.real_savings_debug === 'not_cheaper' && (discountPct > 0 || !!deal.original_price) && !deal.best_before;
   const bestBeforeText = deal?.best_before ? formatBestBefore(deal.best_before) : null;
   const priceText = formatPrice(deal.sale_price, deal.currency);
   const originalPriceText = deal.original_price
@@ -510,7 +511,7 @@ function DealCard({
           </div>,
           document.body,
         )}
-        {discountPct > 0 && (
+        {discountPct > 0 && !isUsualPrice && (
           <div
             className="absolute top-3 right-3 rounded-[8px] px-2.5 py-1"
             style={{
@@ -561,7 +562,7 @@ function DealCard({
               <span className="text-[#1e293b] text-[22px] leading-[30px] font-extrabold">
                 {priceText}
               </span>
-              {originalPriceText && (
+              {originalPriceText && !isUsualPrice && (
                 <span className="text-[#94a3b8] text-[14px] leading-[20px] line-through">
                   {originalPriceText}
                 </span>
@@ -575,7 +576,12 @@ function DealCard({
           </div>
         </div>
 
-        {realSavings ? (() => {
+        {isUsualPrice && (
+          <div className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-[10px] bg-slate-100 w-fit">
+            <span className="text-[12px] font-semibold text-slate-500">Usual price</span>
+          </div>
+        )}
+        {!isUsualPrice && realSavings ? (() => {
           const realPct = Math.round(realSavings.real_discount_pct);
           const gap = discountPct ? Math.abs(realSavings.real_discount_pct - discountPct) : 0;
           const isGreat = realSavings.rating === "great";
