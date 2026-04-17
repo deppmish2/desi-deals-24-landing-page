@@ -6,7 +6,7 @@
 const CLUSTERS = [
   // ── Lentils & Pulses ────────────────────────────────────────────────────────
   ["dal", "dhal", "lentil", "lentils"],
-  ["toor", "arhar", "tuvar"],
+  ["toor", "tur", "arhar", "tuvar"],
   ["moong", "mung"],
   ["urad", "urid"],                          // urad dal = black gram
   ["masoor", "red lentil"],                  // masoor dal = red/split lentils
