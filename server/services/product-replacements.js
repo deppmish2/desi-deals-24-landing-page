@@ -101,9 +101,11 @@ async function getReplacements(db, { canonicalId, storeId, dealId = null }) {
       }
     }
 
-    // T2: same canonical (same type + size), alternative brand deals.
-    // Filter: exclude rows sharing the source brand — T2 surfaces cross-brand alternatives
-    // for the same canonical spec. No canonical-level dedup: each deal row is independent.
+    // T2: same canonical, unbranded deals only.
+    // Canonical IDs encode brand names, so for branded canonicals srcBrand is always present
+    // and all same-canonical deals share that brand — the filter excludes them all, leaving T2
+    // empty. T2 only fires meaningfully for unbranded/generic canonicals (srcBrand === null),
+    // where the short-circuit (!srcBrand) passes all same-canonical deals.
     if (row.canonical_id === canonicalId) {
       if (
         (!srcBrand || !nameHasBrand(row.product_name, srcBrand)) &&

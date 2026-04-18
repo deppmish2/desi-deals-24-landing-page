@@ -217,7 +217,7 @@ Each deal row is evaluated and placed into the **first** matching tier, then ski
 | Tier | Label | Relevance | Criteria |
 |---|---|---|---|
 | T1 | `same_pack` | 1.0 | Same base product + same brand + different size (different canonical, weight must divide evenly into source) |
-| T2 | `same_canonical` | 0.85 | Same canonical ID, different brand — surfaces cross-brand alternatives for the same spec |
+| T2 | `same_canonical` | 0.85 | Same canonical ID, filtered to exclude the source brand. In practice only fires for **unbranded canonicals** (where no brand is detected, so all same-canonical deals pass). For branded canonicals the canonical ID encodes the brand, so all same-canonical deals share that brand and the filter excludes them all — T2 is effectively empty. |
 | T3 | `same_brand` | 0.65 | Same brand + same category + different base product |
 | T4 | `same_category` | 0.4 | Same category only — **only emitted when T1+T2+T3 are all empty** |
 
