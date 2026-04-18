@@ -337,6 +337,10 @@ export function fetchCanonicalStats() {
   return authRequest("/admin-dashboard/canonical-stats");
 }
 
+export function fetchCanonicalPriceData(canonicalId) {
+  return authRequest(`/admin-dashboard/review-queue/canonical/${encodeURIComponent(canonicalId)}/price-data`);
+}
+
 export function fetchMappedProducts() {
   return authRequest("/admin-dashboard/mapped-products");
 }
