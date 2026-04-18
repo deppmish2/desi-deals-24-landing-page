@@ -2,6 +2,11 @@
 
 const synonyms = require("./synonyms.json");
 
+const BBD_RE = /\b(best\s+before|best\s+by|use\s+by|bbd|expiry|expiry\s+date|exp)\b/g;
+const DATE_FRAG_RE = /\b\d{1,2}[\s./]\d{1,2}(\s*\d{2,4})?\b/g;
+const YEAR_RE = /\b20\d{2}\b/g;
+// Strips patterns like "500g", "1.5kg", "750ml", "2x250g" (no word boundary between number and unit)
+const WEIGHT_VAL_RE = /\b\d+(?:[.,]\d+)?(?:\s*x\s*\d+(?:[.,]\d+)?)?\s*(?:kg|kilo|kilogram|gm?|gram|ml|ltr?|litre?|liter|oz|lb|l)\b/ig;
 const UNIT_RE = /\b(kg|kilo|kilogram|g|gram|ml|ltr|litre|liter|l|oz|lb)\b/g;
 const QUALIFIER_RE =
   /\b(organic|premium|extra|special|fresh|pure|whole|split|hulled)\b/g;
@@ -26,6 +31,10 @@ function normalise(rawName) {
   return applySynonyms(
     source
       .replace(/[^a-z0-9\s]/g, " ")
+      .replace(BBD_RE, " ")
+      .replace(DATE_FRAG_RE, " ")
+      .replace(YEAR_RE, " ")
+      .replace(WEIGHT_VAL_RE, " ")
       .replace(UNIT_RE, " ")
       .replace(QUALIFIER_RE, " ")
       .replace(PACK_RE, " "),

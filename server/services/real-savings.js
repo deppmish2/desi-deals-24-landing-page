@@ -12,14 +12,13 @@
  * canonicals per pack size.
  *
  * Evidence layers (priority order):
- *   Layer 1 — Canonical median price_per_kg: non-deal rows in deal_price_history
- *             linked to the same canonical via deal_mappings, last 90 days.
+ *   Layer 1 — Canonical median normal_price_per_kg across ALL history rows,
+ *             where normal_price = COALESCE(original_price, sale_price).
+ *             This handles products that are always on sale: even during a
+ *             discount period the original_price column carries the real price.
+ *             Requires ≥ 3 observations. Pools all stores mapped to the canonical.
  *   Layer 2 — Stated original_price: store-reported, less reliable.
  *             Only used when no canonical price_per_kg history exists.
- *
- * Requires ≥ 3 non-deal observations for Layer 1 — a single observation from the
- * deal's own URL (same store, same product, previously not on sale) is not
- * trustworthy enough to call "market price".
  *
  * Returns null if there is insufficient evidence.
  */
@@ -62,7 +61,7 @@ async function batchGetRealSavings(db, deals) {
   try {
     const placeholders = dealIds.map(() => "?").join(", ");
     const mappingRes = await db.execute(
-      `SELECT deal_id, canonical_id FROM deal_mappings WHERE deal_id IN (${placeholders})`,
+      `SELECT id AS deal_id, canonical_id FROM deals WHERE id IN (${placeholders}) AND canonical_id IS NOT NULL`,
       dealIds,
     );
     canonicalMap = new Map((mappingRes.rows ?? []).map((r) => [r.deal_id, r.canonical_id]));
@@ -77,40 +76,48 @@ async function batchGetRealSavings(db, deals) {
     try {
       const placeholders = canonicalIds.map(() => "?").join(", ");
       // Join through deals table (product_url links deal_price_history ↔ deals)
+      // normal_price = COALESCE(original_price, sale_price) — the un-discounted price
+      // from any row, regardless of whether a discount was active at crawl time.
       const histRes = await db.execute(
-        `SELECT dm.canonical_id, dph.price_per_kg, dph.is_deal
+        `SELECT dm.canonical_id,
+                dph.store_id,
+                COALESCE(dph.original_price, dph.sale_price) * dph.price_per_kg / dph.sale_price AS normal_price_per_kg
          FROM deal_price_history dph
          JOIN deals d ON d.product_url = dph.product_url
          JOIN deal_mappings dm ON dm.deal_id = d.id
          WHERE dm.canonical_id IN (${placeholders})
-           AND dph.is_deal = 0
            AND dph.crawl_date >= date('now', '-90 days')
            AND dph.price_per_kg IS NOT NULL
-           AND dph.price_per_kg > 0`,
+           AND dph.price_per_kg > 0
+           AND dph.sale_price > 0`,
         canonicalIds,
       );
 
-      // Group non-deal price_per_kg values by canonical
+      // Group normal_price_per_kg values and distinct store_ids by canonical
       const byCanonical = new Map();
       for (const row of histRes.rows ?? []) {
         const cid = row.canonical_id;
-        if (!byCanonical.has(cid)) byCanonical.set(cid, []);
-        const ppk = Number(row.price_per_kg);
-        if (Number.isFinite(ppk)) byCanonical.get(cid).push(ppk);
+        if (!byCanonical.has(cid)) byCanonical.set(cid, { prices: [], stores: new Set() });
+        const npk = Number(row.normal_price_per_kg);
+        if (Number.isFinite(npk) && npk > 0) {
+          byCanonical.get(cid).prices.push(npk);
+          byCanonical.get(cid).stores.add(row.store_id);
+        }
       }
 
       // Assign reference to each deal via its canonical
       for (const deal of deals) {
         const cid = canonicalMap.get(deal.id);
         if (!cid) continue;
-        const prices = byCanonical.get(cid);
-        if (!prices || prices.length < 3) continue; // require ≥ 3 non-deal observations
-        const refPpk = median(prices);
+        const entry = byCanonical.get(cid);
+        if (!entry || entry.prices.length < 3) continue; // require ≥ 3 observations
+        const refPpk = median(entry.prices);
         if (refPpk != null) {
           result.set(deal.id, {
             reference_price_per_kg: Math.round(refPpk * 100) / 100,
             reference_source: "canonical_historical",
-            observations: prices.length,
+            observations: entry.prices.length,
+            store_count: entry.stores.size,
             canonical_id: cid,
           });
         }
@@ -179,12 +186,27 @@ function computeRealSavings(deal, historyData) {
 
       if (shouldSuppressBadge(rounded, statedDiscount)) return null;
 
+      // Detect inflated original_price: if store's stated original is >15% above market median
+      let originalPriceInflated = false;
+      let inflationRatio = null;
+      if (deal.original_price && deal.sale_price && Number(deal.price_per_kg) > 0) {
+        const statedOriginalPpk = Number(deal.original_price) * Number(deal.price_per_kg) / Number(deal.sale_price);
+        if (Number.isFinite(statedOriginalPpk) && statedOriginalPpk > refPpk * 1.15) {
+          originalPriceInflated = true;
+          inflationRatio = Math.round(statedOriginalPpk / refPpk * 100) / 100;
+        }
+      }
+
       return {
         reference_price_per_kg: refPpk,
         reference_source: historyData.reference_source,
         real_discount_pct: rounded,
         rating,
         observations: historyData.observations ?? null,
+        store_count: historyData.store_count ?? null,
+        market_confidence: (historyData.store_count ?? 0) > 1 ? "high" : "low",
+        original_price_inflated: originalPriceInflated,
+        inflation_ratio: inflationRatio,
         canonical_id: historyData.canonical_id ?? null,
       };
     }
@@ -220,4 +242,46 @@ function computeRealSavings(deal, historyData) {
   return null;
 }
 
-module.exports = { batchGetRealSavings, computeRealSavings };
+/**
+ * Explain why real savings badge is absent for a deal.
+ * Call only when computeRealSavings(deal, historyData) returns null.
+ *
+ * @param {object}      deal        - Serialised deal
+ * @param {object|null} historyData - Entry from batchGetRealSavings map
+ * @returns {string} reason code
+ */
+function explainRealSavings(deal, historyData) {
+  if (computeRealSavings(deal, historyData) !== null) return null;
+
+  if (!deal.canonical_id) return "no_canonical";
+
+  const statedDiscount = Number(deal.discount_percent) || null;
+
+  // Trace Layer 1
+  if (historyData?.reference_price_per_kg) {
+    const dealPpk = Number(deal.price_per_kg);
+    if (Number.isFinite(dealPpk) && dealPpk > 0) {
+      const refPpk = historyData.reference_price_per_kg;
+      if (refPpk <= dealPpk) return "not_cheaper";
+      const realPct = Math.round(((refPpk - dealPpk) / refPpk) * 1000) / 10;
+      if (realPct < 5) return "rating_too_low";
+      if (shouldSuppressBadge(realPct, statedDiscount)) return "badge_suppressed";
+    }
+    // no price_per_kg — fall through to Layer 2
+  }
+
+  // Layer 2
+  const currentPrice = Number(deal.sale_price);
+  if (!Number.isFinite(currentPrice) || currentPrice <= 0) return "no_price_data";
+  if (!deal.original_price || Number(deal.original_price) <= currentPrice) {
+    return historyData ? "no_original_price" : "no_history";
+  }
+  const refPrice = Number(deal.original_price);
+  const realPct = Math.round(((refPrice - currentPrice) / refPrice) * 1000) / 10;
+  if (realPct < 5) return "rating_too_low";
+  if (shouldSuppressBadge(realPct, statedDiscount)) return "badge_suppressed";
+
+  return "unknown";
+}
+
+module.exports = { batchGetRealSavings, computeRealSavings, explainRealSavings };

@@ -13,6 +13,7 @@ const authRouter = require("./routes/auth");
 const adminRouter = require("./routes/admin");
 const adminDashboardRouter = require("./routes/admin-dashboard");
 const adminStatsRouter = require("./routes/admin-stats");
+const adminReviewQueueRouter = require("./routes/admin-review-queue");
 const contactRouter = require("./routes/contact");
 const waitlistRouter = require("./routes/waitlist");
 const healthRouter = require("./routes/health");
@@ -54,6 +55,7 @@ app.use("/api/auth", authRouter); // compatibility for older frontend builds
 app.use("/api/v1/admin", adminRouter);
 app.use("/api/v1/admin-dashboard", adminDashboardRouter);
 app.use("/api/v1/admin-dashboard", adminStatsRouter);
+app.use("/api/v1/admin-dashboard", adminReviewQueueRouter);
 app.use("/api/v1/contact", contactRouter);
 app.use("/api/v1/waitlist", waitlistRouter);
 app.use("/api/v1/health", healthRouter);

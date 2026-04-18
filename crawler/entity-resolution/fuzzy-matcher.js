@@ -54,10 +54,13 @@ function tokenCoverageScore(source, target) {
   if (sourceTokens.length === 0 || targetTokens.length === 0) return 0;
 
   const matched = sourceTokens.filter((sourceToken) =>
-    targetTokens.some(
-      (targetToken) =>
-        targetToken.includes(sourceToken) || sourceToken.includes(targetToken),
-    ),
+    targetTokens.some((targetToken) => {
+      // Short tokens: exact match only to avoid single-char false positives
+      if (targetToken.length < 3 || sourceToken.length < 3) {
+        return targetToken === sourceToken;
+      }
+      return targetToken.includes(sourceToken) || sourceToken.includes(targetToken);
+    }),
   ).length;
   return matched / sourceTokens.length;
 }
@@ -91,15 +94,8 @@ function fuzzyMatch(normalisedName, candidates) {
   }
 
   if (!best) return null;
-  if (best.score >= 0.78) {
+  if (best.score >= 0.90) {
     return { match: best.candidate, confidence: best.score, method: "fuzzy" };
-  }
-  if (best.score >= 0.58) {
-    return {
-      match: best.candidate,
-      confidence: best.score,
-      method: "ambiguous",
-    };
   }
   return null;
 }

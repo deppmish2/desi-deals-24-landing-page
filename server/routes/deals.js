@@ -10,6 +10,7 @@ const {
   seededShuffle,
 } = require("../services/deal-order");
 const { filterAndRankDealsByQuery } = require("../services/deal-search");
+const { phoneticFallback } = require("../services/phonetic-search");
 const { trackEvent } = require("../services/event-tracker");
 const { formatBerlinDateKey } = require("../services/berlin-time");
 const { trackSearchQuery } = require("../services/search-tracker");
@@ -316,6 +317,8 @@ router.get("/", async (req, res, next) => {
     const hideExpired = req.query.hide_expired === "1";
     const realSavingsGap = parseFloat(req.query.real_savings_gap || "0") || 0;
     const sort = String(req.query.sort || "").trim();
+    const includeInactive =
+      process.env.NODE_ENV !== "production" && req.query.include_inactive === "1";
     const usesExplicitOrdering =
       sort === "discount" || sort === "price_per_kg" || sort === "price" || sort === "real_savings";
     const canUseFastPath = Boolean(
@@ -328,7 +331,8 @@ router.get("/", async (req, res, next) => {
       priceMax <= 0 &&
       inStock &&
       !hideExpired &&
-      !usesExplicitOrdering,
+      !usesExplicitOrdering &&
+      !includeInactive,
     );
 
     if (canUseFastPath) {
@@ -402,22 +406,30 @@ router.get("/", async (req, res, next) => {
     }
 
     // Load + shuffle active deals — cached per latest completed crawl.
-    let allDeals = getMemCache(cacheKey);
+    let allDeals = includeInactive ? null : getMemCache(cacheKey);
     if (!allDeals) {
-      const rows = await db.prepare(ACTIVE_DEALS_SQL).all();
+      const sql = includeInactive
+        ? `${BASE_DEALS_SQL} WHERE lower(d.store_id) NOT IN (${EXCLUDED_STORE_IDS_SQL}) AND ${DISPLAYABLE_DISCOUNT_SQL}`
+        : ACTIVE_DEALS_SQL;
+      const rows = await db.prepare(sql).all();
       allDeals = seededShuffle(rows.map(serializeDeal), dateSeed(cacheKey));
-      if (allDeals.length > 0) setMemCache(cacheKey, allDeals);
+      if (!includeInactive && allDeals.length > 0) setMemCache(cacheKey, allDeals);
     }
 
     // Apply filters (all gated in frontend, server supports freely)
     let filtered = allDeals;
+    let isPhoneticFallback = false;
     if (searchQuery) {
       filtered = filterAndRankDealsByQuery(
         filtered,
         searchQuery,
         (deal) =>
-          `${deal?.product_name || ""} ${deal?.store?.name || ""} ${deal?.product_category || ""}`,
+          `${deal?.product_name || ""} ${deal?.store?.name || ""}`,
       );
+      if (filtered.length === 0) {
+        filtered = await phoneticFallback(db, allDeals, searchQuery);
+        isPhoneticFallback = filtered.length > 0;
+      }
     }
     if (filterStores.length > 0) {
       const storeFilterSet = new Set(filterStores);
@@ -527,10 +539,13 @@ router.get("/", async (req, res, next) => {
 
     // Attach Real Savings ratings (graceful no-op if history table not yet populated)
     const realSavingsMap = await batchGetRealSavings(db, data);
-    const dataWithSavings = data.map((deal) => ({
-      ...deal,
-      real_savings: computeRealSavings(deal, realSavingsMap.get(deal.id)),
-    }));
+    const dataWithSavings = data.map((deal) => {
+      const histData = realSavingsMap.get(deal.id);
+      const rs = computeRealSavings(deal, histData);
+      const out = { ...deal, real_savings: rs };
+      if (!rs) out.real_savings_debug = explainRealSavings(deal, histData);
+      return out;
+    });
 
     // CDN caches for 5 min; serves stale up to 1h while revalidating.
     res.set(
@@ -549,6 +564,7 @@ router.get("/", async (req, res, next) => {
       meta: {
         sort: sort || "random",
         date: crawlDate,
+        phonetic_fallback: isPhoneticFallback,
         store_diversity: {
           no_adjacent_same_store: usesExplicitOrdering
             ? false

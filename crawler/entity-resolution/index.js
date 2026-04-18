@@ -2,7 +2,6 @@
 
 const { normalise } = require("./normaliser");
 const { fuzzyMatch } = require("./fuzzy-matcher");
-const { resolveAmbiguous } = require("./ai-resolver");
 
 async function resolveName(rawName, canonicalNames) {
   const normalised = normalise(rawName);
@@ -43,38 +42,11 @@ async function resolveName(rawName, canonicalNames) {
     return { normalised, match: null, confidence: 0, method: "new" };
   }
 
-  if (fuzzy.method === "fuzzy") {
-    return {
-      normalised,
-      match: matchedCanonicalName,
-      confidence: fuzzy.confidence,
-      method: "fuzzy",
-    };
-  }
-
-  const ai = await resolveAmbiguous(
-    { raw_name: rawName, normalised_name: normalised },
-    { canonical_name: matchedCanonicalName },
-  );
-
-  if (ai === "YES") {
-    return {
-      normalised,
-      match: matchedCanonicalName,
-      confidence: 0.9,
-      method: "ai",
-    };
-  }
-
-  if (ai === "NO") {
-    return { normalised, match: null, confidence: 0, method: "new" };
-  }
-
   return {
     normalised,
     match: matchedCanonicalName,
     confidence: fuzzy.confidence,
-    method: "manual_review",
+    method: "fuzzy",
   };
 }
 
