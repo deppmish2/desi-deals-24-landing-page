@@ -340,3 +340,11 @@ export function fetchCanonicalStats() {
 export function fetchMappedProducts() {
   return authRequest("/admin-dashboard/mapped-products");
 }
+
+export function fetchReplacements(canonicalId, storeId, dealId) {
+  return request("/deals/replacements", {
+    canonical_id: canonicalId,
+    store_id: storeId,
+    ...(dealId && { deal_id: dealId }),
+  });
+}

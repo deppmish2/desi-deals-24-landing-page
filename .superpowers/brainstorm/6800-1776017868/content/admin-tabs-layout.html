@@ -1,0 +1,168 @@
+<h2>Admin Dashboard — Tab Layout</h2>
+<p class="subtitle">Proposed reorganisation of existing content into 3 tabs, plus new Canonical Stats tab</p>
+
+<div class="mockup" style="max-width:900px;margin:0 auto;">
+  <div class="mockup-header">Admin Dashboard — /admin</div>
+  <div class="mockup-body" style="padding:0;font-family:system-ui,sans-serif;">
+
+    <!-- Top bar -->
+    <div style="background:#fff;border-bottom:1px solid #f1f5f9;padding:14px 24px;display:flex;align-items:center;justify-content:between;gap:12px;">
+      <span style="font-weight:900;font-size:14px;color:#0f172a;">DesiDeals24</span>
+      <span style="background:#f1f5f9;color:#64748b;font-size:10px;font-weight:700;padding:2px 8px;border-radius:4px;letter-spacing:1px;margin-left:8px;">ADMIN</span>
+      <span style="margin-left:auto;font-size:12px;color:#94a3b8;font-weight:700;">Sign out</span>
+    </div>
+
+    <!-- Tab bar -->
+    <div style="background:#fff;border-bottom:1px solid #f1f5f9;padding:0 24px;display:flex;gap:0;">
+      <div style="padding:12px 20px;font-size:13px;font-weight:700;color:#16a34a;border-bottom:2px solid #16a34a;cursor:pointer;">Crawl Stats</div>
+      <div style="padding:12px 20px;font-size:13px;font-weight:600;color:#94a3b8;cursor:pointer;">User Stats</div>
+      <div style="padding:12px 20px;font-size:13px;font-weight:600;color:#94a3b8;cursor:pointer;">Canonical Stats</div>
+    </div>
+
+    <!-- Tab content preview (Crawl Stats - existing) -->
+    <div style="padding:24px;background:#f8fafc;">
+
+      <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin-bottom:20px;">
+        <div style="background:#fff;border:1px solid #f1f5f9;border-radius:14px;padding:16px;">
+          <div style="font-size:10px;font-weight:700;color:#94a3b8;text-transform:uppercase;letter-spacing:1px;margin-bottom:6px;">Latest crawl</div>
+          <div style="font-size:22px;font-weight:900;color:#0f172a;">2026-04-12</div>
+        </div>
+        <div style="background:#fff;border:1px solid #f1f5f9;border-radius:14px;padding:16px;">
+          <div style="font-size:10px;font-weight:700;color:#94a3b8;text-transform:uppercase;letter-spacing:1px;margin-bottom:6px;">Stores ok</div>
+          <div style="font-size:22px;font-weight:900;color:#0f172a;">8</div>
+        </div>
+        <div style="background:#fff;border:1px solid #f1f5f9;border-radius:14px;padding:16px;">
+          <div style="font-size:10px;font-weight:700;color:#94a3b8;text-transform:uppercase;letter-spacing:1px;margin-bottom:6px;">Deals found</div>
+          <div style="font-size:22px;font-weight:900;color:#0f172a;">2,850</div>
+        </div>
+        <div style="background:#fff;border:1px solid #f1f5f9;border-radius:14px;padding:16px;">
+          <div style="font-size:10px;font-weight:700;color:#94a3b8;text-transform:uppercase;letter-spacing:1px;margin-bottom:6px;">Status</div>
+          <div style="font-size:13px;font-weight:700;color:#16a34a;background:#f0fdf4;border-radius:8px;padding:4px 10px;display:inline-block;margin-top:4px;">Completed</div>
+        </div>
+      </div>
+
+      <div style="background:#fff;border:1px solid #f1f5f9;border-radius:14px;padding:16px;margin-bottom:16px;">
+        <div style="font-size:10px;font-weight:700;color:#94a3b8;letter-spacing:1px;text-transform:uppercase;margin-bottom:12px;">Store crawl report</div>
+        <div style="display:flex;flex-direction:column;gap:8px;">
+          <div style="display:flex;align-items:center;justify-content:space-between;padding:10px 14px;border:1px solid #f1f5f9;border-radius:10px;">
+            <div>
+              <div style="font-size:13px;font-weight:700;color:#1e293b;">Jamoona</div>
+              <div style="font-size:11px;color:#94a3b8;">450 deals · 0 errors</div>
+            </div>
+            <span style="background:#f0fdf4;color:#16a34a;font-size:10px;font-weight:700;padding:2px 8px;border-radius:99px;">Completed</span>
+          </div>
+          <div style="display:flex;align-items:center;justify-content:space-between;padding:10px 14px;border:1px solid #f1f5f9;border-radius:10px;">
+            <div>
+              <div style="font-size:13px;font-weight:700;color:#1e293b;">Little India</div>
+              <div style="font-size:11px;color:#94a3b8;">312 deals · 0 errors</div>
+            </div>
+            <span style="background:#f0fdf4;color:#16a34a;font-size:10px;font-weight:700;padding:2px 8px;border-radius:99px;">Completed</span>
+          </div>
+          <div style="display:flex;align-items:center;justify-content:space-between;padding:10px 14px;border:1px solid #f1f5f9;border-radius:10px;opacity:0.5;">
+            <div style="font-size:11px;color:#94a3b8;">+ more stores…</div>
+          </div>
+        </div>
+      </div>
+
+      <div style="text-align:center;color:#94a3b8;font-size:12px;padding:8px;">(Crawl Stats tab — existing content reorganised here)</div>
+    </div>
+  </div>
+</div>
+
+<div style="margin-top:32px;max-width:900px;margin-left:auto;margin-right:auto;">
+  <h3>Canonical Stats tab — new content</h3>
+  <p class="subtitle" style="margin-bottom:20px;">What would you see in the Canonical Stats tab</p>
+
+  <div class="mockup">
+    <div class="mockup-header">Canonical Stats tab</div>
+    <div class="mockup-body" style="padding:20px;background:#f8fafc;font-family:system-ui,sans-serif;">
+
+      <!-- KPIs -->
+      <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin-bottom:20px;">
+        <div style="background:#fff;border:1px solid #f1f5f9;border-radius:14px;padding:16px;">
+          <div style="font-size:10px;font-weight:700;color:#94a3b8;text-transform:uppercase;letter-spacing:1px;margin-bottom:6px;">Total canonicals</div>
+          <div style="font-size:22px;font-weight:900;color:#0f172a;">1,575</div>
+        </div>
+        <div style="background:#fff;border:1px solid #f1f5f9;border-radius:14px;padding:16px;">
+          <div style="font-size:10px;font-weight:700;color:#94a3b8;text-transform:uppercase;letter-spacing:1px;margin-bottom:6px;">Deals mapped</div>
+          <div style="font-size:22px;font-weight:900;color:#16a34a;">1,586</div>
+          <div style="font-size:11px;color:#94a3b8;">of 2,850 active</div>
+        </div>
+        <div style="background:#fff;border:1px solid #f1f5f9;border-radius:14px;padding:16px;">
+          <div style="font-size:10px;font-weight:700;color:#94a3b8;text-transform:uppercase;letter-spacing:1px;margin-bottom:6px;">Unbranded</div>
+          <div style="font-size:22px;font-weight:900;color:#f59e0b;">—</div>
+          <div style="font-size:11px;color:#94a3b8;">need review</div>
+        </div>
+        <div style="background:#fff;border:1px solid #f1f5f9;border-radius:14px;padding:16px;">
+          <div style="font-size:10px;font-weight:700;color:#94a3b8;text-transform:uppercase;letter-spacing:1px;margin-bottom:6px;">Unmapped deals</div>
+          <div style="font-size:22px;font-weight:900;color:#ef4444;">1,264</div>
+          <div style="font-size:11px;color:#94a3b8;">no canonical</div>
+        </div>
+      </div>
+
+      <!-- Unbranded canonicals table -->
+      <div style="background:#fff;border:1px solid #f1f5f9;border-radius:14px;padding:16px;margin-bottom:16px;">
+        <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:12px;">
+          <div style="font-size:10px;font-weight:700;color:#94a3b8;letter-spacing:1px;text-transform:uppercase;">Unbranded canonicals — needs review</div>
+          <span style="background:#fef3c7;color:#92400e;font-size:10px;font-weight:700;padding:2px 8px;border-radius:99px;">⚠ 47 flagged</span>
+        </div>
+        <table style="width:100%;font-size:12px;border-collapse:collapse;">
+          <thead>
+            <tr style="text-align:left;color:#94a3b8;font-size:10px;font-weight:700;text-transform:uppercase;border-bottom:1px solid #f1f5f9;">
+              <th style="padding:0 0 8px 0;">Canonical name</th>
+              <th style="padding:0 0 8px 12px;">Detected brand</th>
+              <th style="padding:0 0 8px 12px;">Issue</th>
+              <th style="padding:0 0 8px 12px;text-align:right;">Deals</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr style="border-bottom:1px solid #f8fafc;">
+              <td style="padding:10px 0;font-weight:600;color:#1e293b;">Gulab Jamun Mix</td>
+              <td style="padding:10px 12px;"><code style="background:#f1f5f9;padding:2px 6px;border-radius:4px;font-size:11px;">gulab</code></td>
+              <td style="padding:10px 12px;"><span style="background:#fef3c7;color:#92400e;font-size:10px;font-weight:700;padding:2px 6px;border-radius:4px;">Product word as brand</span></td>
+              <td style="padding:10px 0;text-align:right;font-weight:700;color:#16a34a;">3</td>
+            </tr>
+            <tr style="border-bottom:1px solid #f8fafc;">
+              <td style="padding:10px 0;font-weight:600;color:#1e293b;">Red Chili Powder</td>
+              <td style="padding:10px 12px;"><code style="background:#f1f5f9;padding:2px 6px;border-radius:4px;font-size:11px;">red</code></td>
+              <td style="padding:10px 12px;"><span style="background:#fef3c7;color:#92400e;font-size:10px;font-weight:700;padding:2px 6px;border-radius:4px;">Product word as brand</span></td>
+              <td style="padding:10px 0;text-align:right;font-weight:700;color:#16a34a;">12</td>
+            </tr>
+            <tr style="border-bottom:1px solid #f8fafc;">
+              <td style="padding:10px 0;font-weight:600;color:#1e293b;">Basmati Rice Extra Long 5kg</td>
+              <td style="padding:10px 12px;"><span style="color:#94a3b8;font-size:11px;">null</span></td>
+              <td style="padding:10px 12px;"><span style="background:#fee2e2;color:#991b1b;font-size:10px;font-weight:700;padding:2px 6px;border-radius:4px;">No brand slots</span></td>
+              <td style="padding:10px 0;text-align:right;font-weight:700;color:#16a34a;">0</td>
+            </tr>
+            <tr style="border-bottom:1px solid #f8fafc;opacity:0.5;">
+              <td style="padding:10px 0;font-size:11px;color:#94a3b8;">+ more…</td>
+              <td></td><td></td><td></td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+
+      <!-- Mapping health -->
+      <div style="background:#fff;border:1px solid #f1f5f9;border-radius:14px;padding:16px;">
+        <div style="font-size:10px;font-weight:700;color:#94a3b8;letter-spacing:1px;text-transform:uppercase;margin-bottom:12px;">Deal mapping health</div>
+        <div style="display:flex;flex-direction:column;gap:8px;">
+          <div style="display:flex;align-items:center;gap:12px;">
+            <div style="font-size:12px;color:#1e293b;width:120px;">Slot match</div>
+            <div style="flex:1;height:8px;background:#f1f5f9;border-radius:99px;overflow:hidden;">
+              <div style="width:56%;height:100%;background:#16a34a;border-radius:99px;"></div>
+            </div>
+            <div style="font-size:12px;font-weight:700;color:#16a34a;width:80px;text-align:right;">1,586 (56%)</div>
+          </div>
+          <div style="display:flex;align-items:center;gap:12px;">
+            <div style="font-size:12px;color:#1e293b;width:120px;">No mapping</div>
+            <div style="flex:1;height:8px;background:#f1f5f9;border-radius:99px;overflow:hidden;">
+              <div style="width:44%;height:100%;background:#fca5a5;border-radius:99px;"></div>
+            </div>
+            <div style="font-size:12px;font-weight:700;color:#ef4444;width:80px;text-align:right;">1,264 (44%)</div>
+          </div>
+        </div>
+      </div>
+
+    </div>
+  </div>
+</div>

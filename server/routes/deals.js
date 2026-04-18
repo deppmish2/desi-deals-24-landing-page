@@ -15,6 +15,7 @@ const { formatBerlinDateKey } = require("../services/berlin-time");
 const { trackSearchQuery } = require("../services/search-tracker");
 const { verifyJwt } = require("../utils/jwt");
 const { batchGetRealSavings, computeRealSavings } = require("../services/real-savings");
+const { getReplacements } = require("../services/product-replacements");
 
 const router = express.Router();
 const EXCLUDED_STORE_IDS = ["dookan"];
@@ -597,4 +598,36 @@ router.get("/", async (req, res, next) => {
   }
 });
 
+router.get("/replacements", async (req, res, next) => {
+  try {
+    const canonicalId = String(req.query.canonical_id || "").trim();
+    const storeId = String(req.query.store_id || "").trim();
+    const dealId = String(req.query.deal_id || "").trim() || null;
+    if (!canonicalId || !storeId) {
+      return res
+        .status(400)
+        .json({ error: "canonical_id and store_id are required" });
+    }
+
+    const result = await getReplacements(db, { canonicalId, storeId, dealId });
+    if (!result) return res.status(404).json({ error: "canonical not found" });
+
+    res.set(
+      "Cache-Control",
+      "public, s-maxage=120, stale-while-revalidate=600"
+    );
+    res.json({
+      canonical_id: canonicalId,
+      store_id: storeId,
+      tiers: result.tiers.map((tier) => ({
+        ...tier,
+        deals: tier.deals.map(serializeDeal),
+      })),
+    });
+  } catch (error) {
+    next(error);
+  }
+});
+
 module.exports = router;
+module.exports.serializeDeal = serializeDeal;
