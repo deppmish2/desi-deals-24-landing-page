@@ -544,6 +544,8 @@ function DealCard({
   const [imgError, setImgError] = useState(false);
   const [showAdminTooltip, setShowAdminTooltip] = useState(false);
   const [tooltipPos, setTooltipPos] = useState({ top: 0, left: 0 });
+  const [showImageDebug, setShowImageDebug] = useState(false);
+  const [imageDebugPos, setImageDebugPos] = useState({ top: 0, left: 0 });
   const [showReplacements, setShowReplacements] = useState(false);
   const [replacementTiers, setReplacementTiers] = useState(null);
   const [replacementsLoading, setReplacementsLoading] = useState(false);
