@@ -341,47 +341,10 @@ export function fetchMappedProducts() {
   return authRequest("/admin-dashboard/mapped-products");
 }
 
-export function reprocessUnmapped() {
-  return authRequest("/admin-dashboard/reprocess-unmapped", { method: "POST" });
-}
-
-export function fetchReviewQueue({ status = "pending", category = "", page = 1, search = "" } = {}) {
-  const params = new URLSearchParams({ status, page });
-  if (category) params.set("category", category);
-  if (search) params.set("search", search);
-  return authRequest(`/admin-dashboard/review-queue?${params}`);
-}
-
-export function confirmQueueItem(id, canonicalId) {
-  return authRequest(`/admin-dashboard/review-queue/${id}`, {
-    method: "PATCH",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({ canonical_id: canonicalId }),
+export function fetchReplacements(canonicalId, storeId, dealId) {
+  return request("/deals/replacements", {
+    canonical_id: canonicalId,
+    store_id: storeId,
+    ...(dealId && { deal_id: dealId }),
   });
-}
-
-export function dismissQueueItem(id) {
-  return authRequest(`/admin-dashboard/review-queue/${id}/dismiss`, {
-    method: "POST",
-  });
-}
-
-export function updateCanonical(canonicalId, { canonical_name, brand, base_product, product_type, category }) {
-  return authRequest(`/admin-dashboard/review-queue/canonical/${canonicalId}`, {
-    method: "PATCH",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({ canonical_name, brand, base_product, product_type, category }),
-  });
-}
-
-export function createCanonicalFromQueue({ queue_item_id, canonical_name, category, image_url, brand, base_product, product_type }) {
-  return authRequest("/admin-dashboard/review-queue/canonical", {
-    method: "POST",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({ queue_item_id, canonical_name, category, image_url, brand, base_product, product_type }),
-  });
-}
-
-export function fetchCanonicalPriceData(canonicalId) {
-  return authRequest(`/admin-dashboard/review-queue/canonical/${canonicalId}/price-data`);
 }

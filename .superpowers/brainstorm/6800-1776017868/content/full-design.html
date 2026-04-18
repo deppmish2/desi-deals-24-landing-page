@@ -1,0 +1,152 @@
+<h2>Full Design — Admin Dashboard Redesign</h2>
+<p class="subtitle">3 tabs + known-brands file + Canonical Stats. Click through the tabs below.</p>
+
+<div style="max-width:960px;margin:0 auto;font-family:system-ui,sans-serif;">
+
+  <!-- Simulated tab switcher -->
+  <div style="background:#fff;border:1px solid #e2e8f0;border-radius:16px;overflow:hidden;margin-bottom:32px;">
+
+    <!-- Tab bar -->
+    <div style="border-bottom:1px solid #f1f5f9;padding:0 24px;display:flex;gap:0;background:#fff;">
+      <div onclick="showTab('crawl')" id="tab-crawl" style="padding:13px 20px;font-size:13px;font-weight:700;color:#16a34a;border-bottom:2px solid #16a34a;cursor:pointer;">Crawl Stats</div>
+      <div onclick="showTab('user')" id="tab-user" style="padding:13px 20px;font-size:13px;font-weight:600;color:#94a3b8;border-bottom:2px solid transparent;cursor:pointer;">User Stats</div>
+      <div onclick="showTab('canonical')" id="tab-canonical" style="padding:13px 20px;font-size:13px;font-weight:600;color:#94a3b8;border-bottom:2px solid transparent;cursor:pointer;">Canonical Stats</div>
+    </div>
+
+    <!-- Crawl Stats tab -->
+    <div id="pane-crawl" style="padding:24px;background:#f8fafc;">
+      <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin-bottom:20px;">
+        <div style="background:#fff;border:1px solid #f1f5f9;border-radius:14px;padding:16px;"><div style="font-size:10px;font-weight:700;color:#94a3b8;text-transform:uppercase;letter-spacing:1px;margin-bottom:6px;">Latest crawl</div><div style="font-size:22px;font-weight:900;color:#0f172a;">2026-04-12</div></div>
+        <div style="background:#fff;border:1px solid #f1f5f9;border-radius:14px;padding:16px;"><div style="font-size:10px;font-weight:700;color:#94a3b8;text-transform:uppercase;letter-spacing:1px;margin-bottom:6px;">Stores ok</div><div style="font-size:22px;font-weight:900;color:#0f172a;">8</div></div>
+        <div style="background:#fff;border:1px solid #f1f5f9;border-radius:14px;padding:16px;"><div style="font-size:10px;font-weight:700;color:#94a3b8;text-transform:uppercase;letter-spacing:1px;margin-bottom:6px;">Deals found</div><div style="font-size:22px;font-weight:900;color:#0f172a;">2,850</div></div>
+        <div style="background:#fff;border:1px solid #f1f5f9;border-radius:14px;padding:16px;"><div style="font-size:10px;font-weight:700;color:#94a3b8;text-transform:uppercase;letter-spacing:1px;margin-bottom:6px;">Status</div><div style="margin-top:4px;font-size:11px;font-weight:700;color:#16a34a;background:#f0fdf4;border-radius:8px;padding:3px 10px;display:inline-block;">Completed</div></div>
+      </div>
+      <div style="background:#fff;border:1px solid #f1f5f9;border-radius:14px;padding:16px;text-align:center;color:#94a3b8;font-size:13px;">Store crawl report, category totals, recent runs history — existing content reorganised here</div>
+    </div>
+
+    <!-- User Stats tab (hidden) -->
+    <div id="pane-user" style="display:none;padding:24px;background:#f8fafc;">
+      <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin-bottom:20px;">
+        <div style="background:#fff;border:1px solid #f1f5f9;border-radius:14px;padding:16px;"><div style="font-size:10px;font-weight:700;color:#94a3b8;text-transform:uppercase;letter-spacing:1px;margin-bottom:6px;">Total users</div><div style="font-size:22px;font-weight:900;color:#0f172a;">142</div></div>
+        <div style="background:#fff;border:1px solid #f1f5f9;border-radius:14px;padding:16px;"><div style="font-size:10px;font-weight:700;color:#94a3b8;text-transform:uppercase;letter-spacing:1px;margin-bottom:6px;">New (30d)</div><div style="font-size:22px;font-weight:900;color:#0f172a;">18</div></div>
+        <div style="background:#fff;border:1px solid #f1f5f9;border-radius:14px;padding:16px;"><div style="font-size:10px;font-weight:700;color:#94a3b8;text-transform:uppercase;letter-spacing:1px;margin-bottom:6px;">Searches today</div><div style="font-size:22px;font-weight:900;color:#0f172a;">34</div></div>
+        <div style="background:#fff;border:1px solid #f1f5f9;border-radius:14px;padding:16px;"><div style="font-size:10px;font-weight:700;color:#94a3b8;text-transform:uppercase;letter-spacing:1px;margin-bottom:6px;">Unique searchers (30d)</div><div style="font-size:22px;font-weight:900;color:#0f172a;">89</div></div>
+      </div>
+      <div style="background:#fff;border:1px solid #f1f5f9;border-radius:14px;padding:16px;text-align:center;color:#94a3b8;font-size:13px;">Signup/search charts, top search terms, recent searches, all users table — existing content reorganised here</div>
+    </div>
+
+    <!-- Canonical Stats tab (hidden) -->
+    <div id="pane-canonical" style="display:none;padding:24px;background:#f8fafc;">
+
+      <!-- KPIs -->
+      <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin-bottom:20px;">
+        <div style="background:#fff;border:1px solid #f1f5f9;border-radius:14px;padding:16px;"><div style="font-size:10px;font-weight:700;color:#94a3b8;text-transform:uppercase;letter-spacing:1px;margin-bottom:6px;">Total canonicals</div><div style="font-size:22px;font-weight:900;color:#0f172a;">1,575</div></div>
+        <div style="background:#fff;border:1px solid #f1f5f9;border-radius:14px;padding:16px;"><div style="font-size:10px;font-weight:700;color:#94a3b8;text-transform:uppercase;letter-spacing:1px;margin-bottom:6px;">Deals mapped</div><div style="font-size:22px;font-weight:900;color:#16a34a;">1,586</div><div style="font-size:11px;color:#94a3b8;margin-top:2px;">56% of 2,850</div></div>
+        <div style="background:#fff;border:1px solid #fef3c7;border-radius:14px;padding:16px;background:#fffbeb;"><div style="font-size:10px;font-weight:700;color:#92400e;text-transform:uppercase;letter-spacing:1px;margin-bottom:6px;">Unbranded</div><div style="font-size:22px;font-weight:900;color:#b45309;">47</div><div style="font-size:11px;color:#92400e;margin-top:2px;">brand_slots null</div></div>
+        <div style="background:#fff;border:1px solid #fee2e2;border-radius:14px;padding:16px;background:#fff5f5;"><div style="font-size:10px;font-weight:700;color:#991b1b;text-transform:uppercase;letter-spacing:1px;margin-bottom:6px;">Unmapped deals</div><div style="font-size:22px;font-weight:900;color:#ef4444;">1,264</div><div style="font-size:11px;color:#991b1b;margin-top:2px;">no canonical match</div></div>
+      </div>
+
+      <!-- Mapping health bar -->
+      <div style="background:#fff;border:1px solid #f1f5f9;border-radius:14px;padding:20px;margin-bottom:16px;">
+        <div style="font-size:10px;font-weight:700;color:#94a3b8;letter-spacing:1px;text-transform:uppercase;margin-bottom:16px;">Deal mapping breakdown</div>
+        <div style="display:flex;flex-direction:column;gap:10px;">
+          <div style="display:flex;align-items:center;gap:12px;">
+            <div style="font-size:12px;color:#1e293b;width:130px;font-weight:600;">Slot match ✓</div>
+            <div style="flex:1;height:10px;background:#f1f5f9;border-radius:99px;overflow:hidden;"><div style="width:56%;height:100%;background:#16a34a;border-radius:99px;"></div></div>
+            <div style="font-size:12px;font-weight:700;color:#16a34a;width:100px;text-align:right;">1,586 (56%)</div>
+          </div>
+          <div style="display:flex;align-items:center;gap:12px;">
+            <div style="font-size:12px;color:#1e293b;width:130px;font-weight:600;">No match</div>
+            <div style="flex:1;height:10px;background:#f1f5f9;border-radius:99px;overflow:hidden;"><div style="width:44%;height:100%;background:#fca5a5;border-radius:99px;"></div></div>
+            <div style="font-size:12px;font-weight:700;color:#ef4444;width:100px;text-align:right;">1,264 (44%)</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Known brands -->
+      <div style="background:#fff;border:1px solid #f1f5f9;border-radius:14px;padding:20px;margin-bottom:16px;">
+        <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:14px;">
+          <div style="font-size:10px;font-weight:700;color:#94a3b8;letter-spacing:1px;text-transform:uppercase;">Known brands</div>
+          <span style="font-size:11px;color:#64748b;background:#f1f5f9;padding:3px 10px;border-radius:99px;">Defined in <code style="font-size:11px;">crawler/utils/known-brands.js</code></span>
+        </div>
+        <div style="display:flex;flex-wrap:wrap;gap:6px;">
+          <span style="background:#f0fdf4;color:#15803d;font-size:12px;font-weight:600;padding:4px 10px;border-radius:8px;">Shan</span>
+          <span style="background:#f0fdf4;color:#15803d;font-size:12px;font-weight:600;padding:4px 10px;border-radius:8px;">MTR</span>
+          <span style="background:#f0fdf4;color:#15803d;font-size:12px;font-weight:600;padding:4px 10px;border-radius:8px;">Haldiram's</span>
+          <span style="background:#f0fdf4;color:#15803d;font-size:12px;font-weight:600;padding:4px 10px;border-radius:8px;">Aashirvaad</span>
+          <span style="background:#f0fdf4;color:#15803d;font-size:12px;font-weight:600;padding:4px 10px;border-radius:8px;">Gits</span>
+          <span style="background:#f0fdf4;color:#15803d;font-size:12px;font-weight:600;padding:4px 10px;border-radius:8px;">Aachi</span>
+          <span style="background:#f0fdf4;color:#15803d;font-size:12px;font-weight:600;padding:4px 10px;border-radius:8px;">Daawat</span>
+          <span style="background:#f0fdf4;color:#15803d;font-size:12px;font-weight:600;padding:4px 10px;border-radius:8px;">Heer</span>
+          <span style="background:#f0fdf4;color:#15803d;font-size:12px;font-weight:600;padding:4px 10px;border-radius:8px;">LKK</span>
+          <span style="background:#f0fdf4;color:#15803d;font-size:12px;font-weight:600;padding:4px 10px;border-radius:8px;">Knorr</span>
+          <span style="background:#f0fdf4;color:#15803d;font-size:12px;font-weight:600;padding:4px 10px;border-radius:8px;">Maggi</span>
+          <span style="background:#f0fdf4;color:#15803d;font-size:12px;font-weight:600;padding:4px 10px;border-radius:8px;">Nanak</span>
+          <span style="background:#f0fdf4;color:#15803d;font-size:12px;font-weight:600;padding:4px 10px;border-radius:8px;">+ more…</span>
+        </div>
+      </div>
+
+      <!-- Unbranded canonicals table -->
+      <div style="background:#fff;border:1px solid #fde68a;border-radius:14px;padding:20px;">
+        <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:14px;">
+          <div style="font-size:10px;font-weight:700;color:#92400e;letter-spacing:1px;text-transform:uppercase;">Unbranded canonicals — no recognised brand in name</div>
+          <span style="background:#fef3c7;color:#92400e;font-size:10px;font-weight:700;padding:3px 10px;border-radius:99px;">47 need review</span>
+        </div>
+        <table style="width:100%;font-size:12px;border-collapse:collapse;">
+          <thead>
+            <tr style="text-align:left;color:#94a3b8;font-size:10px;font-weight:700;text-transform:uppercase;border-bottom:1px solid #f1f5f9;">
+              <th style="padding:0 0 8px 0;width:40%;">Canonical name</th>
+              <th style="padding:0 0 8px 12px;width:20%;">First token</th>
+              <th style="padding:0 0 8px 12px;width:20%;">Category</th>
+              <th style="padding:0 0 8px 0;text-align:right;width:10%;">Deals</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr style="border-bottom:1px solid #fef9c3;">
+              <td style="padding:10px 0;font-weight:600;color:#1e293b;">Gulab Jamun Mix</td>
+              <td style="padding:10px 12px;"><code style="background:#fef3c7;color:#92400e;padding:2px 6px;border-radius:4px;font-size:11px;">gulab</code></td>
+              <td style="padding:10px 12px;color:#64748b;">Snacks & Sweets</td>
+              <td style="padding:10px 0;text-align:right;font-weight:700;color:#16a34a;">3</td>
+            </tr>
+            <tr style="border-bottom:1px solid #fef9c3;">
+              <td style="padding:10px 0;font-weight:600;color:#1e293b;">Red Chili Powder</td>
+              <td style="padding:10px 12px;"><code style="background:#fef3c7;color:#92400e;padding:2px 6px;border-radius:4px;font-size:11px;">red</code></td>
+              <td style="padding:10px 12px;color:#64748b;">Spices & Masalas</td>
+              <td style="padding:10px 0;text-align:right;font-weight:700;color:#16a34a;">12</td>
+            </tr>
+            <tr style="border-bottom:1px solid #fef9c3;">
+              <td style="padding:10px 0;font-weight:600;color:#1e293b;">Basmati Rice Extra Long</td>
+              <td style="padding:10px 12px;"><code style="background:#fef3c7;color:#92400e;padding:2px 6px;border-radius:4px;font-size:11px;">basmati</code></td>
+              <td style="padding:10px 12px;color:#64748b;">Rice & Grains</td>
+              <td style="padding:10px 0;text-align:right;font-weight:700;color:#16a34a;">0</td>
+            </tr>
+            <tr style="opacity:0.5;">
+              <td colspan="4" style="padding:8px 0;font-size:11px;color:#94a3b8;">+ 44 more…</td>
+            </tr>
+          </tbody>
+        </table>
+        <div style="margin-top:12px;padding:10px 14px;background:#fffbeb;border-radius:10px;font-size:11px;color:#92400e;">
+          💡 To fix: add the brand name to <code>crawler/utils/known-brands.js</code>, then run <code>node scripts/migrate-canonical-slots.js</code> to re-slot all canonicals.
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+function showTab(name) {
+  ['crawl','user','canonical'].forEach(t => {
+    document.getElementById('pane-' + t).style.display = t === name ? 'block' : 'none';
+    const tab = document.getElementById('tab-' + t);
+    if (t === name) {
+      tab.style.color = '#16a34a';
+      tab.style.borderBottom = '2px solid #16a34a';
+      tab.style.fontWeight = '700';
+    } else {
+      tab.style.color = '#94a3b8';
+      tab.style.borderBottom = '2px solid transparent';
+      tab.style.fontWeight = '600';
+    }
+  });
+}
+</script>

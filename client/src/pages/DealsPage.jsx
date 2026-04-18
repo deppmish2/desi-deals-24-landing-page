@@ -25,6 +25,7 @@ import {
   fetchDealStores,
   fetchDeals,
   fetchOAuthAuthUrl,
+  fetchReplacements,
   getAuthSession,
   logoutUser,
   removeBookmark,
@@ -415,6 +416,121 @@ function dealPermalink(dealId) {
   return buildDealPageUrl(dealId);
 }
 
+const TIER_LABELS = {
+  same_pack: "Same product, different size",
+  same_base_product: "Same product, other brands",
+  same_brand: "Same brand, other products",
+  same_category: "More from this category",
+};
+
+function ReplacementDealRow({ deal, emphasisSize }) {
+  const discountPct = deal.discount_percent ? Math.round(deal.discount_percent) : null;
+  const [imgErr, setImgErr] = React.useState(false);
+  return (
+    <a
+      href={deal.product_url}
+      target="_blank"
+      rel="noopener noreferrer"
+      className="flex items-center gap-3 p-3 rounded-xl border border-slate-100 hover:border-[#16a34a] hover:bg-[#f0fdf4] transition-colors no-underline"
+      style={{ textDecoration: "none" }}
+    >
+      {!imgErr && deal.image_url ? (
+        <img
+          src={deal.image_url}
+          alt={deal.product_name}
+          className="w-12 h-12 object-contain rounded-lg bg-slate-50 shrink-0"
+          onError={() => setImgErr(true)}
+        />
+      ) : (
+        <div className="w-12 h-12 rounded-lg bg-slate-50 shrink-0 flex items-center justify-center text-xl">🛒</div>
+      )}
+      <div className="flex-1 min-w-0">
+        <p className="text-[12px] font-semibold text-slate-800 line-clamp-2 leading-tight">{deal.product_name}</p>
+        {deal.weight_raw && (
+          <span
+            className={`inline-block mt-1 px-1.5 py-0.5 rounded text-[10px] font-bold ${
+              emphasisSize
+                ? "bg-amber-100 text-amber-700 border border-amber-300"
+                : "bg-slate-100 text-slate-500"
+            }`}
+          >
+            {deal.weight_raw}
+          </span>
+        )}
+      </div>
+      <div className="text-right shrink-0">
+        <p className="text-[14px] font-extrabold text-slate-800">
+          {deal.currency === "EUR" ? "€" : deal.currency}{Number(deal.sale_price).toFixed(2)}
+        </p>
+        {discountPct > 0 && (
+          <p className="text-[10px] font-bold text-[#16a34a]">-{discountPct}%</p>
+        )}
+      </div>
+    </a>
+  );
+}
+
+function ReplacementsModal({ sourceDeal, tiers, loading, onClose }) {
+  return createPortal(
+    <div
+      className="fixed inset-0 z-50 flex items-end sm:items-center justify-center bg-black/40 backdrop-blur-sm"
+      onClick={onClose}
+    >
+      <div
+        className="bg-white rounded-t-2xl sm:rounded-2xl w-full sm:max-w-lg max-h-[80vh] flex flex-col"
+        onClick={(e) => e.stopPropagation()}
+      >
+        <div className="flex items-center justify-between px-5 py-4 border-b border-slate-100 shrink-0">
+          <div>
+            <p className="text-[10px] font-extrabold uppercase tracking-[1.5px] text-slate-400">Other options at this store</p>
+            <p className="text-[13px] font-bold text-slate-800 mt-0.5 line-clamp-1">{sourceDeal.product_name}</p>
+          </div>
+          <button
+            type="button"
+            onClick={onClose}
+            className="shrink-0 w-8 h-8 flex items-center justify-center rounded-full hover:bg-slate-100 text-slate-400 hover:text-slate-600 transition-colors ml-3"
+          >
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round">
+              <line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/>
+            </svg>
+          </button>
+        </div>
+        <div className="overflow-y-auto p-4">
+          {loading ? (
+            <div className="flex justify-center py-10">
+              <div className="w-6 h-6 border-2 border-[#16a34a] border-t-transparent rounded-full animate-spin" />
+            </div>
+          ) : !tiers?.length ? (
+            <p className="text-center text-slate-400 text-[13px] py-10">No alternatives found at this store.</p>
+          ) : (
+            tiers.map((tier) => (
+              <div key={tier.type} className="mb-5 last:mb-0">
+                <p className="text-[10px] font-extrabold uppercase tracking-[1.5px] text-slate-400 mb-2">
+                  {TIER_LABELS[tier.type] ?? tier.type}
+                </p>
+                <div className="flex flex-col gap-2">
+                  {tier.deals.map((d) => (
+                    <ReplacementDealRow
+                      key={d.id}
+                      deal={d}
+                      emphasisSize={
+                        d.weight_value != null && sourceDeal.weight_value != null
+                          ? d.weight_value !== sourceDeal.weight_value
+                          : d.weight_raw !== sourceDeal.weight_raw
+                      }
+                    />
+                  ))}
+                </div>
+              </div>
+            ))
+          )}
+        </div>
+      </div>
+    </div>,
+    document.body,
+  );
+}
+
 function DealCard({
   deal,
   isBookmarked,
@@ -428,11 +544,24 @@ function DealCard({
   const [imgError, setImgError] = useState(false);
   const [showAdminTooltip, setShowAdminTooltip] = useState(false);
   const [tooltipPos, setTooltipPos] = useState({ top: 0, left: 0 });
-  const [canonicalData, setCanonicalData] = useState(null);
-  const [loadingCanonical, setLoadingCanonical] = useState(false);
-  const [showImageDebug, setShowImageDebug] = useState(false);
-  const [imageDebugPos, setImageDebugPos] = useState({ top: 0, left: 0 });
+  const [showReplacements, setShowReplacements] = useState(false);
+  const [replacementTiers, setReplacementTiers] = useState(null);
+  const [replacementsLoading, setReplacementsLoading] = useState(false);
   const badgeRef = useRef(null);
+
+  async function handleOpenReplacements() {
+    setShowReplacements(true);
+    if (replacementTiers !== null) return;
+    setReplacementsLoading(true);
+    try {
+      const data = await fetchReplacements(deal.canonical_id, deal.store?.id, deal.id);
+      setReplacementTiers(data.tiers || []);
+    } catch {
+      setReplacementTiers([]);
+    } finally {
+      setReplacementsLoading(false);
+    }
+  }
   const proxyImg = proxyDealImageUrl(deal);
   const discountPct = deal?.discount_percent ? Math.round(deal.discount_percent) : null;
   const realSavings = deal?.real_savings ?? null;
@@ -451,6 +580,7 @@ function DealCard({
 
   const permalink = dealPermalink(deal.id);
   return (
+    <>
     <div
       ref={highlightRef}
       className={`bg-white rounded-[20px] flex flex-col transition-shadow ${
@@ -809,8 +939,29 @@ function DealCard({
             </svg>
           </button>
         </div>
+        {deal.canonical_id && (
+          <button
+            type="button"
+            onClick={handleOpenReplacements}
+            className="w-full text-center text-[11px] text-slate-400 hover:text-[#16a34a] transition-colors pt-2 pb-1 flex items-center justify-center gap-1"
+          >
+            <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+              <polyline points="17 1 21 5 17 9"/><path d="M3 11V9a4 4 0 0 1 4-4h14"/><polyline points="7 23 3 19 7 15"/><path d="M21 13v2a4 4 0 0 1-4 4H3"/>
+            </svg>
+            See alternatives
+          </button>
+        )}
       </div>
     </div>
+    {showReplacements && (
+      <ReplacementsModal
+        sourceDeal={deal}
+        tiers={replacementTiers}
+        loading={replacementsLoading}
+        onClose={() => setShowReplacements(false)}
+      />
+    )}
+    </>
   );
 }
 

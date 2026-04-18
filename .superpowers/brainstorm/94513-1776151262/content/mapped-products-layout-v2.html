@@ -1,0 +1,184 @@
+<style>
+  body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; }
+  .admin-shell { background: #f8fafc; border-radius: 16px; overflow: hidden; border: 1px solid #e2e8f0; max-width: 900px; margin: 0 auto; }
+  .admin-top-tabs { display: flex; gap: 2px; background: #f1f5f9; padding: 6px 16px 0; }
+  .top-tab { padding: 8px 16px; font-size: 12px; font-weight: 600; color: #94a3b8; border-radius: 8px 8px 0 0; cursor: pointer; }
+  .top-tab.active { background: white; color: #1e293b; }
+  .admin-body { background: white; padding: 20px; }
+  .section-card { background: white; border: 1px solid #f1f5f9; border-radius: 16px; box-shadow: 0 1px 3px rgba(0,0,0,0.04); padding: 20px 24px; margin-bottom: 16px; }
+
+  .sub-tabs { display: flex; gap: 0; border-bottom: 2px solid #f1f5f9; margin-bottom: 16px; }
+  .sub-tab { padding: 8px 16px; font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: 1px; color: #94a3b8; cursor: pointer; border-bottom: 2px solid transparent; margin-bottom: -2px; }
+  .sub-tab.active { color: #16a34a; border-bottom-color: #16a34a; }
+  .sub-tab-badge { display: inline-block; background: #f1f5f9; color: #64748b; border-radius: 20px; padding: 1px 7px; font-size: 10px; margin-left: 6px; font-weight: 700; }
+  .sub-tab.active .sub-tab-badge { background: #dcfce7; color: #16a34a; }
+
+  .mapped-table { width: 100%; border-collapse: collapse; font-size: 13px; }
+  .mapped-table th { text-align: left; font-size: 10px; font-weight: 700; text-transform: uppercase; letter-spacing: 1px; color: #94a3b8; padding-bottom: 8px; border-bottom: 1px solid #f1f5f9; padding-right: 16px; }
+  .mapped-table td { padding: 10px 16px 10px 0; border-bottom: 1px solid #f8fafc; vertical-align: middle; }
+  .mapped-table tr.data-row:last-of-type td { border-bottom: none; }
+  .data-row { cursor: pointer; }
+  .data-row:hover td { background: #f8fafc; }
+
+  .canonical-name { font-weight: 600; color: #1e293b; max-width: 320px; }
+  .badge-active { display: inline-flex; align-items: center; gap: 4px; background: #dcfce7; color: #15803d; font-size: 10px; font-weight: 700; border-radius: 20px; padding: 2px 8px; }
+  .badge-inactive { display: inline-flex; align-items: center; gap: 4px; background: #f1f5f9; color: #94a3b8; font-size: 10px; font-weight: 700; border-radius: 20px; padding: 2px 8px; }
+  .dot { width: 5px; height: 5px; border-radius: 50%; }
+  .dot-green { background: #16a34a; }
+  .dot-gray { background: #94a3b8; }
+  .store-count { font-size: 12px; color: #475569; font-weight: 600; }
+  .expand-icon { color: #cbd5e1; font-size: 11px; user-select: none; width: 20px; }
+
+  .expanded-inner { background: #f8fafc; border-radius: 8px; margin: 0 0 4px 0; overflow: hidden; }
+  .expanded-header { display: grid; grid-template-columns: 160px 1fr 80px; gap: 12px; padding: 6px 12px; font-size: 10px; font-weight: 700; text-transform: uppercase; letter-spacing: 1px; color: #94a3b8; border-bottom: 1px solid #e2e8f0; }
+  .expanded-row-item { display: grid; grid-template-columns: 160px 1fr 80px; gap: 12px; padding: 7px 12px; font-size: 12px; border-bottom: 1px solid #e2e8f0; align-items: center; }
+  .expanded-row-item:last-child { border-bottom: none; }
+  .store-name-cell { color: #475569; font-weight: 600; }
+  .product-name-cell { color: #1e293b; }
+  .store-link { font-size: 11px; color: #16a34a; font-weight: 700; text-decoration: none; white-space: nowrap; }
+  .store-link:hover { text-decoration: underline; }
+
+  .search-row { display: flex; align-items: center; gap: 8px; margin-bottom: 12px; }
+  .search-input { border: 1px solid #e2e8f0; border-radius: 8px; padding: 6px 12px; font-size: 12px; color: #475569; outline: none; flex: 1; max-width: 260px; }
+  .row-count { font-size: 11px; color: #94a3b8; }
+</style>
+
+<h2>Mapped Products — updated (no link column)</h2>
+<p class="subtitle">Click any row to expand per-store details</p>
+
+<div class="admin-shell">
+  <div class="admin-top-tabs">
+    <div class="top-tab">User Stats</div>
+    <div class="top-tab">Crawl Stats</div>
+    <div class="top-tab active">Canonical Stats</div>
+  </div>
+  <div class="admin-body">
+
+    <div class="section-card" style="opacity:0.4;pointer-events:none;">
+      <div style="display:flex;gap:32px;font-size:12px;color:#64748b;align-items:center;">
+        <span>📦 1,493 canonicals</span>
+        <span>✅ 3,361 deals mapped</span>
+        <span>⚠️ 2,428 unmapped</span>
+        <div style="flex:1;background:#f1f5f9;border-radius:99px;height:6px;overflow:hidden;">
+          <div style="width:58%;background:#16a34a;height:100%;border-radius:99px;"></div>
+        </div>
+      </div>
+    </div>
+
+    <div class="section-card">
+      <div class="sub-tabs">
+        <div class="sub-tab">Unmapped <span class="sub-tab-badge">2,428</span></div>
+        <div class="sub-tab active">Mapped <span class="sub-tab-badge">1,493</span></div>
+      </div>
+
+      <div class="search-row">
+        <input class="search-input" placeholder="Search canonical name…" readonly />
+        <span class="row-count">Showing 1–50 of 1,493</span>
+      </div>
+
+      <div style="overflow-x:auto;">
+        <table class="mapped-table">
+          <thead>
+            <tr>
+              <th>Canonical name</th>
+              <th>Status</th>
+              <th>Stores</th>
+              <th></th>
+            </tr>
+          </thead>
+          <tbody>
+
+            <tr class="data-row" onclick="toggleRow('r1')">
+              <td class="canonical-name">Aachi Chettinadu Biryani Kit 360g</td>
+              <td><span class="badge-active"><span class="dot dot-green"></span> Active</span></td>
+              <td class="store-count">3 stores</td>
+              <td class="expand-icon" id="icon-r1">▼</td>
+            </tr>
+            <tr id="r1">
+              <td colspan="4" style="padding:0 0 6px 0;">
+                <div class="expanded-inner">
+                  <div class="expanded-header"><span>Store</span><span>Product name on store</span><span>Link</span></div>
+                  <div class="expanded-row-item">
+                    <span class="store-name-cell">Jamoona</span>
+                    <span class="product-name-cell">AACHI CHETTINADU BASMATI BIRYANI KIT – 360g</span>
+                    <a class="store-link" href="#" onclick="return false">View ↗</a>
+                  </div>
+                  <div class="expanded-row-item">
+                    <span class="store-name-cell">Dookan</span>
+                    <span class="product-name-cell">Aachi Chettinadu Biryani Kit 360 g</span>
+                    <a class="store-link" href="#" onclick="return false">View ↗</a>
+                  </div>
+                  <div class="expanded-row-item">
+                    <span class="store-name-cell">Namma Markt</span>
+                    <span class="product-name-cell">Aachi - Chettinadu Biryani Kit (360g)</span>
+                    <a class="store-link" href="#" onclick="return false">View ↗</a>
+                  </div>
+                </div>
+              </td>
+            </tr>
+
+            <tr class="data-row" onclick="toggleRow('r2')">
+              <td class="canonical-name">MTR Rava Idli Mix 500g</td>
+              <td><span class="badge-active"><span class="dot dot-green"></span> Active</span></td>
+              <td class="store-count">5 stores</td>
+              <td class="expand-icon" id="icon-r2">▶</td>
+            </tr>
+            <tr id="r2" style="display:none;">
+              <td colspan="4" style="padding:0 0 6px 0;">
+                <div class="expanded-inner">
+                  <div class="expanded-header"><span>Store</span><span>Product name on store</span><span>Link</span></div>
+                  <div class="expanded-row-item"><span class="store-name-cell">Little India</span><span class="product-name-cell">MTR Rava Idli Mix 500 Gms</span><a class="store-link" href="#" onclick="return false">View ↗</a></div>
+                  <div class="expanded-row-item"><span class="store-name-cell">Grocera</span><span class="product-name-cell">MTR Rava Idli Mix 500g</span><a class="store-link" href="#" onclick="return false">View ↗</a></div>
+                  <div class="expanded-row-item"><span class="store-name-cell">Jamoona</span><span class="product-name-cell">MTR - Rava Idli Mix (500g)</span><a class="store-link" href="#" onclick="return false">View ↗</a></div>
+                </div>
+              </td>
+            </tr>
+
+            <tr class="data-row" onclick="toggleRow('r3')">
+              <td class="canonical-name">Haldiram's Bhujia 400g</td>
+              <td><span class="badge-inactive"><span class="dot dot-gray"></span> Inactive</span></td>
+              <td class="store-count">1 store</td>
+              <td class="expand-icon" id="icon-r3">▶</td>
+            </tr>
+            <tr id="r3" style="display:none;">
+              <td colspan="4" style="padding:0 0 6px 0;">
+                <div class="expanded-inner">
+                  <div class="expanded-header"><span>Store</span><span>Product name on store</span><span>Link</span></div>
+                  <div class="expanded-row-item"><span class="store-name-cell">Grocera</span><span class="product-name-cell">Haldiram Bhujia 400g</span><a class="store-link" href="#" onclick="return false">View ↗</a></div>
+                </div>
+              </td>
+            </tr>
+
+            <tr class="data-row" onclick="toggleRow('r4')">
+              <td class="canonical-name">Aashirvaad Whole Wheat Atta 5kg</td>
+              <td><span class="badge-active"><span class="dot dot-green"></span> Active</span></td>
+              <td class="store-count">4 stores</td>
+              <td class="expand-icon" id="icon-r4">▶</td>
+            </tr>
+            <tr id="r4" style="display:none;"><td colspan="4"></td></tr>
+
+            <tr class="data-row" onclick="toggleRow('r5')">
+              <td class="canonical-name">Maggi Noodles Masala 70g</td>
+              <td><span class="badge-active"><span class="dot dot-green"></span> Active</span></td>
+              <td class="store-count">2 stores</td>
+              <td class="expand-icon" id="icon-r5">▶</td>
+            </tr>
+            <tr id="r5" style="display:none;"><td colspan="4"></td></tr>
+
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+  </div>
+</div>
+
+<script>
+function toggleRow(id) {
+  const row = document.getElementById(id);
+  const icon = document.getElementById('icon-' + id);
+  const isOpen = row.style.display !== 'none';
+  row.style.display = isOpen ? 'none' : 'table-row';
+  icon.textContent = isOpen ? '▶' : '▼';
+}
+</script>
