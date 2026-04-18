@@ -410,7 +410,7 @@ const TIER_LABELS = {
   same_category: "More from this category",
 };
 
-function ReplacementDealRow({ deal }) {
+function ReplacementDealRow({ deal, emphasisSize }) {
   const discountPct = deal.discount_percent ? Math.round(deal.discount_percent) : null;
   const [imgErr, setImgErr] = React.useState(false);
   return (
@@ -434,7 +434,15 @@ function ReplacementDealRow({ deal }) {
       <div className="flex-1 min-w-0">
         <p className="text-[12px] font-semibold text-slate-800 line-clamp-2 leading-tight">{deal.product_name}</p>
         {deal.weight_raw && (
-          <p className="text-[10px] text-slate-400 mt-0.5">{deal.weight_raw}</p>
+          <span
+            className={`inline-block mt-1 px-1.5 py-0.5 rounded text-[10px] font-bold ${
+              emphasisSize
+                ? "bg-amber-100 text-amber-700 border border-amber-300"
+                : "bg-slate-100 text-slate-500"
+            }`}
+          >
+            {deal.weight_raw}
+          </span>
         )}
       </div>
       <div className="text-right shrink-0">
@@ -489,7 +497,15 @@ function ReplacementsModal({ sourceDeal, tiers, loading, onClose }) {
                 </p>
                 <div className="flex flex-col gap-2">
                   {tier.deals.map((d) => (
-                    <ReplacementDealRow key={d.id} deal={d} />
+                    <ReplacementDealRow
+                      key={d.id}
+                      deal={d}
+                      emphasisSize={
+                        d.weight_value != null && sourceDeal.weight_value != null
+                          ? d.weight_value !== sourceDeal.weight_value
+                          : d.weight_raw !== sourceDeal.weight_raw
+                      }
+                    />
                   ))}
                 </div>
               </div>

@@ -27,6 +27,23 @@ const byDiscountDesc = (a, b) =>
   (b.discount_percent || 0) - (a.discount_percent || 0) ||
   (a.sale_price || 0) - (b.sale_price || 0);
 
+function nameHasBrand(productName, brand) {
+  if (!brand || !productName) return false;
+  return new RegExp("\\b" + brand.replace(/[.*+?^${}()|[\]\\]/g, "\\$&") + "\\b", "i").test(productName);
+}
+
+function parseWeight(value, raw) {
+  if (value != null) return value;
+  const m = String(raw || "").match(/(\d+(?:[.,]\d+)?)/);
+  return m ? parseFloat(m[1].replace(",", ".")) : null;
+}
+
+function sizeCompatible(srcWeight, candWeight) {
+  if (!srcWeight || !candWeight) return true;
+  if (candWeight > srcWeight) return false;
+  return srcWeight % candWeight === 0;
+}
+
 async function getReplacements(db, { canonicalId, storeId, dealId = null }) {
   const src = await db
     .prepare(
@@ -48,31 +65,51 @@ async function getReplacements(db, { canonicalId, storeId, dealId = null }) {
     t3 = [],
     t4 = [];
   const seen = new Set();
+  const srcRow = dealId ? rows.find((r) => r.id === dealId) : null;
+  const srcWeightValue = srcRow ? parseWeight(srcRow.weight_value, srcRow.weight_raw) : null;
 
   for (const row of rows) {
     if (dealId && row.id === dealId) continue;
-    if (row.canonical_id === canonicalId) {
-      t1.push(row);
-      continue;
-    }
 
     const sameCategory =
       (row.cp_category || row.product_category) === src.category;
     const candBase = resolveBaseProduct(row.cp_canonical_name);
     const cKey = row.canonical_id;
 
+    // T1: same brand + same base product + different size (different canonical, different weight)
     if (
       srcBaseKey &&
+      srcBrand &&
       candBase?.base_key === srcBaseKey &&
-      sameCategory &&
-      !seen.has(`t2:${cKey}`)
+      row.canonical_id !== canonicalId &&
+      (srcWeightValue === null || row.weight_value !== srcWeightValue) &&
+      sizeCompatible(srcWeightValue, parseWeight(row.weight_value, row.weight_raw)) &&
+      nameHasBrand(row.product_name, srcBrand) &&
+      !seen.has(`t1:${cKey}`)
     ) {
-      t2.push(row);
+      const candBrand = detectBrandForBase(row.cp_canonical_name, candBase.base_key);
+      if (candBrand && candBrand === srcBrand) {
+        t1.push(row);
+        seen.add(`t1:${cKey}`);
+        continue;
+      }
+    }
+
+    // T2: same canonical (same type + size), different brand/deal
+    // exclude same-brand items that are wrongly mapped to this canonical
+    if (row.canonical_id === canonicalId && !seen.has(`t2:${cKey}`)) {
+      if (
+        (!srcBrand || !nameHasBrand(row.product_name, srcBrand)) &&
+        sizeCompatible(srcWeightValue, parseWeight(row.weight_value, row.weight_raw))
+      ) {
+        t2.push(row);
+      }
       seen.add(`t2:${cKey}`);
       continue;
     }
 
-    if (srcBrand && sameCategory && !seen.has(`t3:${cKey}`)) {
+    // T3: same brand, same category, different base product
+    if (srcBrand && sameCategory && nameHasBrand(row.product_name, srcBrand) && sizeCompatible(srcWeightValue, parseWeight(row.weight_value, row.weight_raw)) && !seen.has(`t3:${cKey}`)) {
       const candBrand = candBase?.base_key
         ? detectBrandForBase(row.cp_canonical_name, candBase.base_key)
         : null;
@@ -83,7 +120,8 @@ async function getReplacements(db, { canonicalId, storeId, dealId = null }) {
       }
     }
 
-    if (sameCategory && !seen.has(`t4:${cKey}`)) {
+    // T4: same category
+    if (sameCategory && sizeCompatible(srcWeightValue, parseWeight(row.weight_value, row.weight_raw)) && !seen.has(`t4:${cKey}`)) {
       t4.push(row);
       seen.add(`t4:${cKey}`);
     }
@@ -93,6 +131,7 @@ async function getReplacements(db, { canonicalId, storeId, dealId = null }) {
   t2.sort(byDiscountDesc);
   t3.sort(byDiscountDesc);
   t4.sort(byDiscountDesc);
+
 
   const tiers = [];
   if (t1.length)
