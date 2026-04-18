@@ -1,5 +1,7 @@
 "use strict";
 
+const { expandQueryWord } = require("./search-synonyms");
+
 function levenshtein(a, b) {
   const m = a.length;
   const n = b.length;
@@ -37,11 +39,19 @@ function compactSearchValue(value) {
   return normalizeSearchValue(value).replace(/\s+/g, "");
 }
 
+function transliterateNorm(word) {
+  // Collapse common romanisation double-vowels: daawat→dawat, basmatti→basmati
+  return word.replace(/aa/g, "a").replace(/ii/g, "i");
+}
+
 function buildWordVariants(word) {
   const normalized = normalizeSearchValue(word);
   if (!normalized) return [];
 
   const variants = new Set([normalized]);
+
+  const transliterated = transliterateNorm(normalized);
+  if (transliterated !== normalized) variants.add(transliterated);
 
   if (normalized.endsWith("ies") && normalized.length > 5) {
     variants.add(`${normalized.slice(0, -3)}y`);
@@ -125,12 +135,15 @@ function getSearchMatchScore(haystack, query) {
   }
 
   for (const queryWord of queryWords) {
+    const expandedWords = expandQueryWord(queryWord);
     let bestTokenScore = 0;
     for (const haystackWord of haystackWords) {
-      bestTokenScore = Math.max(
-        bestTokenScore,
-        scoreWordMatch(haystackWord, queryWord),
-      );
+      for (const expandedWord of expandedWords) {
+        bestTokenScore = Math.max(
+          bestTokenScore,
+          scoreWordMatch(haystackWord, expandedWord),
+        );
+      }
     }
 
     if (bestTokenScore <= 0) {

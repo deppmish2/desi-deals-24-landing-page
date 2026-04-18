@@ -10,6 +10,7 @@ const {
   seededShuffle,
 } = require("../services/deal-order");
 const { filterAndRankDealsByQuery } = require("../services/deal-search");
+const { phoneticFallback } = require("../services/phonetic-search");
 const { trackEvent } = require("../services/event-tracker");
 const { formatBerlinDateKey } = require("../services/berlin-time");
 const { trackSearchQuery } = require("../services/search-tracker");
@@ -416,13 +417,18 @@ router.get("/", async (req, res, next) => {
 
     // Apply filters (all gated in frontend, server supports freely)
     let filtered = allDeals;
+    let isPhoneticFallback = false;
     if (searchQuery) {
       filtered = filterAndRankDealsByQuery(
         filtered,
         searchQuery,
         (deal) =>
-          `${deal?.product_name || ""} ${deal?.store?.name || ""} ${deal?.product_category || ""}`,
+          `${deal?.product_name || ""} ${deal?.store?.name || ""}`,
       );
+      if (filtered.length === 0) {
+        filtered = await phoneticFallback(db, allDeals, searchQuery);
+        isPhoneticFallback = filtered.length > 0;
+      }
     }
     if (filterStores.length > 0) {
       const storeFilterSet = new Set(filterStores);
@@ -557,6 +563,7 @@ router.get("/", async (req, res, next) => {
       meta: {
         sort: sort || "random",
         date: crawlDate,
+        phonetic_fallback: isPhoneticFallback,
         store_diversity: {
           no_adjacent_same_store: usesExplicitOrdering
             ? false
