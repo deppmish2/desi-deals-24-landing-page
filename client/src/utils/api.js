@@ -341,6 +341,40 @@ export function fetchCanonicalPriceData(canonicalId) {
   return authRequest(`/admin-dashboard/review-queue/canonical/${encodeURIComponent(canonicalId)}/price-data`);
 }
 
+export function fetchReviewQueue({ status = "pending", page = 1, search = "" } = {}) {
+  return authRequest(`/admin-dashboard/review-queue?status=${encodeURIComponent(status)}&page=${page}&search=${encodeURIComponent(search)}`);
+}
+
+export function confirmQueueItem(id, canonicalId) {
+  return authRequest(`/admin-dashboard/review-queue/${encodeURIComponent(id)}`, {
+    method: "PATCH",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ canonical_id: canonicalId }),
+  });
+}
+
+export function dismissQueueItem(id) {
+  return authRequest(`/admin-dashboard/review-queue/${encodeURIComponent(id)}/dismiss`, {
+    method: "POST",
+  });
+}
+
+export function createCanonicalFromQueue(data) {
+  return authRequest("/admin-dashboard/review-queue/canonical", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(data),
+  });
+}
+
+export function updateCanonical(id, data) {
+  return authRequest(`/admin-dashboard/review-queue/canonical/${encodeURIComponent(id)}`, {
+    method: "PATCH",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(data),
+  });
+}
+
 export function fetchMappedProducts() {
   return authRequest("/admin-dashboard/mapped-products");
 }
