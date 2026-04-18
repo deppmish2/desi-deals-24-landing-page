@@ -82,7 +82,7 @@ async function getReplacements(db, { canonicalId, storeId, dealId = null }) {
       srcBrand &&
       candBase?.base_key === srcBaseKey &&
       row.canonical_id !== canonicalId &&
-      (srcWeightValue === null || row.weight_value !== srcWeightValue) &&
+      (srcWeightValue === null || parseWeight(row.weight_value, row.weight_raw) !== srcWeightValue) &&
       sizeCompatible(srcWeightValue, parseWeight(row.weight_value, row.weight_raw)) &&
       nameHasBrand(row.product_name, srcBrand) &&
       !seen.has(`t1:${cKey}`)
@@ -96,15 +96,17 @@ async function getReplacements(db, { canonicalId, storeId, dealId = null }) {
     }
 
     // T2: same canonical (same type + size), different brand/deal
-    // exclude same-brand items that are wrongly mapped to this canonical
-    if (row.canonical_id === canonicalId && !seen.has(`t2:${cKey}`)) {
-      if (
-        (!srcBrand || !nameHasBrand(row.product_name, srcBrand)) &&
-        sizeCompatible(srcWeightValue, parseWeight(row.weight_value, row.weight_raw))
-      ) {
-        t2.push(row);
+    // always skip same-canonical rows — never let them fall through to T3/T4
+    if (row.canonical_id === canonicalId) {
+      if (!seen.has(`t2:${cKey}`)) {
+        if (
+          (!srcBrand || !nameHasBrand(row.product_name, srcBrand)) &&
+          sizeCompatible(srcWeightValue, parseWeight(row.weight_value, row.weight_raw))
+        ) {
+          t2.push(row);
+        }
+        seen.add(`t2:${cKey}`);
       }
-      seen.add(`t2:${cKey}`);
       continue;
     }
 
