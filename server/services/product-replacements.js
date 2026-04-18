@@ -38,16 +38,18 @@ function parseWeight(value, raw) {
   return m ? parseFloat(m[1].replace(",", ".")) : null;
 }
 
+// Bug fix: use epsilon-based ratio check to avoid float modulo errors (e.g. 0.3 % 0.1 === 0.09999...)
 function sizeCompatible(srcWeight, candWeight) {
   if (!srcWeight || !candWeight) return true;
   if (candWeight > srcWeight) return false;
-  return srcWeight % candWeight === 0;
+  const ratio = srcWeight / candWeight;
+  return Math.abs(Math.round(ratio) - ratio) < 0.01;
 }
 
 async function getReplacements(db, { canonicalId, storeId, dealId = null }) {
   const src = await db
     .prepare(
-      `SELECT id, canonical_name, category FROM canonical_products WHERE id = ? LIMIT 1`
+      `SELECT id, canonical_name, category, weight_value, weight_unit FROM canonical_products WHERE id = ? LIMIT 1`
     )
     .get(canonicalId);
   if (!src) return null;
@@ -66,7 +68,11 @@ async function getReplacements(db, { canonicalId, storeId, dealId = null }) {
     t4 = [];
   const seen = new Set();
   const srcRow = dealId ? rows.find((r) => r.id === dealId) : null;
-  const srcWeightValue = srcRow ? parseWeight(srcRow.weight_value, srcRow.weight_raw) : null;
+  // Bug fix: fall back to canonical_products.weight_value when no dealId is provided,
+  // so T1 "different size" check and sizeCompatible() work without a specific source deal.
+  const srcWeightValue = srcRow
+    ? parseWeight(srcRow.weight_value, srcRow.weight_raw)
+    : (src.weight_value ?? null);
 
   for (const row of rows) {
     if (dealId && row.id === dealId) continue;
@@ -95,19 +101,17 @@ async function getReplacements(db, { canonicalId, storeId, dealId = null }) {
       }
     }
 
-    // T2: same canonical (same type + size), different brand/deal
-    // always skip same-canonical rows — never let them fall through to T3/T4
+    // T2: same canonical (same type + size), alternative brand deals.
+    // Filter: exclude rows sharing the source brand — T2 surfaces cross-brand alternatives
+    // for the same canonical spec. No canonical-level dedup: each deal row is independent.
     if (row.canonical_id === canonicalId) {
-      if (!seen.has(`t2:${cKey}`)) {
-        if (
-          (!srcBrand || !nameHasBrand(row.product_name, srcBrand)) &&
-          sizeCompatible(srcWeightValue, parseWeight(row.weight_value, row.weight_raw))
-        ) {
-          t2.push(row);
-        }
-        seen.add(`t2:${cKey}`);
+      if (
+        (!srcBrand || !nameHasBrand(row.product_name, srcBrand)) &&
+        sizeCompatible(srcWeightValue, parseWeight(row.weight_value, row.weight_raw))
+      ) {
+        t2.push(row);
       }
-      continue;
+      continue; // always block same-canonical from falling through to T3/T4
     }
 
     // T3: same brand, same category, different base product
@@ -134,12 +138,11 @@ async function getReplacements(db, { canonicalId, storeId, dealId = null }) {
   t3.sort(byDiscountDesc);
   t4.sort(byDiscountDesc);
 
-
   const tiers = [];
   if (t1.length)
     tiers.push({ type: "same_pack", relevance: 1.0, deals: t1.slice(0, TIER_CAP) });
   if (t2.length)
-    tiers.push({ type: "same_base_product", relevance: 0.85, deals: t2.slice(0, TIER_CAP) });
+    tiers.push({ type: "same_canonical", relevance: 0.85, deals: t2.slice(0, TIER_CAP) });
   if (t3.length)
     tiers.push({ type: "same_brand", relevance: 0.65, deals: t3.slice(0, TIER_CAP) });
   if (!t1.length && !t2.length && !t3.length && t4.length)
