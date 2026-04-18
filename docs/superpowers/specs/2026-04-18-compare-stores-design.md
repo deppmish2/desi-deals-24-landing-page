@@ -246,7 +246,7 @@ buildShopifyCartUrl(storeUrl, items) → string | null
 ### 4.2 Cart management (`/cart`)
 
 1. Full product list with image, name, weight, qty stepper, unit price, line total, remove button
-2. "See alternatives" per item → inline expansion showing canonical-matched alternatives from any store, each displaying current price (green) + median market price (grey, from `real-savings.js`)
+2. "See alternatives" per item → inline expansion showing canonical-matched alternatives from any store, each displaying the median market price only (from `real-savings.js`) — no color coding, no strikethrough. Purpose is neutral brand/variant comparison, not deal highlighting.
 3. User can swap a cart item with an alternative (replaces the cart entry)
 4. Running total at bottom + "Compare prices across stores →" CTA
 
