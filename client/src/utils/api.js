@@ -341,6 +341,10 @@ export function fetchCanonicalPriceData(canonicalId) {
   return authRequest(`/admin-dashboard/review-queue/canonical/${encodeURIComponent(canonicalId)}/price-data`);
 }
 
+export function reprocessUnmapped() {
+  return authRequest("/admin-dashboard/reprocess-unmapped", { method: "POST" });
+}
+
 export function fetchReviewQueue({ status = "pending", page = 1, search = "" } = {}) {
   return authRequest(`/admin-dashboard/review-queue?status=${encodeURIComponent(status)}&page=${page}&search=${encodeURIComponent(search)}`);
 }
