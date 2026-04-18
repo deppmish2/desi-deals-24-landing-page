@@ -196,7 +196,44 @@ Unavailable items lazy-load replacements via `fetchReplacements(item.canonicalId
 
 ## Replacement Logic
 
-Replacements reuse the existing `GET /api/v1/deals/replacements` endpoint (4-tier matching: same canonical → same product group → same category by price/kg → category fallback). Items without a `canonicalId` cannot receive replacements — this is a data quality issue for deals ingested before canonical matching.
+**Entry point:** `GET /api/v1/deals/replacements?canonical_id=X&store_id=Y&deal_id=Z`  
+**Service:** `server/services/product-replacements.js` → `getReplacements(db, { canonicalId, storeId, dealId })`
+
+`dealId` is optional — omit it to get replacements without excluding a specific source deal. When omitted, source weight falls back to `canonical_products.weight_value` so size checks still work.
+
+### Step 1 — Load context
+
+Fetches the source canonical (`canonical_name`, `category`, `weight_value`) and resolves two values from the name via `base-product-catalog.js`:
+
+- **`srcBaseKey`** — base product type (e.g. `"basmati-rice"`)
+- **`srcBrand`** — brand within that base (e.g. `"Daawat"`)
+
+Then loads all active, canonical-linked deals for the target store in one query.
+
+### Step 2 — Classify candidates into tiers
+
+Each deal row is evaluated and placed into the **first** matching tier, then skipped via `continue`.
+
+| Tier | Label | Relevance | Criteria |
+|---|---|---|---|
+| T1 | `same_pack` | 1.0 | Same base product + same brand + different size (different canonical, weight must divide evenly into source) |
+| T2 | `same_canonical` | 0.85 | Same canonical ID, different brand — surfaces cross-brand alternatives for the same spec |
+| T3 | `same_brand` | 0.65 | Same brand + same category + different base product |
+| T4 | `same_category` | 0.4 | Same category only — **only emitted when T1+T2+T3 are all empty** |
+
+T2 rows always `continue` regardless of filter result — same-canonical rows never fall through to T3/T4.
+
+### Step 3 — Sort and cap
+
+- T1: weight ascending (smallest pack first)
+- T2, T3, T4: discount % descending, then price ascending
+- Each tier capped at 4 results
+
+### `sizeCompatible(src, cand)`
+
+Accepts candidates whose size divides evenly into the source (500g fits inside 1kg; 700g does not). Uses epsilon ratio check — `|round(src/cand) - src/cand| < 0.01` — instead of float modulo to avoid precision errors on decimal weights (oils, spices).
+
+Items without a `canonicalId` cannot receive replacements — this is a data quality issue for deals ingested before canonical matching.
 
 ---
 
