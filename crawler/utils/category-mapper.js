@@ -33,6 +33,12 @@ const CATEGORIES = [
       "masoor",
       "chickpea",
       "pea",
+      "bean",
+      "beans",
+      "legume",
+      "kidney",
+      "lobiya",
+      "haslama",
     ],
   ],
   [
@@ -57,10 +63,10 @@ const CATEGORIES = [
       "fenugreek",
     ],
   ],
-  ["Oils & Ghee", ["oil", "ghee", "butter"]],
+  ["Oils & Ghee", ["oil", "ghee"]],
   [
     "Sauces & Pastes",
-    ["chutney", "pickle", "achar", "sauce", "paste", "ketchup", "vinegar"],
+    ["chutney", "pickle", "achar", "sauce", "paste", "ketchup", "vinegar", "chicken"],
   ],
   [
     "Snacks & Sweets",
@@ -70,6 +76,8 @@ const CATEGORIES = [
       "ladoo",
       "halwa",
       "biscuit",
+      "cookie",
+      "cookies",
       "namkeen",
       "chakli",
       "murukku",
@@ -137,7 +145,7 @@ const CATEGORIES = [
   ],
   [
     "Personal Care",
-    ["soap", "shampoo", "hair oil", "cosmetic", "lotion", "cream", "skincare"],
+    ["soap", "shampoo", "hair oil", "cosmetic", "lotion", "cream", "skincare", "shea"],
   ],
   ["Household", ["incense", "agarbatti", "pooja", "diya", "puja", "lamp"]],
 ];
@@ -150,7 +158,7 @@ function mapCategory(productName) {
   if (!productName) return "Other";
   const lower = productName.toLowerCase();
   for (const [category, keywords] of CATEGORIES) {
-    if (keywords.some((kw) => lower.includes(kw))) return category;
+    if (keywords.some((kw) => new RegExp(`\\b${kw}\\b`).test(lower))) return category;
   }
   return "Other";
 }

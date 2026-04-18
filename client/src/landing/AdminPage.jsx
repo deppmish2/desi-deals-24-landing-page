@@ -19,10 +19,16 @@ import {
   fetchBrands,
   fetchCanonicalStats,
   fetchMappedProducts,
+  reprocessUnmapped,
   fetchRemapStatus,
   triggerBrandRemap,
   getAuthSession,
   logoutUser,
+  fetchReviewQueue,
+  confirmQueueItem,
+  dismissQueueItem,
+  createCanonicalFromQueue,
+  updateCanonical,
 } from "../utils/api";
 
 function BarChart({ data }) {
@@ -276,6 +282,7 @@ function MappedProductsTable({ products, loading, error, onRetry }) {
           <thead>
             <tr className="text-left text-[10px] font-bold uppercase tracking-[1px] text-slate-400 border-b border-slate-100">
               <th className="pb-2 pr-4">Canonical name</th>
+              <th className="pb-2 pr-4">ID</th>
               <th className="pb-2 pr-4">Status</th>
               <th className="pb-2 pr-4">Stores</th>
               <th className="pb-2 w-6" />
@@ -292,6 +299,9 @@ function MappedProductsTable({ products, loading, error, onRetry }) {
                   >
                     <td className="py-2.5 pr-4 font-semibold text-slate-700 max-w-[280px]">
                       {item.canonical_name}
+                    </td>
+                    <td className="py-2.5 pr-4 font-mono text-[11px] text-slate-400 max-w-[160px] truncate" title={item.canonical_id}>
+                      {item.canonical_id}
                     </td>
                     <td className="py-2.5 pr-4">
                       {item.has_active_deal ? (
@@ -361,6 +371,7 @@ function CanonicalStatsTab({
   onAddBrandFromSuggestion,
   mappedSubTab, mappedProducts, mappedLoading, mappedError,
   onMappedTabOpen, onRetryMapped,
+  reprocessing, reprocessToast, onReprocessUnmapped,
 }) {
   const [selectedChip, setSelectedChip] = useState(null);
 
@@ -584,7 +595,7 @@ function CanonicalStatsTab({
       {/* Unmapped / Mapped sub-tabs */}
       <div className="bg-white rounded-2xl border border-slate-100 shadow-sm px-6 py-5">
         {/* Sub-tab switcher */}
-        <div className="flex gap-0 border-b-2 border-slate-100 mb-4">
+        <div className="flex items-end gap-0 border-b-2 border-slate-100 mb-4">
           <button
             onClick={() => {}}
             className={`pb-2 px-4 text-[11px] font-bold uppercase tracking-[1px] border-b-2 -mb-[2px] transition-colors ${
@@ -615,7 +626,24 @@ function CanonicalStatsTab({
               {mappedProducts ? mappedProducts.length : stats.total_canonicals}
             </span>
           </button>
+          <button
+            onClick={onReprocessUnmapped}
+            disabled={reprocessing}
+            className="ml-auto mb-1 px-3 py-1 text-[11px] font-semibold rounded-lg bg-green-600 text-white hover:bg-green-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+          >
+            {reprocessing ? "Processing…" : "Reprocess Unmapped"}
+          </button>
         </div>
+
+        {reprocessToast && (
+          <div className={`mb-3 px-3 py-2 rounded-lg text-xs font-medium ${
+            reprocessToast.type === "success"
+              ? "bg-green-50 text-green-700 border border-green-200"
+              : "bg-red-50 text-red-700 border border-red-200"
+          }`}>
+            {reprocessToast.msg}
+          </div>
+        )}
 
         {mappedSubTab === "mapped" ? (
           <MappedProductsTable
@@ -739,6 +767,394 @@ function CanonicalStatsTab({
   );
 }
 
+function ReviewQueueTab() {
+  const [items, setItems] = useState([]);
+  const [total, setTotal] = useState(0);
+  const [page, setPage] = useState(1);
+  const [status, setStatus] = useState("pending");
+  const [search, setSearch] = useState("");
+  const [searchInput, setSearchInput] = useState("");
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState(null);
+  const [actionError, setActionError] = useState(null);
+  const [createForm, setCreateForm] = useState(null);
+  const [createFields, setCreateFields] = useState({ name: "", brand: "", baseProduct: "", productType: "", category: "" });
+  const [editForm, setEditForm] = useState(null); // { canonicalId, rawName, canonicalName }
+  const [editFields, setEditFields] = useState({ canonicalName: "", brand: "", baseProduct: "", productType: "", category: "" });
+
+  const CATEGORIES = ["Rice & Grains","Flours & Baking","Lentils & Pulses","Spices & Masalas","Oils & Ghee","Sauces & Pastes","Snacks & Sweets","Beverages","Dairy & Paneer","Frozen Foods","Fresh Produce","Noodles & Pasta","Canned & Packaged","Personal Care","Household","Other"];
+  const PAGE_SIZE = 50;
+
+  async function load() {
+    setLoading(true);
+    setError(null);
+    try {
+      const data = await fetchReviewQueue({ status, page, search });
+      setItems(data.items || []);
+      setTotal(data.total || 0);
+    } catch (e) {
+      setError(e.message);
+    } finally {
+      setLoading(false);
+    }
+  }
+
+  useEffect(() => { load(); }, [status, page, search]);
+
+  useEffect(() => {
+    const t = setTimeout(() => {
+      setSearch(searchInput);
+      setPage(1);
+    }, 350);
+    return () => clearTimeout(t);
+  }, [searchInput]);
+
+  async function handleConfirm(id, canonicalId) {
+    setActionError(null);
+    try {
+      await confirmQueueItem(id, canonicalId);
+      load();
+    } catch (e) {
+      setActionError(e.message);
+    }
+  }
+
+  async function handleDismiss(id) {
+    setActionError(null);
+    try {
+      await dismissQueueItem(id);
+      load();
+    } catch (e) {
+      setActionError(e.message);
+    }
+  }
+
+  async function handleCreateCanonical(e) {
+    e.preventDefault();
+    if (!createFields.name.trim() || !createForm) return;
+    setActionError(null);
+    try {
+      await createCanonicalFromQueue({
+        queue_item_id: createForm.queueItemId,
+        canonical_name: createFields.name.trim(),
+        category: createFields.category || createForm.category,
+        brand: createFields.brand.trim(),
+        base_product: createFields.baseProduct.trim(),
+        product_type: createFields.productType.trim(),
+      });
+      setCreateForm(null);
+      setCreateFields({ name: "", brand: "", baseProduct: "", productType: "", category: "" });
+      load();
+    } catch (e) {
+      setActionError(e.message);
+    }
+  }
+
+  async function handleEditCanonical(e) {
+    e.preventDefault();
+    if (!editForm) return;
+    setActionError(null);
+    try {
+      await updateCanonical(editForm.canonicalId, {
+        canonical_name: editFields.canonicalName.trim(),
+        brand: editFields.brand.trim(),
+        base_product: editFields.baseProduct.trim(),
+        product_type: editFields.productType.trim(),
+        category: editFields.category,
+      });
+      setEditForm(null);
+      load();
+    } catch (e) {
+      setActionError(e.message);
+    }
+  }
+
+  const totalPages = Math.ceil(total / PAGE_SIZE);
+
+  return (
+    <div className="bg-white rounded-2xl border border-slate-100 shadow-sm px-6 py-5">
+      <div className="flex items-center gap-4 mb-4 flex-wrap">
+        <h2 className="text-lg font-semibold text-slate-700">Review Queue</h2>
+        <select
+          value={status}
+          onChange={(e) => { setStatus(e.target.value); setPage(1); }}
+          className="text-sm border border-slate-200 rounded px-2 py-1"
+        >
+          <option value="pending">Pending</option>
+          <option value="confirmed">Confirmed</option>
+          <option value="dismissed">Dismissed</option>
+        </select>
+        <input
+          type="text"
+          value={searchInput}
+          onChange={(e) => setSearchInput(e.target.value)}
+          placeholder="Search raw name…"
+          className="text-sm border border-slate-200 rounded px-2 py-1 w-52"
+        />
+        <span className="text-sm text-slate-500">{total} items</span>
+      </div>
+
+      {error && <div className="text-red-600 text-sm mb-2">{error}</div>}
+      {actionError && <div className="text-red-600 text-sm mb-2">{actionError}</div>}
+
+      {createForm && (
+        <form onSubmit={handleCreateCanonical} className="mb-4 p-4 bg-green-50 border border-green-200 rounded-xl space-y-3">
+          <div className="flex items-center justify-between">
+            <div className="space-y-0.5">
+              <div className="text-sm font-semibold text-slate-700">New canonical for: <span className="text-green-700">{createForm.rawName}</span></div>
+              {createForm.suggestedName && (
+                <div className="text-xs text-slate-500">Closest match (rejected): <span className="font-medium text-slate-600">{createForm.suggestedName}</span></div>
+              )}
+              {createFields.name && (
+                <div className="text-xs text-slate-400">New ID: <span className="font-mono text-slate-500">{createFields.name.toLowerCase().replace(/[^a-z0-9\s-]/g, "").replace(/\s+/g, "-").replace(/-+/g, "-").replace(/^-|-$/g, "")}</span></div>
+              )}
+            </div>
+            <button type="button" onClick={() => setCreateForm(null)} className="text-slate-400 hover:text-slate-600 text-xs">Cancel</button>
+          </div>
+          <div className="grid grid-cols-2 gap-2">
+            <div className="col-span-2">
+              <label className="block text-xs text-slate-500 mb-0.5">Canonical Name *</label>
+              <input
+                type="text"
+                value={createFields.name}
+                onChange={(e) => setCreateFields((f) => ({ ...f, name: e.target.value }))}
+                placeholder="e.g. Heera Soan Papdi 500g"
+                className="w-full border border-slate-300 rounded px-2 py-1.5 text-sm"
+                autoFocus
+                required
+              />
+            </div>
+            <div>
+              <label className="block text-xs text-slate-500 mb-0.5">Brand</label>
+              <input
+                type="text"
+                value={createFields.brand}
+                onChange={(e) => setCreateFields((f) => ({ ...f, brand: e.target.value }))}
+                placeholder="e.g. Heera"
+                className="w-full border border-slate-300 rounded px-2 py-1.5 text-sm"
+              />
+            </div>
+            <div>
+              <label className="block text-xs text-slate-500 mb-0.5">Base Product</label>
+              <input
+                type="text"
+                value={createFields.baseProduct}
+                onChange={(e) => setCreateFields((f) => ({ ...f, baseProduct: e.target.value }))}
+                placeholder="e.g. Soan Papdi"
+                className="w-full border border-slate-300 rounded px-2 py-1.5 text-sm"
+              />
+            </div>
+            <div>
+              <label className="block text-xs text-slate-500 mb-0.5">Type / Variant</label>
+              <input
+                type="text"
+                value={createFields.productType}
+                onChange={(e) => setCreateFields((f) => ({ ...f, productType: e.target.value }))}
+                placeholder="e.g. Classic, Mango, Cardamom"
+                className="w-full border border-slate-300 rounded px-2 py-1.5 text-sm"
+              />
+            </div>
+            <div>
+              <label className="block text-xs text-slate-500 mb-0.5">Category</label>
+              <select
+                value={createFields.category || createForm.category || "Other"}
+                onChange={(e) => setCreateFields((f) => ({ ...f, category: e.target.value }))}
+                className="w-full border border-slate-300 rounded px-2 py-1.5 text-sm bg-white"
+              >
+                {CATEGORIES.map((c) => <option key={c} value={c}>{c}</option>)}
+              </select>
+            </div>
+          </div>
+          <button type="submit" className="bg-green-600 text-white px-4 py-1.5 rounded text-sm font-medium hover:bg-green-700">
+            Create Canonical
+          </button>
+        </form>
+      )}
+
+      {editForm && (
+        <form onSubmit={handleEditCanonical} className="mb-4 p-4 bg-amber-50 border border-amber-200 rounded-xl space-y-3">
+          <div className="flex items-center justify-between">
+            <div className="space-y-0.5">
+              <div className="text-sm font-semibold text-slate-700">Edit canonical for: <span className="text-amber-700">{editForm.rawName}</span></div>
+              {editForm.canonicalName && (
+                <div className="text-xs text-slate-500">Current canonical: <span className="font-medium text-slate-600">{editForm.canonicalName}</span></div>
+              )}
+              {editForm.currentId && (
+                <div className="text-xs text-slate-400">Current ID: <span className="font-mono text-slate-500">{editForm.currentId}</span></div>
+              )}
+            </div>
+            <button type="button" onClick={() => setEditForm(null)} className="text-slate-400 hover:text-slate-600 text-xs">Cancel</button>
+          </div>
+          <div className="grid grid-cols-2 gap-2">
+            <div className="col-span-2">
+              <label className="block text-xs text-slate-500 mb-0.5">Canonical Name *</label>
+              <input
+                type="text"
+                value={editFields.canonicalName}
+                onChange={(e) => setEditFields((f) => ({ ...f, canonicalName: e.target.value }))}
+                placeholder="e.g. Heera Soan Papdi 500g"
+                className="w-full border border-slate-300 rounded px-2 py-1.5 text-sm"
+                autoFocus
+                required
+              />
+            </div>
+            <div>
+              <label className="block text-xs text-slate-500 mb-0.5">Brand</label>
+              <input
+                type="text"
+                value={editFields.brand}
+                onChange={(e) => setEditFields((f) => ({ ...f, brand: e.target.value }))}
+                placeholder="e.g. Heera"
+                className="w-full border border-slate-300 rounded px-2 py-1.5 text-sm"
+              />
+            </div>
+            <div>
+              <label className="block text-xs text-slate-500 mb-0.5">Base Product</label>
+              <input
+                type="text"
+                value={editFields.baseProduct}
+                onChange={(e) => setEditFields((f) => ({ ...f, baseProduct: e.target.value }))}
+                placeholder="e.g. Soan Papdi"
+                className="w-full border border-slate-300 rounded px-2 py-1.5 text-sm"
+              />
+            </div>
+            <div>
+              <label className="block text-xs text-slate-500 mb-0.5">Type / Variant</label>
+              <input
+                type="text"
+                value={editFields.productType}
+                onChange={(e) => setEditFields((f) => ({ ...f, productType: e.target.value }))}
+                placeholder="e.g. Classic, Mango"
+                className="w-full border border-slate-300 rounded px-2 py-1.5 text-sm"
+              />
+            </div>
+            <div>
+              <label className="block text-xs text-slate-500 mb-0.5">Category</label>
+              <select
+                value={editFields.category}
+                onChange={(e) => setEditFields((f) => ({ ...f, category: e.target.value }))}
+                className="w-full border border-slate-300 rounded px-2 py-1.5 text-sm bg-white"
+              >
+                {CATEGORIES.map((c) => <option key={c} value={c}>{c}</option>)}
+              </select>
+            </div>
+          </div>
+          <button type="submit" className="bg-amber-600 text-white px-4 py-1.5 rounded text-sm font-medium hover:bg-amber-700">
+            Save Changes
+          </button>
+        </form>
+      )}
+
+      {loading ? (
+        <div className="text-slate-400 text-sm">Loading…</div>
+      ) : items.length === 0 ? (
+        <div className="text-slate-400 text-sm">No items</div>
+      ) : (
+        <div className="overflow-x-auto">
+          <table className="w-full text-sm border-collapse">
+            <thead>
+              <tr className="bg-slate-50 text-slate-500 text-xs uppercase">
+                <th className="text-left p-2 border-b">Raw Name</th>
+                <th className="text-left p-2 border-b">Normalised</th>
+                <th className="text-left p-2 border-b">Store</th>
+                <th className="text-left p-2 border-b">Category</th>
+                <th className="text-right p-2 border-b">Confidence</th>
+                <th className="text-left p-2 border-b">Suggested</th>
+                <th className="text-left p-2 border-b">ID</th>
+                <th className="text-left p-2 border-b">Actions</th>
+              </tr>
+            </thead>
+            <tbody>
+              {items.map((item) => (
+                <tr key={item.id} className="border-b hover:bg-slate-50">
+                  <td className="p-2 max-w-[200px] truncate" title={item.raw_name}>{item.raw_name}</td>
+                  <td className="p-2 max-w-[180px] truncate text-slate-500" title={item.normalised_name}>{item.normalised_name || "—"}</td>
+                  <td className="p-2 text-slate-500">{item.store_name || item.store_id || "—"}</td>
+                  <td className="p-2 text-slate-500">{item.category || "—"}</td>
+                  <td className="p-2 text-right tabular-nums">
+                    {item.confidence != null ? (item.confidence * 100).toFixed(0) + "%" : "—"}
+                  </td>
+                  <td className="p-2 text-slate-600 max-w-[160px] truncate" title={item.suggested_canonical_name_normalised || item.suggested_canonical_name}>
+                    {item.suggested_canonical_name_normalised || item.suggested_canonical_name || "—"}
+                  </td>
+                  <td className="p-2 font-mono text-[11px] text-slate-400 max-w-[120px] truncate" title={item.suggested_canonical_id}>
+                    {item.suggested_canonical_id || "—"}
+                  </td>
+                  <td className="p-2">
+                    <div className="flex gap-1 flex-wrap">
+                      {status === "pending" && (<>
+                        {item.suggested_canonical_id && (
+                          <button
+                            onClick={() => handleConfirm(item.id, item.suggested_canonical_id)}
+                            className="text-xs bg-blue-100 text-blue-700 px-2 py-0.5 rounded hover:bg-blue-200"
+                          >
+                            Confirm
+                          </button>
+                        )}
+                        <button
+                          onClick={() => handleDismiss(item.id)}
+                          className="text-xs bg-slate-100 text-slate-600 px-2 py-0.5 rounded hover:bg-slate-200"
+                        >
+                          Dismiss
+                        </button>
+                        <button
+                          onClick={() => { setEditForm(null); setCreateForm({ queueItemId: item.id, rawName: item.raw_name, category: item.category, suggestedName: item.suggested_canonical_name }); setCreateFields({ name: item.raw_name || "", brand: "", baseProduct: "", productType: "", category: item.category || "Other" }); }}
+                          className="text-xs bg-green-100 text-green-700 px-2 py-0.5 rounded hover:bg-green-200"
+                        >
+                          Create
+                        </button>
+                      </>)}
+                      {(status === "confirmed" || status === "dismissed") && item.suggested_canonical_id && (
+                        <button
+                          onClick={() => {
+                            setCreateForm(null);
+                            const slots = (s) => { try { return JSON.parse(s || "[]").map((g) => Array.isArray(g) ? g[0] : g).filter(Boolean).join(" "); } catch { return ""; } };
+                            setEditFields({
+                              canonicalName: item.suggested_canonical_name || "",
+                              brand: slots(item.brand_slots),
+                              baseProduct: slots(item.base_product_slots),
+                              productType: slots(item.type_slots),
+                              category: item.canonical_category || item.category || "Other",
+                            });
+                            setEditForm({ canonicalId: item.suggested_canonical_id, rawName: item.raw_name, canonicalName: item.suggested_canonical_name, currentId: item.suggested_canonical_id });
+                          }}
+                          className="text-xs bg-amber-100 text-amber-700 px-2 py-0.5 rounded hover:bg-amber-200"
+                        >
+                          Edit
+                        </button>
+                      )}
+                    </div>
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+      )}
+
+      {totalPages > 1 && (
+        <div className="flex gap-2 mt-3 items-center text-sm">
+          <button
+            onClick={() => setPage((p) => Math.max(1, p - 1))}
+            disabled={page === 1}
+            className="px-3 py-1 rounded border disabled:opacity-40"
+          >
+            Prev
+          </button>
+          <span>{page} / {totalPages}</span>
+          <button
+            onClick={() => setPage((p) => Math.min(totalPages, p + 1))}
+            disabled={page === totalPages}
+            className="px-3 py-1 rounded border disabled:opacity-40"
+          >
+            Next
+          </button>
+        </div>
+      )}
+    </div>
+  );
+}
+
 export default function AdminPage() {
   const navigate = useNavigate();
   const [stats, setStats] = useState(null);
@@ -757,6 +1173,8 @@ export default function AdminPage() {
   const [mappedProducts, setMappedProducts] = useState(null);
   const [mappedLoading, setMappedLoading] = useState(false);
   const [mappedError, setMappedError] = useState(null);
+  const [reprocessing, setReprocessing] = useState(false);
+  const [reprocessToast, setReprocessToast] = useState(null);
 
   // Brand manager draft state
   const [brandDraft, setBrandDraft] = useState(null);
@@ -840,6 +1258,24 @@ export default function AdminPage() {
 
   function handleRetryMapped() {
     loadMappedProducts();
+  }
+
+  async function handleReprocessUnmapped() {
+    setReprocessing(true);
+    setReprocessToast(null);
+    try {
+      const result = await reprocessUnmapped();
+      const s = result?.stats || {};
+      setReprocessToast({
+        type: "success",
+        msg: `Done: ${s.mapped ?? 0} mapped · ${s.created ?? 0} new canonicals · ${s.manual_review ?? 0} queued for review`,
+      });
+      fetchCanonicalStats().then(setCanonicalStats).catch(() => {});
+    } catch (err) {
+      setReprocessToast({ type: "error", msg: String(err?.message || "Reprocess failed") });
+    } finally {
+      setReprocessing(false);
+    }
   }
 
   function handleBrandFieldChange(index, field, value) {
@@ -1018,6 +1454,7 @@ export default function AdminPage() {
             { id: "user",      label: "User Stats"      },
             { id: "crawl",     label: "Crawl Stats"     },
             { id: "canonical", label: "Canonical Stats" },
+            { id: "queue",     label: "Review Queue"    },
           ].map(({ id, label }) => (
             <button
               key={id}
@@ -1424,7 +1861,14 @@ export default function AdminPage() {
             mappedError={mappedError}
             onMappedTabOpen={handleMappedTabOpen}
             onRetryMapped={handleRetryMapped}
+            reprocessing={reprocessing}
+            reprocessToast={reprocessToast}
+            onReprocessUnmapped={handleReprocessUnmapped}
           />
+        )}
+
+        {tab === "queue" && (
+          <ReviewQueueTab />
         )}
 
       </div>

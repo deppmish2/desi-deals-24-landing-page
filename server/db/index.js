@@ -8,9 +8,11 @@ const { getAdminEmailSet } = require("../utils/admin-access");
 
 // Local: file: URL pointing at the existing SQLite file
 // Vercel / any env with TURSO_DATABASE_URL: remote Turso DB
+const dbFileOverride = process.env.DB_FILE;
 const tursoUrl =
-  process.env.TURSO_DATABASE_URL ||
-  process.env.DESI_DEALS_DB_TURSO_DATABASE_URL;
+  !dbFileOverride &&
+  (process.env.TURSO_DATABASE_URL ||
+  process.env.DESI_DEALS_DB_TURSO_DATABASE_URL);
 const tursoAuthToken =
   process.env.TURSO_AUTH_TOKEN || process.env.DESI_DEALS_DB_TURSO_AUTH_TOKEN;
 const usingRemoteDb = Boolean(tursoUrl);
@@ -20,7 +22,7 @@ const client = tursoUrl
       authToken: tursoAuthToken,
     })
   : createClient({
-      url: `file:${path.resolve("./data/desiDeals24.db")}`,
+      url: `file:${path.resolve(dbFileOverride || "./data/desiDeals24.db")}`,
     });
 
 /**
@@ -183,6 +185,10 @@ const ready = (async () => {
     )`,
     `CREATE INDEX IF NOT EXISTS idx_brand_remap_jobs_status
        ON brand_remap_jobs(status, started_at)`,
+    "ALTER TABLE entity_resolution_queue ADD COLUMN store_id TEXT REFERENCES stores(id) ON DELETE SET NULL",
+    "ALTER TABLE entity_resolution_queue ADD COLUMN category TEXT",
+    "CREATE INDEX IF NOT EXISTS idx_queue_deal_id ON entity_resolution_queue(deal_id)",
+    "CREATE INDEX IF NOT EXISTS idx_queue_category ON entity_resolution_queue(category, status)",
   ];
   for (const sql of alwaysMigrations) {
     try {

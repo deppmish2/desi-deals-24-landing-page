@@ -143,6 +143,17 @@ router.get("/mapped-products", async (req, res) => {
   }
 });
 
+// ── Reprocess unmapped ────────────────────────────────────────────────────────
+
+router.post("/reprocess-unmapped", async (req, res) => {
+  try {
+    const stats = await canonicalizeDeals(db, { unmappedOnly: true });
+    res.json({ ok: true, stats });
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
 // ── Brand remap ───────────────────────────────────────────────────────────────
 
 router.post("/brands/remap", async (req, res) => {

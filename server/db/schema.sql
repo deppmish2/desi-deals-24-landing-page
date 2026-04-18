@@ -304,6 +304,8 @@ CREATE TABLE IF NOT EXISTS entity_resolution_queue (
   raw_name              TEXT NOT NULL,
   normalised_name       TEXT,
   status                TEXT DEFAULT 'pending',
+  store_id              TEXT REFERENCES stores(id) ON DELETE SET NULL,
+  category              TEXT,
   created_at            DATETIME DEFAULT CURRENT_TIMESTAMP
 );
 

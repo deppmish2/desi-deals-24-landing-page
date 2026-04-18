@@ -17,9 +17,14 @@
     "test:integration": "node --test tests/integration/*.test.js",
     "test:e2e": "node --test tests/e2e/*.test.js",
     "migrate:real-savings": "node scripts/migrate-real-savings.js",
-    "seed:canonicals": "node scripts/seed-priority-canonicals.js"
+    "seed:canonicals": "node scripts/seed-priority-canonicals.js",
+    "batch:pending-queue": "node scripts/process-pending-queue-openai-batch.js",
+    "batch:pending-queue:cleanup": "node scripts/cleanup-pending-queue-batch-output.js",
+    "batch:pending-queue:prune-junk": "node scripts/prune-pending-queue-review-junk.js",
+    "batch:pending-queue:refine-review": "node scripts/refine-pending-queue-manual-review.js"
   },
   "dependencies": {
+    "@anthropic-ai/sdk": "^0.89.0",
     "@libsql/client": "^0.17.0",
     "@vercel/kv": "^3.0.0",
     "better-sqlite3": "^9.4.3",
