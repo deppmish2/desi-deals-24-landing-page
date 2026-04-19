@@ -91,6 +91,34 @@ In `DealsPage`, the "Real Savings" badge uses `createPortal` (rendered into `doc
 
 `proxyDealImageUrl(deal)` takes the **full deal object** (not `deal.image_url` string) — it needs `deal.store.url` to resolve relative image paths. Passing the string instead of the object silently breaks image display.
 
+## `formatPricePerKg(ppkg, weightUnit)`
+
+`client/src/utils/formatters.js`. Accepts optional `weightUnit` — displays `/L` when unit is `ml` or `l`, `/kg` otherwise. **Always pass `deal.weight_unit` as the second arg** — omitting it silently shows `/kg` for liquid products.
+
+## `DealSharePage` (`/share/deal/:dealId`)
+
+Conditional rendering based on `deal.is_fake_deal` (server-computed, see backend wiki):
+
+| Condition | UI |
+|---|---|
+| `is_fake_deal && discountPct && realPct != null` | Amber warning banner: "⚠️ Claims X% off — only Y% vs market price" |
+| `is_fake_deal && realPct != null` | WA share uses `buildWhatsAppSuspectDiscountShareText` (exposes gap) |
+| genuine deal | WA share uses `buildWhatsAppDealShareUrl` (standard copy) |
+
+Secondary CTA link below SNATCH DEAL button:
+- Fake: "See more inflated deals →" → `/deals?sort=real_savings`
+- Genuine: "See more genuine deals →" → `/deals`
+
+Falls back to genuine treatment when `real_savings` is unavailable.
+
+## `DealsPage` — WhatsApp share branching
+
+WA share in `DealCard` uses `deal.is_fake_deal` (from API) to branch:
+- Fake: `buildWhatsAppSuspectDiscountShareText` — exposes claimed vs real saving gap
+- Genuine: `buildWhatsAppDealShareUrl` — standard deal share copy
+
+`buildWhatsAppSuspectDiscountShareText` and `buildWhatsAppShareUrl` live in `client/src/utils/share.js`.
+
 ## Related pages
 
 - [Backend](backend.md) — API routes consumed by the frontend

@@ -239,6 +239,19 @@ Items without a `canonicalId` cannot receive replacements — this is a data qua
 
 ---
 
+## Replacement Modal UI (ReplacementsModal in DealsPage.jsx)
+
+**Display order** (always):
+1. Non-category tiers (T1, T2, T3) — in server-returned order
+2. "Same Product, Other Stores" (admin-only)
+3. "More from this category" (T4) — **always last**, rendered after other stores
+
+**Kg-saving % badge** on each replacement row:
+- Shows `(sourcePricePerKg - deal.price_per_kg) / sourcePricePerKg * 100` — how much cheaper/pricier vs the source deal
+- Green when cheaper (`-X%`), red when more expensive (`+X%`)
+- **Not shown for T4 (same_category)** — different product types make the comparison meaningless
+- Falls back to no badge when either deal lacks `price_per_kg`
+
 ## Known Limitations
 
 - **Delivery duration sort** is a no-op — falls back to total cost. The `delivery_options` table has no data for most stores.

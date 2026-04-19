@@ -29,6 +29,24 @@ Sources: scripts/prune-pending-queue-review-junk.js, package.json
 
 ---
 
+## [2026-04-19] update | Fake-deal detection, price/L for liquids, replacement modal improvements
+
+Pages touched: backend.md, frontend.md, crawler.md, compare-stores.md
+Sources: server/routes/deals.js, crawler/utils/price-parser.js, client/src/utils/formatters.js, client/src/utils/share.js, client/src/pages/DealSharePage.jsx, client/src/pages/DealsPage.jsx, scripts/backfill-price-per-litre.js
+
+**Changes recorded:**
+
+- `FAKE_DEAL_THRESHOLD_PP = 10` in `server/routes/deals.js` — single source of truth for fake deal classification. `is_fake_deal` boolean now attached to every deal row in all API responses.
+- `calcPricePerKg` fixed for liquid units: `ml` → price/litre, `l` → price/litre. Previously returned null. `price_per_kg` DB field stores price/L for liquids; `weight_unit` distinguishes at display time.
+- `formatPricePerKg(ppkg, weightUnit)` — now accepts `weightUnit`; shows `/L` for ml/l, `/kg` otherwise. All call sites updated.
+- `DealSharePage`: amber warning banner for fake deals, conditional WhatsApp share text (exposes gap vs genuine copy), secondary CTA ("See more inflated deals →" or "See more genuine deals →").
+- `DealsPage` WA share branches on `deal.is_fake_deal` (removed hardcoded 10pp threshold).
+- Replacement modal: kg-saving % badge shows vs source deal price/kg (not store's claimed discount); hidden for T4 category tier; T4 always rendered last (after "Same Product, Other Stores").
+- `scripts/backfill-price-per-litre.js` — one-off backfill for existing liquid deals. Supports `--turso` for prod. ⚠️ Must be run against Turso on merge: `node scripts/backfill-price-per-litre.js --turso`.
+- Discovery: `server/db` connects to Turso when `DESI_DEALS_DB_TURSO_DATABASE_URL` is in env — localhost dev runs against Turso, not local SQLite.
+
+---
+
 ## [2026-04-17] auto-update | Final refinement pass for pending-queue manual review
 Pages touched: crawler.md
 Sources: scripts/refine-pending-queue-manual-review.js, package.json
