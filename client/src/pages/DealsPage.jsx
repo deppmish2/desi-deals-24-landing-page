@@ -895,7 +895,7 @@ function DealCard({
                     <p className={`text-[10px] font-extrabold uppercase tracking-[1.4px] leading-none mb-[3px] ${
                       isGreat || isGood ? "text-[#15803d]" : "text-slate-400"
                     }`}>Real Savings</p>
-                    <p className="text-[11px] text-slate-400 leading-none">
+                    <p className="text-[11px] text-slate-500 leading-none">
                       {realSavings.reference_source === "store_original" ? "vs store's original price" : "vs market price"}
                     </p>
                   </div>
@@ -905,7 +905,7 @@ function DealCard({
                     isGreat || isGood ? "text-[#16a34a]" : "text-slate-500"
                   }`}>{realPct}%</p>
                   {gap >= 3 && discountPct && (
-                    <p className="text-[10px] text-slate-400 leading-none mt-1">store says {discountPct}%</p>
+                    <p className="text-[10px] text-slate-500 leading-none mt-1">store says {discountPct}%</p>
                   )}
                 </div>
               </div>
@@ -2787,7 +2787,7 @@ export default function DealsPage() {
               <div className="flex flex-col gap-4">
                 <div className="flex items-center justify-between gap-3">
                   <div className="flex flex-col min-w-0 gap-2">
-                    <span className="text-[10px] sm:text-[11px] font-extrabold uppercase tracking-[1.5px] text-slate-400 leading-none">
+                    <span className="text-[10px] sm:text-[11px] font-extrabold uppercase tracking-[1.5px] text-slate-500 leading-none">
                       Matching Deals
                     </span>
                     <div className="flex items-baseline gap-1.5">
@@ -2798,7 +2798,7 @@ export default function DealsPage() {
                         totalCount != null &&
                         totalCount !== matchingCount && (
                           <span className="flex items-center gap-1.5">
-                            <span className="text-[13px] sm:text-[14px] font-semibold text-slate-400 leading-none">
+                            <span className="text-[13px] sm:text-[14px] font-semibold text-slate-500 leading-none">
                               / {totalCount.toLocaleString()}
                             </span>
                             <button
