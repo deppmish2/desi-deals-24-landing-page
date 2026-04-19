@@ -337,8 +337,9 @@ export function fetchCanonicalStats() {
   return authRequest("/admin-dashboard/canonical-stats");
 }
 
-export function fetchCanonicalPriceData(canonicalId) {
-  return authRequest(`/admin-dashboard/review-queue/canonical/${encodeURIComponent(canonicalId)}/price-data`);
+export function fetchCanonicalPriceData(canonicalId, excludeStoreId) {
+  const qs = excludeStoreId ? `?exclude_store_id=${encodeURIComponent(excludeStoreId)}` : "";
+  return authRequest(`/admin-dashboard/review-queue/canonical/${encodeURIComponent(canonicalId)}/price-data${qs}`);
 }
 
 export function reprocessUnmapped() {
@@ -388,5 +389,12 @@ export function fetchReplacements(canonicalId, storeId, dealId) {
     canonical_id: canonicalId,
     store_id: storeId,
     ...(dealId && { deal_id: dealId }),
+  });
+}
+
+export function fetchSameProductOtherStores(canonicalId, storeId) {
+  return request("/deals/same-product-other-stores", {
+    canonical_id: canonicalId,
+    store_id: storeId,
   });
 }

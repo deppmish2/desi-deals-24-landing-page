@@ -1802,3 +1802,17 @@ None found — all steps contain complete code.
 Delivery duration sort is a no-op (falls back to total cost sort). The `delivery_options` table exists in schema but has no data for most stores. This can be wired in a follow-up once delivery data is populated.
 
 Cart items without `canonicalId` show permanently as unavailable (no replacement path). This is a data quality issue — items added before canonical matching existed will hit this. No fix in scope.
+
+---
+
+## ⚠️ Reviewer Warning — Production DB Migration Required
+
+**Before merging this branch to `main`, the production Turso DB must be updated.**
+
+The T2 replacement tier (`same_spec`) depends on `canonical_products.base_product_slots` being populated. This column was backfilled locally on 2026-04-19 using `scripts/backfill-base-product-slots.js` (2345/2347 rows updated), but that change only exists in the local SQLite file — **it has not been synced to production yet**.
+
+If merged without syncing, T2 will silently return empty for all replacement lookups (no error, just degraded results). T1/T3/T4 tiers are unaffected.
+
+**Steps before merging:**
+1. Sync the local DB to production (via `scripts/push-local-db-to-turso.js` or equivalent), **or**
+2. Run `node scripts/backfill-base-product-slots.js` directly against the production Turso DB (set `TURSO_DATABASE_URL` + `TURSO_AUTH_TOKEN` in env). The script is idempotent — safe to re-run.

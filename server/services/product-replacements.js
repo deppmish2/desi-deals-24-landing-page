@@ -16,7 +16,8 @@ const ACTIVE_DEALS_WITH_CANONICAL_SQL = `
          d.price_per_kg, d.currency, d.availability, d.bulk_pricing,
          d.best_before,
          cp.canonical_name AS cp_canonical_name,
-         cp.category AS cp_category
+         cp.category AS cp_category,
+         cp.base_product_slots AS cp_base_product_slots
   FROM deals d
   JOIN stores s ON s.id = d.store_id
   JOIN canonical_products cp ON cp.id = d.canonical_id
@@ -38,6 +39,16 @@ function parseWeight(value, raw) {
   return m ? parseFloat(m[1].replace(",", ".")) : null;
 }
 
+// T2: exact set equality of product token slots (cross-brand same-spec matching).
+// srcSlotSet is pre-computed as a flat Set from src.base_product_slots.
+function baseProductSlotsMatch(srcSlotSet, candSlotsJson) {
+  if (!srcSlotSet || !candSlotsJson) return false;
+  const candSet = new Set(JSON.parse(candSlotsJson).flat());
+  if (srcSlotSet.size !== candSet.size) return false;
+  for (const v of srcSlotSet) if (!candSet.has(v)) return false;
+  return true;
+}
+
 // Bug fix: use epsilon-based ratio check to avoid float modulo errors (e.g. 0.3 % 0.1 === 0.09999...)
 function sizeCompatible(srcWeight, candWeight) {
   if (!srcWeight || !candWeight) return true;
@@ -49,7 +60,7 @@ function sizeCompatible(srcWeight, candWeight) {
 async function getReplacements(db, { canonicalId, storeId, dealId = null }) {
   const src = await db
     .prepare(
-      `SELECT id, canonical_name, category, weight_value, weight_unit FROM canonical_products WHERE id = ? LIMIT 1`
+      `SELECT id, canonical_name, category, weight_value, weight_unit, base_product_slots FROM canonical_products WHERE id = ? LIMIT 1`
     )
     .get(canonicalId);
   if (!src) return null;
@@ -58,6 +69,9 @@ async function getReplacements(db, { canonicalId, storeId, dealId = null }) {
   const srcBaseKey = srcBase?.base_key ?? null;
   const srcBrand = srcBaseKey
     ? detectBrandForBase(src.canonical_name, srcBaseKey)
+    : null;
+  const srcBaseSlots = src.base_product_slots
+    ? new Set(JSON.parse(src.base_product_slots).flat())
     : null;
 
   const rows = await db.prepare(ACTIVE_DEALS_WITH_CANONICAL_SQL).all(storeId);
@@ -101,19 +115,20 @@ async function getReplacements(db, { canonicalId, storeId, dealId = null }) {
       }
     }
 
-    // T2: same canonical, unbranded deals only.
-    // Canonical IDs encode brand names, so for branded canonicals srcBrand is always present
-    // and all same-canonical deals share that brand — the filter excludes them all, leaving T2
-    // empty. T2 only fires meaningfully for unbranded/generic canonicals (srcBrand === null),
-    // where the short-circuit (!srcBrand) passes all same-canonical deals.
-    if (row.canonical_id === canonicalId) {
-      if (
-        (!srcBrand || !nameHasBrand(row.product_name, srcBrand)) &&
-        sizeCompatible(srcWeightValue, parseWeight(row.weight_value, row.weight_raw))
-      ) {
-        t2.push(row);
-      }
-      continue; // always block same-canonical from falling through to T3/T4
+    // Skip same canonical — don't surface the same product as its own replacement.
+    if (row.canonical_id === canonicalId) continue;
+
+    // T2: cross-brand alternative for the same product spec.
+    // Match when base_product_slots token sets are identical (same product, different brand).
+    if (
+      srcBaseSlots &&
+      baseProductSlotsMatch(srcBaseSlots, row.cp_base_product_slots) &&
+      sizeCompatible(srcWeightValue, parseWeight(row.weight_value, row.weight_raw)) &&
+      !seen.has(`t2:${cKey}`)
+    ) {
+      t2.push(row);
+      seen.add(`t2:${cKey}`);
+      continue;
     }
 
     // T3: same brand, same category, different base product
@@ -144,7 +159,7 @@ async function getReplacements(db, { canonicalId, storeId, dealId = null }) {
   if (t1.length)
     tiers.push({ type: "same_pack", relevance: 1.0, deals: t1.slice(0, TIER_CAP) });
   if (t2.length)
-    tiers.push({ type: "same_canonical", relevance: 0.85, deals: t2.slice(0, TIER_CAP) });
+    tiers.push({ type: "same_spec", relevance: 0.85, deals: t2.slice(0, TIER_CAP) });
   if (t3.length)
     tiers.push({ type: "same_brand", relevance: 0.65, deals: t3.slice(0, TIER_CAP) });
   if (!t1.length && !t2.length && !t3.length && t4.length)

@@ -15,7 +15,7 @@ const { trackEvent } = require("../services/event-tracker");
 const { formatBerlinDateKey } = require("../services/berlin-time");
 const { trackSearchQuery } = require("../services/search-tracker");
 const { verifyJwt } = require("../utils/jwt");
-const { batchGetRealSavings, computeRealSavings } = require("../services/real-savings");
+const { batchGetRealSavings, computeRealSavings, explainRealSavings } = require("../services/real-savings");
 const { getReplacements } = require("../services/product-replacements");
 
 const router = express.Router();
@@ -640,6 +640,57 @@ router.get("/replacements", async (req, res, next) => {
         deals: tier.deals.map(serializeDeal),
       })),
     });
+  } catch (error) {
+    next(error);
+  }
+});
+
+router.get("/same-product-other-stores", async (req, res, next) => {
+  try {
+    const canonicalId = String(req.query.canonical_id || "").trim();
+    const storeId = String(req.query.store_id || "").trim();
+    if (!canonicalId || !storeId) {
+      return res.status(400).json({ error: "canonical_id and store_id are required" });
+    }
+
+    const rows = await db
+      .prepare(
+        `SELECT d.id, d.product_name, d.sale_price, d.discount_percent,
+                d.price_per_kg, d.weight_raw, d.weight_value, d.weight_unit, d.product_url, d.image_url,
+                s.id AS store_id, s.name AS store_name, s.url AS store_url
+         FROM deals d
+         JOIN stores s ON s.id = d.store_id
+         WHERE d.canonical_id = ? AND d.store_id != ? AND d.is_active = 1
+         ORDER BY s.name ASC, d.sale_price ASC`
+      )
+      .all(canonicalId, storeId);
+
+    const storeMap = new Map();
+    for (const d of rows) {
+      if (!storeMap.has(d.store_id)) {
+        storeMap.set(d.store_id, {
+          store_id: d.store_id,
+          store_name: d.store_name,
+          store_url: d.store_url,
+          deals: [],
+        });
+      }
+      storeMap.get(d.store_id).deals.push({
+        id: d.id,
+        product_name: d.product_name,
+        sale_price: d.sale_price,
+        discount_percent: d.discount_percent,
+        price_per_kg: d.price_per_kg,
+        weight_raw: d.weight_raw,
+        weight_value: d.weight_value,
+        weight_unit: d.weight_unit,
+        product_url: d.product_url,
+        image_url: d.image_url,
+      });
+    }
+
+    res.set("Cache-Control", "public, s-maxage=120, stale-while-revalidate=600");
+    res.json({ stores: [...storeMap.values()] });
   } catch (error) {
     next(error);
   }

@@ -26,6 +26,7 @@ import {
   fetchDeals,
   fetchOAuthAuthUrl,
   fetchReplacements,
+  fetchSameProductOtherStores,
   getAuthSession,
   logoutUser,
   removeBookmark,
@@ -418,6 +419,7 @@ function dealPermalink(dealId) {
 
 const TIER_LABELS = {
   same_pack: "Same product, different size",
+  same_spec: "Same product, other brands",
   same_base_product: "Same product, other brands",
   same_brand: "Same brand, other products",
   same_category: "More from this category",
@@ -446,16 +448,23 @@ function ReplacementDealRow({ deal, emphasisSize }) {
       )}
       <div className="flex-1 min-w-0">
         <p className="text-[12px] font-semibold text-slate-800 line-clamp-2 leading-tight">{deal.product_name}</p>
-        {deal.weight_raw && (
-          <span
-            className={`inline-block mt-1 px-1.5 py-0.5 rounded text-[10px] font-bold ${
-              emphasisSize
-                ? "bg-amber-100 text-amber-700 border border-amber-300"
-                : "bg-slate-100 text-slate-500"
-            }`}
-          >
-            {deal.weight_raw}
-          </span>
+        {(deal.weight_raw || deal.price_per_kg != null) && (
+          <div className="flex items-center gap-1.5 mt-1 flex-wrap">
+            {deal.weight_raw && (
+              <span
+                className={`px-1.5 py-0.5 rounded text-[10px] font-bold ${
+                  emphasisSize
+                    ? "bg-amber-100 text-amber-700 border border-amber-300"
+                    : "bg-slate-100 text-slate-500"
+                }`}
+              >
+                {deal.weight_raw}
+              </span>
+            )}
+            {deal.price_per_kg != null && (
+              <span className="text-[10px] text-slate-400">{formatPricePerKg(deal.price_per_kg)}</span>
+            )}
+          </div>
         )}
       </div>
       <div className="text-right shrink-0">
@@ -470,7 +479,8 @@ function ReplacementDealRow({ deal, emphasisSize }) {
   );
 }
 
-function ReplacementsModal({ sourceDeal, tiers, loading, onClose }) {
+function ReplacementsModal({ sourceDeal, tiers, loading, otherStores, isAdmin, onClose }) {
+  const hasOtherStores = isAdmin && otherStores?.length > 0;
   return createPortal(
     <div
       className="fixed inset-0 z-50 flex items-end sm:items-center justify-center bg-black/40 backdrop-blur-sm"
@@ -484,6 +494,18 @@ function ReplacementsModal({ sourceDeal, tiers, loading, onClose }) {
           <div>
             <p className="text-[10px] font-extrabold uppercase tracking-[1.5px] text-slate-400">Other options at this store</p>
             <p className="text-[13px] font-bold text-slate-800 mt-0.5 line-clamp-1">{sourceDeal.product_name}</p>
+            {(sourceDeal.weight_raw || sourceDeal.price_per_kg != null) && (
+              <div className="flex items-center gap-1.5 mt-1 flex-wrap">
+                {sourceDeal.weight_raw && (
+                  <span className="px-1.5 py-0.5 rounded text-[10px] font-bold bg-slate-100 text-slate-500">
+                    {sourceDeal.weight_raw}
+                  </span>
+                )}
+                {sourceDeal.price_per_kg != null && (
+                  <span className="text-[10px] text-slate-400">{formatPricePerKg(sourceDeal.price_per_kg)}</span>
+                )}
+              </div>
+            )}
           </div>
           <button
             type="button"
@@ -500,29 +522,62 @@ function ReplacementsModal({ sourceDeal, tiers, loading, onClose }) {
             <div className="flex justify-center py-10">
               <div className="w-6 h-6 border-2 border-[#16a34a] border-t-transparent rounded-full animate-spin" />
             </div>
-          ) : !tiers?.length ? (
-            <p className="text-center text-slate-400 text-[13px] py-10">No alternatives found at this store.</p>
           ) : (
-            tiers.map((tier) => (
-              <div key={tier.type} className="mb-5 last:mb-0">
-                <p className="text-[10px] font-extrabold uppercase tracking-[1.5px] text-slate-400 mb-2">
-                  {TIER_LABELS[tier.type] ?? tier.type}
-                </p>
-                <div className="flex flex-col gap-2">
-                  {tier.deals.map((d) => (
-                    <ReplacementDealRow
-                      key={d.id}
-                      deal={d}
-                      emphasisSize={
-                        d.weight_value != null && sourceDeal.weight_value != null
-                          ? d.weight_value !== sourceDeal.weight_value
-                          : d.weight_raw !== sourceDeal.weight_raw
-                      }
-                    />
-                  ))}
+            <>
+              {!tiers?.length ? (
+                <p className="text-center text-slate-400 text-[13px] py-6">No alternatives found at this store.</p>
+              ) : (
+                tiers.map((tier) => (
+                  <div key={tier.type} className="mb-5 last:mb-0">
+                    <p className="text-[10px] font-extrabold uppercase tracking-[1.5px] text-slate-400 mb-2">
+                      {TIER_LABELS[tier.type] ?? tier.type}
+                    </p>
+                    <div className="flex flex-col gap-2">
+                      {tier.deals.map((d) => (
+                        <ReplacementDealRow
+                          key={d.id}
+                          deal={d}
+                          emphasisSize={
+                            d.weight_value != null && sourceDeal.weight_value != null
+                              ? d.weight_value !== sourceDeal.weight_value
+                              : d.weight_raw !== sourceDeal.weight_raw
+                          }
+                        />
+                      ))}
+                    </div>
+                  </div>
+                ))
+              )}
+
+              {/* Admin-only: same product at other stores */}
+              {hasOtherStores && (
+                <div className="mt-4 pt-4 border-t border-slate-100">
+                  <p className="text-[10px] font-extrabold uppercase tracking-[1.5px] text-slate-400 mb-3">
+                    Same Product, Other Stores
+                  </p>
+                  <div className="flex flex-col gap-4">
+                    {otherStores.map((store) => (
+                      <div key={store.store_id}>
+                        <p className="text-[11px] font-bold text-slate-500 uppercase tracking-wide mb-1.5">{store.store_name}</p>
+                        <div className="flex flex-col gap-2">
+                          {store.deals.map((d) => (
+                            <ReplacementDealRow
+                              key={d.id}
+                              deal={{ ...d, store: { name: store.store_name, url: store.store_url } }}
+                              emphasisSize={
+                                d.weight_value != null && sourceDeal.weight_value != null
+                                  ? d.weight_value !== sourceDeal.weight_value
+                                  : d.weight_raw !== sourceDeal.weight_raw
+                              }
+                            />
+                          ))}
+                        </div>
+                      </div>
+                    ))}
+                  </div>
                 </div>
-              </div>
-            ))
+              )}
+            </>
           )}
         </div>
       </div>
@@ -549,6 +604,9 @@ function DealCard({
   const [showReplacements, setShowReplacements] = useState(false);
   const [replacementTiers, setReplacementTiers] = useState(null);
   const [replacementsLoading, setReplacementsLoading] = useState(false);
+  const [otherStores, setOtherStores] = useState(null);
+  const [loadingCanonical, setLoadingCanonical] = useState(false);
+  const [canonicalData, setCanonicalData] = useState(null);
   const badgeRef = useRef(null);
 
   async function handleOpenReplacements() {
@@ -556,10 +614,17 @@ function DealCard({
     if (replacementTiers !== null) return;
     setReplacementsLoading(true);
     try {
-      const data = await fetchReplacements(deal.canonical_id, deal.store?.id, deal.id);
-      setReplacementTiers(data.tiers || []);
+      const [repData, otherStoresData] = await Promise.all([
+        fetchReplacements(deal.canonical_id, deal.store?.id, deal.id),
+        deal.canonical_id && deal.store?.id
+          ? fetchSameProductOtherStores(deal.canonical_id, deal.store?.id).catch(() => ({ stores: [] }))
+          : Promise.resolve({ stores: [] }),
+      ]);
+      setReplacementTiers(repData.tiers || []);
+      setOtherStores(otherStoresData.stores || []);
     } catch {
       setReplacementTiers([]);
+      setOtherStores([]);
     } finally {
       setReplacementsLoading(false);
     }
@@ -730,7 +795,7 @@ function DealCard({
                 setShowAdminTooltip(true);
                 if (realSavings.canonical_id && !canonicalData && !loadingCanonical) {
                   setLoadingCanonical(true);
-                  fetchCanonicalPriceData(realSavings.canonical_id)
+                  fetchCanonicalPriceData(realSavings.canonical_id, deal.store?.id)
                     .then((data) => setCanonicalData(data))
                     .catch(() => {})
                     .finally(() => setLoadingCanonical(false));
@@ -860,6 +925,38 @@ function DealCard({
                       <p className="text-[10px] text-slate-600">No market data</p>
                     )}
                   </div>
+
+                  {/* Same-spec alternatives at other stores */}
+                  {canonicalData?.same_spec_alts?.length > 0 && (
+                    <div className="border-t border-slate-600 mt-2.5 pt-2">
+                      <p className="text-[10px] font-extrabold uppercase tracking-[1.2px] text-slate-500 mb-1.5">Same Spec at Other Stores</p>
+                      <div className="flex flex-col gap-2">
+                        {canonicalData.same_spec_alts.map((store) => (
+                          <div key={store.store_id}>
+                            <p className="text-[10px] font-semibold text-slate-400 mb-0.5">{store.store_name}</p>
+                            {store.deals.slice(0, 3).map((d) => (
+                              <div key={d.id} className="flex justify-between items-baseline ml-1.5 gap-1">
+                                <span className="text-[10px] text-slate-500 truncate">{d.product_name}</span>
+                                <span className="text-[10px] font-semibold text-white shrink-0">
+                                  {d.sale_price != null ? `€${d.sale_price.toFixed(2)}` : "—"}
+                                  {d.discount_percent ? <span className="text-[9px] text-green-400 ml-1">-{Math.round(d.discount_percent)}%</span> : null}
+                                </span>
+                              </div>
+                            ))}
+                            {store.deals.length > 3 && (
+                              <p className="text-[9px] text-slate-600 ml-1.5">+{store.deals.length - 3} more</p>
+                            )}
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                  )}
+                  {canonicalData && !canonicalData.same_spec_alts?.length && (
+                    <div className="border-t border-slate-600 mt-2.5 pt-2">
+                      <p className="text-[10px] font-extrabold uppercase tracking-[1.2px] text-slate-500 mb-1">Same Spec at Other Stores</p>
+                      <p className="text-[10px] text-slate-600">None found</p>
+                    </div>
+                  )}
                 </div>,
                 document.body,
               )}
@@ -960,6 +1057,8 @@ function DealCard({
         sourceDeal={deal}
         tiers={replacementTiers}
         loading={replacementsLoading}
+        otherStores={otherStores}
+        isAdmin={isAdmin}
         onClose={() => setShowReplacements(false)}
       />
     )}
