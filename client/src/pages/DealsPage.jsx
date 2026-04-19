@@ -425,7 +425,17 @@ const TIER_LABELS = {
   same_category: "More from this category",
 };
 
-function ReplacementDealRow({ deal, emphasisSize }) {
+function highlightDiffName(sourceName, targetName) {
+  const sourceTokens = new Set((sourceName || "").toLowerCase().split(/\s+/));
+  return targetName.split(/(\s+)/).map((part, i) => {
+    if (/^\s+$/.test(part)) return part;
+    return !sourceTokens.has(part.toLowerCase())
+      ? <strong key={i} className="font-bold text-slate-900">{part}</strong>
+      : <span key={i}>{part}</span>;
+  });
+}
+
+function ReplacementDealRow({ deal, emphasisSize, sourceName }) {
   const discountPct = deal.discount_percent ? Math.round(deal.discount_percent) : null;
   const [imgErr, setImgErr] = React.useState(false);
   return (
@@ -447,7 +457,9 @@ function ReplacementDealRow({ deal, emphasisSize }) {
         <div className="w-12 h-12 rounded-lg bg-slate-50 shrink-0 flex items-center justify-center text-xl">🛒</div>
       )}
       <div className="flex-1 min-w-0">
-        <p className="text-[12px] font-semibold text-slate-800 line-clamp-2 leading-tight">{deal.product_name}</p>
+        <p className="text-[12px] font-normal text-slate-800 line-clamp-2 leading-tight">
+          {sourceName ? highlightDiffName(sourceName, deal.product_name) : deal.product_name}
+        </p>
         {(deal.weight_raw || deal.price_per_kg != null) && (
           <div className="flex items-center gap-1.5 mt-1 flex-wrap">
             {deal.weight_raw && (
@@ -567,6 +579,7 @@ function ReplacementsModal({ sourceDeal, tiers, loading, otherStores, isAdmin, o
                               <ReplacementDealRow
                                 key={d.id}
                                 deal={d}
+                                sourceName={sourceDeal.product_name}
                                 emphasisSize={
                                   d.weight_value != null && sourceDeal.weight_value != null
                                     ? d.weight_value !== sourceDeal.weight_value
@@ -597,6 +610,7 @@ function ReplacementsModal({ sourceDeal, tiers, loading, otherStores, isAdmin, o
                             <ReplacementDealRow
                               key={d.id}
                               deal={{ ...d, store: { name: store.store_name, url: store.store_url } }}
+                              sourceName={sourceDeal.product_name}
                               emphasisSize={
                                 d.weight_value != null && sourceDeal.weight_value != null
                                   ? d.weight_value !== sourceDeal.weight_value
