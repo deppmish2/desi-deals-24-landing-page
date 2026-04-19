@@ -136,7 +136,14 @@ export default function DealSharePage() {
             SHARED WITH YOU
           </p>
           <h1 className="text-[24px] sm:text-[30px] font-black text-[#111827] mt-2">
-            Someone found a great deal
+            {!loading && isFakeDeal && discountPct && realPct != null ? (
+              <>
+                {deal.store?.name} says {discountPct}% off.<br />
+                Real saving: {realPct}%.
+              </>
+            ) : (
+              "Someone found a great deal"
+            )}
           </h1>
         </div>
       )}
@@ -252,14 +259,7 @@ export default function DealSharePage() {
               </div>
 
               <div className="flex flex-col flex-1 px-5 pt-4 pb-5 gap-3">
-                {isFakeDeal && discountPct && realPct != null && (
-                  <div className="rounded-[8px] bg-amber-50 border border-amber-200 px-3 py-2">
-                    <p className="text-[11px] font-bold text-amber-700 leading-tight">
-                      ⚠️ Claims {discountPct}% off — only {realPct}% vs market price
-                    </p>
-                  </div>
-                )}
-                <div className="flex flex-col gap-1.5">
+<div className="flex flex-col gap-1.5">
                   <p className="text-[#94a3b8] text-[10px] leading-[15px] tracking-[1.5px] uppercase font-extrabold">
                     {deal.store?.name || "Store"}
                   </p>
@@ -283,6 +283,7 @@ export default function DealSharePage() {
                       </span>
                     )}
                   </div>
+                  <p className="text-[11px] text-gray-400 leading-none">Price tracked daily. May change.</p>
                 </div>
 
                 {isUsualPrice && (
@@ -301,11 +302,19 @@ export default function DealSharePage() {
                     }`}>
                       <div className="flex items-center gap-2.5">
                         <div className={`shrink-0 w-7 h-7 rounded-full flex items-center justify-center ${
-                          isGreat || isGood ? "bg-[#16a34a]" : "bg-slate-300"
+                          isFakeDeal ? "bg-amber-100" : isGreat || isGood ? "bg-[#16a34a]" : "bg-slate-300"
                         }`}>
-                          <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="3.2" strokeLinecap="round" strokeLinejoin="round">
-                            <polyline points="20 6 9 17 4 12"/>
-                          </svg>
+                          {isFakeDeal ? (
+                            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="#f59e0b" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                              <circle cx="12" cy="12" r="10"/>
+                              <line x1="12" y1="8" x2="12" y2="13"/>
+                              <line x1="12" y1="16" x2="12.01" y2="16"/>
+                            </svg>
+                          ) : (
+                            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="3.2" strokeLinecap="round" strokeLinejoin="round">
+                              <polyline points="20 6 9 17 4 12"/>
+                            </svg>
+                          )}
                         </div>
                         <div>
                           <p className={`text-[10px] font-extrabold uppercase tracking-[1.4px] leading-none mb-[3px] ${
@@ -317,7 +326,7 @@ export default function DealSharePage() {
                         </div>
                       </div>
                       <div className="text-right">
-                        <p className={`text-[22px] font-extrabold leading-none ${
+                        <p className={`text-[28px] font-extrabold leading-none ${
                           isGreat || isGood ? "text-[#16a34a]" : "text-slate-500"
                         }`}>{realPct}%</p>
                         {gap >= 3 && discountPct && (
@@ -328,103 +337,115 @@ export default function DealSharePage() {
                   );
                 })()}
 
-                <div className="mt-auto flex items-center gap-2 pt-2">
-                  <a
-                    href={resolveUrl(deal, deal.product_url)}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    onClick={() =>
-                      trackAnalyticsEvent(
-                        "snatch_deal_click",
-                        buildSharedDealAnalyticsPayload(deal),
-                      )
-                    }
-                    className="flex-1 justify-center bg-[#16a34a] hover:bg-[#15803d] transition-colors rounded-[14px] py-3 inline-flex items-center gap-2 text-white no-underline hover:no-underline"
-                    style={{ textDecoration: "none" }}
-                  >
-                    <span className="text-[13px] leading-[16px] font-extrabold tracking-wide uppercase">
-                      Snatch Deal
-                    </span>
-                  </a>
-                  <a
-                    href={
-                      isFakeDeal && realPct != null
-                        ? buildWhatsAppShareUrl(buildWhatsAppSuspectDiscountShareText({
-                            dealId: deal.id,
-                            productName: deal.product_name,
-                            salePrice: deal.sale_price,
-                            storeName: deal.store?.name,
-                            storeDiscount: discountPct,
-                            realSaving: realPct,
-                          }))
-                        : buildWhatsAppDealShareUrl({
-                            dealId: deal.id,
-                            productName: deal.product_name,
-                            priceText,
-                            originalPriceText,
-                            storeName: deal.store?.name,
-                          })
-                    }
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    onClick={() =>
-                      trackAnalyticsEvent(
-                        "whatsapp_share_click",
-                        buildSharedDealAnalyticsPayload(deal),
-                      )
-                    }
-                    className="shrink-0 inline-flex items-center justify-center w-[46px] h-[46px] rounded-[14px] border border-slate-200 bg-white hover:bg-[#e7fbe9] hover:border-[#25D366] transition-colors"
-                    title="Share on WhatsApp"
-                  >
-                    <svg width="18" height="18" viewBox="0 0 32 32" fill="none">
-                      <path
-                        d="M16 3C9.373 3 4 8.373 4 15c0 2.385.67 4.61 1.832 6.5L4 29l7.697-1.803A12.94 12.94 0 0 0 16 27c6.627 0 12-5.373 12-12S22.627 3 16 3z"
-                        fill="#25D366"
-                      />
-                      <path
-                        d="M21.786 18.618c-.306-.153-1.81-.894-2.09-.994-.28-.1-.484-.153-.688.153-.204.306-.79.994-.968 1.198-.178.204-.356.23-.662.077-.306-.153-1.29-.476-2.458-1.516-.908-.81-1.522-1.81-1.7-2.116-.178-.306-.019-.47.134-.622.137-.136.306-.356.459-.535.153-.178.204-.306.306-.51.102-.204.051-.382-.025-.535-.077-.153-.688-1.658-.942-2.27-.248-.595-.5-.514-.688-.524l-.586-.01c-.204 0-.535.077-.816.382-.28.306-1.07 1.045-1.07 2.55s1.095 2.96 1.248 3.164c.153.204 2.154 3.29 5.22 4.614.73.315 1.3.503 1.744.644.733.233 1.4.2 1.927.121.588-.087 1.81-.74 2.065-1.455.255-.714.255-1.326.178-1.455-.076-.13-.28-.204-.586-.357z"
-                        fill="white"
-                      />
-                    </svg>
-                  </a>
-                </div>
-                <div className="text-center">
-                  <Link
-                    to={isFakeDeal ? "/deals?sort=real_savings" : "/deals"}
-                    className="text-[12px] text-slate-400 hover:text-slate-600 no-underline"
-                    onClick={() => trackAnalyticsEvent("secondary_cta_click", buildSharedDealAnalyticsPayload(deal))}
-                  >
-                    {isFakeDeal ? "See more inflated deals →" : "See more genuine deals →"}
-                  </Link>
-                </div>
+                {isFakeDeal ? (
+                  <div className="mt-auto flex flex-col gap-3">
+                    <a
+                      href={realPct != null ? buildWhatsAppShareUrl(buildWhatsAppSuspectDiscountShareText({
+                        dealId: deal.id,
+                        productName: deal.product_name,
+                        salePrice: deal.sale_price,
+                        storeName: deal.store?.name,
+                        storeDiscount: discountPct,
+                        realSaving: realPct,
+                      })) : "#"}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      onClick={() => trackAnalyticsEvent("whatsapp_share_click", buildSharedDealAnalyticsPayload(deal))}
+                      className="w-full min-h-[44px] flex items-center justify-center gap-2 bg-[#16a34a] hover:bg-[#15803d] transition-colors rounded-[14px] py-3 text-white no-underline"
+                      style={{ textDecoration: "none" }}
+                    >
+                      <svg width="20" height="20" viewBox="0 0 32 32" fill="none">
+                        <path d="M16 3C9.373 3 4 8.373 4 15c0 2.385.67 4.61 1.832 6.5L4 29l7.697-1.803A12.94 12.94 0 0 0 16 27c6.627 0 12-5.373 12-12S22.627 3 16 3z" fill="white"/>
+                        <path d="M21.786 18.618c-.306-.153-1.81-.894-2.09-.994-.28-.1-.484-.153-.688.153-.204.306-.79.994-.968 1.198-.178.204-.356.23-.662.077-.306-.153-1.29-.476-2.458-1.516-.908-.81-1.522-1.81-1.7-2.116-.178-.306-.019-.47.134-.622.137-.136.306-.356.459-.535.153-.178.204-.306.306-.51.102-.204.051-.382-.025-.535-.077-.153-.688-1.658-.942-2.27-.248-.595-.5-.514-.688-.524l-.586-.01c-.204 0-.535.077-.816.382-.28.306-1.07 1.045-1.07 2.55s1.095 2.96 1.248 3.164c.153.204 2.154 3.29 5.22 4.614.73.315 1.3.503 1.744.644.733.233 1.4.2 1.927.121.588-.087 1.81-.74 2.065-1.455.255-.714.255-1.326.178-1.455-.076-.13-.28-.204-.586-.357z" fill="#16a34a"/>
+                      </svg>
+                      <span className="text-[13px] leading-[16px] font-extrabold tracking-wide">Share in your group</span>
+                    </a>
+                    <Link
+                      to="/deals?sort=real_savings"
+                      onClick={() => trackAnalyticsEvent("secondary_cta_click", buildSharedDealAnalyticsPayload(deal))}
+                      className="w-full min-h-[44px] flex items-center justify-center border-2 border-green-600 text-green-600 bg-white rounded-[14px] py-3 no-underline font-semibold text-[13px] transition-colors hover:bg-green-50"
+                      style={{ textDecoration: "none" }}
+                    >
+                      Browse all inflated deals →
+                    </Link>
+                    <div className="text-center mt-1">
+                      <a
+                        href={resolveUrl(deal, deal.product_url)}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        onClick={() => trackAnalyticsEvent("snatch_deal_click", buildSharedDealAnalyticsPayload(deal))}
+                        className="text-sm text-gray-500 hover:text-gray-700 no-underline"
+                      >
+                        View product on {deal.store?.name}
+                      </a>
+                    </div>
+                  </div>
+                ) : (
+                  <div className="mt-auto flex flex-col gap-2">
+                    <div className="text-center">
+                      <Link
+                        to="/deals"
+                        className="text-[13px] font-semibold text-gray-700 hover:text-gray-900 no-underline"
+                        onClick={() => trackAnalyticsEvent("secondary_cta_click", buildSharedDealAnalyticsPayload(deal))}
+                      >
+                        See more genuine deals →
+                      </Link>
+                    </div>
+                    <div className="flex items-center gap-2">
+                      <a
+                        href={resolveUrl(deal, deal.product_url)}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        onClick={() =>
+                          trackAnalyticsEvent(
+                            "snatch_deal_click",
+                            buildSharedDealAnalyticsPayload(deal),
+                          )
+                        }
+                        className="flex-1 justify-center bg-[#16a34a] hover:bg-[#15803d] transition-colors rounded-[14px] py-3 inline-flex items-center gap-2 text-white no-underline hover:no-underline"
+                        style={{ textDecoration: "none" }}
+                      >
+                        <span className="text-[13px] leading-[16px] font-extrabold tracking-wide uppercase">
+                          Snatch Deal
+                        </span>
+                      </a>
+                      <a
+                        href={buildWhatsAppDealShareUrl({
+                          dealId: deal.id,
+                          productName: deal.product_name,
+                          priceText,
+                          originalPriceText,
+                          storeName: deal.store?.name,
+                        })}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        onClick={() =>
+                          trackAnalyticsEvent(
+                            "whatsapp_share_click",
+                            buildSharedDealAnalyticsPayload(deal),
+                          )
+                        }
+                        className="shrink-0 inline-flex items-center justify-center w-[52px] h-[52px] rounded-[14px] border border-slate-200 bg-white hover:bg-[#e7fbe9] hover:border-[#25D366] transition-colors"
+                        title="Share on WhatsApp"
+                      >
+                        <svg width="27" height="27" viewBox="0 0 32 32" fill="none">
+                          <path
+                            d="M16 3C9.373 3 4 8.373 4 15c0 2.385.67 4.61 1.832 6.5L4 29l7.697-1.803A12.94 12.94 0 0 0 16 27c6.627 0 12-5.373 12-12S22.627 3 16 3z"
+                            fill="#25D366"
+                          />
+                          <path
+                            d="M21.786 18.618c-.306-.153-1.81-.894-2.09-.994-.28-.1-.484-.153-.688.153-.204.306-.79.994-.968 1.198-.178.204-.356.23-.662.077-.306-.153-1.29-.476-2.458-1.516-.908-.81-1.522-1.81-1.7-2.116-.178-.306-.019-.47.134-.622.137-.136.306-.356.459-.535.153-.178.204-.306.306-.51.102-.204.051-.382-.025-.535-.077-.153-.688-1.658-.942-2.27-.248-.595-.5-.514-.688-.524l-.586-.01c-.204 0-.535.077-.816.382-.28.306-1.07 1.045-1.07 2.55s1.095 2.96 1.248 3.164c.153.204 2.154 3.29 5.22 4.614.73.315 1.3.503 1.744.644.733.233 1.4.2 1.927.121.588-.087 1.81-.74 2.065-1.455.255-.714.255-1.326.178-1.455-.076-.13-.28-.204-.586-.357z"
+                            fill="white"
+                          />
+                        </svg>
+                      </a>
+                    </div>
+                  </div>
+                )}
               </div>
             </div>
           </div>
 
-          {/* Bottom CTA */}
-          <div className="mt-8 px-4 pb-12">
-            <div className="rounded-[24px] bg-[#eef4ff] border border-[#dbe9ff] p-8 mx-auto max-w-sm text-center">
-              <h2 className="text-[20px] font-black text-[#111827]">
-                Discover more deals
-              </h2>
-              <p className="text-[14px] text-slate-500 mt-2">
-                Hundreds of Indian grocery deals in Germany, updated daily.
-              </p>
-              <Link
-                to="/"
-                onClick={() =>
-                  trackAnalyticsEvent("explore_all_deals_click", {
-                    page_type: "shared_deal",
-                    source: "bottom_cta",
-                  })
-                }
-                className="bg-[#17874a] text-white font-bold text-[15px] px-8 py-3.5 rounded-[14px] mt-4 inline-block no-underline transition-colors hover:bg-[#15803d]"
-                style={{ textDecoration: "none" }}
-              >
-                Explore all deals
-              </Link>
-            </div>
-          </div>
         </>
       )}
     </div>
