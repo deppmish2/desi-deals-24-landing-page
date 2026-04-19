@@ -53,9 +53,11 @@ function calcDiscount(salePrice, originalPrice) {
 function calcPricePerKg(price, weightValue, weightUnit) {
   if (!price || !weightValue || !weightUnit) return null;
   const unit = weightUnit.toLowerCase();
-  if (unit === "g") return Math.round((price / weightValue) * 1000 * 100) / 100;
+  if (unit === "g")  return Math.round((price / weightValue) * 1000 * 100) / 100;
   if (unit === "kg") return Math.round((price / weightValue) * 100) / 100;
-  return null; // ml/l/units not convertible to kg
+  if (unit === "ml") return Math.round((price / weightValue) * 1000 * 100) / 100; // price per L
+  if (unit === "l")  return Math.round((price / weightValue) * 100) / 100;        // price per L
+  return null;
 }
 
 module.exports = { parsePrice, calcDiscount, calcPricePerKg };

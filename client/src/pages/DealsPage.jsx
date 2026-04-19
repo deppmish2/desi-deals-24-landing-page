@@ -37,7 +37,7 @@ import {
 } from "../utils/dealsViewState.mjs";
 import { trackAnalyticsEvent } from "../utils/analytics";
 import { proxyDealImageUrl } from "../utils/images";
-import { buildDealPageUrl, buildWhatsAppDealShareUrl } from "../utils/share";
+import { buildDealPageUrl, buildWhatsAppDealShareUrl, buildWhatsAppShareUrl, buildWhatsAppSuspectDiscountShareText } from "../utils/share";
 
 const POST_AUTH_REDIRECT_STORAGE_KEY = "dd24_post_auth_redirect";
 const OAUTH_STATE_STORAGE_PREFIX = "dd24_oauth_state:";
@@ -435,9 +435,11 @@ function highlightDiffName(sourceName, targetName) {
   });
 }
 
-function ReplacementDealRow({ deal, emphasisSize, sourceName }) {
-  const discountPct = deal.discount_percent ? Math.round(deal.discount_percent) : null;
+function ReplacementDealRow({ deal, emphasisSize, sourceName, sourcePricePerKg }) {
   const [imgErr, setImgErr] = React.useState(false);
+  const kgSavingPct = sourcePricePerKg && deal.price_per_kg != null
+    ? Math.round((sourcePricePerKg - deal.price_per_kg) / sourcePricePerKg * 100)
+    : null;
   return (
     <a
       href={deal.product_url}
@@ -474,7 +476,7 @@ function ReplacementDealRow({ deal, emphasisSize, sourceName }) {
               </span>
             )}
             {deal.price_per_kg != null && (
-              <span className="text-[10px] text-slate-400">{formatPricePerKg(deal.price_per_kg)}</span>
+              <span className="text-[10px] text-slate-400">{formatPricePerKg(deal.price_per_kg, deal.weight_unit)}</span>
             )}
           </div>
         )}
@@ -483,8 +485,10 @@ function ReplacementDealRow({ deal, emphasisSize, sourceName }) {
         <p className="text-[14px] font-extrabold text-slate-800">
           {deal.currency === "EUR" ? "€" : deal.currency}{Number(deal.sale_price).toFixed(2)}
         </p>
-        {discountPct > 0 && (
-          <p className="text-[10px] font-bold text-[#16a34a]">-{discountPct}%</p>
+        {kgSavingPct !== null && kgSavingPct !== 0 && (
+          <p className={`text-[10px] font-bold ${kgSavingPct > 0 ? "text-[#16a34a]" : "text-red-400"}`}>
+            {kgSavingPct > 0 ? `-${kgSavingPct}%` : `+${Math.abs(kgSavingPct)}%`}
+          </p>
         )}
       </div>
     </a>
@@ -515,7 +519,7 @@ function ReplacementsModal({ sourceDeal, tiers, loading, otherStores, isAdmin, o
                   </span>
                 )}
                 {sourceDeal.price_per_kg != null && (
-                  <span className="text-[10px] text-slate-400">{formatPricePerKg(sourceDeal.price_per_kg)}</span>
+                  <span className="text-[10px] text-slate-400">{formatPricePerKg(sourceDeal.price_per_kg, sourceDeal.weight_unit)}</span>
                 )}
               </div>
             )}
@@ -540,59 +544,33 @@ function ReplacementsModal({ sourceDeal, tiers, loading, otherStores, isAdmin, o
               {!tiers?.length ? (
                 <p className="text-center text-slate-400 text-[13px] py-6">No alternatives found at this store.</p>
               ) : (
-                tiers.map((tier) => {
-                  const isCategory = tier.type === "same_category";
-                  const isExpanded = !isCategory || categoryExpanded;
-                  return (
-                    <div key={tier.type} className="mb-5 last:mb-0">
-                      {isCategory && !categoryExpanded ? (
-                        <button
-                          type="button"
-                          onClick={() => setCategoryExpanded(true)}
-                          className="w-full flex items-center justify-between px-3 py-2.5 rounded-xl border border-dashed border-slate-200 bg-slate-50 hover:bg-slate-100 hover:border-slate-300 transition-colors group"
-                        >
-                          <span className="text-[12px] font-semibold text-slate-400 group-hover:text-slate-500">
-                            {tier.deals.length} more from this category
-                          </span>
-                          <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" className="text-slate-300 group-hover:text-slate-400 transition-colors">
-                            <polyline points="6 9 12 15 18 9"/>
-                          </svg>
-                        </button>
-                      ) : (
-                        <>
-                          <button
-                            type="button"
-                            onClick={isCategory ? () => setCategoryExpanded(false) : undefined}
-                            className={`flex items-center gap-1 mb-2 w-full text-left ${isCategory ? "cursor-pointer" : "cursor-default"}`}
-                          >
-                            <p className="text-[10px] font-extrabold uppercase tracking-[1.5px] text-slate-400">
-                              {TIER_LABELS[tier.type] ?? tier.type}
-                            </p>
-                            {isCategory && (
-                              <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" className="text-slate-400 rotate-180">
-                                <polyline points="6 9 12 15 18 9"/>
-                              </svg>
-                            )}
-                          </button>
-                          <div className="flex flex-col gap-2">
-                            {tier.deals.map((d) => (
-                              <ReplacementDealRow
-                                key={d.id}
-                                deal={d}
-                                sourceName={sourceDeal.product_name}
-                                emphasisSize={
-                                  d.weight_value != null && sourceDeal.weight_value != null
-                                    ? d.weight_value !== sourceDeal.weight_value
-                                    : d.weight_raw !== sourceDeal.weight_raw
-                                }
-                              />
-                            ))}
-                          </div>
-                        </>
-                      )}
+                tiers.filter((t) => t.type !== "same_category").map((tier) => (
+                  <div key={tier.type} className="mb-5 last:mb-0">
+                    <button
+                      type="button"
+                      className="flex items-center gap-1 mb-2 w-full text-left cursor-default"
+                    >
+                      <p className="text-[10px] font-extrabold uppercase tracking-[1.5px] text-slate-400">
+                        {TIER_LABELS[tier.type] ?? tier.type}
+                      </p>
+                    </button>
+                    <div className="flex flex-col gap-2">
+                      {tier.deals.map((d) => (
+                        <ReplacementDealRow
+                          key={d.id}
+                          deal={d}
+                          sourceName={sourceDeal.product_name}
+                          sourcePricePerKg={sourceDeal.price_per_kg}
+                          emphasisSize={
+                            d.weight_value != null && sourceDeal.weight_value != null
+                              ? d.weight_value !== sourceDeal.weight_value
+                              : d.weight_raw !== sourceDeal.weight_raw
+                          }
+                        />
+                      ))}
                     </div>
-                  );
-                })
+                  </div>
+                ))
               )}
 
               {/* Admin-only: same product at other stores */}
@@ -611,6 +589,7 @@ function ReplacementsModal({ sourceDeal, tiers, loading, otherStores, isAdmin, o
                               key={d.id}
                               deal={{ ...d, store: { name: store.store_name, url: store.store_url } }}
                               sourceName={sourceDeal.product_name}
+                              sourcePricePerKg={sourceDeal.price_per_kg}
                               emphasisSize={
                                 d.weight_value != null && sourceDeal.weight_value != null
                                   ? d.weight_value !== sourceDeal.weight_value
@@ -624,6 +603,57 @@ function ReplacementsModal({ sourceDeal, tiers, loading, otherStores, isAdmin, o
                   </div>
                 </div>
               )}
+              {tiers?.find((t) => t.type === "same_category") && (() => {
+                const tier = tiers.find((t) => t.type === "same_category");
+                return (
+                  <div className="mt-4 pt-4 border-t border-slate-100">
+                    {!categoryExpanded ? (
+                      <button
+                        type="button"
+                        onClick={() => setCategoryExpanded(true)}
+                        className="w-full flex items-center justify-between px-3 py-2.5 rounded-xl border border-dashed border-slate-200 bg-slate-50 hover:bg-slate-100 hover:border-slate-300 transition-colors group"
+                      >
+                        <span className="text-[12px] font-semibold text-slate-400 group-hover:text-slate-500">
+                          {tier.deals.length} more from this category
+                        </span>
+                        <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" className="text-slate-300 group-hover:text-slate-400 transition-colors">
+                          <polyline points="6 9 12 15 18 9"/>
+                        </svg>
+                      </button>
+                    ) : (
+                      <>
+                        <button
+                          type="button"
+                          onClick={() => setCategoryExpanded(false)}
+                          className="flex items-center gap-1 mb-2 w-full text-left cursor-pointer"
+                        >
+                          <p className="text-[10px] font-extrabold uppercase tracking-[1.5px] text-slate-400">
+                            {TIER_LABELS[tier.type] ?? tier.type}
+                          </p>
+                          <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" className="text-slate-400 rotate-180">
+                            <polyline points="6 9 12 15 18 9"/>
+                          </svg>
+                        </button>
+                        <div className="flex flex-col gap-2">
+                          {tier.deals.map((d) => (
+                            <ReplacementDealRow
+                              key={d.id}
+                              deal={d}
+                              sourceName={sourceDeal.product_name}
+                              sourcePricePerKg={null}
+                              emphasisSize={
+                                d.weight_value != null && sourceDeal.weight_value != null
+                                  ? d.weight_value !== sourceDeal.weight_value
+                                  : d.weight_raw !== sourceDeal.weight_raw
+                              }
+                            />
+                          ))}
+                        </div>
+                      </>
+                    )}
+                  </div>
+                );
+              })()}
             </>
           )}
         </div>
@@ -687,7 +717,7 @@ function DealCard({
     : null;
   const weightText = [
     deal.weight_raw || null,
-    deal.price_per_kg ? formatPricePerKg(deal.price_per_kg) : null,
+    deal.price_per_kg ? formatPricePerKg(deal.price_per_kg, deal.weight_unit) : null,
   ]
     .filter(Boolean)
     .join(" | ");
@@ -1031,13 +1061,26 @@ function DealCard({
           </a>
           {/* WhatsApp share — shares DesiDeals24 permalink, WA shows branded OG preview */}
           <a
-            href={buildWhatsAppDealShareUrl({
-              dealId: deal.id,
-              productName: deal.product_name,
-              priceText,
-              originalPriceText,
-              storeName: deal.store?.name,
-            })}
+            href={(() => {
+              const realPct = realSavings ? Math.round(realSavings.real_discount_pct) : null;
+              const isSuspect = deal.is_fake_deal && realPct != null;
+              return isSuspect
+                ? buildWhatsAppShareUrl(buildWhatsAppSuspectDiscountShareText({
+                    dealId: deal.id,
+                    productName: deal.product_name,
+                    salePrice: deal.sale_price,
+                    storeName: deal.store?.name,
+                    storeDiscount: discountPct,
+                    realSaving: realPct,
+                  }))
+                : buildWhatsAppDealShareUrl({
+                    dealId: deal.id,
+                    productName: deal.product_name,
+                    priceText,
+                    originalPriceText,
+                    storeName: deal.store?.name,
+                  });
+            })()}
             target="_blank"
             rel="noopener noreferrer"
             onClick={() =>

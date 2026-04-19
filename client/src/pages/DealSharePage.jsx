@@ -7,7 +7,7 @@ import {
   formatPrice,
   formatPricePerKg,
 } from "../utils/formatters";
-import { buildWhatsAppDealShareUrl } from "../utils/share";
+import { buildWhatsAppDealShareUrl, buildWhatsAppSuspectDiscountShareText, buildWhatsAppShareUrl } from "../utils/share";
 
 const HEADER_HEADLINE = "Best Desi grocery deals in Germany.";
 
@@ -69,7 +69,7 @@ export default function DealSharePage() {
   const weightText = deal
     ? [
         deal.weight_raw || null,
-        deal.price_per_kg ? formatPricePerKg(deal.price_per_kg) : null,
+        deal.price_per_kg ? formatPricePerKg(deal.price_per_kg, deal.weight_unit) : null,
       ]
         .filter(Boolean)
         .join(" | ")
@@ -77,6 +77,10 @@ export default function DealSharePage() {
   const discountPct = deal?.discount_percent
     ? Math.round(deal.discount_percent)
     : null;
+  const realSavings = deal?.real_savings ?? null;
+  const realPct = realSavings ? Math.round(realSavings.real_discount_pct) : null;
+  const isFakeDeal = !!deal?.is_fake_deal;
+  const isUsualPrice = deal?.real_savings_debug === 'not_cheaper' && (discountPct > 0 || !!deal?.original_price) && !deal?.best_before;
   const bestBeforeText = deal?.best_before
     ? formatBestBefore(deal.best_before)
     : null;
@@ -248,6 +252,13 @@ export default function DealSharePage() {
               </div>
 
               <div className="flex flex-col flex-1 px-5 pt-4 pb-5 gap-3">
+                {isFakeDeal && discountPct && realPct != null && (
+                  <div className="rounded-[8px] bg-amber-50 border border-amber-200 px-3 py-2">
+                    <p className="text-[11px] font-bold text-amber-700 leading-tight">
+                      ⚠️ Claims {discountPct}% off — only {realPct}% vs market price
+                    </p>
+                  </div>
+                )}
                 <div className="flex flex-col gap-1.5">
                   <p className="text-[#94a3b8] text-[10px] leading-[15px] tracking-[1.5px] uppercase font-extrabold">
                     {deal.store?.name || "Store"}
@@ -274,6 +285,49 @@ export default function DealSharePage() {
                   </div>
                 </div>
 
+                {isUsualPrice && (
+                  <div className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-[10px] bg-slate-100 w-fit">
+                    <span className="text-[12px] font-semibold text-slate-500">Usual price</span>
+                  </div>
+                )}
+                {!isUsualPrice && realSavings && (() => {
+                  const realPct = Math.round(realSavings.real_discount_pct);
+                  const gap = discountPct ? Math.abs(realSavings.real_discount_pct - discountPct) : 0;
+                  const isGreat = realSavings.rating === "great";
+                  const isGood  = realSavings.rating === "good";
+                  return (
+                    <div className={`flex items-center justify-between rounded-[14px] px-3.5 py-3 ${
+                      isGreat || isGood ? "bg-[#f0fdf4] border border-[#bbf7d0]" : "bg-[#f8fafc] border border-[#e2e8f0]"
+                    }`}>
+                      <div className="flex items-center gap-2.5">
+                        <div className={`shrink-0 w-7 h-7 rounded-full flex items-center justify-center ${
+                          isGreat || isGood ? "bg-[#16a34a]" : "bg-slate-300"
+                        }`}>
+                          <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="3.2" strokeLinecap="round" strokeLinejoin="round">
+                            <polyline points="20 6 9 17 4 12"/>
+                          </svg>
+                        </div>
+                        <div>
+                          <p className={`text-[10px] font-extrabold uppercase tracking-[1.4px] leading-none mb-[3px] ${
+                            isGreat || isGood ? "text-[#15803d]" : "text-slate-400"
+                          }`}>Real Savings</p>
+                          <p className="text-[11px] text-slate-400 leading-none">
+                            {realSavings.reference_source === "store_original" ? "vs store's original price" : "vs market price"}
+                          </p>
+                        </div>
+                      </div>
+                      <div className="text-right">
+                        <p className={`text-[22px] font-extrabold leading-none ${
+                          isGreat || isGood ? "text-[#16a34a]" : "text-slate-500"
+                        }`}>{realPct}%</p>
+                        {gap >= 3 && discountPct && (
+                          <p className="text-[10px] text-slate-400 leading-none mt-1">store says {discountPct}%</p>
+                        )}
+                      </div>
+                    </div>
+                  );
+                })()}
+
                 <div className="mt-auto flex items-center gap-2 pt-2">
                   <a
                     href={resolveUrl(deal, deal.product_url)}
@@ -293,13 +347,24 @@ export default function DealSharePage() {
                     </span>
                   </a>
                   <a
-                    href={buildWhatsAppDealShareUrl({
-                      dealId: deal.id,
-                      productName: deal.product_name,
-                      priceText,
-                      originalPriceText,
-                      storeName: deal.store?.name,
-                    })}
+                    href={
+                      isFakeDeal && realPct != null
+                        ? buildWhatsAppShareUrl(buildWhatsAppSuspectDiscountShareText({
+                            dealId: deal.id,
+                            productName: deal.product_name,
+                            salePrice: deal.sale_price,
+                            storeName: deal.store?.name,
+                            storeDiscount: discountPct,
+                            realSaving: realPct,
+                          }))
+                        : buildWhatsAppDealShareUrl({
+                            dealId: deal.id,
+                            productName: deal.product_name,
+                            priceText,
+                            originalPriceText,
+                            storeName: deal.store?.name,
+                          })
+                    }
                     target="_blank"
                     rel="noopener noreferrer"
                     onClick={() =>
@@ -322,6 +387,15 @@ export default function DealSharePage() {
                       />
                     </svg>
                   </a>
+                </div>
+                <div className="text-center">
+                  <Link
+                    to={isFakeDeal ? "/deals?sort=real_savings" : "/deals"}
+                    className="text-[12px] text-slate-400 hover:text-slate-600 no-underline"
+                    onClick={() => trackAnalyticsEvent("secondary_cta_click", buildSharedDealAnalyticsPayload(deal))}
+                  >
+                    {isFakeDeal ? "See more inflated deals →" : "See more genuine deals →"}
+                  </Link>
                 </div>
               </div>
             </div>

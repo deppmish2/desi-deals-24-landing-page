@@ -19,6 +19,7 @@ const { batchGetRealSavings, computeRealSavings, explainRealSavings } = require(
 const { getReplacements } = require("../services/product-replacements");
 
 const router = express.Router();
+const FAKE_DEAL_THRESHOLD_PP = 10;
 const EXCLUDED_STORE_IDS = ["dookan"];
 const EXCLUDED_STORE_IDS_SQL = EXCLUDED_STORE_IDS.map(
   (storeId) => `'${String(storeId).replace(/'/g, "''")}'`,
@@ -274,7 +275,16 @@ router.get("/", async (req, res, next) => {
            LIMIT 1`,
         )
         .get(focusDealId);
-      const data = row ? [serializeDeal(row)] : [];
+      const rawData = row ? [serializeDeal(row)] : [];
+      const realSavingsMap = await batchGetRealSavings(db, rawData);
+      const data = rawData.map((deal) => {
+        const histData = realSavingsMap.get(deal.id);
+        const rs = computeRealSavings(deal, histData);
+        const isFakeDeal = rs && deal.discount_percent != null && (deal.discount_percent - rs.real_discount_pct) >= FAKE_DEAL_THRESHOLD_PP;
+        const out = { ...deal, real_savings: rs, is_fake_deal: !!isFakeDeal };
+        if (!rs) out.real_savings_debug = explainRealSavings(deal, histData);
+        return out;
+      });
 
       res.set(
         "Cache-Control",
@@ -542,7 +552,8 @@ router.get("/", async (req, res, next) => {
     const dataWithSavings = data.map((deal) => {
       const histData = realSavingsMap.get(deal.id);
       const rs = computeRealSavings(deal, histData);
-      const out = { ...deal, real_savings: rs };
+      const isFakeDeal = rs && deal.discount_percent != null && (deal.discount_percent - rs.real_discount_pct) >= FAKE_DEAL_THRESHOLD_PP;
+      const out = { ...deal, real_savings: rs, is_fake_deal: !!isFakeDeal };
       if (!rs) out.real_savings_debug = explainRealSavings(deal, histData);
       return out;
     });
