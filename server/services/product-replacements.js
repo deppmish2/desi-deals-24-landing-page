@@ -49,6 +49,16 @@ function baseProductSlotsMatch(srcSlotSet, candSlotsJson) {
   return true;
 }
 
+// T3: subset check — catches same-product variants (e.g. "Urid Flour" ↔ "Urid Flour Roasted")
+// for brands not in the CSV catalog. One slot set must be fully contained in the other.
+function baseProductSlotsSubset(srcSlotSet, candSlotsJson) {
+  if (!srcSlotSet || !candSlotsJson) return false;
+  const candSet = new Set(JSON.parse(candSlotsJson).flat());
+  const srcInCand = [...srcSlotSet].every((v) => candSet.has(v));
+  const candInSrc = [...candSet].every((v) => srcSlotSet.has(v));
+  return srcInCand || candInSrc;
+}
+
 // Bug fix: use epsilon-based ratio check to avoid float modulo errors (e.g. 0.3 % 0.1 === 0.09999...)
 function sizeCompatible(srcWeight, candWeight) {
   if (!srcWeight || !candWeight) return true;
@@ -60,16 +70,21 @@ function sizeCompatible(srcWeight, candWeight) {
 async function getReplacements(db, { canonicalId, storeId, dealId = null }) {
   const src = await db
     .prepare(
-      `SELECT id, canonical_name, category, weight_value, weight_unit, base_product_slots FROM canonical_products WHERE id = ? LIMIT 1`
+      `SELECT id, canonical_name, category, weight_value, weight_unit, base_product_slots, brand_slots FROM canonical_products WHERE id = ? LIMIT 1`
     )
     .get(canonicalId);
   if (!src) return null;
 
   const srcBase = resolveBaseProduct(src.canonical_name);
   const srcBaseKey = srcBase?.base_key ?? null;
-  const srcBrand = srcBaseKey
+  const srcBrandFromCatalog = srcBaseKey
     ? detectBrandForBase(src.canonical_name, srcBaseKey)
     : null;
+  // Fall back to brand_slots when the CSV catalog doesn't know this brand
+  // (e.g. Anjappar — in known_brands/brand_slots but absent from the product catalog).
+  const srcBrand = srcBrandFromCatalog
+    ?? (src.brand_slots ? (JSON.parse(src.brand_slots)[0]?.[0] ?? null) : null);
+  const srcBrandFromCatalogOnly = !!srcBrandFromCatalog;
   const srcBaseSlots = src.base_product_slots
     ? new Set(JSON.parse(src.base_product_slots).flat())
     : null;
@@ -96,19 +111,28 @@ async function getReplacements(db, { canonicalId, storeId, dealId = null }) {
     const candBase = resolveBaseProduct(row.cp_canonical_name);
     const cKey = row.canonical_id;
 
-    // T1: same brand + same base product + different size (different canonical, different weight)
+    // T1: same brand + same exact product spec + different size.
+    // Uses exact base_product_slots match so variants (split vs whole) don't qualify —
+    // only true size variants of identical product spec (e.g. 500g vs 1kg of same item).
+    const sameSpec = srcBaseSlots
+      ? baseProductSlotsMatch(srcBaseSlots, row.cp_base_product_slots)
+      : (srcBaseKey && candBase?.base_key === srcBaseKey);
     if (
-      srcBaseKey &&
       srcBrand &&
-      candBase?.base_key === srcBaseKey &&
+      sameSpec &&
       row.canonical_id !== canonicalId &&
       (srcWeightValue === null || parseWeight(row.weight_value, row.weight_raw) !== srcWeightValue) &&
       sizeCompatible(srcWeightValue, parseWeight(row.weight_value, row.weight_raw)) &&
       nameHasBrand(row.product_name, srcBrand) &&
       !seen.has(`t1:${cKey}`)
     ) {
-      const candBrand = detectBrandForBase(row.cp_canonical_name, candBase.base_key);
-      if (candBrand && candBrand === srcBrand) {
+      const candBrand = candBase?.base_key
+        ? detectBrandForBase(row.cp_canonical_name, candBase.base_key)
+        : null;
+      const brandMatch = srcBrandFromCatalogOnly
+        ? (candBrand === srcBrand)
+        : nameHasBrand(row.product_name, srcBrand);
+      if (brandMatch) {
         t1.push(row);
         seen.add(`t1:${cKey}`);
         continue;
@@ -131,12 +155,19 @@ async function getReplacements(db, { canonicalId, storeId, dealId = null }) {
       continue;
     }
 
-    // T3: same brand, same category, different base product
-    if (srcBrand && sameCategory && nameHasBrand(row.product_name, srcBrand) && sizeCompatible(srcWeightValue, parseWeight(row.weight_value, row.weight_raw)) && !seen.has(`t3:${cKey}`)) {
+    // T3: same brand + same product group (variants like "extra long" vs "original").
+    // Product group matched via base_key (catalog brands) or slot overlap ≥60% (non-catalog brands).
+    const sameProductGroup =
+      (srcBaseKey && candBase?.base_key === srcBaseKey) ||
+      baseProductSlotsSubset(srcBaseSlots, row.cp_base_product_slots);
+    if (srcBrand && sameProductGroup && nameHasBrand(row.product_name, srcBrand) && sizeCompatible(srcWeightValue, parseWeight(row.weight_value, row.weight_raw)) && !seen.has(`t3:${cKey}`)) {
       const candBrand = candBase?.base_key
         ? detectBrandForBase(row.cp_canonical_name, candBase.base_key)
         : null;
-      if (candBrand && candBrand === srcBrand) {
+      const t3BrandMatch = srcBrandFromCatalogOnly
+        ? (candBrand === srcBrand)
+        : nameHasBrand(row.cp_canonical_name, srcBrand);
+      if (t3BrandMatch) {
         t3.push(row);
         seen.add(`t3:${cKey}`);
         continue;

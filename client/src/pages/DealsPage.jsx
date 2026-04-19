@@ -480,6 +480,7 @@ function ReplacementDealRow({ deal, emphasisSize }) {
 }
 
 function ReplacementsModal({ sourceDeal, tiers, loading, otherStores, isAdmin, onClose }) {
+  const [categoryExpanded, setCategoryExpanded] = React.useState(false);
   const hasOtherStores = isAdmin && otherStores?.length > 0;
   return createPortal(
     <div
@@ -527,26 +528,58 @@ function ReplacementsModal({ sourceDeal, tiers, loading, otherStores, isAdmin, o
               {!tiers?.length ? (
                 <p className="text-center text-slate-400 text-[13px] py-6">No alternatives found at this store.</p>
               ) : (
-                tiers.map((tier) => (
-                  <div key={tier.type} className="mb-5 last:mb-0">
-                    <p className="text-[10px] font-extrabold uppercase tracking-[1.5px] text-slate-400 mb-2">
-                      {TIER_LABELS[tier.type] ?? tier.type}
-                    </p>
-                    <div className="flex flex-col gap-2">
-                      {tier.deals.map((d) => (
-                        <ReplacementDealRow
-                          key={d.id}
-                          deal={d}
-                          emphasisSize={
-                            d.weight_value != null && sourceDeal.weight_value != null
-                              ? d.weight_value !== sourceDeal.weight_value
-                              : d.weight_raw !== sourceDeal.weight_raw
-                          }
-                        />
-                      ))}
+                tiers.map((tier) => {
+                  const isCategory = tier.type === "same_category";
+                  const isExpanded = !isCategory || categoryExpanded;
+                  return (
+                    <div key={tier.type} className="mb-5 last:mb-0">
+                      {isCategory && !categoryExpanded ? (
+                        <button
+                          type="button"
+                          onClick={() => setCategoryExpanded(true)}
+                          className="w-full flex items-center justify-between px-3 py-2.5 rounded-xl border border-dashed border-slate-200 bg-slate-50 hover:bg-slate-100 hover:border-slate-300 transition-colors group"
+                        >
+                          <span className="text-[12px] font-semibold text-slate-400 group-hover:text-slate-500">
+                            {tier.deals.length} more from this category
+                          </span>
+                          <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" className="text-slate-300 group-hover:text-slate-400 transition-colors">
+                            <polyline points="6 9 12 15 18 9"/>
+                          </svg>
+                        </button>
+                      ) : (
+                        <>
+                          <button
+                            type="button"
+                            onClick={isCategory ? () => setCategoryExpanded(false) : undefined}
+                            className={`flex items-center gap-1 mb-2 w-full text-left ${isCategory ? "cursor-pointer" : "cursor-default"}`}
+                          >
+                            <p className="text-[10px] font-extrabold uppercase tracking-[1.5px] text-slate-400">
+                              {TIER_LABELS[tier.type] ?? tier.type}
+                            </p>
+                            {isCategory && (
+                              <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" className="text-slate-400 rotate-180">
+                                <polyline points="6 9 12 15 18 9"/>
+                              </svg>
+                            )}
+                          </button>
+                          <div className="flex flex-col gap-2">
+                            {tier.deals.map((d) => (
+                              <ReplacementDealRow
+                                key={d.id}
+                                deal={d}
+                                emphasisSize={
+                                  d.weight_value != null && sourceDeal.weight_value != null
+                                    ? d.weight_value !== sourceDeal.weight_value
+                                    : d.weight_raw !== sourceDeal.weight_raw
+                                }
+                              />
+                            ))}
+                          </div>
+                        </>
+                      )}
                     </div>
-                  </div>
-                ))
+                  );
+                })
               )}
 
               {/* Admin-only: same product at other stores */}
@@ -1059,7 +1092,7 @@ function DealCard({
         loading={replacementsLoading}
         otherStores={otherStores}
         isAdmin={isAdmin}
-        onClose={() => setShowReplacements(false)}
+        onClose={() => { setShowReplacements(false); setReplacementTiers(null); setOtherStores(null); }}
       />
     )}
     </>
