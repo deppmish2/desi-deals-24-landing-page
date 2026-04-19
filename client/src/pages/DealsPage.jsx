@@ -1530,7 +1530,7 @@ function FiltersModal({
 }
 
 // ── Sort dropdown ─────────────────────────────────────────────────────────────
-function SortDropdown({ value, onChange, isLoggedIn, onRequireLogin, toolbar = false }) {
+function SortDropdown({ value, onChange, toolbar = false }) {
   const [open, setOpen] = useState(false);
   const ref = useRef(null);
   const current = SORT_OPTIONS.find((o) => o.value === value);
@@ -1549,11 +1549,6 @@ function SortDropdown({ value, onChange, isLoggedIn, onRequireLogin, toolbar = f
   }
 
   function handleSelect(nextValue) {
-    if (!isLoggedIn && nextValue !== "") {
-      setOpen(false);
-      onRequireLogin(nextValue);
-      return;
-    }
     onChange(nextValue);
     setOpen(false);
   }
@@ -2056,7 +2051,7 @@ export default function DealsPage() {
     q: searchQuery || undefined,
     track_search:
       nextSearchShouldTrackRef.current && searchQuery ? "1" : undefined,
-    sort: sortValue && isLoggedIn ? sortValue : undefined,
+    sort: sortValue || undefined,
     store:
       filterStores.length > 0 && isLoggedIn
         ? filterStores.join(",")
@@ -2787,16 +2782,8 @@ export default function DealsPage() {
                   <div className="hidden sm:block">
                     <SortDropdown
                       toolbar
-                      value={isLoggedIn ? sortValue : ""}
+                      value={sortValue}
                       onChange={handleSortChange}
-                      isLoggedIn={isLoggedIn}
-                      onRequireLogin={(nextValue) =>
-                        requireLogin(
-                          "Sorting is for registered members only.",
-                          undefined,
-                          createResumeState({ sortValue: nextValue, page: 1 }),
-                        )
-                      }
                     />
                   </div>
 
@@ -2835,15 +2822,8 @@ export default function DealsPage() {
 
                   <div className="shrink-0 sm:hidden">
                     <SortDropdown
-                      value={isLoggedIn ? sortValue : ""}
+                      value={sortValue}
                       onChange={handleSortChange}
-                      isLoggedIn={isLoggedIn}
-                      onRequireLogin={(nextValue) =>
-                        requireLogin(
-                          "Sorting is for registered members only.",
-                          undefined,
-                          createResumeState({ sortValue: nextValue, page: 1 }),
-                        )
                       }
                     />
                   </div>
