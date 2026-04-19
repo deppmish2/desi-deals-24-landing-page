@@ -1596,7 +1596,6 @@ function SortDropdown({ value, onChange, toolbar = false }) {
         <div className="absolute right-0 top-full z-20 mt-3 overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-xl min-w-[180px] w-max">
           {SORT_OPTIONS.map((opt) => {
             const isSelected = opt.value === value;
-            const requiresLogin = opt.value !== "" && !isLoggedIn;
             return (
               <button
                 key={opt.value || "random"}
@@ -1624,11 +1623,6 @@ function SortDropdown({ value, onChange, toolbar = false }) {
                   <span className="w-[14px]" />
                 )}
                 <span>{opt.compactLabel}</span>
-                {requiresLogin && (
-                  <span className="ml-auto inline-flex h-6 w-6 items-center justify-center rounded-full bg-[#eef4ff] text-slate-500">
-                    <LockIcon size={11} color="currentColor" />
-                  </span>
-                )}
               </button>
             );
           })}
@@ -2824,7 +2818,6 @@ export default function DealsPage() {
                     <SortDropdown
                       value={sortValue}
                       onChange={handleSortChange}
-                      }
                     />
                   </div>
                 </div>
