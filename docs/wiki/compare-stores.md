@@ -216,12 +216,14 @@ Each deal row is evaluated and placed into the **first** matching tier, then ski
 
 | Tier | Label | Relevance | Criteria |
 |---|---|---|---|
-| T1 | `same_pack` | 1.0 | Same base product + same brand + different size (different canonical, weight must divide evenly into source) |
-| T2 | `same_spec` | 0.85 | **Cross-brand alternative**: different canonical whose `base_product_slots` token set is identical to the source. E.g., "Daawat Extra Long Basmati Rice" → other brands of Extra Long Basmati Rice. Populated by backfill script (`scripts/backfill-base-product-slots.js`); ~65% of canonicals have slots. |
-| T3 | `same_brand` | 0.65 | Same brand + same category + different base product |
-| T4 | `same_category` | 0.4 | Same category only — **only emitted when T1+T2+T3 are all empty** |
+| T1 | `same_pack` | 1.0 | Same brand + **exact `base_product_slots` match** + different weight. Exact slot match prevents variants (e.g. "Split Chilka" vs "Whole") from being treated as size variants. Falls back to `base_key` equality when slots are null. |
+| T2 | `same_spec` | 0.85 | **Cross-brand alternative**: different canonical whose `base_product_slots` token set is identical to source. Populated by `scripts/backfill-base-product-slots.js`. |
+| T3 | `same_brand` | 0.65 | Same brand + **same product group** — surfaces variants ("Extra Long" ↔ "Original", "Urid Flour" ↔ "Urid Flour Roasted"). Matched via `base_key` equality (catalog brands) or slot-subset check (non-catalog brands: one slot set fully contained in the other). |
+| T4 | `same_category` | 0.4 | Same category only — **only emitted when T1+T2+T3 are all empty**. Displayed collapsed as a CTA pill ("N more from this category"); expands on click. |
 
 Same-canonical deals (identical `canonical_id`) are always skipped — they represent the same product variant and would not be useful replacements.
+
+**Brand detection (T1/T3):** `srcBrand` resolved from CSV catalog (`detectBrandForBase`). For brands absent from catalog (e.g. Anjappar), falls back to `brand_slots[0][0]`. When using fallback (`srcBrandFromCatalogOnly = false`), candidate brand check uses `nameHasBrand` rather than strict catalog equality.
 
 ### Step 3 — Sort and cap
 

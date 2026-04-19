@@ -1816,3 +1816,29 @@ If merged without syncing, T2 will silently return empty for all replacement loo
 **Steps before merging:**
 1. Sync the local DB to production (via `scripts/push-local-db-to-turso.js` or equivalent), **or**
 2. Run `node scripts/backfill-base-product-slots.js` directly against the production Turso DB (set `TURSO_DATABASE_URL` + `TURSO_AUTH_TOKEN` in env). The script is idempotent — safe to re-run.
+
+---
+
+## Replacement Tier Refinements (2026-04-19)
+
+The following changes were made to `server/services/product-replacements.js` after the initial implementation:
+
+### T1 — Exact spec matching
+T1 previously matched on `base_key` (product family) alone. This caused false positives: "Schani Urid Split Chilka" and "Schani Urid Whole" both resolved to `base_key = "urid"` and were shown as size variants of the same product.
+
+**Fix:** T1 now requires exact `base_product_slots` match. Products must be the same spec to qualify; different variants of the same base (Split vs Whole, Chilka vs Whole) fall through to T3.
+
+### T3 — Product-group–driven variant matching
+T3 previously matched on `sameCategory` — any same-brand product in the same category qualified. This was too broad (e.g. any two Anjappar flour products matched regardless of product type).
+
+**Fix:** T3 now matches on product group:
+- **Catalog brands** (`srcBaseKey` non-null): `candBase.base_key === srcBaseKey`
+- **Non-catalog brands** (e.g. Anjappar): slot-subset check — one product's `base_product_slots` token set must be fully contained in the other. Catches "Urid Flour" ↔ "Urid Flour Roasted" while rejecting "Urid Flour" vs "Red Rice Flour Roasted".
+
+A 60%-overlap threshold was evaluated but produced false positives (shared generic tokens like "flour" + "roasted"). Subset check is stricter and more precise.
+
+### T4 — Collapsed CTA
+T4 (`same_category`) now renders as a collapsed dashed-border pill ("N more from this category") that expands on click. This keeps the modal uncluttered while signalling that more results exist.
+
+### Modal re-fetch on close
+`replacementTiers` state is now reset when the modal closes so each open fetches fresh data. Previously the cached result persisted for the lifetime of the DealCard, causing stale data after server restarts (development issue).
