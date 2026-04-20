@@ -9,7 +9,7 @@
  *  - Loads only canonicals with is_match_priority = 1 AND brand_slots IS NOT NULL.
  *  - Canonicals without slots are skipped entirely (no legacy fallback).
  *
- * Upserts confirmed matches into deal_mappings so Real Savings can compute
+ * Upserts confirmed matches into local_deal_mappings so Real Savings can compute
  * Layer 1 savings from canonical price history.
  */
 
@@ -120,7 +120,7 @@ async function loadPriorityCanonicals(db) {
       `SELECT id, canonical_name,
               brand_slots, base_product_slots, type_slots,
               weight_value, weight_unit
-       FROM canonical_products
+       FROM local_canonical_products
        WHERE is_match_priority = 1
          AND brand_slots IS NOT NULL
          AND brand_slots != 'null'
@@ -135,7 +135,7 @@ async function loadPriorityCanonicals(db) {
           `SELECT id, canonical_name,
                   brand_slots, base_product_slots, type_slots,
                   weight_value, weight_unit
-           FROM canonical_products
+           FROM local_canonical_products
            WHERE is_priority = 1
              AND brand_slots IS NOT NULL
              AND brand_slots != 'null'
@@ -184,7 +184,7 @@ async function loadPriorityCanonicals(db) {
  * For each scraped deal, attempt to match it to a canonical using slot-based
  * matching only. Canonicals without slots are skipped (no legacy fallback).
  *
- * Upserts confirmed matches into deal_mappings.
+ * Upserts confirmed matches into local_deal_mappings.
  *
  * @param {object} db
  * @param {Array}  deals              - Normalised deal objects
@@ -205,7 +205,7 @@ async function autoMapDeals(db, deals, priorityCanonicals) {
     for (const canon of priorityCanonicals) {
       if (matchesCanonical(normedName, dealWeightValue, dealWeightUnit, canon) !== true) continue;
       stmts.push({
-        sql: `INSERT INTO deal_mappings (deal_id, canonical_id, match_method, match_confidence)
+        sql: `INSERT INTO local_deal_mappings (deal_id, canonical_id, match_method, match_confidence)
               VALUES (?, ?, 'slot_match', 0.85)
               ON CONFLICT(deal_id, canonical_id) DO UPDATE SET
                 match_method = 'slot_match', match_confidence = 0.85`,

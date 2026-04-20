@@ -5,7 +5,7 @@
  * Pass 1 of the two-pass crawler.
  *
  * For every is_priority = 1 canonical product that has at least one entry
- * in deal_mappings, fetches the current price from the product's stored URL —
+ * in local_deal_mappings, fetches the current price from the product's stored URL —
  * regardless of whether it's currently on sale.
  *
  * Platform detection:
@@ -115,23 +115,23 @@ async function fetchHtmlPrice(productUrl) {
  * @returns {Promise<Array>}  - Array of price-snapshot objects (for price-history-recorder)
  */
 async function runPass1(db, { crawlRunId, crawlDate, crawlTimestamp, logInfo, logWarn }) {
-  // Load all deal_mappings for priority products
+  // Load all local_deal_mappings for priority products
   let mappings;
   try {
     const res = await db.execute(
       `SELECT dm.deal_id, dm.canonical_id, d.product_url, d.product_name,
               d.product_category, d.store_id, d.weight_raw, d.weight_value,
               d.weight_unit, d.currency
-       FROM deal_mappings dm
+       FROM local_deal_mappings dm
        JOIN deals d ON d.id = dm.deal_id
-       JOIN canonical_products cp ON cp.id = dm.canonical_id
+       JOIN local_canonical_products cp ON cp.id = dm.canonical_id
        WHERE cp.is_priority = 1
          AND d.product_url IS NOT NULL`,
     );
     mappings = res.rows ?? [];
   } catch (e) {
     if (/no such (table|column)/i.test(e.message)) {
-      logWarn("pass1", "Skipping Pass 1 — deal_mappings or is_priority not ready");
+      logWarn("pass1", "Skipping Pass 1 — local_deal_mappings or is_priority not ready");
       return [];
     }
     throw e;

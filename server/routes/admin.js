@@ -205,9 +205,9 @@ router.get("/entity-resolution/queue", requireAuth, (req, res) => {
   const rows = db
     .prepare(
       `SELECT q.*, d.product_name, d.product_url, d.store_id, c.canonical_name AS suggested_canonical_name
-     FROM entity_resolution_queue q
+     FROM local_entity_resolution_queue q
      JOIN deals d ON d.id = q.deal_id
-     LEFT JOIN canonical_products c ON c.id = q.suggested_canonical_id
+     LEFT JOIN local_canonical_products c ON c.id = q.suggested_canonical_id
      WHERE q.status = ?
      ORDER BY q.created_at DESC
      LIMIT ?`,
@@ -234,7 +234,7 @@ router.post("/entity-resolution/resolve", requireAuth, (req, res) => {
   let queue = null;
   if (queueId != null && Number.isFinite(queueId)) {
     queue = db
-      .prepare("SELECT * FROM entity_resolution_queue WHERE id = ? LIMIT 1")
+      .prepare("SELECT * FROM local_entity_resolution_queue WHERE id = ? LIMIT 1")
       .get(queueId);
   }
 
@@ -252,7 +252,7 @@ router.post("/entity-resolution/resolve", requireAuth, (req, res) => {
     }
 
     const canonical = db
-      .prepare("SELECT id FROM canonical_products WHERE id = ? LIMIT 1")
+      .prepare("SELECT id FROM local_canonical_products WHERE id = ? LIMIT 1")
       .get(resolvedCanonicalId);
     if (!canonical)
       return res.status(404).json({ error: "Canonical product not found" });
@@ -262,7 +262,7 @@ router.post("/entity-resolution/resolve", requireAuth, (req, res) => {
       resolvedDealId,
     );
     db.prepare(
-      `INSERT INTO deal_mappings
+      `INSERT INTO local_deal_mappings
         (deal_id, canonical_id, match_method, match_confidence, verified_at)
        VALUES (?, ?, 'manual', 1.0, ?)
        ON CONFLICT(deal_id, canonical_id)
@@ -274,7 +274,7 @@ router.post("/entity-resolution/resolve", requireAuth, (req, res) => {
 
     if (queue?.id) {
       db.prepare(
-        `UPDATE entity_resolution_queue
+        `UPDATE local_entity_resolution_queue
          SET status = 'resolved_confirm', suggested_canonical_id = ?
          WHERE id = ?`,
       ).run(resolvedCanonicalId, queue.id);
@@ -290,7 +290,7 @@ router.post("/entity-resolution/resolve", requireAuth, (req, res) => {
 
   if (queue?.id) {
     db.prepare(
-      `UPDATE entity_resolution_queue
+      `UPDATE local_entity_resolution_queue
        SET status = 'resolved_reject'
        WHERE id = ?`,
     ).run(queue.id);
@@ -755,7 +755,7 @@ router.get("/release/readiness", requireAuth, (req, res) => {
   const pendingQueue = db
     .prepare(
       `SELECT COUNT(*) AS cnt
-     FROM entity_resolution_queue
+     FROM local_entity_resolution_queue
      WHERE status = 'pending'`,
     )
     .get().cnt;

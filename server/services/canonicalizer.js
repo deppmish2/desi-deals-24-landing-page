@@ -26,7 +26,7 @@ async function loadCanonicalRows(db) {
   return await db
     .prepare(
       `SELECT id, canonical_name, category, common_aliases, image_url
-     FROM canonical_products`,
+     FROM local_canonical_products`,
     )
     .all();
 }
@@ -35,7 +35,7 @@ async function addAliasToCanonical(db, canonicalId, rawName) {
   const row = await db
     .prepare(
       `SELECT common_aliases
-     FROM canonical_products
+     FROM local_canonical_products
      WHERE id = ?
      LIMIT 1`,
     )
@@ -46,7 +46,7 @@ async function addAliasToCanonical(db, canonicalId, rawName) {
 
   await db
     .prepare(
-      `UPDATE canonical_products
+      `UPDATE local_canonical_products
      SET common_aliases = ?
      WHERE id = ?`,
     )
@@ -58,7 +58,7 @@ async function ensureUniqueCanonicalId(db, baseId) {
   let suffix = 2;
   while (
     await db
-      .prepare("SELECT 1 FROM canonical_products WHERE id = ? LIMIT 1")
+      .prepare("SELECT 1 FROM local_canonical_products WHERE id = ? LIMIT 1")
       .get(id)
   ) {
     id = `${baseId}-${suffix}`;
@@ -88,7 +88,7 @@ async function createCanonical(
 
   await db
     .prepare(
-      `INSERT INTO canonical_products
+      `INSERT INTO local_canonical_products
         (id, canonical_name, category, common_aliases, image_url, verified,
          brand_slots, base_product_slots, type_slots, product_group_id,
          weight_value, weight_unit, is_match_priority)
@@ -121,7 +121,7 @@ async function createCanonical(
   }
 
   return await db
-    .prepare("SELECT * FROM canonical_products WHERE id = ? LIMIT 1")
+    .prepare("SELECT * FROM local_canonical_products WHERE id = ? LIMIT 1")
     .get(canonicalId);
 }
 
@@ -131,7 +131,7 @@ async function upsertDealMapping(
 ) {
   await db
     .prepare(
-      `INSERT INTO deal_mappings
+      `INSERT INTO local_deal_mappings
       (deal_id, canonical_id, match_method, match_confidence, verified_at)
      VALUES (?, ?, ?, ?, ?)
      ON CONFLICT(deal_id, canonical_id)
@@ -157,7 +157,7 @@ async function enqueueManualReview(
   const pending = await db
     .prepare(
       `SELECT id
-     FROM entity_resolution_queue
+     FROM local_entity_resolution_queue
      WHERE deal_id = ? AND status = 'pending'
      LIMIT 1`,
     )
@@ -167,7 +167,7 @@ async function enqueueManualReview(
 
   await db
     .prepare(
-      `INSERT INTO entity_resolution_queue
+      `INSERT INTO local_entity_resolution_queue
       (deal_id, suggested_canonical_id, confidence, raw_name, normalised_name, status, store_id, category)
      VALUES (?, ?, ?, ?, ?, 'pending', ?, ?)`,
     )
@@ -251,7 +251,7 @@ async function canonicalizeDeals(db, { runId, unmappedOnly } = {}) {
     params.push(runId);
   }
   const join = unmappedOnly
-    ? "LEFT JOIN deal_mappings dm ON dm.deal_id = d.id"
+    ? "LEFT JOIN local_deal_mappings dm ON dm.deal_id = d.id"
     : "";
   if (unmappedOnly) where += " AND dm.deal_id IS NULL";
 

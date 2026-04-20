@@ -68,7 +68,7 @@ async function phoneticFallback(db, deals, query) {
   // Phonetic skeleton matching is too ambiguous below 5 chars.
   if (!query || query.length < 5) return [];
   const canonicals = await db
-    .prepare("SELECT id, canonical_name FROM canonical_products")
+    .prepare("SELECT id, canonical_name FROM local_canonical_products")
     .all();
 
   const matchedIds = new Set();

@@ -20,7 +20,7 @@ const ACTIVE_DEALS_WITH_CANONICAL_SQL = `
          cp.base_product_slots AS cp_base_product_slots
   FROM deals d
   JOIN stores s ON s.id = d.store_id
-  JOIN canonical_products cp ON cp.id = d.canonical_id
+  JOIN local_canonical_products cp ON cp.id = d.canonical_id
   WHERE d.store_id = ? AND d.is_active = 1 AND d.canonical_id IS NOT NULL
 `;
 
@@ -70,7 +70,7 @@ function sizeCompatible(srcWeight, candWeight) {
 async function getReplacements(db, { canonicalId, storeId, dealId = null }) {
   const src = await db
     .prepare(
-      `SELECT id, canonical_name, category, weight_value, weight_unit, base_product_slots, brand_slots FROM canonical_products WHERE id = ? LIMIT 1`
+      `SELECT id, canonical_name, category, weight_value, weight_unit, base_product_slots, brand_slots FROM local_canonical_products WHERE id = ? LIMIT 1`
     )
     .get(canonicalId);
   if (!src) return null;
@@ -97,7 +97,7 @@ async function getReplacements(db, { canonicalId, storeId, dealId = null }) {
     t4 = [];
   const seen = new Set();
   const srcRow = dealId ? rows.find((r) => r.id === dealId) : null;
-  // Bug fix: fall back to canonical_products.weight_value when no dealId is provided,
+  // Bug fix: fall back to local_canonical_products.weight_value when no dealId is provided,
   // so T1 "different size" check and sizeCompatible() work without a specific source deal.
   const srcWeightValue = srcRow
     ? parseWeight(srcRow.weight_value, srcRow.weight_raw)

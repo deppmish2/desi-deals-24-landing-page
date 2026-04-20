@@ -27,7 +27,7 @@ async function ensureUniqueCanonicalId(db, baseId) {
   let suffix = 2;
   while (
     await db
-      .prepare("SELECT 1 FROM canonical_products WHERE id = ? LIMIT 1")
+      .prepare("SELECT 1 FROM local_canonical_products WHERE id = ? LIMIT 1")
       .get(id)
   ) {
     id = `${baseId}-${suffix}`;
@@ -72,8 +72,8 @@ router.get("/review-queue", async (req, res) => {
                 cp.brand_slots, cp.base_product_slots, cp.type_slots,
                 cp.category as canonical_category,
                 s.name as store_name
-         FROM entity_resolution_queue eq
-         LEFT JOIN canonical_products cp ON cp.id = eq.suggested_canonical_id
+         FROM local_entity_resolution_queue eq
+         LEFT JOIN local_canonical_products cp ON cp.id = eq.suggested_canonical_id
          LEFT JOIN stores s ON s.id = eq.store_id
          WHERE ${where}
          ORDER BY eq.created_at DESC
@@ -83,7 +83,7 @@ router.get("/review-queue", async (req, res) => {
 
     const countRow = await db
       .prepare(
-        `SELECT COUNT(*) as c FROM entity_resolution_queue eq WHERE ${where}`,
+        `SELECT COUNT(*) as c FROM local_entity_resolution_queue eq WHERE ${where}`,
       )
       .get(...params);
 
@@ -113,7 +113,7 @@ router.patch("/review-queue/:id", async (req, res) => {
     }
 
     const item = await db
-      .prepare("SELECT * FROM entity_resolution_queue WHERE id = ? LIMIT 1")
+      .prepare("SELECT * FROM local_entity_resolution_queue WHERE id = ? LIMIT 1")
       .get(id);
 
     if (!item) {
@@ -122,14 +122,14 @@ router.patch("/review-queue/:id", async (req, res) => {
 
     await db
       .prepare(
-        "UPDATE entity_resolution_queue SET status = 'confirmed', suggested_canonical_id = ? WHERE id = ?",
+        "UPDATE local_entity_resolution_queue SET status = 'confirmed', suggested_canonical_id = ? WHERE id = ?",
       )
       .run(canonical_id, id);
 
     const now = new Date().toISOString();
     await db
       .prepare(
-        `INSERT INTO deal_mappings (deal_id, canonical_id, match_method, match_confidence, verified_at)
+        `INSERT INTO local_deal_mappings (deal_id, canonical_id, match_method, match_confidence, verified_at)
          VALUES (?, ?, 'manual', ?, ?)
          ON CONFLICT(deal_id, canonical_id) DO UPDATE SET
            match_method = 'manual',
@@ -161,7 +161,7 @@ router.post("/review-queue/canonical", async (req, res) => {
     }
 
     const originItem = await db
-      .prepare("SELECT * FROM entity_resolution_queue WHERE id = ? LIMIT 1")
+      .prepare("SELECT * FROM local_entity_resolution_queue WHERE id = ? LIMIT 1")
       .get(queue_item_id);
 
     if (!originItem) {
@@ -187,7 +187,7 @@ router.post("/review-queue/canonical", async (req, res) => {
 
     await db
       .prepare(
-        `INSERT INTO canonical_products
+        `INSERT INTO local_canonical_products
           (id, canonical_name, category, common_aliases, image_url, verified,
            brand_slots, base_product_slots, type_slots, product_group_id,
            weight_value, weight_unit, is_match_priority)
@@ -210,7 +210,7 @@ router.post("/review-queue/canonical", async (req, res) => {
     // Confirm originating queue item
     await db
       .prepare(
-        "UPDATE entity_resolution_queue SET status = 'confirmed', suggested_canonical_id = ? WHERE id = ?",
+        "UPDATE local_entity_resolution_queue SET status = 'confirmed', suggested_canonical_id = ? WHERE id = ?",
       )
       .run(newId, queue_item_id);
 
@@ -219,7 +219,7 @@ router.post("/review-queue/canonical", async (req, res) => {
     // Insert deal_mapping for originating deal
     await db
       .prepare(
-        `INSERT INTO deal_mappings (deal_id, canonical_id, match_method, match_confidence, verified_at)
+        `INSERT INTO local_deal_mappings (deal_id, canonical_id, match_method, match_confidence, verified_at)
          VALUES (?, ?, 'manual', 1.0, ?)
          ON CONFLICT(deal_id, canonical_id) DO UPDATE SET
            match_method = 'manual',
@@ -235,7 +235,7 @@ router.post("/review-queue/canonical", async (req, res) => {
     // Re-scan pending items in same category
     const pendingItems = await db
       .prepare(
-        "SELECT * FROM entity_resolution_queue WHERE status = 'pending' AND category = ? AND id != ?",
+        "SELECT * FROM local_entity_resolution_queue WHERE status = 'pending' AND category = ? AND id != ?",
       )
       .all(category || originItem.category || "Other", queue_item_id);
 
@@ -249,13 +249,13 @@ router.post("/review-queue/canonical", async (req, res) => {
       if (matchResult && matchResult.confidence >= 0.90) {
         await db
           .prepare(
-            "UPDATE entity_resolution_queue SET status = 'confirmed', suggested_canonical_id = ? WHERE id = ?",
+            "UPDATE local_entity_resolution_queue SET status = 'confirmed', suggested_canonical_id = ? WHERE id = ?",
           )
           .run(newId, pending.id);
 
         await db
           .prepare(
-            `INSERT INTO deal_mappings (deal_id, canonical_id, match_method, match_confidence, verified_at)
+            `INSERT INTO local_deal_mappings (deal_id, canonical_id, match_method, match_confidence, verified_at)
              VALUES (?, ?, 'fuzzy', ?, ?)
              ON CONFLICT(deal_id, canonical_id) DO UPDATE SET
                match_method = 'fuzzy',
@@ -286,7 +286,7 @@ router.patch("/review-queue/canonical/:id", async (req, res) => {
     const { brand, base_product, product_type, category, canonical_name } = req.body || {};
 
     const existing = await db
-      .prepare("SELECT * FROM canonical_products WHERE id = ? LIMIT 1")
+      .prepare("SELECT * FROM local_canonical_products WHERE id = ? LIMIT 1")
       .get(id);
     if (!existing) return res.status(404).json({ error: "Canonical not found" });
 
@@ -304,7 +304,7 @@ router.patch("/review-queue/canonical/:id", async (req, res) => {
     if (idChanged) {
       // Explicit INSERT to avoid INSERT...SELECT param issues with libsql
       await db.prepare(
-        `INSERT INTO canonical_products
+        `INSERT INTO local_canonical_products
           (id, canonical_name, category, common_aliases, base_unit, image_url, verified,
            is_priority, is_match_priority, brand_slots, base_product_slots, type_slots,
            product_group_id, weight_value, weight_unit, created_at)
@@ -326,13 +326,13 @@ router.patch("/review-queue/canonical/:id", async (req, res) => {
         existing.created_at ?? new Date().toISOString(),
       );
       // Cascade references before deleting old record
-      await db.prepare(`UPDATE deal_mappings SET canonical_id = ? WHERE canonical_id = ?`).run(newId, id);
-      await db.prepare(`UPDATE entity_resolution_queue SET suggested_canonical_id = ? WHERE suggested_canonical_id = ?`).run(newId, id);
+      await db.prepare(`UPDATE local_deal_mappings SET canonical_id = ? WHERE canonical_id = ?`).run(newId, id);
+      await db.prepare(`UPDATE local_entity_resolution_queue SET suggested_canonical_id = ? WHERE suggested_canonical_id = ?`).run(newId, id);
       await db.prepare(`UPDATE deals SET canonical_id = ? WHERE canonical_id = ?`).run(newId, id);
-      await db.prepare(`DELETE FROM canonical_products WHERE id = ?`).run(id);
+      await db.prepare(`DELETE FROM local_canonical_products WHERE id = ?`).run(id);
     } else {
       await db.prepare(
-        `UPDATE canonical_products SET canonical_name=?, brand_slots=?, base_product_slots=?, type_slots=?, product_group_id=?, category=? WHERE id=?`,
+        `UPDATE local_canonical_products SET canonical_name=?, brand_slots=?, base_product_slots=?, type_slots=?, product_group_id=?, category=? WHERE id=?`,
       ).run(resolvedName, JSON.stringify(brandSlots), JSON.stringify(baseProductSlots), JSON.stringify(typeSlots), productGroupId, resolvedCategory, id);
     }
 
@@ -349,7 +349,7 @@ router.post("/review-queue/:id/dismiss", async (req, res) => {
     const { id } = req.params;
 
     const item = await db
-      .prepare("SELECT * FROM entity_resolution_queue WHERE id = ? LIMIT 1")
+      .prepare("SELECT * FROM local_entity_resolution_queue WHERE id = ? LIMIT 1")
       .get(id);
 
     if (!item) {
@@ -357,7 +357,7 @@ router.post("/review-queue/:id/dismiss", async (req, res) => {
     }
 
     await db
-      .prepare("UPDATE entity_resolution_queue SET status = 'dismissed' WHERE id = ?")
+      .prepare("UPDATE local_entity_resolution_queue SET status = 'dismissed' WHERE id = ?")
       .run(id);
 
     res.json({ ok: true });
@@ -374,7 +374,7 @@ router.get("/review-queue/canonical/:id/price-data", async (req, res) => {
     const { exclude_store_id } = req.query;
 
     const canonical = await db
-      .prepare("SELECT id, canonical_name, category, base_product_slots FROM canonical_products WHERE id = ? LIMIT 1")
+      .prepare("SELECT id, canonical_name, category, base_product_slots FROM local_canonical_products WHERE id = ? LIMIT 1")
       .get(id);
     if (!canonical) return res.status(404).json({ error: "Canonical not found" });
 
@@ -385,7 +385,7 @@ router.get("/review-queue/canonical/:id/price-data", async (req, res) => {
                 dm.match_method, dm.match_confidence
          FROM deals d
          JOIN stores s ON s.id = d.store_id
-         LEFT JOIN deal_mappings dm ON dm.deal_id = d.id AND dm.canonical_id = ?
+         LEFT JOIN local_deal_mappings dm ON dm.deal_id = d.id AND dm.canonical_id = ?
          WHERE d.canonical_id = ? AND d.is_active = 1
          ORDER BY d.sale_price ASC`,
       )
@@ -422,7 +422,7 @@ router.get("/review-queue/canonical/:id/price-data", async (req, res) => {
                   s.id AS store_id, s.name AS store_name
            FROM deals d
            JOIN stores s ON s.id = d.store_id
-           JOIN canonical_products cp ON cp.id = d.canonical_id
+           JOIN local_canonical_products cp ON cp.id = d.canonical_id
            WHERE cp.base_product_slots = ?
              AND d.canonical_id != ?
              AND d.is_active = 1

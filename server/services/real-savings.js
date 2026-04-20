@@ -84,7 +84,7 @@ async function batchGetRealSavings(db, deals) {
                 COALESCE(dph.original_price, dph.sale_price) * dph.price_per_kg / dph.sale_price AS normal_price_per_kg
          FROM deal_price_history dph
          JOIN deals d ON d.product_url = dph.product_url
-         JOIN deal_mappings dm ON dm.deal_id = d.id
+         JOIN local_deal_mappings dm ON dm.deal_id = d.id
          WHERE dm.canonical_id IN (${placeholders})
            AND dph.crawl_date >= date('now', '-90 days')
            AND dph.price_per_kg IS NOT NULL
@@ -123,7 +123,7 @@ async function batchGetRealSavings(db, deals) {
         }
       }
     } catch (_) {
-      // price_per_kg or deal_mappings not available — fall through to Layer 2
+      // price_per_kg or local_deal_mappings not available — fall through to Layer 2
     }
   }
 
