@@ -2,6 +2,7 @@
 
 const { resolveName } = require("../../crawler/entity-resolution");
 const { decomposeCanonical } = require("../../crawler/utils/canonical-decomposer");
+const { resolveBaseProduct } = require("./base-product-catalog");
 
 function slugify(value) {
   const base = String(value || "")
@@ -86,13 +87,15 @@ async function createCanonical(
     weightUnit,
   } = decomposeCanonical(canonicalName || rawName || "", [], brands);
 
+  const baseKey = resolveBaseProduct(canonicalName)?.base_key ?? null;
+
   await db
     .prepare(
       `INSERT INTO canonical_products
         (id, canonical_name, category, common_aliases, image_url, verified,
-         brand_slots, base_product_slots, type_slots, product_group_id,
+         brand_slots, base_product_slots, type_slots, product_group_id, base_key,
          weight_value, weight_unit, is_match_priority)
-       VALUES (?, ?, ?, ?, ?, 0, ?, ?, ?, ?, ?, ?, 1)`,
+       VALUES (?, ?, ?, ?, ?, 0, ?, ?, ?, ?, ?, ?, ?, 1)`,
     )
     .run(
       canonicalId,
@@ -104,6 +107,7 @@ async function createCanonical(
       JSON.stringify(baseProductSlots),
       JSON.stringify(typeSlots),
       productGroupId,
+      baseKey,
       weightValue,
       weightUnit,
     );

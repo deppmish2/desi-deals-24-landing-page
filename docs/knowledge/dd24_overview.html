@@ -888,11 +888,15 @@ name: <span class="str">"HEERA SOAN PAPDI 500GMS"</span>
       </div>
 
       <div class="card">
-        <div class="card-title">API endpoint</div>
+        <div class="card-title">API endpoints</div>
         <div class="code-block"><span class="kw">GET</span> /api/v1/deals/replacements
   ?canonical_id=<span class="str">{id}</span>
   &amp;store_id=<span class="str">{id}</span>
-  &amp;deal_id=<span class="str">{id}</span>     <span class="cm">// optional; source weight falls back to canonical if omitted</span></div>
+  &amp;deal_id=<span class="str">{id}</span>     <span class="cm">// optional; source weight falls back to canonical if omitted</span>
+
+<span class="kw">GET</span> /api/v1/deals/same-product-other-stores
+  ?canonical_id=<span class="str">{id}</span>
+  &amp;store_id=<span class="str">{id}</span>     <span class="cm">// cross-store alternatives via base_key + category SQL join</span></div>
       </div>
 
       <div class="card">
@@ -911,8 +915,8 @@ name: <span class="str">"HEERA SOAN PAPDI 500GMS"</span>
               <td>T2</td>
               <td>same_spec</td>
               <td><span class="badge badge-blue">0.85</span></td>
-              <td>Cross-brand with identical base_product_slots token set. Populated via base-product-slots backfill.</td>
-              <td>Natco Soan Papdi 500g as alternative to Heera (different brand, same product type)</td>
+              <td>Cross-brand, same base product. Primary: exact <code>base_product_slots</code> set match. Fallback: catalog <code>base_key</code> equality — handles Hindi/English term divergence (e.g. "Mung Sabut Whole" ↔ "TRS Mung Beans" both → <code>"moong dal yellow"</code>).</td>
+              <td>Natco Soan Papdi 500g as alternative to Heera; Mung Sabut 500g as alternative to TRS Mung Beans</td>
             </tr>
             <tr class="tier-t3">
               <td>T3</td>
@@ -942,6 +946,8 @@ name: <span class="str">"HEERA SOAN PAPDI 500GMS"</span>
             <tr><td>sizeCompatible()</td><td>Uses epsilon ratio check (<code>|round(src/cand) − src/cand| &lt; 0.01</code>) instead of float modulo to handle decimal weights (oils, spices)</td></tr>
             <tr><td>Brand detection</td><td>Uses base-product-catalog CSV via <code>detectBrandForBase()</code>; falls back to <code>brand_slots[0][0]</code> for non-catalog brands</td></tr>
             <tr><td>T1 slot check</td><td>Requires exact slot match to prevent "Split Chilka" vs "Whole" from being treated as size variants</td></tr>
+            <tr><td>Cross-store matching</td><td><code>same-product-other-stores</code> uses SQL <code>JOIN canonical_products ON cp.base_key = ? AND cp.category = ?</code>. Category guard blocks snack/lentil false positives. Falls back to exact <code>canonical_id</code> when <code>base_key</code> is null.</td></tr>
+            <tr><td><code>canonical_products.base_key</code></td><td>TEXT column; populated by <code>resolveBaseProduct()</code> at canonical write time (canonicalizer, admin-review-queue, brand remap). 3,003 of 14,598 rows populated. Indexed.</td></tr>
           </tbody>
         </table>
       </div>
@@ -1004,7 +1010,7 @@ name: <span class="str">"HEERA SOAN PAPDI 500GMS"</span>
             <tr>
               <td><code>crawler/utils/category-mapper.js</code></td>
               <td>Product → category classifier</td>
-              <td>16 categories; maps scraped names to enum values</td>
+              <td>16 categories; <code>SNACK_PHRASES</code> pre-check prevents fried dal snacks matching lentil keywords</td>
             </tr>
             <tr>
               <td><code>server/services/canonicalizer.js</code></td>
@@ -1018,8 +1024,8 @@ name: <span class="str">"HEERA SOAN PAPDI 500GMS"</span>
             </tr>
             <tr>
               <td><code>server/services/product-replacements.js</code></td>
-              <td>Replacement engine</td>
-              <td><code>getReplacements(canonicalId, storeId, dealId)</code></td>
+              <td>Same-store replacement engine</td>
+              <td><code>getReplacements()</code> — T1/T2/T3/T4; T2 uses <code>base_key</code> fallback for Hindi/English term differences</td>
             </tr>
             <tr>
               <td><code>server/services/price-history-recorder.js</code></td>

@@ -7,6 +7,7 @@ const requireAdminAuth = require("../middleware/user-admin-auth");
 const { normalise } = require("../../crawler/entity-resolution/normaliser");
 const { fuzzyMatch } = require("../../crawler/entity-resolution/fuzzy-matcher");
 const { decomposeCanonical } = require("../../crawler/utils/canonical-decomposer");
+const { resolveBaseProduct } = require("../services/base-product-catalog");
 
 router.use(requireAdminAuth);
 
@@ -185,13 +186,15 @@ router.post("/review-queue/canonical", async (req, res) => {
       productGroupId = [...first(brandSlots || []), ...first(baseProductSlots), ...first(typeSlots)].join("-") || productGroupId;
     }
 
+    const baseKey = resolveBaseProduct(canonical_name)?.base_key ?? null;
+
     await db
       .prepare(
         `INSERT INTO canonical_products
           (id, canonical_name, category, common_aliases, image_url, verified,
-           brand_slots, base_product_slots, type_slots, product_group_id,
+           brand_slots, base_product_slots, type_slots, product_group_id, base_key,
            weight_value, weight_unit, is_match_priority)
-         VALUES (?, ?, ?, ?, ?, 0, ?, ?, ?, ?, ?, ?, 1)`,
+         VALUES (?, ?, ?, ?, ?, 0, ?, ?, ?, ?, ?, ?, ?, 1)`,
       )
       .run(
         newId,
@@ -203,6 +206,7 @@ router.post("/review-queue/canonical", async (req, res) => {
         JSON.stringify(baseProductSlots),
         JSON.stringify(typeSlots),
         productGroupId,
+        baseKey,
         weightValue,
         weightUnit,
       );
@@ -300,6 +304,7 @@ router.patch("/review-queue/canonical/:id", async (req, res) => {
     const resolvedName = (canonical_name || "").trim() || existing.canonical_name;
     const newId = await ensureUniqueCanonicalId(db, slugify(resolvedName));
     const idChanged = newId !== id;
+    const baseKey = resolveBaseProduct(resolvedName)?.base_key ?? null;
 
     if (idChanged) {
       // Explicit INSERT to avoid INSERT...SELECT param issues with libsql
@@ -307,8 +312,8 @@ router.patch("/review-queue/canonical/:id", async (req, res) => {
         `INSERT INTO canonical_products
           (id, canonical_name, category, common_aliases, base_unit, image_url, verified,
            is_priority, is_match_priority, brand_slots, base_product_slots, type_slots,
-           product_group_id, weight_value, weight_unit, created_at)
-         VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+           product_group_id, base_key, weight_value, weight_unit, created_at)
+         VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
       ).run(
         newId, resolvedName, resolvedCategory,
         existing.common_aliases ?? null,
@@ -321,6 +326,7 @@ router.patch("/review-queue/canonical/:id", async (req, res) => {
         JSON.stringify(baseProductSlots),
         JSON.stringify(typeSlots),
         productGroupId,
+        baseKey,
         existing.weight_value ?? null,
         existing.weight_unit ?? null,
         existing.created_at ?? new Date().toISOString(),
@@ -332,8 +338,8 @@ router.patch("/review-queue/canonical/:id", async (req, res) => {
       await db.prepare(`DELETE FROM canonical_products WHERE id = ?`).run(id);
     } else {
       await db.prepare(
-        `UPDATE canonical_products SET canonical_name=?, brand_slots=?, base_product_slots=?, type_slots=?, product_group_id=?, category=? WHERE id=?`,
-      ).run(resolvedName, JSON.stringify(brandSlots), JSON.stringify(baseProductSlots), JSON.stringify(typeSlots), productGroupId, resolvedCategory, id);
+        `UPDATE canonical_products SET canonical_name=?, brand_slots=?, base_product_slots=?, type_slots=?, product_group_id=?, base_key=?, category=? WHERE id=?`,
+      ).run(resolvedName, JSON.stringify(brandSlots), JSON.stringify(baseProductSlots), JSON.stringify(typeSlots), productGroupId, baseKey, resolvedCategory, id);
     }
 
     res.json({ ok: true, new_id: newId });

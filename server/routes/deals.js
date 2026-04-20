@@ -664,17 +664,42 @@ router.get("/same-product-other-stores", async (req, res, next) => {
       return res.status(400).json({ error: "canonical_id and store_id are required" });
     }
 
-    const rows = await db
-      .prepare(
-        `SELECT d.id, d.product_name, d.sale_price, d.discount_percent,
-                d.price_per_kg, d.weight_raw, d.weight_value, d.weight_unit, d.product_url, d.image_url,
-                s.id AS store_id, s.name AS store_name, s.url AS store_url
-         FROM deals d
-         JOIN stores s ON s.id = d.store_id
-         WHERE d.canonical_id = ? AND d.store_id != ? AND d.is_active = 1
-         ORDER BY s.name ASC, d.sale_price ASC`
-      )
-      .all(canonicalId, storeId);
+    // Look up source canonical's base_key and category for SQL-based cross-store matching.
+    // base_key groups semantically equivalent products across Hindi/English terminology
+    // (e.g. "Mung Sabut Whole" ↔ "TRS Mung Beans" → base_key "moong dal yellow").
+    // Category guard prevents cross-category false positives (snack vs ingredient).
+    const src = await db
+      .prepare(`SELECT base_key, category FROM canonical_products WHERE id = ? LIMIT 1`)
+      .get(canonicalId);
+
+    let rows;
+    if (src?.base_key) {
+      rows = await db
+        .prepare(
+          `SELECT d.id, d.product_name, d.sale_price, d.discount_percent,
+                  d.price_per_kg, d.weight_raw, d.weight_value, d.weight_unit, d.product_url, d.image_url,
+                  s.id AS store_id, s.name AS store_name, s.url AS store_url
+           FROM deals d
+           JOIN stores s ON s.id = d.store_id
+           JOIN canonical_products cp ON cp.id = d.canonical_id
+           WHERE cp.base_key = ? AND cp.category = ? AND d.store_id != ? AND d.is_active = 1
+           ORDER BY s.name ASC, d.sale_price ASC`
+        )
+        .all(src.base_key, src.category, storeId);
+    } else {
+      // Fallback: exact canonical_id match (no base_key populated yet)
+      rows = await db
+        .prepare(
+          `SELECT d.id, d.product_name, d.sale_price, d.discount_percent,
+                  d.price_per_kg, d.weight_raw, d.weight_value, d.weight_unit, d.product_url, d.image_url,
+                  s.id AS store_id, s.name AS store_name, s.url AS store_url
+           FROM deals d
+           JOIN stores s ON s.id = d.store_id
+           WHERE d.canonical_id = ? AND d.store_id != ? AND d.is_active = 1
+           ORDER BY s.name ASC, d.sale_price ASC`
+        )
+        .all(canonicalId, storeId);
+    }
 
     const storeMap = new Map();
     for (const d of rows) {

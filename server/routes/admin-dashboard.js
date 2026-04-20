@@ -4,6 +4,7 @@ const { Router } = require("express");
 const db = require("../db");
 const requireAdminAuth = require("../middleware/user-admin-auth");
 const { decomposeCanonical, buildBrandAliasMap } = require("../../crawler/utils/canonical-decomposer");
+const { resolveBaseProduct } = require("../services/base-product-catalog");
 const { loadPriorityCanonicals, autoMapDeals, matchesCanonical, norm } = require("../../crawler/utils/auto-mapper");
 const { canonicalizeDeals } = require("../services/canonicalizer");
 
@@ -224,12 +225,13 @@ router.post("/brands/remap", async (req, res) => {
         } else {
           redecomposeStmts.push({
             sql: `UPDATE canonical_products
-                  SET brand_slots = ?, base_product_slots = ?, product_group_id = ?
+                  SET brand_slots = ?, base_product_slots = ?, product_group_id = ?, base_key = ?
                   WHERE id = ?`,
             args: [
               JSON.stringify(decomposed.brandSlots),
               JSON.stringify(decomposed.baseProductSlots),
               decomposed.productGroupId,
+              resolveBaseProduct(canonical.canonical_name)?.base_key ?? null,
               canonical.id,
             ],
           });

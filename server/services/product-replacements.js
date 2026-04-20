@@ -143,10 +143,14 @@ async function getReplacements(db, { canonicalId, storeId, dealId = null }) {
     if (row.canonical_id === canonicalId) continue;
 
     // T2: cross-brand alternative for the same product spec.
-    // Match when base_product_slots token sets are identical (same product, different brand).
+    // Primary: exact base_product_slots set match.
+    // Fallback: catalog base_key equality — handles Hindi/English terminology
+    // differences (e.g. "Mung Sabut Whole" ↔ "TRS Mung Beans" both → "moong dal yellow").
+    const sameBaseProduct =
+      (srcBaseSlots && baseProductSlotsMatch(srcBaseSlots, row.cp_base_product_slots)) ||
+      (srcBaseKey && candBase?.base_key === srcBaseKey);
     if (
-      srcBaseSlots &&
-      baseProductSlotsMatch(srcBaseSlots, row.cp_base_product_slots) &&
+      sameBaseProduct &&
       sizeCompatible(srcWeightValue, parseWeight(row.weight_value, row.weight_raw)) &&
       !seen.has(`t2:${cKey}`)
     ) {

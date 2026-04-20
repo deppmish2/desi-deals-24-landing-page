@@ -1,6 +1,6 @@
 # Crawl Pipeline & Canonical Product System
 
-_Last updated: 2026-04-20_
+_Last updated: 2026-04-21_
 
 ---
 
@@ -155,14 +155,20 @@ Uses 90 days of `deal_price_history` grouped by `canonical_id`:
 - ≥25% → **Great**, ≥15% → **Good**, ≥5% → **Low**, else no badge
 
 ### Product Replacements (compare-stores)
-Uses `product_group_id` and slot fields to find alternatives cross-store:
+Two separate API calls from the frontend:
+
+**Same-store (`GET /replacements`)** — `server/services/product-replacements.js` `getReplacements()`. Four tiers, all within the same store:
 
 | Tier | Logic |
 |---|---|
-| T1 | Same brand, different size |
-| T2 | Different brand, same base product |
-| T3 | Same brand + same product group (via catalog base_key or slot overlap); catches variants like "extra long" vs "original" |
+| T1 | Same brand, different size (exact slot match) |
+| T2 | Different brand, same base product — primary: exact `base_product_slots` set equality; fallback: catalog `base_key` match (handles Hindi/English terminology differences, e.g. "Mung Sabut Whole" ↔ "TRS Mung Beans" both → `"moong dal yellow"`) |
+| T3 | Same brand + same product group (via catalog `base_key` or slot subset); catches variants like "extra long" vs "original" |
 | T4 | Same category fallback |
+
+**Cross-store (`GET /same-product-other-stores`)** — `server/routes/deals.js`. SQL JOIN on `canonical_products.base_key = ? AND canonical_products.category = ?`. Expands to all canonicals sharing the same catalog base product, with a **category guard** to prevent cross-category false positives (e.g. snack vs raw lentil). Falls back to exact `canonical_id` match when `base_key` is null.
+
+`canonical_products.base_key` — TEXT column populated by `resolveBaseProduct(canonical_name)` at write time (canonicalizer, admin-review-queue, brand remap). Indexed (`idx_canonical_base_key`). 3,003 of 14,598 canonicals have a non-null `base_key` (catalog coverage limited to ~1,000 common grocery items).
 
 ---
 
@@ -187,5 +193,7 @@ Admin actions:
 | `server/services/canonicalizer.js` | Fuzzy pass — `canonicalizeDeals()`, `createCanonical()` |
 | `server/services/price-history-recorder.js` | `recordStoreHistory()` |
 | `server/services/real-savings.js` | `batchGetRealSavings()`, `computeRealSavings()` |
-| `server/services/product-replacements.js` | `getReplacements()` — T1/T2/T3/T4 logic |
+| `server/services/product-replacements.js` | `getReplacements()` — T1/T2/T3/T4 logic; T2 uses `base_key` fallback for Hindi/English term differences |
+| `server/services/base-product-catalog.js` | `resolveBaseProduct(name)` — maps product name → `base_key` via CSV catalog; lazy-loaded cache |
+| `crawler/utils/category-mapper.js` | `mapCategory()` — keyword-based; `SNACK_PHRASES` pre-check prevents fried dal snacks from matching lentil keywords |
 | `scripts/backfill-base-product-slots.js` | Retroactive slot decomposition |

@@ -59,6 +59,21 @@ Sources: server/services/real-savings.js, server/services/price-history-recorder
 
 ---
 
+## [2026-04-21] update | base_key column, cross-store SQL join, category guard, snack phrase fix
+
+Pages touched: backend.md, crawl-pipeline.md
+Sources: server/routes/deals.js, server/services/product-replacements.js, crawler/utils/category-mapper.js, server/db/schema.sql, server/db/index.js, data/prod_local.db
+
+**Changes recorded:**
+
+- `canonical_products.base_key TEXT` — new column stores resolved catalog base product key (`resolveBaseProduct(canonical_name)?.base_key`). Populated at write time by canonicalizer, admin-review-queue, and brand remap. Indexed (`idx_canonical_base_key`). Backfilled 3,003 of 14,598 rows in prod_local.db. Added to `alwaysMigrations` so Turso picks it up on next deploy.
+- `product-replacements.js` T2: extended with `base_key` fallback alongside exact slot match. Handles Hindi/English terminology divergence (e.g. "Mung Sabut Whole" and "TRS Mung Beans" both resolve to `"moong dal yellow"` and now surface as T2 same-spec within a store).
+- `same-product-other-stores` route: replaced 14k-row JS scan with SQL `JOIN canonical_products ON cp.base_key = ? AND cp.category = ?`. Category guard prevents cross-category false positives (fried snack vs raw lentil). Falls back to exact `canonical_id` match when `base_key` is null.
+- `category-mapper.js` `SNACK_PHRASES`: pre-check for `"moong dal masala"`, `"moong dal plain"`, `"mung dal masala"`, `"mung dal plain"` before lentil keyword matching. Prevents Haldiram fried snacks from landing in "Lentils & Pulses".
+- `prod_local.db` canonical categories fixed: Haldiram Moong/Mung Dal Masala/Plain canonicals recategorized to "Snacks & Sweets". Non-standard category names normalised (Snacks & Namkeen → Snacks & Sweets). False positives (condensed milk, sweet potato, drinks) reverted to correct categories.
+
+---
+
 ## [2026-04-20] update | Weight parser multi-pack fixes, DB canonicalization cleanup, prod_local.db prep
 
 Pages touched: crawler.md, backend.md, index.md, crawl-pipeline.md

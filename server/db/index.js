@@ -189,6 +189,8 @@ const ready = (async () => {
     "ALTER TABLE entity_resolution_queue ADD COLUMN category TEXT",
     "CREATE INDEX IF NOT EXISTS idx_queue_deal_id ON entity_resolution_queue(deal_id)",
     "CREATE INDEX IF NOT EXISTS idx_queue_category ON entity_resolution_queue(category, status)",
+    "ALTER TABLE canonical_products ADD COLUMN base_key TEXT",
+    "CREATE INDEX IF NOT EXISTS idx_canonical_base_key ON canonical_products(base_key)",
   ];
   for (const sql of alwaysMigrations) {
     try {

@@ -271,6 +271,7 @@ CREATE TABLE IF NOT EXISTS canonical_products (
   base_product_slots TEXT,
   type_slots        TEXT,
   product_group_id  TEXT,
+  base_key          TEXT,
   weight_value      REAL,
   weight_unit       TEXT,
   created_at        DATETIME DEFAULT CURRENT_TIMESTAMP
