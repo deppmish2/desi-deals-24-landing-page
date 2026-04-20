@@ -915,7 +915,7 @@ name: <span class="str">"HEERA SOAN PAPDI 500GMS"</span>
               <td>T2</td>
               <td>same_spec</td>
               <td><span class="badge badge-blue">0.85</span></td>
-              <td>Cross-brand, same base product. Primary: exact <code>base_product_slots</code> set match. Fallback: catalog <code>base_key</code> equality — handles Hindi/English term divergence (e.g. "Mung Sabut Whole" ↔ "TRS Mung Beans" both → <code>"moong dal yellow"</code>).</td>
+              <td>Cross-brand, same base product. Primary: exact <code>base_product_slots</code> set match. Fallback: catalog <code>base_key</code> equality <strong>with <code>sameCategory</code> guard</strong> — handles Hindi/English term divergence (e.g. "Mung Sabut Whole" ↔ "TRS Mung Beans" both → <code>"moong dal yellow"</code>); category guard prevents fried dal snacks matching raw lentils.</td>
               <td>Natco Soan Papdi 500g as alternative to Heera; Mung Sabut 500g as alternative to TRS Mung Beans</td>
             </tr>
             <tr class="tier-t3">
@@ -947,7 +947,7 @@ name: <span class="str">"HEERA SOAN PAPDI 500GMS"</span>
             <tr><td>Brand detection</td><td>Uses base-product-catalog CSV via <code>detectBrandForBase()</code>; falls back to <code>brand_slots[0][0]</code> for non-catalog brands</td></tr>
             <tr><td>T1 slot check</td><td>Requires exact slot match to prevent "Split Chilka" vs "Whole" from being treated as size variants</td></tr>
             <tr><td>Cross-store matching</td><td><code>same-product-other-stores</code> uses SQL <code>JOIN canonical_products ON cp.base_key = ? AND cp.category = ?</code>. Category guard blocks snack/lentil false positives. Falls back to exact <code>canonical_id</code> when <code>base_key</code> is null.</td></tr>
-            <tr><td><code>canonical_products.base_key</code></td><td>TEXT column; populated by <code>resolveBaseProduct()</code> at canonical write time (canonicalizer, admin-review-queue, brand remap). 3,003 of 14,598 rows populated. Indexed.</td></tr>
+            <tr><td><code>canonical_products.base_key</code></td><td>TEXT column; populated by <code>resolveBaseProduct()</code> at canonical write time (canonicalizer, admin-review-queue, brand remap, promote-bootstrap-staging, seed-priority-canonicals). 3,003 of 14,598 rows populated. Indexed. All INSERT sites now set this field.</td></tr>
           </tbody>
         </table>
       </div>
@@ -1025,7 +1025,7 @@ name: <span class="str">"HEERA SOAN PAPDI 500GMS"</span>
             <tr>
               <td><code>server/services/product-replacements.js</code></td>
               <td>Same-store replacement engine</td>
-              <td><code>getReplacements()</code> — T1/T2/T3/T4; T2 uses <code>base_key</code> fallback for Hindi/English term differences</td>
+              <td><code>getReplacements()</code> — T1/T2/T3/T4; T2 <code>base_key</code> fallback requires <code>sameCategory</code> (exact slot-match branch unchanged)</td>
             </tr>
             <tr>
               <td><code>server/services/price-history-recorder.js</code></td>
