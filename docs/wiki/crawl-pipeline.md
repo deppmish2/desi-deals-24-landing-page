@@ -161,7 +161,7 @@ Uses `product_group_id` and slot fields to find alternatives cross-store:
 |---|---|
 | T1 | Same brand, different size |
 | T2 | Different brand, same base product |
-| T3 | Subset slot match (e.g. "toor dal split" → "toor dal") |
+| T3 | Same brand + same product group (via catalog base_key or slot overlap); catches variants like "extra long" vs "original" |
 | T4 | Same category fallback |
 
 ---
