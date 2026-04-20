@@ -14,6 +14,7 @@ DesiDeals24 wiki — compiled project knowledge maintained by Claude. Read this 
 - [Backend](backend.md) — Express routes, DB schema (all tables), auth flow, OG meta injection, scheduling
 - [Frontend](frontend.md) — React routing, `useDeals` hook, API client, filter URL-sync, analytics
 - [Crawler](crawler.md) — two-pass orchestrator, display ordering, category mapping, price/weight parsing, canonical auto-mapping
+- [Crawl Pipeline & Canonicals](crawl-pipeline.md) — full crawl-to-canonical reference: triggers, reconciliation, slot matching, entity resolution, T1–T4 replacements
 - [Decisions](decisions.md) — architecture decisions with rationale: CommonJS, Turso, GitHub Actions crawl, sequential crawl, Dookan exclusion, Real Savings two-pass, price format dual support
 
 ## Stores

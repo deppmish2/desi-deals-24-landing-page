@@ -59,6 +59,23 @@ Sources: server/services/real-savings.js, server/services/price-history-recorder
 
 ---
 
+## [2026-04-20] update | Weight parser multi-pack fixes, DB canonicalization cleanup, prod_local.db prep
+
+Pages touched: crawler.md, backend.md, index.md, crawl-pipeline.md
+Sources: crawler/utils/weight-parser.js, scripts/promote-bootstrap-staging.js, data/prod_local.db
+
+**Changes recorded:**
+
+- `weight-parser.js` fix 1: `N x Munit` pattern was returning per-unit weight (multiplier ignored). Now returns `N × M` total. `isMultiPack: true` flag prevents double-multiplication.
+- `weight-parser.js` fix 2: New `packMultiplier()` detects `(N Pack)` / `Pack of N` patterns and multiplies against extracted unit weight. Backfilled 1,760 + 51 deals and 2,299 + 31 `deal_price_history` rows.
+- `prod_local.db` canonicalization state fixed: 119 bootstrap staging rows approved and promoted (→ 14,598 total canonicals); `is_match_priority` was 0 for all — set to 1 for 12,443 canonicals with `brand_slots`; 25 active drift cases resolved; 22 unmapped active deals queued in `entity_resolution_queue`.
+- `crawl-pipeline.md` T3 tier description corrected: was "subset slot match", now reflects actual same-brand + product-group logic (commit 358217e).
+- `crawl-pipeline.md` added to wiki index.
+- `docs/knowledge/` HTML files added: `dd24_overview.html` (project knowledge hub) and updated `dd24_db_explorer.html` (30-table schema).
+- DealSharePage CTA restructured for fake vs genuine deal branching; real savings sort ungated; low-rating badge green styling; badge subtext contrast; mobile header button hidden.
+
+---
+
 ## [2026-04-11] bootstrap | Initial wiki created from codebase sources
 Pages touched: WIKI.md, index.md, overview.md, backend.md, frontend.md, crawler.md, decisions.md, stores/jamoona.md, stores/dookan.md, stores/grocera.md, stores/little-india.md, stores/namma-markt.md
 Sources: CLAUDE.md, docs/crisp-architecture.md, server/index.js, server/db/schema.sql, crawler/index.js, crawler/utils/category-mapper.js, client/src/App.jsx, client/src/hooks/useDeals.js, client/src/utils/api.js, crawler/stores/*.js (5 stores)

@@ -546,6 +546,20 @@
         <div class="card-title">Price parser note</div>
         <p style="color:var(--text2);font-size:12px;">Handles both <code>3.29</code> (Shopify) and <code>3,29</code> (WooCommerce/EU locale). Do not simplify — both formats are in production.</p>
       </div>
+
+      <div class="card">
+        <div class="card-title">Weight parser — multi-pack patterns (fixed 2026-04-20)</div>
+        <p style="color:var(--text2);font-size:12px;margin-bottom:8px;"><code>crawler/utils/weight-parser.js</code> handles three multi-pack forms:</p>
+        <table class="data-table">
+          <thead><tr><th>Pattern</th><th>Example title</th><th>weight_value</th></tr></thead>
+          <tbody>
+            <tr><td><code>N x Munit</code></td><td>Bundle of 2 x 5kg</td><td>10kg (N × M)</td></tr>
+            <tr><td><code>(N Pack)</code></td><td>Maggi 290g (2 Pack)</td><td>580g (unit × N)</td></tr>
+            <tr><td><code>Pack of N</code></td><td>Pears 375g Pack of 3</td><td>1125g (unit × N)</td></tr>
+          </tbody>
+        </table>
+        <p style="color:var(--text2);font-size:12px;margin-top:8px;">The <code>isMultiPack</code> flag on the <code>N x Munit</code> pattern prevents double-multiplication when a title contains both forms. <code>weight_raw</code> stores the matched string (e.g. <code>2 x 290g</code>) for display; <code>weight_value</code> stores the total.</p>
+      </div>
     </div>
 
     <!-- ═══════════════════════════════════════ RECONCILE ═══ -->

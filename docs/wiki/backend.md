@@ -1,6 +1,6 @@
 ---
 title: Backend
-last_updated: 2026-04-13
+last_updated: 2026-04-20
 source_count: 3
 ---
 
@@ -115,7 +115,9 @@ After serialization, every response path calls `batchGetRealSavings` + `computeR
 
 ## DB connectivity
 
-`server/db/index.js` connects to **Turso** when `DESI_DEALS_DB_TURSO_DATABASE_URL` is present in env (including `.env.local` in local dev). Falls back to local SQLite (`./data/desiDeals24.db`) only when no Turso URL is set. **Important:** localhost dev typically runs against Turso, not the local SQLite file.
+`server/db/index.js` connects to **Turso** when `DESI_DEALS_DB_TURSO_DATABASE_URL` is present in env. Falls back to local SQLite (`./data/desiDeals24.db`) when no Turso URL is set. Override with `DB_FILE=data/prod_local.db npm run dev` to run against a local snapshot.
+
+**prod_local.db (as of 2026-04-20):** `data/prod_local.db` is the curated local snapshot used as the replacement for the live Turso DB. State: 14,598 canonical products (12,443 with `is_match_priority=1`), 119 bootstrap staging rows promoted, 22 unmapped active deals in entity_resolution_queue. The `is_match_priority` field was 0 for all canonicals and had to be set from a one-off SQL update (`UPDATE canonical_products SET is_match_priority=1 WHERE brand_slots IS NOT NULL AND brand_slots != '[]'`).
 
 ## Related pages
 
