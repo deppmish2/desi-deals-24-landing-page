@@ -27,6 +27,7 @@ require("dotenv").config({ path: ".env.local", override: true });
 const fs = require("fs");
 const path = require("path");
 const { loadPriorityCanonicals, autoMapDeals } = require("../crawler/utils/auto-mapper");
+const { resolveBaseProduct } = require("../server/services/base-product-catalog");
 
 const CSV_PATH = path.resolve(
   __dirname,
@@ -247,14 +248,16 @@ async function main() {
         [canonicalId],
       )).rows[0];
 
+      const baseKey = resolveBaseProduct(canonicalName)?.base_key ?? null;
       await db.execute(
         `INSERT INTO canonical_products
-           (id, canonical_name, category, common_aliases, is_priority, verified)
-         VALUES (?, ?, ?, ?, 1, 1)
+           (id, canonical_name, category, common_aliases, is_priority, verified, base_key)
+         VALUES (?, ?, ?, ?, 1, 1, ?)
          ON CONFLICT(id) DO UPDATE SET
            common_aliases = excluded.common_aliases,
-           is_priority = 1`,
-        [canonicalId, canonicalName, category, JSON.stringify(aliases)],
+           is_priority = 1,
+           base_key = excluded.base_key`,
+        [canonicalId, canonicalName, category, JSON.stringify(aliases), baseKey],
       );
 
       if (existing) updated++;

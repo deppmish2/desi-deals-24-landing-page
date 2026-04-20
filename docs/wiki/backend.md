@@ -119,7 +119,7 @@ After serialization, every response path calls `batchGetRealSavings` + `computeR
 
 `server/db/index.js` connects to **Turso** when `DESI_DEALS_DB_TURSO_DATABASE_URL` is present in env. Falls back to local SQLite (`./data/desiDeals24.db`) when no Turso URL is set. Override with `DB_FILE=data/prod_local.db npm run dev` to run against a local snapshot.
 
-**prod_local.db (as of 2026-04-21):** `data/prod_local.db` is the curated local snapshot used as the replacement for the live Turso DB. State: 14,598 canonical products (12,443 with `is_match_priority=1`), 3,003 with `base_key` populated, 22 unmapped active deals in entity_resolution_queue. `base_key` column added 2026-04-21 and backfilled from `resolveBaseProduct()`.
+**prod_local.db (as of 2026-04-21):** `data/prod_local.db` is the curated local snapshot used as the replacement for the live Turso DB. State: 14,598 canonical products (12,443 with `is_match_priority=1`), 3,003 with `base_key` populated, 22 unmapped active deals in entity_resolution_queue. `base_key` column added 2026-04-21 and backfilled from `resolveBaseProduct()`. All active `deals.product_category` values synced to match `canonical_products.category` (18,507 rows updated, 0 active drift).
 
 ## Related pages
 

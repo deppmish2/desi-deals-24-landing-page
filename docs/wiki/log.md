@@ -91,6 +91,20 @@ Sources: crawler/utils/weight-parser.js, scripts/promote-bootstrap-staging.js, d
 
 ---
 
+## [2026-04-21] update | base_key propagation fixes, T2 category guard, deal category drift repair
+
+Pages touched: crawl-pipeline.md, backend.md
+Sources: scripts/promote-bootstrap-staging.js, scripts/seed-priority-canonicals.js, server/services/product-replacements.js, data/prod_local.db
+
+**Changes recorded:**
+
+- `scripts/promote-bootstrap-staging.js`: INSERT into `canonical_products` now sets `base_key` via `resolveBaseProduct(canonical_name)?.base_key`. Previously omitted — every batch promotion created base_key-null rows, silently breaking cross-store expansion for all bootstrap-promoted products.
+- `scripts/seed-priority-canonicals.js`: same fix — `base_key` added to INSERT and to `ON CONFLICT DO UPDATE SET` so re-runs refresh the value.
+- `server/services/product-replacements.js` T2 `base_key` fallback: added `sameCategory` guard. Exact `base_product_slots` match branch unchanged. Only the catalog-level `base_key` equality branch (which can span naming conventions) now requires categories to agree — prevents same-store cross-category false positives (e.g. fried dal snack matched as replacement for raw lentils).
+- `data/prod_local.db`: 18,507 deal rows synced — `deals.product_category` updated to match `canonical_products.category`. Active drift: 0.
+
+---
+
 ## [2026-04-11] bootstrap | Initial wiki created from codebase sources
 Pages touched: WIKI.md, index.md, overview.md, backend.md, frontend.md, crawler.md, decisions.md, stores/jamoona.md, stores/dookan.md, stores/grocera.md, stores/little-india.md, stores/namma-markt.md
 Sources: CLAUDE.md, docs/crisp-architecture.md, server/index.js, server/db/schema.sql, crawler/index.js, crawler/utils/category-mapper.js, client/src/App.jsx, client/src/hooks/useDeals.js, client/src/utils/api.js, crawler/stores/*.js (5 stores)

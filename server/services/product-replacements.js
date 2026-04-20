@@ -148,7 +148,7 @@ async function getReplacements(db, { canonicalId, storeId, dealId = null }) {
     // differences (e.g. "Mung Sabut Whole" ↔ "TRS Mung Beans" both → "moong dal yellow").
     const sameBaseProduct =
       (srcBaseSlots && baseProductSlotsMatch(srcBaseSlots, row.cp_base_product_slots)) ||
-      (srcBaseKey && candBase?.base_key === srcBaseKey);
+      (srcBaseKey && candBase?.base_key === srcBaseKey && sameCategory);
     if (
       sameBaseProduct &&
       sizeCompatible(srcWeightValue, parseWeight(row.weight_value, row.weight_raw)) &&

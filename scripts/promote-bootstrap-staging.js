@@ -13,6 +13,7 @@ require("dotenv").config();
 require("dotenv").config({ path: ".env.local", override: true });
 
 const path = require("path");
+const { resolveBaseProduct } = require("../server/services/base-product-catalog");
 
 function slugify(value) {
   const base = String(value || "")
@@ -131,10 +132,11 @@ async function main() {
         }
 
         // Insert canonical_products
+        const baseKey = resolveBaseProduct(row.canonical_name)?.base_key ?? null;
         await tx.execute({
           sql: `INSERT INTO canonical_products
-                (id, canonical_name, category, common_aliases, verified, created_at, brand_slots)
-                VALUES (?, ?, ?, ?, ?, datetime('now'), ?)`,
+                (id, canonical_name, category, common_aliases, verified, created_at, brand_slots, base_key)
+                VALUES (?, ?, ?, ?, ?, datetime('now'), ?, ?)`,
           args: [
             canonicalId,
             row.canonical_name,
@@ -142,6 +144,7 @@ async function main() {
             JSON.stringify(aliases),
             1,
             brandSlots ? JSON.stringify(brandSlots) : null,
+            baseKey,
           ],
         });
         canonicalsInserted++;

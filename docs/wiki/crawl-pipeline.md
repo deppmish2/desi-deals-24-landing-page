@@ -162,7 +162,7 @@ Two separate API calls from the frontend:
 | Tier | Logic |
 |---|---|
 | T1 | Same brand, different size (exact slot match) |
-| T2 | Different brand, same base product — primary: exact `base_product_slots` set equality; fallback: catalog `base_key` match (handles Hindi/English terminology differences, e.g. "Mung Sabut Whole" ↔ "TRS Mung Beans" both → `"moong dal yellow"`) |
+| T2 | Different brand, same base product — primary: exact `base_product_slots` set equality; fallback: catalog `base_key` match **with `sameCategory` guard** (handles Hindi/English terminology differences, e.g. "Mung Sabut Whole" ↔ "TRS Mung Beans" both → `"moong dal yellow"`; category guard prevents fried snacks matching raw lentils via shared `base_key`) |
 | T3 | Same brand + same product group (via catalog `base_key` or slot subset); catches variants like "extra long" vs "original" |
 | T4 | Same category fallback |
 
