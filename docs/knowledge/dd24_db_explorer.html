@@ -1,0 +1,2051 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>DesiDeals24 — DB Explorer</title>
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500;600&family=Syne:wght@400;600;700;800&display=swap" rel="stylesheet">
+<style>
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+  :root {
+    --bg: #0a0c0f;
+    --surface: #111318;
+    --surface2: #181c23;
+    --border: #1e2430;
+    --border2: #2a3040;
+    --green: #16a34a;
+    --green-dim: #0d6630;
+    --green-glow: rgba(22,163,74,0.12);
+    --green-glow2: rgba(22,163,74,0.06);
+    --amber: #f59e0b;
+    --amber-dim: rgba(245,158,11,0.12);
+    --blue: #3b82f6;
+    --blue-dim: rgba(59,130,246,0.12);
+    --red: #ef4444;
+    --red-dim: rgba(239,68,68,0.1);
+    --text: #e2e8f0;
+    --text2: #94a3b8;
+    --text3: #475569;
+    --mono: 'IBM Plex Mono', monospace;
+    --sans: 'Syne', sans-serif;
+  }
+
+  html, body {
+    background: var(--bg);
+    color: var(--text);
+    font-family: var(--mono);
+    min-height: 100vh;
+    overflow-x: hidden;
+  }
+
+  /* Grid background */
+  body::before {
+    content: '';
+    position: fixed;
+    inset: 0;
+    background-image:
+      linear-gradient(rgba(22,163,74,0.03) 1px, transparent 1px),
+      linear-gradient(90deg, rgba(22,163,74,0.03) 1px, transparent 1px);
+    background-size: 40px 40px;
+    pointer-events: none;
+    z-index: 0;
+  }
+
+  .layout {
+    display: grid;
+    grid-template-columns: 240px 1fr;
+    min-height: 100vh;
+    position: relative;
+    z-index: 1;
+  }
+
+  /* ── Sidebar ── */
+  .sidebar {
+    border-right: 1px solid var(--border);
+    padding: 0;
+    position: sticky;
+    top: 0;
+    height: 100vh;
+    overflow-y: auto;
+    background: var(--surface);
+  }
+
+  .sidebar::-webkit-scrollbar { width: 4px; }
+  .sidebar::-webkit-scrollbar-track { background: transparent; }
+  .sidebar::-webkit-scrollbar-thumb { background: var(--border2); border-radius: 2px; }
+
+  .sidebar-header {
+    padding: 20px 16px 16px;
+    border-bottom: 1px solid var(--border);
+  }
+
+  .sidebar-logo {
+    font-family: var(--sans);
+    font-size: 13px;
+    font-weight: 800;
+    color: var(--green);
+    letter-spacing: 0.05em;
+    text-transform: uppercase;
+  }
+
+  .sidebar-sub {
+    font-size: 10px;
+    color: var(--text3);
+    margin-top: 2px;
+    letter-spacing: 0.08em;
+  }
+
+  .group-label {
+    font-size: 9px;
+    font-weight: 600;
+    color: var(--text3);
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    padding: 16px 16px 6px;
+  }
+
+  .table-btn {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    width: 100%;
+    padding: 7px 16px;
+    background: none;
+    border: none;
+    cursor: pointer;
+    text-align: left;
+    font-family: var(--mono);
+    font-size: 11.5px;
+    color: var(--text2);
+    transition: all 0.12s;
+    position: relative;
+  }
+
+  .table-btn:hover { background: var(--green-glow2); color: var(--text); }
+
+  .table-btn.active {
+    background: var(--green-glow);
+    color: var(--green);
+  }
+
+  .table-btn.active::before {
+    content: '';
+    position: absolute;
+    left: 0; top: 0; bottom: 0;
+    width: 2px;
+    background: var(--green);
+  }
+
+  .dot {
+    width: 6px; height: 6px;
+    border-radius: 50%;
+    flex-shrink: 0;
+  }
+
+  /* ── Main ── */
+  .main {
+    padding: 40px 48px;
+    max-width: 900px;
+  }
+
+  .welcome {
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    min-height: 60vh;
+    gap: 12px;
+  }
+
+  .welcome-title {
+    font-family: var(--sans);
+    font-size: 32px;
+    font-weight: 800;
+    color: var(--text);
+    line-height: 1.1;
+  }
+
+  .welcome-title span { color: var(--green); }
+
+  .welcome-sub {
+    font-size: 13px;
+    color: var(--text3);
+    line-height: 1.8;
+    max-width: 440px;
+  }
+
+  .table-view { display: none; animation: fadeIn 0.2s ease; }
+  .table-view.active { display: block; }
+
+  @keyframes fadeIn {
+    from { opacity: 0; transform: translateY(6px); }
+    to { opacity: 1; transform: translateY(0); }
+  }
+
+  /* ── Header ── */
+  .tv-header {
+    margin-bottom: 28px;
+    padding-bottom: 20px;
+    border-bottom: 1px solid var(--border);
+  }
+
+  .tv-breadcrumb {
+    font-size: 10px;
+    color: var(--text3);
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    margin-bottom: 8px;
+  }
+
+  .tv-name {
+    font-family: var(--sans);
+    font-size: 28px;
+    font-weight: 800;
+    color: var(--green);
+    letter-spacing: -0.01em;
+  }
+
+  .tv-sub {
+    font-size: 12px;
+    color: var(--text2);
+    margin-top: 6px;
+    line-height: 1.6;
+    max-width: 560px;
+  }
+
+  .badge-row {
+    display: flex;
+    gap: 6px;
+    flex-wrap: wrap;
+    margin-top: 12px;
+  }
+
+  .badge {
+    font-size: 10px;
+    padding: 3px 8px;
+    border-radius: 3px;
+    font-weight: 500;
+    letter-spacing: 0.05em;
+  }
+
+  .badge-green { background: var(--green-glow); color: var(--green); border: 1px solid var(--green-dim); }
+  .badge-amber { background: var(--amber-dim); color: var(--amber); border: 1px solid rgba(245,158,11,0.25); }
+  .badge-blue  { background: var(--blue-dim); color: var(--blue); border: 1px solid rgba(59,130,246,0.2); }
+  .badge-red   { background: var(--red-dim); color: var(--red); border: 1px solid rgba(239,68,68,0.2); }
+
+  /* ── Sections ── */
+  .section {
+    margin-bottom: 32px;
+  }
+
+  .section-title {
+    font-size: 10px;
+    font-weight: 600;
+    color: var(--text3);
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    margin-bottom: 12px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+
+  .section-title::after {
+    content: '';
+    flex: 1;
+    height: 1px;
+    background: var(--border);
+  }
+
+  /* ── Column table ── */
+  .col-table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 12px;
+  }
+
+  .col-table th {
+    text-align: left;
+    font-size: 9px;
+    font-weight: 600;
+    color: var(--text3);
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    padding: 0 10px 8px 0;
+    border-bottom: 1px solid var(--border);
+  }
+
+  .col-table td {
+    padding: 8px 10px 8px 0;
+    border-bottom: 1px solid var(--border);
+    vertical-align: top;
+    line-height: 1.5;
+  }
+
+  .col-table tr:last-child td { border-bottom: none; }
+
+  .col-table tr:hover td { background: var(--green-glow2); }
+
+  .col-name { color: var(--green); font-weight: 500; white-space: nowrap; }
+  .col-type { color: var(--amber); font-size: 11px; white-space: nowrap; }
+  .col-note { color: var(--text2); font-size: 11px; }
+
+  /* ── FK table ── */
+  .fk-table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 12px;
+  }
+
+  .fk-table th {
+    text-align: left;
+    font-size: 9px;
+    font-weight: 600;
+    color: var(--text3);
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    padding: 0 10px 8px 0;
+    border-bottom: 1px solid var(--border);
+  }
+
+  .fk-table td {
+    padding: 8px 10px 8px 0;
+    border-bottom: 1px solid var(--border);
+    vertical-align: top;
+    font-size: 11.5px;
+    line-height: 1.5;
+  }
+
+  .fk-table tr:last-child td { border-bottom: none; }
+  .fk-table tr:hover td { background: var(--green-glow2); }
+
+  .fk-child { color: var(--blue); }
+  .fk-col   { color: var(--text2); }
+  .fk-cascade { font-size: 10px; }
+  .cascade-yes { color: var(--green); }
+  .cascade-set { color: var(--amber); }
+  .cascade-no  { color: var(--text3); }
+
+  /* ── Callout boxes ── */
+  .callout {
+    border-radius: 4px;
+    padding: 14px 16px;
+    font-size: 12px;
+    line-height: 1.7;
+    margin-bottom: 10px;
+    border-left: 2px solid;
+  }
+
+  .callout-red    { background: var(--red-dim); border-color: var(--red); color: #fca5a5; }
+  .callout-amber  { background: var(--amber-dim); border-color: var(--amber); color: #fcd34d; }
+  .callout-green  { background: var(--green-glow); border-color: var(--green); color: #86efac; }
+  .callout-blue   { background: var(--blue-dim); border-color: var(--blue); color: #93c5fd; }
+
+  .callout strong { display: block; font-weight: 600; margin-bottom: 3px; font-size: 11px; letter-spacing: 0.05em; text-transform: uppercase; }
+
+  /* ── Code block ── */
+  .code-block {
+    background: var(--surface2);
+    border: 1px solid var(--border);
+    border-radius: 4px;
+    padding: 14px 16px;
+    font-size: 11px;
+    line-height: 1.7;
+    color: var(--text2);
+    overflow-x: auto;
+    white-space: pre;
+  }
+
+  .code-block .kw  { color: var(--amber); }
+  .code-block .fn  { color: var(--green); }
+  .code-block .cm  { color: var(--text3); }
+  .code-block .str { color: #f87171; }
+
+  /* ── Role pill ── */
+  .role-grid {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 10px;
+    margin-bottom: 0;
+  }
+
+  .role-card {
+    background: var(--surface2);
+    border: 1px solid var(--border);
+    border-radius: 4px;
+    padding: 14px;
+  }
+
+  .role-card-num {
+    font-family: var(--sans);
+    font-size: 20px;
+    font-weight: 800;
+    color: var(--green);
+    line-height: 1;
+    margin-bottom: 6px;
+  }
+
+  .role-card-label {
+    font-size: 10px;
+    color: var(--text3);
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+    margin-bottom: 4px;
+  }
+
+  .role-card-desc {
+    font-size: 11px;
+    color: var(--text2);
+    line-height: 1.5;
+  }
+</style>
+</head>
+<body>
+<div class="layout">
+
+  <!-- Sidebar -->
+  <aside class="sidebar">
+    <div class="sidebar-header">
+      <div class="sidebar-logo">DesiDeals24</div>
+      <div class="sidebar-sub">Database Explorer</div>
+      <a href="dd24_overview.html" style="display:inline-block;margin-top:8px;font-size:10px;color:var(--green);text-decoration:none;letter-spacing:0.06em;">← Project Overview</a>
+    </div>
+
+    <div class="group-label">Overview</div>
+    <button class="table-btn" data-table="overview" onclick="show('overview',this)" style="font-weight:600;color:var(--text)">
+      <span class="dot" style="background:#16a34a;box-shadow:0 0 6px #16a34a"></span>Architecture map
+    </button>
+
+    <div class="group-label">Core Deals</div>
+    <button class="table-btn" data-table="deals" onclick="show('deals',this)">
+      <span class="dot" style="background:#16a34a"></span>deals
+    </button>
+    <button class="table-btn" data-table="stores" onclick="show('stores',this)">
+      <span class="dot" style="background:#16a34a"></span>stores
+    </button>
+    <button class="table-btn" data-table="deal_price_history" onclick="show('deal_price_history',this)">
+      <span class="dot" style="background:#16a34a"></span>deal_price_history
+    </button>
+    <button class="table-btn" onclick="show('bookmarks',this)" data-table="bookmarks">
+      <span class="dot" style="background:#16a34a"></span>bookmarks
+    </button>
+    <button class="table-btn" onclick="show('shopping_lists',this)" data-table="shopping_lists">
+      <span class="dot" style="background:#16a34a"></span>shopping_lists
+    </button>
+    <button class="table-btn" onclick="show('price_alerts',this)" data-table="price_alerts">
+      <span class="dot" style="background:#16a34a"></span>price_alerts
+    </button>
+    <button class="table-btn" onclick="show('list_items',this)" data-table="list_items">
+      <span class="dot" style="background:#16a34a"></span>list_items
+    </button>
+    <button class="table-btn" onclick="show('alert_notifications',this)" data-table="alert_notifications">
+      <span class="dot" style="background:#16a34a"></span>alert_notifications
+    </button>
+
+    <div class="group-label">Entity Resolution</div>
+    <button class="table-btn" data-table="canonical_products" onclick="show('canonical_products',this)">
+      <span class="dot" style="background:#f59e0b"></span>canonical_products
+    </button>
+    <button class="table-btn" data-table="deal_mappings" onclick="show('deal_mappings',this)">
+      <span class="dot" style="background:#f59e0b"></span>deal_mappings
+    </button>
+    <button class="table-btn" onclick="show('entity_resolution_queue',this)" data-table="entity_resolution_queue">
+      <span class="dot" style="background:#f59e0b"></span>entity_resolution_queue
+    </button>
+    <button class="table-btn" onclick="show('known_brands',this)" data-table="known_brands">
+      <span class="dot" style="background:#f59e0b"></span>known_brands
+    </button>
+    <button class="table-btn" onclick="show('brand_remap_jobs',this)" data-table="brand_remap_jobs">
+      <span class="dot" style="background:#f59e0b"></span>brand_remap_jobs
+    </button>
+    <button class="table-btn" onclick="show('product_groups',this)" data-table="product_groups">
+      <span class="dot" style="background:#f59e0b"></span>product_groups
+    </button>
+    <button class="table-btn" onclick="show('bootstrap_product_queue',this)" data-table="bootstrap_product_queue">
+      <span class="dot" style="background:#f59e0b"></span>bootstrap_product_queue
+    </button>
+    <button class="table-btn" onclick="show('canonical_bootstrap_staging',this)" data-table="canonical_bootstrap_staging">
+      <span class="dot" style="background:#f59e0b"></span>canonical_bootstrap_staging
+    </button>
+    <button class="table-btn" onclick="show('canonical_bootstrap_source_products',this)" data-table="canonical_bootstrap_source_products">
+      <span class="dot" style="background:#f59e0b"></span>canonical_bs_source_products
+    </button>
+
+    <div class="group-label">Crawl Engine</div>
+    <button class="table-btn" onclick="show('crawl_runs',this)" data-table="crawl_runs">
+      <span class="dot" style="background:#3b82f6"></span>crawl_runs
+    </button>
+    <button class="table-btn" onclick="show('crawl_store_results',this)" data-table="crawl_store_results">
+      <span class="dot" style="background:#3b82f6"></span>crawl_store_results
+    </button>
+    <button class="table-btn" onclick="show('crawl_locks',this)" data-table="crawl_locks">
+      <span class="dot" style="background:#3b82f6"></span>crawl_locks
+    </button>
+    <button class="table-btn" onclick="show('job_runs',this)" data-table="job_runs">
+      <span class="dot" style="background:#3b82f6"></span>job_runs
+    </button>
+
+    <div class="group-label">Users & Auth</div>
+    <button class="table-btn" onclick="show('users',this)" data-table="users">
+      <span class="dot" style="background:#a855f7"></span>users
+    </button>
+    <button class="table-btn" onclick="show('email_auth_tokens',this)" data-table="email_auth_tokens">
+      <span class="dot" style="background:#a855f7"></span>email_auth_tokens
+    </button>
+    <button class="table-btn" onclick="show('refresh_tokens',this)" data-table="refresh_tokens">
+      <span class="dot" style="background:#a855f7"></span>refresh_tokens
+    </button>
+    <button class="table-btn" onclick="show('waitlist_referrals',this)" data-table="waitlist_referrals">
+      <span class="dot" style="background:#a855f7"></span>waitlist_referrals
+    </button>
+    <button class="table-btn" onclick="show('shipping_tiers',this)" data-table="shipping_tiers">
+      <span class="dot" style="background:#a855f7"></span>shipping_tiers
+    </button>
+    <button class="table-btn" onclick="show('delivery_options',this)" data-table="delivery_options">
+      <span class="dot" style="background:#a855f7"></span>delivery_options
+    </button>
+
+    <div class="group-label">Analytics</div>
+    <button class="table-btn" onclick="show('events',this)" data-table="events">
+      <span class="dot" style="background:#64748b"></span>events
+    </button>
+    <button class="table-btn" onclick="show('search_queries',this)" data-table="search_queries">
+      <span class="dot" style="background:#64748b"></span>search_queries
+    </button>
+    <button class="table-btn" onclick="show('app_settings',this)" data-table="app_settings">
+      <span class="dot" style="background:#64748b"></span>app_settings
+    </button>
+  </aside>
+
+  <!-- Main -->
+  <main class="main">
+
+    <!-- Welcome -->
+    <div id="view-welcome" class="welcome" style="display:none">
+      <div style="font-size:11px;color:var(--text3);letter-spacing:0.1em;text-transform:uppercase;margin-bottom:4px">DesiDeals24 / Database</div>
+      <div class="welcome-title">30 tables.<br><span>Select one.</span></div>
+      <div class="welcome-sub">Full schema reference for all 30 tables — columns, types, foreign keys, and the architectural risks that matter for Phase 2 and Phase 3.</div>
+    </div>
+
+    <!-- ── OVERVIEW ── -->
+    <div id="view-overview" class="table-view active">
+      <div class="tv-header">
+        <div class="tv-breadcrumb">architecture</div>
+        <div class="tv-name">Architecture map</div>
+        <div class="tv-sub">30 tables across 5 domains. Hover any table to highlight its FK relationships. Click to jump to its detail view.</div>
+        <div class="badge-row">
+          <span class="badge badge-green">● core deals</span>
+          <span class="badge badge-amber">● entity resolution</span>
+          <span class="badge badge-blue">● crawl engine</span>
+          <span style="background:rgba(168,85,247,0.12);color:#a855f7;border:1px solid rgba(168,85,247,0.25)" class="badge">● users &amp; auth</span>
+          <span class="badge" style="background:rgba(100,116,139,0.12);color:#94a3b8;border:1px solid rgba(100,116,139,0.2)">● analytics</span>
+        </div>
+      </div>
+      <div style="position:relative;width:100%;">
+        <canvas id="arch-canvas" style="width:100%;display:block;cursor:default;border-radius:4px;border:1px solid var(--border)"></canvas>
+        <div id="arch-tip" style="position:absolute;pointer-events:none;background:#111318;border:1px solid #2a3040;border-radius:6px;padding:10px 14px;font-size:11px;max-width:220px;opacity:0;transition:opacity .15s;color:#e2e8f0;z-index:10;line-height:1.6;font-family:'IBM Plex Mono',monospace"></div>
+      </div>
+      <div style="margin-top:12px;font-size:11px;color:var(--text3)">Filter: 
+        <span id="f-all"    onclick="setFilter('all')"        style="cursor:pointer;margin-left:8px;color:var(--green)">All</span>
+        <span id="f-core"   onclick="setFilter('core')"       style="cursor:pointer;margin-left:12px">Core deals</span>
+        <span id="f-res"    onclick="setFilter('resolution')" style="cursor:pointer;margin-left:12px">Entity resolution</span>
+        <span id="f-crawl"  onclick="setFilter('crawl')"      style="cursor:pointer;margin-left:12px">Crawl engine</span>
+        <span id="f-users"  onclick="setFilter('users')"      style="cursor:pointer;margin-left:12px">Users &amp; auth</span>
+        <span id="f-anal"   onclick="setFilter('analytics')"  style="cursor:pointer;margin-left:12px">Analytics</span>
+      </div>
+    </div>
+
+    <!-- ── DEALS ── -->
+    <div id="view-deals" class="table-view">
+      <div class="tv-header">
+        <div class="tv-breadcrumb">core deals</div>
+        <div class="tv-name">deals</div>
+        <div class="tv-sub">Core product listings scraped from stores. One row per store SKU per crawl. The biggest table in the system — everything else joins to it or derives from it.</div>
+        <div class="badge-row">
+          <span class="badge badge-green">PK: id (TEXT)</span>
+          <span class="badge badge-amber">North Star: deal click-throughs/session</span>
+          <span class="badge badge-blue">Indexes: 9</span>
+        </div>
+      </div>
+
+      <div class="section">
+        <div class="section-title">Key Columns</div>
+        <table class="col-table">
+          <thead><tr><th>Column</th><th>Type</th><th>Notes</th></tr></thead>
+          <tbody>
+            <tr><td class="col-name">id</td><td class="col-type">TEXT PK</td><td class="col-note">UUID</td></tr>
+            <tr><td class="col-name">store_id</td><td class="col-type">TEXT FK</td><td class="col-note">→ stores(id). No cascade.</td></tr>
+            <tr><td class="col-name">canonical_id</td><td class="col-type">TEXT FK</td><td class="col-note">→ canonical_products(id). NULL until entity resolution runs. Denormalised copy of deal_mappings.</td></tr>
+            <tr><td class="col-name">crawl_run_id</td><td class="col-type">TEXT FK</td><td class="col-note">→ crawl_runs(id). Ties deal to the crawl that created it.</td></tr>
+            <tr><td class="col-name">product_url</td><td class="col-type">TEXT</td><td class="col-note">Dedup key within a crawl run. Also the join key to deal_price_history.</td></tr>
+            <tr><td class="col-name">sale_price</td><td class="col-type">REAL NOT NULL</td><td class="col-note">⚠ Rename to current_price for Phase 2 — Phase 2 schema change.</td></tr>
+            <tr><td class="col-name">original_price</td><td class="col-type">REAL</td><td class="col-note">Crossed-out price from store. NULL if no promotion shown.</td></tr>
+            <tr><td class="col-name">discount_percent</td><td class="col-type">REAL</td><td class="col-note">Derived at crawl time from sale/original. Not recomputed on reads.</td></tr>
+            <tr><td class="col-name">price_per_kg</td><td class="col-type">REAL</td><td class="col-note">Normalised for cross-weight comparison. Central to Phase 3 basket comparison.</td></tr>
+            <tr><td class="col-name">is_active</td><td class="col-type">INTEGER</td><td class="col-note">0 at crawl start, 1 for newly crawled. Soft delete pattern — deals are never hard-deleted.</td></tr>
+            <tr><td class="col-name">availability</td><td class="col-type">TEXT</td><td class="col-note">'unknown' default. in_stock / out_of_stock / limited.</td></tr>
+          </tbody>
+        </table>
+      </div>
+
+      <div class="section">
+        <div class="section-title">Foreign Keys Out</div>
+        <table class="fk-table">
+          <thead><tr><th>Column</th><th>References</th><th>On Delete</th></tr></thead>
+          <tbody>
+            <tr><td class="fk-col">store_id</td><td class="fk-child">stores(id)</td><td class="fk-cascade cascade-no">none</td></tr>
+            <tr><td class="fk-col">crawl_run_id</td><td class="fk-child">crawl_runs(id)</td><td class="fk-cascade cascade-no">none</td></tr>
+            <tr><td class="fk-col">canonical_id</td><td class="fk-child">canonical_products(id)</td><td class="fk-cascade cascade-no">none</td></tr>
+          </tbody>
+        </table>
+      </div>
+
+      <div class="section">
+        <div class="section-title">Tables That Reference This</div>
+        <table class="fk-table">
+          <thead><tr><th>Child Table</th><th>FK Column</th><th>On Delete</th></tr></thead>
+          <tbody>
+            <tr><td class="fk-child">deal_mappings</td><td class="fk-col">deal_id</td><td class="fk-cascade cascade-yes">CASCADE</td></tr>
+            <tr><td class="fk-child">entity_resolution_queue</td><td class="fk-col">deal_id</td><td class="fk-cascade cascade-yes">CASCADE</td></tr>
+            <tr><td class="fk-child">bookmarks</td><td class="fk-col">deal_id</td><td class="fk-cascade cascade-yes">CASCADE</td></tr>
+          </tbody>
+        </table>
+      </div>
+
+      <div class="section">
+        <div class="section-title">Risks & Notes</div>
+        <div class="callout callout-amber">
+          <strong>⚠ Phase 2 Schema Change Required</strong>
+          sale_price must be renamed to current_price before Phase 2 ships. This touches every query in the codebase. Scope a migration script early.
+        </div>
+        <div class="callout callout-red">
+          <strong>⚠ canonical_id Sync Risk</strong>
+          deals.canonical_id is a denormalised copy of deal_mappings. If a mapping is written without updating this field, or a canonical is renamed without cascading here, you get silent orphans — deals that appear unmapped but have a mapping row.
+        </div>
+        <div class="callout callout-blue">
+          <strong>ℹ Soft Delete Pattern</strong>
+          is_active=0 at crawl start, set to 1 for all products found in that run. Products not seen in a crawl remain as is_active=0 — they're never deleted. The 0-deal guard prevents wiping active records if a store returns nothing.
+        </div>
+      </div>
+    </div>
+
+    <!-- ── STORES ── -->
+    <div id="view-stores" class="table-view">
+      <div class="tv-header">
+        <div class="tv-breadcrumb">core deals</div>
+        <div class="tv-name">stores</div>
+        <div class="tv-sub">Registry of the 27+ Indian grocery stores being crawled. Root anchor of the system — everything hangs off store_id. One row per store, slug-keyed.</div>
+        <div class="badge-row">
+          <span class="badge badge-green">PK: id (TEXT slug)</span>
+          <span class="badge badge-amber">27+ stores</span>
+          <span class="badge badge-blue">No FK cascades on delete</span>
+        </div>
+      </div>
+
+      <div class="section">
+        <div class="section-title">Key Columns</div>
+        <table class="col-table">
+          <thead><tr><th>Column</th><th>Type</th><th>Notes</th></tr></thead>
+          <tbody>
+            <tr><td class="col-name">id</td><td class="col-type">TEXT PK</td><td class="col-note">Slug e.g. "jamoona", "dookan". Propagates everywhere as FK. Renaming = touching 6+ tables manually.</td></tr>
+            <tr><td class="col-name">name</td><td class="col-type">TEXT NOT NULL</td><td class="col-note">Display name.</td></tr>
+            <tr><td class="col-name">platform</td><td class="col-type">TEXT</td><td class="col-note">shopify | woocommerce | custom | unknown. Determines which crawler adapter is used.</td></tr>
+            <tr><td class="col-name">crawl_status</td><td class="col-type">TEXT</td><td class="col-note">active | maintenance | error. Crawler checks this before attempting. HTTP 503 → maintenance, skip.</td></tr>
+            <tr><td class="col-name">free_shipping_min</td><td class="col-type">REAL</td><td class="col-note">Denormalised convenience. Real shipping logic is in shipping_tiers.</td></tr>
+            <tr><td class="col-name">webhook_secret</td><td class="col-type">TEXT</td><td class="col-note">HMAC-SHA256 secret for inbound store webhooks. NULL = no partnership. Gates the fresh_arrived alert type.</td></tr>
+            <tr><td class="col-name">last_crawled_at</td><td class="col-type">DATETIME</td><td class="col-note">Used for staleness detection. Crawl staleness alert fires if >26h.</td></tr>
+          </tbody>
+        </table>
+      </div>
+
+      <div class="section">
+        <div class="section-title">Tables That Reference This</div>
+        <table class="fk-table">
+          <thead><tr><th>Child Table</th><th>FK Column</th><th>On Delete</th></tr></thead>
+          <tbody>
+            <tr><td class="fk-child">deals</td><td class="fk-col">store_id</td><td class="fk-cascade cascade-no">none</td></tr>
+            <tr><td class="fk-child">crawl_store_results</td><td class="fk-col">store_id</td><td class="fk-cascade cascade-no">none</td></tr>
+            <tr><td class="fk-child">deal_price_history</td><td class="fk-col">store_id</td><td class="fk-cascade cascade-no">none</td></tr>
+            <tr><td class="fk-child">shipping_tiers</td><td class="fk-col">store_id</td><td class="fk-cascade cascade-no">none</td></tr>
+            <tr><td class="fk-child">delivery_options</td><td class="fk-col">store_id</td><td class="fk-cascade cascade-no">none</td></tr>
+            <tr><td class="fk-child">price_alerts</td><td class="fk-col">target_store_id</td><td class="fk-cascade cascade-no">none</td></tr>
+            <tr><td class="fk-child">entity_resolution_queue</td><td class="fk-col">store_id</td><td class="fk-cascade cascade-set">SET NULL</td></tr>
+          </tbody>
+        </table>
+      </div>
+
+      <div class="section">
+        <div class="section-title">Risks & Notes</div>
+        <div class="callout callout-red">
+          <strong>⚠ No Cascade on Deactivation</strong>
+          None of the 6 FK children cascade on delete. Removing or deactivating a store requires manual cleanup across deals, crawl_store_results, deal_price_history, shipping_tiers, delivery_options, and price_alerts. No migration script for this scenario exists yet.
+        </div>
+        <div class="callout callout-amber">
+          <strong>⚠ fresh_arrived Alert Dependency</strong>
+          The fresh_arrived alert type is fully implemented but dormant. It cannot fire until at least one store sets webhook_secret and activates the partnership. This is a commercial agreement, not a code problem.
+        </div>
+      </div>
+    </div>
+
+    <!-- ── DEAL_PRICE_HISTORY ── -->
+    <div id="view-deal_price_history" class="table-view">
+      <div class="tv-header">
+        <div class="tv-breadcrumb">core deals</div>
+        <div class="tv-name">deal_price_history</div>
+        <div class="tv-sub">Immutable, append-only daily price snapshots. The foundation of Phase 2's Real Savings rating system. One row per (crawl_date, store_id, product_url) — the UNIQUE constraint guarantees no double-counting.</div>
+        <div class="badge-row">
+          <span class="badge badge-green">Append-only — never deleted</span>
+          <span class="badge badge-amber">Powers Phase 2 baseline</span>
+          <span class="badge badge-red">No FK to deals</span>
+        </div>
+      </div>
+
+      <div class="section">
+        <div class="section-title">Key Columns</div>
+        <table class="col-table">
+          <thead><tr><th>Column</th><th>Type</th><th>Notes</th></tr></thead>
+          <tbody>
+            <tr><td class="col-name">crawl_date</td><td class="col-type">TEXT</td><td class="col-note">e.g. "2026-04-15". Part of UNIQUE(crawl_date, store_id, product_url).</td></tr>
+            <tr><td class="col-name">store_id</td><td class="col-type">TEXT FK</td><td class="col-note">→ stores(id). No cascade. Denormalised — store identity at snapshot time.</td></tr>
+            <tr><td class="col-name">product_url</td><td class="col-type">TEXT</td><td class="col-note">Stable per-product identifier. Also the join key back to deals — no FK, just a string match.</td></tr>
+            <tr><td class="col-name">sale_price</td><td class="col-type">REAL</td><td class="col-note">Price on this day.</td></tr>
+            <tr><td class="col-name">price_per_kg</td><td class="col-type">REAL</td><td class="col-note">Normalised at write time for cross-weight comparison.</td></tr>
+            <tr><td class="col-name">is_deal</td><td class="col-type">INTEGER</td><td class="col-note">⚠ Critical for Phase 2. 1 = product was on promotion that day. Added via always-run migration. Baseline must exclude is_deal=1 rows.</td></tr>
+            <tr><td class="col-name">crawl_run_id</td><td class="col-type">TEXT FK</td><td class="col-note">→ crawl_runs(id). No cascade.</td></tr>
+          </tbody>
+        </table>
+      </div>
+
+      <div class="section">
+        <div class="section-title">Phase 2 Baseline Logic</div>
+        <div class="code-block"><span class="cm">-- 90-day non-deal baseline per product</span>
+<span class="kw">SELECT</span> product_url,
+       <span class="fn">median</span>(sale_price) <span class="kw">AS</span> normal_price_baseline
+<span class="kw">FROM</span>   deal_price_history
+<span class="kw">WHERE</span>  is_deal = <span class="str">0</span>
+  <span class="kw">AND</span>  crawl_date >= <span class="fn">date</span>(<span class="str">'now'</span>, <span class="str">'-90 days'</span>)
+<span class="kw">GROUP BY</span> product_url
+
+<span class="cm">-- Hard override rule:</span>
+<span class="cm">-- if current_price > baseline → Weak, regardless of gap</span></div>
+      </div>
+
+      <div class="section">
+        <div class="section-title">Risks & Notes</div>
+        <div class="callout callout-red">
+          <strong>⚠ is_deal Classification Quality</strong>
+          If is_deal was defaulted to 0 on rows that were actually promotional prices (e.g. during backfill), your Phase 2 baselines are contaminated. Run: SELECT is_deal, COUNT(*) FROM deal_price_history GROUP BY is_deal — before Phase 2 ships.
+        </div>
+        <div class="callout callout-red">
+          <strong>⚠ No FK to deals</strong>
+          The join to deals is on product_url — a string match, not a relational guarantee. If a store changes a product URL, history for that product becomes unreachable — orphaned rows with no reconnection path.
+        </div>
+        <div class="callout callout-amber">
+          <strong>⚠ Growth & Query Performance</strong>
+          27 stores × ~500 products × 365 days ≈ 5M rows/year. The Phase 2 baseline query (median over 90 days, grouped by product_url) will get expensive. Add a composite index on (product_url, crawl_date, is_deal) before Phase 2 ships.
+        </div>
+        <div class="callout callout-amber">
+          <strong>⚠ 90-Day Minimum Data Required</strong>
+          Phase 2 is not viable until this table has 90 days of clean history. Verify when population started and whether any crawl failures created gaps in the timeline.
+        </div>
+      </div>
+    </div>
+
+    <!-- ── CANONICAL_PRODUCTS ── -->
+    <div id="view-canonical_products" class="table-view">
+      <div class="tv-header">
+        <div class="tv-breadcrumb">entity resolution</div>
+        <div class="tv-name">canonical_products</div>
+        <div class="tv-sub">Central entity-resolution hub. ~90 unique product identities. Every raw deal eventually resolves to a row here — or fails and enters the review queue. The entire cross-store comparison engine depends on this table being clean.</div>
+        <div class="badge-row">
+          <span class="badge badge-green">PK: id (TEXT slug)</span>
+          <span class="badge badge-amber">~90 canonical products</span>
+          <span class="badge badge-red">Manual rename cascades</span>
+        </div>
+      </div>
+
+      <div class="section">
+        <div class="section-title">Three Roles</div>
+        <div class="role-grid">
+          <div class="role-card">
+            <div class="role-card-num">01</div>
+            <div class="role-card-label">Matching Target</div>
+            <div class="role-card-desc">canonical_name is what the fuzzy matcher scores incoming deal names against. Quality here = resolution rate everywhere.</div>
+          </div>
+          <div class="role-card">
+            <div class="role-card-num">02</div>
+            <div class="role-card-label">Price Anchor</div>
+            <div class="role-card-desc">batchGetRealSavings() groups deals by canonical_id to compute cross-store medians. Bad canonicals = bad Real Savings ratings.</div>
+          </div>
+          <div class="role-card">
+            <div class="role-card-num">03</div>
+            <div class="role-card-label">User Identity</div>
+            <div class="role-card-desc">What appears in shopping lists, price alerts, and Phase 3 basket comparison. The user-facing product name.</div>
+          </div>
+        </div>
+      </div>
+
+      <div class="section">
+        <div class="section-title">Key Columns</div>
+        <table class="col-table">
+          <thead><tr><th>Column</th><th>Type</th><th>Notes</th></tr></thead>
+          <tbody>
+            <tr><td class="col-name">id</td><td class="col-type">TEXT PK</td><td class="col-note">Hyphen-slug e.g. "heera-soan-papdi-500g". The join key everywhere. No ON UPDATE CASCADE — renaming requires manual cascade across 5+ tables.</td></tr>
+            <tr><td class="col-name">canonical_name</td><td class="col-type">TEXT NOT NULL</td><td class="col-note">The matcher's vocabulary. Fuzzy matching scores against this field. Keep clean — garbage here degrades match quality system-wide.</td></tr>
+            <tr><td class="col-name">brand_slots</td><td class="col-type">TEXT (JSON)</td><td class="col-note">Nested arrays: [["heera"]]. Each inner array is a synonym group for a brand token. Feeds decomposeCanonical().</td></tr>
+            <tr><td class="col-name">base_product_slots</td><td class="col-type">TEXT (JSON)</td><td class="col-note">[["soan"],["papdi"]] — product token groups. Same nesting logic as brand_slots.</td></tr>
+            <tr><td class="col-name">type_slots</td><td class="col-type">TEXT (JSON)</td><td class="col-note">Variant tokens e.g. [["split"],["hulled"]]. Often empty array.</td></tr>
+            <tr><td class="col-name">product_group_id</td><td class="col-type">TEXT</td><td class="col-note">Slug joining all tokens. Links to product_groups for cross-brand substitution suggestions.</td></tr>
+            <tr><td class="col-name">verified</td><td class="col-type">INTEGER</td><td class="col-note">0 = auto-created, 1 = admin-reviewed. Never use unverified rows for Phase 2 pricing logic.</td></tr>
+            <tr><td class="col-name">is_priority / is_match_priority</td><td class="col-type">INTEGER</td><td class="col-note">Weighting flags. Higher-priority canonicals win ties during fuzzy matching.</td></tr>
+            <tr><td class="col-name">common_aliases</td><td class="col-type">TEXT (JSON)</td><td class="col-note">Alt names for matching. Training data for the fuzzy matcher.</td></tr>
+          </tbody>
+        </table>
+      </div>
+
+      <div class="section">
+        <div class="section-title">Tables That Reference This</div>
+        <table class="fk-table">
+          <thead><tr><th>Child Table</th><th>FK Column</th><th>On Delete</th></tr></thead>
+          <tbody>
+            <tr><td class="fk-child">deals</td><td class="fk-col">canonical_id</td><td class="fk-cascade cascade-no">none</td></tr>
+            <tr><td class="fk-child">deal_mappings</td><td class="fk-col">canonical_id</td><td class="fk-cascade cascade-yes">CASCADE</td></tr>
+            <tr><td class="fk-child">entity_resolution_queue</td><td class="fk-col">suggested_canonical_id</td><td class="fk-cascade cascade-set">SET NULL</td></tr>
+            <tr><td class="fk-child">list_items</td><td class="fk-col">canonical_id</td><td class="fk-cascade cascade-no">none</td></tr>
+            <tr><td class="fk-child">price_alerts</td><td class="fk-col">canonical_id</td><td class="fk-cascade cascade-no">none</td></tr>
+          </tbody>
+        </table>
+      </div>
+
+      <div class="section">
+        <div class="section-title">Risks & Notes</div>
+        <div class="callout callout-red">
+          <strong>⚠ TEXT Slug PK — Rename is Dangerous</strong>
+          No ON UPDATE CASCADE. A canonical_id rename requires manually updating deals, deal_mappings, list_items, price_alerts, entity_resolution_queue. Miss one table and you get silent orphans. No migration script exists for this yet.
+        </div>
+        <div class="callout callout-amber">
+          <strong>⚠ Phase 2 Minimum Deal Count Threshold</strong>
+          If a canonical has only one deal mapped to it, the "cross-store median" is just that price — no comparison possible. Define and enforce a minimum deal count before a canonical is eligible for Real Savings ratings.
+        </div>
+        <div class="callout callout-amber">
+          <strong>⚠ Slot Schema Has No Write Validation</strong>
+          The nested array structure [["heera"]] vs [["soan"],["papdi"]] is non-obvious. A flat array instead of nested, or a null, will cause decomposeCanonical() to produce wrong token decompositions silently. Add validation on write.
+        </div>
+        <div class="callout callout-blue">
+          <strong>ℹ Coverage Gap</strong>
+          With ~90 canonicals across 27 stores, any unmapped deals sit as canonical_id=NULL on deals or in entity_resolution_queue. That gap directly limits Phase 2 and Phase 3 at launch.
+        </div>
+      </div>
+    </div>
+
+    <!-- ── DEAL_MAPPINGS ── -->
+    <div id="view-deal_mappings" class="table-view">
+      <div class="tv-header">
+        <div class="tv-breadcrumb">entity resolution</div>
+        <div class="tv-name">deal_mappings</div>
+        <div class="tv-sub">The bridge that makes cross-store price comparison possible. Maps every raw scraped deal to its canonical product identity. Without clean data here, every deal is an island — batchGetRealSavings() produces garbage.</div>
+        <div class="badge-row">
+          <span class="badge badge-green">PK: (deal_id, canonical_id)</span>
+          <span class="badge badge-amber">Powers batchGetRealSavings()</span>
+          <span class="badge badge-red">No index on deal_id</span>
+        </div>
+      </div>
+
+      <div class="section">
+        <div class="section-title">Key Columns</div>
+        <table class="col-table">
+          <thead><tr><th>Column</th><th>Type</th><th>Notes</th></tr></thead>
+          <tbody>
+            <tr><td class="col-name">deal_id</td><td class="col-type">TEXT FK</td><td class="col-note">→ deals(id) CASCADE. If a deal is hard-deleted, this row disappears silently.</td></tr>
+            <tr><td class="col-name">canonical_id</td><td class="col-type">TEXT FK</td><td class="col-note">→ canonical_products(id) CASCADE. Indexed — this is the join key for batchGetRealSavings().</td></tr>
+            <tr><td class="col-name">match_method</td><td class="col-type">TEXT</td><td class="col-note">exact | fuzzy | manual | slot. Tells you how much to trust the mapping.</td></tr>
+            <tr><td class="col-name">match_confidence</td><td class="col-type">REAL (0–1)</td><td class="col-note">Score from matching pipeline. 1.0 for exact/manual. 0.82–0.89 band is fuzzy-mapped but arguably not trustworthy.</td></tr>
+            <tr><td class="col-name">verified_at</td><td class="col-type">DATETIME</td><td class="col-note">NULL = auto-matched. Set = admin-confirmed. Only verified rows should drive Phase 2 ratings.</td></tr>
+          </tbody>
+        </table>
+      </div>
+
+      <div class="section">
+        <div class="section-title">How a Row Gets Written — Pipeline</div>
+        <div class="code-block">raw deal name
+  → <span class="fn">normalise()</span>        <span class="cm">Layer 1: strips units, qualifiers, synonyms</span>
+  → <span class="fn">fuzzyMatch()</span>  <span class="kw">≥ 0.82</span> → INSERT here <span class="cm">(method='fuzzy')</span>
+                  <span class="kw">0.60–0.81</span> → Layer 3
+  → <span class="fn">Claude Haiku</span>   <span class="kw">YES</span>   → INSERT <span class="cm">(confidence=0.90, method='ai')</span>
+                  <span class="kw">UNSURE</span> → entity_resolution_queue
+                  <span class="kw">NO</span>    → new canonical_products row created</div>
+      </div>
+
+      <div class="section">
+        <div class="section-title">Risks & Notes</div>
+        <div class="callout callout-amber">
+          <strong>⚠ No Unique Constraint on deal_id</strong>
+          The PK is (deal_id, canonical_id). A single deal can technically map to multiple canonicals. That would double-count it in batchGetRealSavings() and corrupt reference prices. Verify this hasn't happened in production.
+        </div>
+        <div class="callout callout-amber">
+          <strong>⚠ Confidence Gap 0.82–0.89</strong>
+          The pipeline writes fuzzy matches at ≥0.82 with method='fuzzy'. The entity_resolution_queue threshold is 0.90. Rows between 0.82–0.89 are mapped but unreviewed — they're the highest false-positive risk band. Check the actual error rate here.
+        </div>
+        <div class="callout callout-red">
+          <strong>⚠ Missing Index on deal_id</strong>
+          The only index is on canonical_id. Queries looking up "what canonical does this deal map to?" — which happen during crawl updates — do a full table scan. Add idx_deal_mappings_deal_id.
+        </div>
+        <div class="callout callout-blue">
+          <strong>ℹ deals.canonical_id Sync</strong>
+          Writing a mapping row here must also update deals.canonical_id. These two must stay in sync — a mapping without the corresponding deals update is a silent bug that breaks deal card display.
+        </div>
+      </div>
+    </div>
+
+    <!-- ── ENTITY_RESOLUTION_QUEUE ── -->
+    <div id="view-entity_resolution_queue" class="table-view">
+      <div class="tv-header">
+        <div class="tv-breadcrumb">entity resolution</div>
+        <div class="tv-name">entity_resolution_queue</div>
+        <div class="tv-sub">Admin review queue for deals that couldn't be auto-matched (confidence &lt; 0.90). A debt accumulator — every failed resolution adds a row. Backlog size here directly measures your coverage gap.</div>
+        <div class="badge-row">
+          <span class="badge badge-green">PK: INTEGER AUTOINCREMENT</span>
+          <span class="badge badge-amber">Status: pending | confirmed | dismissed</span>
+          <span class="badge badge-red">Debt accumulator</span>
+        </div>
+      </div>
+
+      <div class="section">
+        <div class="section-title">Key Columns</div>
+        <table class="col-table">
+          <thead><tr><th>Column</th><th>Type</th><th>Notes</th></tr></thead>
+          <tbody>
+            <tr><td class="col-name">deal_id</td><td class="col-type">TEXT FK</td><td class="col-note">→ deals(id) CASCADE. Row disappears if deal is deleted.</td></tr>
+            <tr><td class="col-name">suggested_canonical_id</td><td class="col-type">TEXT FK</td><td class="col-note">→ canonical_products(id) SET NULL. Best fuzzy guess — the thing to confirm or reject.</td></tr>
+            <tr><td class="col-name">confidence</td><td class="col-type">REAL</td><td class="col-note">Score of the suggestion. Rows with confidence 0.60–0.89 come from fuzzy miss; lower = likely new product.</td></tr>
+            <tr><td class="col-name">raw_name</td><td class="col-type">TEXT NOT NULL</td><td class="col-note">Original deal name from store. What the admin sees.</td></tr>
+            <tr><td class="col-name">normalised_name</td><td class="col-type">TEXT</td><td class="col-note">Stored at enqueue time. Re-derived live on GET for display.</td></tr>
+            <tr><td class="col-name">status</td><td class="col-type">TEXT</td><td class="col-note">'pending' default. confirmed = write to deal_mappings. dismissed = skip.</td></tr>
+            <tr><td class="col-name">store_id</td><td class="col-type">TEXT FK</td><td class="col-note">→ stores(id) SET NULL. Added via always-run migration. Context for the admin reviewer.</td></tr>
+            <tr><td class="col-name">category</td><td class="col-type">TEXT</td><td class="col-note">Added via always-run migration. Used for queue filtering in admin UI.</td></tr>
+          </tbody>
+        </table>
+      </div>
+
+      <div class="section">
+        <div class="section-title">Risks & Notes</div>
+        <div class="callout callout-red">
+          <strong>⚠ Uncapped Growth</strong>
+          Rows only leave this table when an admin confirms or dismisses them. With no automated resolution for pending rows, every crawl with new products adds more. What's the current pending backlog? That number is your effective unmapped product count.
+        </div>
+        <div class="callout callout-amber">
+          <strong>⚠ Admin Bottleneck for Phase 2</strong>
+          Phase 2 Real Savings ratings require canonical mappings. Any product stuck here is ineligible for ratings. Systematic backlog review before Phase 2 launch is a prerequisite, not optional.
+        </div>
+      </div>
+    </div>
+
+    <!-- ── KNOWN_BRANDS ── -->
+    <div id="view-known_brands" class="table-view">
+      <div class="tv-header">
+        <div class="tv-breadcrumb">entity resolution</div>
+        <div class="tv-name">known_brands</div>
+        <div class="tv-sub">Brand registry with JSON aliases. Used by decomposeCanonical() for brand slot extraction during entity resolution.</div>
+        <div class="badge-row">
+          <span class="badge badge-green">16 seeded brands</span>
+          <span class="badge badge-amber">Feeds decomposeCanonical()</span>
+        </div>
+      </div>
+      <div class="section">
+        <div class="section-title">Seeded Brands</div>
+        <div class="code-block">Aachi, Aashirvaad, Bambino, Daawat, Gits, Haldiram's,
+Heer, ITC, Knorr, LKK, Maggi, MTR, Nanak,
+Priya, Shan, Swad</div>
+      </div>
+      <div class="section">
+        <div class="section-title">Role in Pipeline</div>
+        <div class="callout callout-blue">
+          <strong>ℹ Brand Token Extraction</strong>
+          During entity resolution, decomposeCanonical() checks the incoming product name against known_brands.aliases (JSON array of spelling variants). A hit populates brand_slots on the canonical_products row. Miss = brand goes unrecognised and may cause a fuzzy mismatch.
+        </div>
+        <div class="callout callout-amber">
+          <strong>⚠ 16 Brands is Thin Coverage</strong>
+          Indian grocery market has dozens of relevant brands. Every unrecognised brand that appears in raw product names degrades matching quality. This table needs continuous expansion as new stores and products are crawled.
+        </div>
+      </div>
+    </div>
+
+    <!-- ── CRAWL_RUNS ── -->
+    <div id="view-crawl_runs" class="table-view">
+      <div class="tv-header">
+        <div class="tv-breadcrumb">crawl engine</div>
+        <div class="tv-name">crawl_runs</div>
+        <div class="tv-sub">Metadata for each crawl cycle. One row per run, regardless of how many stores were attempted. The orchestrator writes here at start and updates on completion.</div>
+        <div class="badge-row">
+          <span class="badge badge-green">PK: id (TEXT)</span>
+          <span class="badge badge-blue">Index: crawl_date</span>
+        </div>
+      </div>
+      <div class="section">
+        <div class="section-title">Key Columns</div>
+        <table class="col-table">
+          <thead><tr><th>Column</th><th>Type</th><th>Notes</th></tr></thead>
+          <tbody>
+            <tr><td class="col-name">crawl_date</td><td class="col-type">TEXT</td><td class="col-note">e.g. "2026-04-15". Indexed. Denormalised copy used by child tables for fast date filtering.</td></tr>
+            <tr><td class="col-name">status</td><td class="col-type">TEXT</td><td class="col-note">running | completed | failed.</td></tr>
+            <tr><td class="col-name">stores_attempted / stores_succeeded</td><td class="col-type">INTEGER</td><td class="col-note">Success rate tracking. If succeeded/attempted drops below threshold, flag for investigation.</td></tr>
+            <tr><td class="col-name">deals_found</td><td class="col-type">INTEGER</td><td class="col-note">Total products scraped this run across all stores.</td></tr>
+            <tr><td class="col-name">errors</td><td class="col-type">TEXT (JSON)</td><td class="col-note">Array of {store_id, error_message}. Per-store failures.</td></tr>
+          </tbody>
+        </table>
+      </div>
+      <div class="section">
+        <div class="section-title">Tables That Reference This</div>
+        <table class="fk-table">
+          <thead><tr><th>Child Table</th><th>FK Column</th><th>On Delete</th></tr></thead>
+          <tbody>
+            <tr><td class="fk-child">deals</td><td class="fk-col">crawl_run_id</td><td class="fk-cascade cascade-no">none</td></tr>
+            <tr><td class="fk-child">crawl_store_results</td><td class="fk-col">crawl_run_id</td><td class="fk-cascade cascade-yes">CASCADE</td></tr>
+            <tr><td class="fk-child">deal_price_history</td><td class="fk-col">crawl_run_id</td><td class="fk-cascade cascade-no">none</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+    <!-- ── CRAWL_STORE_RESULTS ── -->
+    <div id="view-crawl_store_results" class="table-view">
+      <div class="tv-header">
+        <div class="tv-breadcrumb">crawl engine</div>
+        <div class="tv-name">crawl_store_results</div>
+        <div class="tv-sub">Per-store outcome for each crawl run. Granular breakdown of what happened at each store — how many deals scraped, inserted, updated, unchanged, removed.</div>
+        <div class="badge-row">
+          <span class="badge badge-green">PK: id (TEXT)</span>
+          <span class="badge badge-blue">cascade from crawl_runs</span>
+        </div>
+      </div>
+      <div class="section">
+        <div class="section-title">Key Columns</div>
+        <table class="col-table">
+          <thead><tr><th>Column</th><th>Type</th><th>Notes</th></tr></thead>
+          <tbody>
+            <tr><td class="col-name">crawl_run_id</td><td class="col-type">TEXT FK</td><td class="col-note">→ crawl_runs(id) CASCADE. Deleted when parent run is deleted.</td></tr>
+            <tr><td class="col-name">store_id</td><td class="col-type">TEXT FK</td><td class="col-note">→ stores(id). No cascade.</td></tr>
+            <tr><td class="col-name">status</td><td class="col-type">TEXT</td><td class="col-note">success | failure | timeout.</td></tr>
+            <tr><td class="col-name">deals_scraped / inserted / updated / unchanged / removed</td><td class="col-type">INTEGER</td><td class="col-note">Full delta breakdown per store per run. Primary data source for the admin crawl dashboard.</td></tr>
+            <tr><td class="col-name">category_counts_json</td><td class="col-type">TEXT (JSON)</td><td class="col-note">{category: count}. Snapshot of what was found by category.</td></tr>
+            <tr><td class="col-name">history_rows_written</td><td class="col-type">INTEGER</td><td class="col-note">How many rows were appended to deal_price_history this run for this store.</td></tr>
+            <tr><td class="col-name">store_name / store_url</td><td class="col-type">TEXT</td><td class="col-note">Snapshot at crawl time — denormalised so historical records stay accurate even if store details change.</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+    <!-- ── CRAWL_LOCKS ── -->
+    <div id="view-crawl_locks" class="table-view">
+      <div class="tv-header">
+        <div class="tv-breadcrumb">crawl engine</div>
+        <div class="tv-name">crawl_locks</div>
+        <div class="tv-sub">Distributed lock table to prevent concurrent crawls of the same store. Acquired at crawl start, released on completion or expiry.</div>
+        <div class="badge-row">
+          <span class="badge badge-green">PK: lock_key (TEXT)</span>
+          <span class="badge badge-blue">Auto-release via expires_at</span>
+        </div>
+      </div>
+      <div class="section">
+        <div class="section-title">Key Columns</div>
+        <table class="col-table">
+          <thead><tr><th>Column</th><th>Type</th><th>Notes</th></tr></thead>
+          <tbody>
+            <tr><td class="col-name">lock_key</td><td class="col-type">TEXT PK</td><td class="col-note">e.g. "store:jamoona". One lock per store.</td></tr>
+            <tr><td class="col-name">owner_id</td><td class="col-type">TEXT NOT NULL</td><td class="col-note">Process or instance ID that holds the lock.</td></tr>
+            <tr><td class="col-name">acquired_at</td><td class="col-type">DATETIME</td><td class="col-note">When the lock was taken.</td></tr>
+            <tr><td class="col-name">expires_at</td><td class="col-type">DATETIME</td><td class="col-note">Auto-release time. If the crawler crashes without releasing, the lock expires here and the next run can proceed.</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+    <!-- ── JOB_RUNS ── -->
+    <div id="view-job_runs" class="table-view">
+      <div class="tv-header">
+        <div class="tv-breadcrumb">crawl engine</div>
+        <div class="tv-name">job_runs</div>
+        <div class="tv-sub">Generic ledger for all scheduled and manual jobs. Every named job — crawl, brand_remap, entity resolution — writes a row here on start and updates on completion.</div>
+        <div class="badge-row">
+          <span class="badge badge-green">PK: id (TEXT)</span>
+          <span class="badge badge-blue">job_name indexed</span>
+        </div>
+      </div>
+      <div class="section">
+        <div class="section-title">Key Columns</div>
+        <table class="col-table">
+          <thead><tr><th>Column</th><th>Type</th><th>Notes</th></tr></thead>
+          <tbody>
+            <tr><td class="col-name">job_name</td><td class="col-type">TEXT NOT NULL</td><td class="col-note">e.g. "crawl", "brand_remap", "entity_resolution". The primary filter for monitoring.</td></tr>
+            <tr><td class="col-name">trigger_type</td><td class="col-type">TEXT</td><td class="col-note">schedule | manual | webhook.</td></tr>
+            <tr><td class="col-name">status</td><td class="col-type">TEXT</td><td class="col-note">running | completed | failed.</td></tr>
+            <tr><td class="col-name">duration_ms</td><td class="col-type">INTEGER</td><td class="col-note">Wall-clock time. Use for performance regression detection across deploys.</td></tr>
+            <tr><td class="col-name">item_count / warning_count</td><td class="col-type">INTEGER</td><td class="col-note">Job-specific throughput metrics. warning_count > 0 warrants investigation.</td></tr>
+            <tr><td class="col-name">details</td><td class="col-type">TEXT (JSON)</td><td class="col-note">Freeform job-specific payload.</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+    <!-- ── USERS ── -->
+    <div id="view-users" class="table-view">
+      <div class="tv-header">
+        <div class="tv-breadcrumb">users & auth</div>
+        <div class="tv-name">users</div>
+        <div class="tv-sub">Registered shoppers and admins. Currently very small user base (early personal network). Google OAuth is the primary signup path — password_hash is NULL for OAuth users.</div>
+        <div class="badge-row">
+          <span class="badge badge-green">PK: id (TEXT)</span>
+          <span class="badge badge-amber">Google OAuth primary</span>
+          <span class="badge badge-blue">user_type: basic | premium</span>
+        </div>
+      </div>
+      <div class="section">
+        <div class="section-title">Key Columns</div>
+        <table class="col-table">
+          <thead><tr><th>Column</th><th>Type</th><th>Notes</th></tr></thead>
+          <tbody>
+            <tr><td class="col-name">email</td><td class="col-type">TEXT UNIQUE</td><td class="col-note">Primary identity. Not tied to google_id in schema — a user could have email+password and add Google OAuth later.</td></tr>
+            <tr><td class="col-name">google_id / facebook_id</td><td class="col-type">TEXT UNIQUE</td><td class="col-note">OAuth provider IDs. NULL if not connected.</td></tr>
+            <tr><td class="col-name">postcode</td><td class="col-type">TEXT NOT NULL</td><td class="col-note">Required at signup. Used for delivery zone filtering and postcode eligibility checks.</td></tr>
+            <tr><td class="col-name">dietary_prefs</td><td class="col-type">TEXT (JSON)</td><td class="col-note">["vegetarian","halal","jain"]. Used for product filtering in Phase 3.</td></tr>
+            <tr><td class="col-name">preferred_stores / blocked_stores / preferred_brands</td><td class="col-type">TEXT (JSON)</td><td class="col-note">User personalisation arrays. Drive recommendation engine weightings.</td></tr>
+            <tr><td class="col-name">user_type</td><td class="col-type">TEXT</td><td class="col-note">basic | premium. Phase 3 subscription gating.</td></tr>
+            <tr><td class="col-name">waitlist_referral_code</td><td class="col-type">TEXT UNIQUE</td><td class="col-note">For referral loop. Self-referential FK: waitlist_referrer_user_id → users(id) SET NULL.</td></tr>
+            <tr><td class="col-name">is_admin</td><td class="col-type">INTEGER</td><td class="col-note">0 = user, 1 = admin. Gates entity resolution queue UI, crawl triggers, etc.</td></tr>
+          </tbody>
+        </table>
+      </div>
+      <div class="section">
+        <div class="section-title">Tables That Reference This</div>
+        <table class="fk-table">
+          <thead><tr><th>Child Table</th><th>FK Column</th><th>On Delete</th></tr></thead>
+          <tbody>
+            <tr><td class="fk-child">refresh_tokens</td><td class="fk-col">user_id</td><td class="fk-cascade cascade-yes">CASCADE</td></tr>
+            <tr><td class="fk-child">shopping_lists</td><td class="fk-col">user_id</td><td class="fk-cascade cascade-yes">CASCADE</td></tr>
+            <tr><td class="fk-child">bookmarks</td><td class="fk-col">user_id</td><td class="fk-cascade cascade-yes">CASCADE</td></tr>
+            <tr><td class="fk-child">price_alerts</td><td class="fk-col">user_id</td><td class="fk-cascade cascade-yes">CASCADE</td></tr>
+            <tr><td class="fk-child">events</td><td class="fk-col">user_id</td><td class="fk-cascade cascade-set">SET NULL</td></tr>
+            <tr><td class="fk-child">search_queries</td><td class="fk-col">user_id</td><td class="fk-cascade cascade-set">SET NULL</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+    <!-- ── EMAIL_AUTH_TOKENS ── -->
+    <div id="view-email_auth_tokens" class="table-view">
+      <div class="tv-header">
+        <div class="tv-breadcrumb">users & auth</div>
+        <div class="tv-name">email_auth_tokens</div>
+        <div class="tv-sub">One-time tokens for passwordless email login/signup. Token is never stored in plaintext — only the HMAC-SHA256 hash is persisted.</div>
+        <div class="badge-row">
+          <span class="badge badge-green">HMAC-SHA256 only — no plaintext</span>
+          <span class="badge badge-blue">purpose: signup | login</span>
+        </div>
+      </div>
+      <div class="section">
+        <div class="section-title">Key Columns</div>
+        <table class="col-table">
+          <thead><tr><th>Column</th><th>Type</th><th>Notes</th></tr></thead>
+          <tbody>
+            <tr><td class="col-name">token_hash</td><td class="col-type">TEXT UNIQUE</td><td class="col-note">HMAC-SHA256 of the actual token. Never store plaintext.</td></tr>
+            <tr><td class="col-name">purpose</td><td class="col-type">TEXT</td><td class="col-note">signup | login. Different flows on consumption.</td></tr>
+            <tr><td class="col-name">expires_at</td><td class="col-type">DATETIME</td><td class="col-note">Short TTL — typically 15 minutes.</td></tr>
+            <tr><td class="col-name">consumed_at</td><td class="col-type">DATETIME</td><td class="col-note">Set on use. NULL = not yet used. Check both expiry AND consumed_at before accepting a token.</td></tr>
+            <tr><td class="col-name">requested_ip / requested_user_agent</td><td class="col-type">TEXT</td><td class="col-note">Audit trail. Not used for auth decisions — just logging.</td></tr>
+            <tr><td class="col-name">referral_code</td><td class="col-type">TEXT</td><td class="col-note">Carried through from signup URL to link referrer on account creation.</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+    <!-- ── REFRESH_TOKENS ── -->
+    <div id="view-refresh_tokens" class="table-view">
+      <div class="tv-header">
+        <div class="tv-breadcrumb">users & auth</div>
+        <div class="tv-name">refresh_tokens</div>
+        <div class="tv-sub">Session refresh tokens. Access tokens are short-lived JWTs; this table holds the long-lived refresh token that issues new access tokens. Cascades on user delete.</div>
+        <div class="badge-row">
+          <span class="badge badge-green">PK: id (TEXT)</span>
+          <span class="badge badge-amber">CASCADE from users</span>
+        </div>
+      </div>
+      <div class="section">
+        <div class="section-title">Key Columns</div>
+        <table class="col-table">
+          <thead><tr><th>Column</th><th>Type</th><th>Notes</th></tr></thead>
+          <tbody>
+            <tr><td class="col-name">user_id</td><td class="col-type">TEXT FK</td><td class="col-note">→ users(id) CASCADE. All tokens deleted on account deletion.</td></tr>
+            <tr><td class="col-name">token_hash</td><td class="col-type">TEXT UNIQUE</td><td class="col-note">Hashed. Never plaintext.</td></tr>
+            <tr><td class="col-name">expires_at</td><td class="col-type">DATETIME</td><td class="col-note">Long TTL (typically 30–90 days).</td></tr>
+            <tr><td class="col-name">revoked_at</td><td class="col-type">DATETIME</td><td class="col-note">Set on logout or forced revocation. NULL = active. Always check both expiry AND revoked_at.</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+    <!-- ── EVENTS ── -->
+    <div id="view-events" class="table-view">
+      <div class="tv-header">
+        <div class="tv-breadcrumb">analytics</div>
+        <div class="tv-name">events</div>
+        <div class="tv-sub">Analytics event log. No PII in event payloads — user_id is SET NULL on account deletion. The primary data source for conversion funnel analysis.</div>
+        <div class="badge-row">
+          <span class="badge badge-green">No PII in payloads</span>
+          <span class="badge badge-blue">user_id SET NULL on delete</span>
+        </div>
+      </div>
+      <div class="section">
+        <div class="section-title">Key Event Types</div>
+        <table class="col-table">
+          <thead><tr><th>Event</th><th>Key Properties</th><th>Purpose</th></tr></thead>
+          <tbody>
+            <tr><td class="col-name">list_submitted</td><td class="col-type">item_count, input_method</td><td class="col-note">Demand signal</td></tr>
+            <tr><td class="col-name">cart_transfer_clicked</td><td class="col-type">store_id, method, item_count</td><td class="col-note">Conversion tracking</td></tr>
+            <tr><td class="col-name">recommendation_shown</td><td class="col-type">winner_store, match_pct</td><td class="col-note">Funnel step</td></tr>
+            <tr><td class="col-name">price_alert_triggered</td><td class="col-type">canonical_id, store_id, type</td><td class="col-note">Re-engagement</td></tr>
+            <tr><td class="col-name">item_resolved / item_unresolved</td><td class="col-type">canonical_id, method</td><td class="col-note">Resolution quality</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+    <!-- ── SEARCH_QUERIES ── -->
+    <div id="view-search_queries" class="table-view">
+      <div class="tv-header">
+        <div class="tv-breadcrumb">analytics</div>
+        <div class="tv-name">search_queries</div>
+        <div class="tv-sub">Raw and normalised search queries with result counts. Monthly analytics output: top 50 searched products with resolution rate, top 20 unresolvable items → feeds synonym dictionary updates.</div>
+        <div class="badge-row">
+          <span class="badge badge-green">user_id SET NULL on delete</span>
+          <span class="badge badge-amber">Feeds synonym dictionary</span>
+        </div>
+      </div>
+      <div class="section">
+        <div class="section-title">Key Columns</div>
+        <table class="col-table">
+          <thead><tr><th>Column</th><th>Type</th><th>Notes</th></tr></thead>
+          <tbody>
+            <tr><td class="col-name">user_id</td><td class="col-type">TEXT FK</td><td class="col-note">→ users(id) SET NULL. Preserved for analytics even after account deletion.</td></tr>
+            <tr><td class="col-name">raw_query</td><td class="col-type">TEXT</td><td class="col-note">Exactly what the user typed.</td></tr>
+            <tr><td class="col-name">result_count</td><td class="col-type">INTEGER</td><td class="col-note">0 results = candidate for synonym dictionary expansion.</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+    <!-- ── APP_SETTINGS ── -->
+    <div id="view-app_settings" class="table-view">
+      <div class="tv-header">
+        <div class="tv-breadcrumb">analytics</div>
+        <div class="tv-name">app_settings</div>
+        <div class="tv-sub">Key-value config store. Simple runtime configuration that doesn't warrant an environment variable or deployment change.</div>
+        <div class="badge-row">
+          <span class="badge badge-green">Key-value store</span>
+          <span class="badge badge-blue">Current: display_member_count</span>
+        </div>
+      </div>
+      <div class="section">
+        <div class="section-title">Current Entries</div>
+        <table class="col-table">
+          <thead><tr><th>Key</th><th>Purpose</th></tr></thead>
+          <tbody>
+            <tr><td class="col-name">display_member_count</td><td class="col-note">The member count shown on the landing page. Manually overridable without a deploy — useful for social proof copy during early growth phase.</td></tr>
+          </tbody>
+        </table>
+      </div>
+      <div class="section">
+        <div class="section-title">Notes</div>
+        <div class="callout callout-blue">
+          <strong>ℹ Social Proof Lever</strong>
+          Keeping this in a DB config rather than hardcoded means you can update the displayed count without a deployment. Relevant during the push from 0→50 organic users where the number is changing frequently.
+        </div>
+      </div>
+    </div>
+
+    <!-- ── BOOKMARKS ── -->
+    <div id="view-bookmarks" class="table-view">
+      <div class="tv-header">
+        <div class="tv-breadcrumb">core deals</div>
+        <div class="tv-name">bookmarks</div>
+        <div class="tv-sub">User-saved deals. Simple many-to-many join between users and deals. Cascades from both parents — no orphaned rows possible.</div>
+        <div class="badge-row">
+          <span class="badge badge-green">PK: id (TEXT)</span>
+          <span class="badge badge-amber">UNIQUE(user_id, deal_id)</span>
+          <span class="badge badge-blue">Dual CASCADE</span>
+        </div>
+      </div>
+      <div class="section">
+        <div class="section-title">Key Columns</div>
+        <table class="col-table">
+          <thead><tr><th>Column</th><th>Type</th><th>Notes</th></tr></thead>
+          <tbody>
+            <tr><td class="col-name">id</td><td class="col-type">TEXT PK</td><td class="col-note">UUID.</td></tr>
+            <tr><td class="col-name">user_id</td><td class="col-type">TEXT FK</td><td class="col-note">→ users(id) CASCADE. Bookmark deleted when user account deleted.</td></tr>
+            <tr><td class="col-name">deal_id</td><td class="col-type">TEXT FK</td><td class="col-note">→ deals(id) CASCADE. Bookmark deleted when deal is hard-deleted.</td></tr>
+            <tr><td class="col-name">created_at</td><td class="col-type">DATETIME</td><td class="col-note">Default CURRENT_TIMESTAMP.</td></tr>
+          </tbody>
+        </table>
+      </div>
+      <div class="section">
+        <div class="section-title">Risks & Notes</div>
+        <div class="callout callout-amber">
+          <strong>⚠ deals are soft-deleted</strong>
+          Deals are never hard-deleted (is_active=0 instead), so bookmarks to inactive deals remain valid rows. The UI must filter out is_active=0 deals when rendering a user's bookmark list.
+        </div>
+      </div>
+    </div>
+
+    <!-- ── SHOPPING_LISTS ── -->
+    <div id="view-shopping_lists" class="table-view">
+      <div class="tv-header">
+        <div class="tv-breadcrumb">core deals</div>
+        <div class="tv-name">shopping_lists</div>
+        <div class="tv-sub">Named shopping lists owned by a user. One list contains many list_items. Supports manual text input and structured input methods.</div>
+        <div class="badge-row">
+          <span class="badge badge-green">PK: id (TEXT)</span>
+          <span class="badge badge-amber">CASCADE from users</span>
+          <span class="badge badge-blue">input_method tracks UX path</span>
+        </div>
+      </div>
+      <div class="section">
+        <div class="section-title">Key Columns</div>
+        <table class="col-table">
+          <thead><tr><th>Column</th><th>Type</th><th>Notes</th></tr></thead>
+          <tbody>
+            <tr><td class="col-name">id</td><td class="col-type">TEXT PK</td><td class="col-note">UUID.</td></tr>
+            <tr><td class="col-name">user_id</td><td class="col-type">TEXT FK</td><td class="col-note">→ users(id) CASCADE.</td></tr>
+            <tr><td class="col-name">name</td><td class="col-type">TEXT NOT NULL</td><td class="col-note">Display name for the list.</td></tr>
+            <tr><td class="col-name">raw_input</td><td class="col-type">TEXT</td><td class="col-note">Raw text the user pasted/typed, preserved for re-parsing.</td></tr>
+            <tr><td class="col-name">input_method</td><td class="col-type">TEXT</td><td class="col-note">How the list was created — text | voice | scan etc. Analytics signal.</td></tr>
+            <tr><td class="col-name">last_used_at</td><td class="col-type">DATETIME</td><td class="col-note">For surfacing recently-used lists in UI.</td></tr>
+            <tr><td class="col-name">reorder_reminder_days</td><td class="col-type">INTEGER</td><td class="col-note">If set, trigger a re-order reminder after N days since last_used_at.</td></tr>
+          </tbody>
+        </table>
+      </div>
+      <div class="section">
+        <div class="section-title">Tables That Reference This</div>
+        <table class="fk-table">
+          <thead><tr><th>Child Table</th><th>FK Column</th><th>On Delete</th></tr></thead>
+          <tbody>
+            <tr><td class="fk-child">list_items</td><td class="fk-col">list_id</td><td class="fk-cascade cascade-yes">CASCADE</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+    <!-- ── LIST_ITEMS ── -->
+    <div id="view-list_items" class="table-view">
+      <div class="tv-header">
+        <div class="tv-breadcrumb">core deals</div>
+        <div class="tv-name">list_items</div>
+        <div class="tv-sub">Line items within a shopping list. Each item has a raw text name plus optional resolution state — canonical link, quantity, brand preference, and locked deal details for checkout handoff.</div>
+        <div class="badge-row">
+          <span class="badge badge-green">PK: INTEGER AUTOINCREMENT</span>
+          <span class="badge badge-amber">CASCADE from shopping_lists</span>
+          <span class="badge badge-blue">locked_* = checkout snapshot</span>
+        </div>
+      </div>
+      <div class="section">
+        <div class="section-title">Key Columns</div>
+        <table class="col-table">
+          <thead><tr><th>Column</th><th>Type</th><th>Notes</th></tr></thead>
+          <tbody>
+            <tr><td class="col-name">list_id</td><td class="col-type">TEXT FK</td><td class="col-note">→ shopping_lists(id) CASCADE.</td></tr>
+            <tr><td class="col-name">canonical_id</td><td class="col-type">TEXT</td><td class="col-note">Resolved canonical product. NULL if unresolvable.</td></tr>
+            <tr><td class="col-name">raw_item_text</td><td class="col-type">TEXT NOT NULL</td><td class="col-note">Exactly what the user typed for this line.</td></tr>
+            <tr><td class="col-name">quantity / quantity_unit</td><td class="col-type">REAL / TEXT</td><td class="col-note">Parsed from raw_item_text. quantity_unit e.g. "kg", "pcs".</td></tr>
+            <tr><td class="col-name">brand_pref</td><td class="col-type">TEXT</td><td class="col-note">Preferred brand for this line item — influences deal ranking.</td></tr>
+            <tr><td class="col-name">resolved / unresolvable</td><td class="col-type">INTEGER</td><td class="col-note">resolved=1 if canonical_id found. unresolvable=1 if all attempts failed.</td></tr>
+            <tr><td class="col-name">item_count</td><td class="col-type">INTEGER</td><td class="col-note">Number of units wanted. Default 1.</td></tr>
+            <tr><td class="col-name">locked_deal_id / locked_store_*</td><td class="col-type">TEXT</td><td class="col-note">Snapshot of the selected deal at checkout time. Preserved even if deal changes.</td></tr>
+            <tr><td class="col-name">locked_weight_* / locked_image_url</td><td class="col-type">TEXT / REAL</td><td class="col-note">Full deal snapshot for cart handoff without re-querying deals.</td></tr>
+          </tbody>
+        </table>
+      </div>
+      <div class="section">
+        <div class="section-title">Risks & Notes</div>
+        <div class="callout callout-amber">
+          <strong>⚠ No FK on canonical_id or locked_deal_id</strong>
+          These are soft references — no referential integrity enforced. A canonical rename or deal deletion won't clean up locked fields. The UI must tolerate stale snapshots gracefully.
+        </div>
+        <div class="callout callout-blue">
+          <strong>ℹ Checkout Snapshot Pattern</strong>
+          locked_* columns capture the deal state at the moment the user "locks" an item for cart transfer. This ensures the cart export remains consistent even if the live deal is updated or deactivated before checkout.
+        </div>
+      </div>
+    </div>
+
+    <!-- ── PRICE_ALERTS ── -->
+    <div id="view-price_alerts" class="table-view">
+      <div class="tv-header">
+        <div class="tv-breadcrumb">core deals</div>
+        <div class="tv-name">price_alerts</div>
+        <div class="tv-sub">User-defined price alert rules. Each row is a trigger definition — when the condition fires, alert_notifications rows are created and sent.</div>
+        <div class="badge-row">
+          <span class="badge badge-green">PK: INTEGER AUTOINCREMENT</span>
+          <span class="badge badge-amber">alert_type: price | discount | fresh_arrived</span>
+          <span class="badge badge-blue">CASCADE from users</span>
+        </div>
+      </div>
+      <div class="section">
+        <div class="section-title">Key Columns</div>
+        <table class="col-table">
+          <thead><tr><th>Column</th><th>Type</th><th>Notes</th></tr></thead>
+          <tbody>
+            <tr><td class="col-name">user_id</td><td class="col-type">TEXT FK</td><td class="col-note">→ users(id) CASCADE.</td></tr>
+            <tr><td class="col-name">canonical_id</td><td class="col-type">TEXT</td><td class="col-note">Soft FK → canonical_products(id). No referential enforcement. Alert applies to any deal mapped to this canonical.</td></tr>
+            <tr><td class="col-name">product_query</td><td class="col-type">TEXT</td><td class="col-note">Fallback for alerts not yet tied to a canonical — raw search term.</td></tr>
+            <tr><td class="col-name">alert_type</td><td class="col-type">TEXT NOT NULL</td><td class="col-note">price | discount | fresh_arrived. Default 'price'.</td></tr>
+            <tr><td class="col-name">target_price</td><td class="col-type">REAL</td><td class="col-note">Fires when deal price drops at or below this value.</td></tr>
+            <tr><td class="col-name">min_discount_pct</td><td class="col-type">REAL</td><td class="col-note">Fires when discount_percent &gt;= this value.</td></tr>
+            <tr><td class="col-name">target_store_id</td><td class="col-type">TEXT FK</td><td class="col-note">→ stores(id). Optional — alert scoped to a single store.</td></tr>
+            <tr><td class="col-name">triggered / last_triggered_at</td><td class="col-type">INTEGER / DATETIME</td><td class="col-note">De-duplication guard. triggered=1 means fired at least once.</td></tr>
+            <tr><td class="col-name">is_active</td><td class="col-type">INTEGER</td><td class="col-note">1 = enabled. 0 = user paused. Only active alerts are evaluated.</td></tr>
+          </tbody>
+        </table>
+      </div>
+      <div class="section">
+        <div class="section-title">Tables That Reference This</div>
+        <table class="fk-table">
+          <thead><tr><th>Child Table</th><th>FK Column</th><th>On Delete</th></tr></thead>
+          <tbody>
+            <tr><td class="fk-child">alert_notifications</td><td class="fk-col">alert_id</td><td class="fk-cascade cascade-yes">CASCADE</td></tr>
+          </tbody>
+        </table>
+      </div>
+      <div class="section">
+        <div class="section-title">Risks & Notes</div>
+        <div class="callout callout-amber">
+          <strong>⚠ fresh_arrived is dormant</strong>
+          fresh_arrived alert type requires a store webhook_secret to be set. No store has activated this yet — it's a commercial dependency, not a code gap.
+        </div>
+      </div>
+    </div>
+
+    <!-- ── ALERT_NOTIFICATIONS ── -->
+    <div id="view-alert_notifications" class="table-view">
+      <div class="tv-header">
+        <div class="tv-breadcrumb">core deals</div>
+        <div class="tv-name">alert_notifications</div>
+        <div class="tv-sub">Outbound notification records generated when a price_alerts rule fires. One row per send attempt — tracks delivery status and provider response.</div>
+        <div class="badge-row">
+          <span class="badge badge-green">PK: INTEGER AUTOINCREMENT</span>
+          <span class="badge badge-amber">sent_status: queued | sent | failed</span>
+          <span class="badge badge-blue">Dual CASCADE</span>
+        </div>
+      </div>
+      <div class="section">
+        <div class="section-title">Key Columns</div>
+        <table class="col-table">
+          <thead><tr><th>Column</th><th>Type</th><th>Notes</th></tr></thead>
+          <tbody>
+            <tr><td class="col-name">alert_id</td><td class="col-type">INTEGER FK</td><td class="col-note">→ price_alerts(id) CASCADE. Notifications deleted when alert rule is deleted.</td></tr>
+            <tr><td class="col-name">user_id</td><td class="col-type">TEXT FK</td><td class="col-note">→ users(id) CASCADE. Notifications deleted when user account is deleted.</td></tr>
+            <tr><td class="col-name">trigger_context</td><td class="col-type">TEXT</td><td class="col-note">JSON snapshot of the deal/price that triggered the alert. Audit trail.</td></tr>
+            <tr><td class="col-name">sent_to</td><td class="col-type">TEXT</td><td class="col-note">Recipient address (email or push token) at send time.</td></tr>
+            <tr><td class="col-name">sent_status</td><td class="col-type">TEXT</td><td class="col-note">queued | sent | failed. Default 'queued'. Retry candidates: failed rows.</td></tr>
+            <tr><td class="col-name">provider_message</td><td class="col-type">TEXT</td><td class="col-note">Raw response from email/push provider. Useful for debugging delivery failures.</td></tr>
+          </tbody>
+        </table>
+      </div>
+      <div class="section">
+        <div class="section-title">Risks & Notes</div>
+        <div class="callout callout-blue">
+          <strong>ℹ Delivery Audit</strong>
+          Keep failed rows and provider_message intact. They are the only record of what went wrong if a user reports a missed alert. Do not purge without archiving.
+        </div>
+      </div>
+    </div>
+
+    <!-- ── BRAND_REMAP_JOBS ── -->
+    <div id="view-brand_remap_jobs" class="table-view">
+      <div class="tv-header">
+        <div class="tv-breadcrumb">entity resolution</div>
+        <div class="tv-name">brand_remap_jobs</div>
+        <div class="tv-sub">Async job tracking for brand remapping operations. One row per job run — records start/finish time, status, and stats payload.</div>
+        <div class="badge-row">
+          <span class="badge badge-green">PK: INTEGER AUTOINCREMENT</span>
+          <span class="badge badge-amber">status: running | completed | failed</span>
+        </div>
+      </div>
+      <div class="section">
+        <div class="section-title">Key Columns</div>
+        <table class="col-table">
+          <thead><tr><th>Column</th><th>Type</th><th>Notes</th></tr></thead>
+          <tbody>
+            <tr><td class="col-name">status</td><td class="col-type">TEXT NOT NULL</td><td class="col-note">running | completed | failed. CHECK constraint enforced in DB.</td></tr>
+            <tr><td class="col-name">started_at</td><td class="col-type">DATETIME</td><td class="col-note">Default CURRENT_TIMESTAMP.</td></tr>
+            <tr><td class="col-name">finished_at</td><td class="col-type">DATETIME</td><td class="col-note">NULL while running. Set on completion or failure.</td></tr>
+            <tr><td class="col-name">stats</td><td class="col-type">TEXT (JSON)</td><td class="col-note">Job output summary — counts of remapped, skipped, errored rows.</td></tr>
+            <tr><td class="col-name">error</td><td class="col-type">TEXT</td><td class="col-note">Error message if status=failed.</td></tr>
+          </tbody>
+        </table>
+      </div>
+      <div class="section">
+        <div class="section-title">Risks & Notes</div>
+        <div class="callout callout-blue">
+          <strong>ℹ Admin Dashboard Source</strong>
+          The admin brand-remap UI reads this table to show job history and progress. A stuck running row (finished_at still NULL after timeout) indicates a crashed job — handle with a cleanup cron or manual reset.
+        </div>
+      </div>
+    </div>
+
+    <!-- ── PRODUCT_GROUPS ── -->
+    <div id="view-product_groups" class="table-view">
+      <div class="tv-header">
+        <div class="tv-breadcrumb">entity resolution</div>
+        <div class="tv-name">product_groups</div>
+        <div class="tv-sub">Cross-brand product groupings. Canonicals in the same group are considered substitutable — used to power Phase 3 "you might also try" suggestions and cross-brand basket comparison.</div>
+        <div class="badge-row">
+          <span class="badge badge-green">PK: id (TEXT slug)</span>
+          <span class="badge badge-amber">Referenced by canonical_products.product_group_id</span>
+        </div>
+      </div>
+      <div class="section">
+        <div class="section-title">Key Columns</div>
+        <table class="col-table">
+          <thead><tr><th>Column</th><th>Type</th><th>Notes</th></tr></thead>
+          <tbody>
+            <tr><td class="col-name">id</td><td class="col-type">TEXT PK</td><td class="col-note">Slug, typically derived from product token composition.</td></tr>
+            <tr><td class="col-name">group_name</td><td class="col-type">TEXT NOT NULL</td><td class="col-note">Human-readable group label e.g. "Soan Papdi".</td></tr>
+            <tr><td class="col-name">category</td><td class="col-type">TEXT</td><td class="col-note">Optional category tag for group-level filtering.</td></tr>
+          </tbody>
+        </table>
+      </div>
+      <div class="section">
+        <div class="section-title">Risks & Notes</div>
+        <div class="callout callout-blue">
+          <strong>ℹ No FK from canonical_products</strong>
+          canonical_products.product_group_id references this table by value only — no FK constraint. Deleting a product_groups row leaves orphaned product_group_id values on canonicals. Always update canonicals before deleting a group.
+        </div>
+      </div>
+    </div>
+
+    <!-- ── BOOTSTRAP_PRODUCT_QUEUE ── -->
+    <div id="view-bootstrap_product_queue" class="table-view">
+      <div class="tv-header">
+        <div class="tv-breadcrumb">entity resolution</div>
+        <div class="tv-name">bootstrap_product_queue</div>
+        <div class="tv-sub">Input pipeline for the canonical bootstrapping workflow. Distinct normalised product names awaiting AI-assisted canonical proposal. Feeds canonical_bootstrap_staging.</div>
+        <div class="badge-row">
+          <span class="badge badge-green">PK: INTEGER AUTOINCREMENT</span>
+          <span class="badge badge-amber">UNIQUE: norm_name</span>
+          <span class="badge badge-blue">status: pending | processing | done | skipped</span>
+        </div>
+      </div>
+      <div class="section">
+        <div class="section-title">Key Columns</div>
+        <table class="col-table">
+          <thead><tr><th>Column</th><th>Type</th><th>Notes</th></tr></thead>
+          <tbody>
+            <tr><td class="col-name">product_name</td><td class="col-type">TEXT NOT NULL</td><td class="col-note">Representative raw product name from the crawl data.</td></tr>
+            <tr><td class="col-name">norm_name</td><td class="col-type">TEXT NOT NULL UNIQUE</td><td class="col-note">Normalised form. The dedup key — prevents re-queueing the same product.</td></tr>
+            <tr><td class="col-name">status</td><td class="col-type">TEXT NOT NULL</td><td class="col-note">pending → processing → done | skipped. Controls batch pickup.</td></tr>
+            <tr><td class="col-name">source</td><td class="col-type">TEXT</td><td class="col-note">How this item entered the queue — e.g. "crawl", "manual".</td></tr>
+            <tr><td class="col-name">deal_count</td><td class="col-type">INTEGER</td><td class="col-note">Number of distinct deals with this norm_name. Higher = higher priority to resolve.</td></tr>
+            <tr><td class="col-name">processed_at</td><td class="col-type">DATETIME</td><td class="col-note">Set when status transitions to done/skipped.</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+    <!-- ── CANONICAL_BOOTSTRAP_STAGING ── -->
+    <div id="view-canonical_bootstrap_staging" class="table-view">
+      <div class="tv-header">
+        <div class="tv-breadcrumb">entity resolution</div>
+        <div class="tv-name">canonical_bootstrap_staging</div>
+        <div class="tv-sub">AI-proposed canonical product rows awaiting admin review before promotion to canonical_products. Each row is one AI suggestion for a batch of similar raw product names.</div>
+        <div class="badge-row">
+          <span class="badge badge-green">PK: INTEGER AUTOINCREMENT</span>
+          <span class="badge badge-amber">needs_review / promoted flags</span>
+          <span class="badge badge-blue">ai_confidence: high | medium | low</span>
+        </div>
+      </div>
+      <div class="section">
+        <div class="section-title">Key Columns</div>
+        <table class="col-table">
+          <thead><tr><th>Column</th><th>Type</th><th>Notes</th></tr></thead>
+          <tbody>
+            <tr><td class="col-name">batch_id / batch_item_id</td><td class="col-type">TEXT NOT NULL</td><td class="col-note">Groups rows from the same AI batch run. batch_item_id identifies the item within the batch.</td></tr>
+            <tr><td class="col-name">canonical_name</td><td class="col-type">TEXT NOT NULL</td><td class="col-note">AI-proposed canonical name. Subject to admin edit before promotion.</td></tr>
+            <tr><td class="col-name">brand / product_type / variant</td><td class="col-type">TEXT</td><td class="col-note">Decomposed canonical fields proposed by AI.</td></tr>
+            <tr><td class="col-name">category / weight_kg / weight_unit</td><td class="col-type">TEXT / REAL</td><td class="col-note">Additional structured fields.</td></tr>
+            <tr><td class="col-name">aliases</td><td class="col-type">TEXT (JSON)</td><td class="col-note">AI-proposed synonym list for matching. Review before promotion.</td></tr>
+            <tr><td class="col-name">ai_confidence</td><td class="col-type">TEXT NOT NULL</td><td class="col-note">high | medium | low. Low-confidence rows set needs_review=1 automatically.</td></tr>
+            <tr><td class="col-name">needs_review / review_note</td><td class="col-type">INTEGER / TEXT</td><td class="col-note">Admin review gate. review_note carries AI or admin commentary.</td></tr>
+            <tr><td class="col-name">promoted / promoted_canonical_id</td><td class="col-type">INTEGER / TEXT</td><td class="col-note">promoted=1 once admin approves and inserts into canonical_products. promoted_canonical_id is the resulting PK.</td></tr>
+          </tbody>
+        </table>
+      </div>
+      <div class="section">
+        <div class="section-title">Tables That Reference This</div>
+        <table class="fk-table">
+          <thead><tr><th>Child Table</th><th>FK Column</th><th>On Delete</th></tr></thead>
+          <tbody>
+            <tr><td class="fk-child">canonical_bootstrap_source_products</td><td class="fk-col">staging_id</td><td class="fk-cascade cascade-yes">CASCADE</td></tr>
+          </tbody>
+        </table>
+      </div>
+      <div class="section">
+        <div class="section-title">Risks & Notes</div>
+        <div class="callout callout-amber">
+          <strong>⚠ Never promote without review</strong>
+          AI proposals with ai_confidence=low or needs_review=1 must be human-reviewed before promotion. Automated promotion of these rows will pollute canonical_products and degrade matching quality.
+        </div>
+        <div class="callout callout-blue">
+          <strong>ℹ Staging is a holding area</strong>
+          Rows here are not live. They only affect production once promoted=1 and a corresponding canonical_products row is created. Safe to iterate on without impacting active matching.
+        </div>
+      </div>
+    </div>
+
+    <!-- ── CANONICAL_BOOTSTRAP_SOURCE_PRODUCTS ── -->
+    <div id="view-canonical_bootstrap_source_products" class="table-view">
+      <div class="tv-header">
+        <div class="tv-breadcrumb">entity resolution</div>
+        <div class="tv-name">canonical_bootstrap_source_products</div>
+        <div class="tv-sub">The raw deal evidence that informed an AI staging proposal. Links each canonical_bootstrap_staging row back to the actual deals that were grouped together to produce it.</div>
+        <div class="badge-row">
+          <span class="badge badge-green">PK: INTEGER AUTOINCREMENT</span>
+          <span class="badge badge-amber">CASCADE from canonical_bootstrap_staging</span>
+        </div>
+      </div>
+      <div class="section">
+        <div class="section-title">Key Columns</div>
+        <table class="col-table">
+          <thead><tr><th>Column</th><th>Type</th><th>Notes</th></tr></thead>
+          <tbody>
+            <tr><td class="col-name">staging_id</td><td class="col-type">INTEGER FK</td><td class="col-note">→ canonical_bootstrap_staging(id) CASCADE.</td></tr>
+            <tr><td class="col-name">deal_id</td><td class="col-type">TEXT NOT NULL</td><td class="col-note">Soft reference to deals(id). No FK — deal may be deactivated but row kept for audit.</td></tr>
+            <tr><td class="col-name">store_id / store_name</td><td class="col-type">TEXT NOT NULL / TEXT</td><td class="col-note">Store context at the time the bootstrap batch ran.</td></tr>
+            <tr><td class="col-name">raw_product_name</td><td class="col-type">TEXT NOT NULL</td><td class="col-note">Original product name from the deal. Preserved verbatim for audit.</td></tr>
+            <tr><td class="col-name">raw_category / raw_weight*</td><td class="col-type">TEXT / REAL</td><td class="col-note">Raw category and weight fields captured from the source deal.</td></tr>
+            <tr><td class="col-name">store_count_at_crawl</td><td class="col-type">INTEGER</td><td class="col-note">How many stores had this product when the bootstrap ran — signals cross-store relevance.</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+    <!-- ── WAITLIST_REFERRALS ── -->
+    <div id="view-waitlist_referrals" class="table-view">
+      <div class="tv-header">
+        <div class="tv-breadcrumb">users &amp; auth</div>
+        <div class="tv-name">waitlist_referrals</div>
+        <div class="tv-sub">Tracks referral chain: who invited whom. One row per successful referral claim. Both inviter and invited cascade on user deletion.</div>
+        <div class="badge-row">
+          <span class="badge badge-green">PK: INTEGER AUTOINCREMENT</span>
+          <span class="badge badge-amber">UNIQUE: invited_user_id</span>
+          <span class="badge badge-blue">Dual CASCADE</span>
+        </div>
+      </div>
+      <div class="section">
+        <div class="section-title">Key Columns</div>
+        <table class="col-table">
+          <thead><tr><th>Column</th><th>Type</th><th>Notes</th></tr></thead>
+          <tbody>
+            <tr><td class="col-name">inviter_user_id</td><td class="col-type">TEXT FK</td><td class="col-note">→ users(id) CASCADE. The user who shared the referral code.</td></tr>
+            <tr><td class="col-name">invited_user_id</td><td class="col-type">TEXT FK UNIQUE</td><td class="col-note">→ users(id) CASCADE. UNIQUE ensures one referral record per invited user.</td></tr>
+            <tr><td class="col-name">referral_code</td><td class="col-type">TEXT</td><td class="col-note">The code used at signup. Kept for audit even after claim.</td></tr>
+            <tr><td class="col-name">invited_email_snapshot</td><td class="col-type">TEXT</td><td class="col-note">Email at invite time — preserved even if user later changes email.</td></tr>
+            <tr><td class="col-name">claimed_at</td><td class="col-type">DATETIME</td><td class="col-note">When the referred user signed up.</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+    <!-- ── SHIPPING_TIERS ── -->
+    <div id="view-shipping_tiers" class="table-view">
+      <div class="tv-header">
+        <div class="tv-breadcrumb">users &amp; auth</div>
+        <div class="tv-name">shipping_tiers</div>
+        <div class="tv-sub">Basket-value-based shipping cost brackets per store. Multiple tiers per store define the stepped shipping cost curve — e.g. €3.99 under €20, free over €50.</div>
+        <div class="badge-row">
+          <span class="badge badge-green">PK: INTEGER AUTOINCREMENT</span>
+          <span class="badge badge-amber">No FK cascade from stores</span>
+          <span class="badge badge-blue">Denormalised in stores.free_shipping_min</span>
+        </div>
+      </div>
+      <div class="section">
+        <div class="section-title">Key Columns</div>
+        <table class="col-table">
+          <thead><tr><th>Column</th><th>Type</th><th>Notes</th></tr></thead>
+          <tbody>
+            <tr><td class="col-name">store_id</td><td class="col-type">TEXT FK</td><td class="col-note">→ stores(id). No cascade — manual cleanup required if store is removed.</td></tr>
+            <tr><td class="col-name">min_basket / max_basket</td><td class="col-type">REAL</td><td class="col-note">Basket value range for this tier. max_basket NULL = no upper limit (free shipping).</td></tr>
+            <tr><td class="col-name">cost</td><td class="col-type">REAL NOT NULL</td><td class="col-note">Shipping cost in €. 0.0 = free shipping tier.</td></tr>
+            <tr><td class="col-name">updated_at</td><td class="col-type">DATETIME</td><td class="col-note">Last update timestamp. Used for cache invalidation.</td></tr>
+          </tbody>
+        </table>
+      </div>
+      <div class="section">
+        <div class="section-title">Risks & Notes</div>
+        <div class="callout callout-amber">
+          <strong>⚠ Denormalised copy in stores</strong>
+          stores.free_shipping_min is a convenience copy. Keep it in sync manually when shipping tiers change — no trigger or constraint enforces consistency.
+        </div>
+      </div>
+    </div>
+
+    <!-- ── DELIVERY_OPTIONS ── -->
+    <div id="view-delivery_options" class="table-view">
+      <div class="tv-header">
+        <div class="tv-breadcrumb">users &amp; auth</div>
+        <div class="tv-name">delivery_options</div>
+        <div class="tv-sub">Per-store delivery method definitions — same-day, next-day, scheduled, etc. Each row is one delivery method offered by a store. Powers Phase 3 basket checkout delivery selection.</div>
+        <div class="badge-row">
+          <span class="badge badge-green">PK: INTEGER AUTOINCREMENT</span>
+          <span class="badge badge-amber">delivery_type: same_day | next_day | scheduled</span>
+          <span class="badge badge-blue">eligible_postcodes / eligible_cities filter zones</span>
+        </div>
+      </div>
+      <div class="section">
+        <div class="section-title">Key Columns</div>
+        <table class="col-table">
+          <thead><tr><th>Column</th><th>Type</th><th>Notes</th></tr></thead>
+          <tbody>
+            <tr><td class="col-name">store_id</td><td class="col-type">TEXT FK</td><td class="col-note">→ stores(id). No cascade.</td></tr>
+            <tr><td class="col-name">delivery_type</td><td class="col-type">TEXT NOT NULL</td><td class="col-note">same_day | next_day | scheduled. Determines UI presentation.</td></tr>
+            <tr><td class="col-name">label</td><td class="col-type">TEXT NOT NULL</td><td class="col-note">User-facing label e.g. "Same Day Delivery (by 9pm)".</td></tr>
+            <tr><td class="col-name">surcharge</td><td class="col-type">REAL</td><td class="col-note">Extra cost on top of shipping tier. Default 0.</td></tr>
+            <tr><td class="col-name">cutoff_time / cutoff_timezone</td><td class="col-type">TEXT</td><td class="col-note">Order cutoff for same-day eligibility. Default Europe/Berlin.</td></tr>
+            <tr><td class="col-name">eligible_postcodes / eligible_cities</td><td class="col-type">TEXT (JSON)</td><td class="col-note">Zone filters. NULL = no restriction. Used to filter delivery options by user postcode.</td></tr>
+            <tr><td class="col-name">min_basket</td><td class="col-type">REAL</td><td class="col-note">Minimum basket value to unlock this delivery option.</td></tr>
+            <tr><td class="col-name">available_days</td><td class="col-type">TEXT (JSON)</td><td class="col-note">e.g. ["Mon","Tue","Wed"]. Days this option is offered.</td></tr>
+            <tr><td class="col-name">estimated_hours / estimated_days</td><td class="col-type">INTEGER</td><td class="col-note">Display estimate for the user. Only one should be set per row.</td></tr>
+            <tr><td class="col-name">is_active</td><td class="col-type">INTEGER</td><td class="col-note">1 = currently offered. 0 = temporarily unavailable.</td></tr>
+          </tbody>
+        </table>
+      </div>
+      <div class="section">
+        <div class="section-title">Risks & Notes</div>
+        <div class="callout callout-amber">
+          <strong>⚠ Zone filtering is JSON string-match only</strong>
+          eligible_postcodes is a JSON array stored as TEXT. Matching against user postcode requires JSON parsing on read — no index possible. For large postcode lists, consider normalising to a child table.
+        </div>
+      </div>
+    </div>
+
+  </main>
+</div>
+
+<script>
+  // ── show/hide ──────────────────────────────────────────────
+  function show(id, btn) {
+    document.querySelectorAll('.table-view').forEach(v => v.classList.remove('active'));
+    document.querySelectorAll('.table-btn').forEach(b => b.classList.remove('active'));
+    const welcome = document.getElementById('view-welcome');
+    if (welcome) welcome.style.display = 'none';
+    const view = document.getElementById('view-' + id);
+    if (view) view.classList.add('active');
+    if (btn) btn.classList.add('active');
+    if (id === 'overview') { setTimeout(drawArch, 60); }
+  }
+
+  // ── Architecture diagram ────────────────────────────────────
+  const TABLES = [
+    // Core deals
+    { id:'deals',                  x:20,  y:30,  w:155, h:52, group:'core',       label:'deals',                  sub:'Core listings' },
+    { id:'stores',                 x:20,  y:120, w:155, h:52, group:'core',       label:'stores',                 sub:'27+ stores' },
+    { id:'deal_price_history',     x:20,  y:210, w:155, h:52, group:'core',       label:'deal_price_history',     sub:'Price audit log' },
+    { id:'bookmarks',              x:20,  y:300, w:155, h:52, group:'core',       label:'bookmarks',              sub:'Saved deals' },
+    { id:'shopping_lists',         x:20,  y:390, w:155, h:52, group:'core',       label:'shopping_lists',         sub:'User lists' },
+    { id:'price_alerts',           x:20,  y:480, w:155, h:52, group:'core',       label:'price_alerts',           sub:'Alert defs' },
+    // Crawl engine
+    { id:'crawl_runs',             x:205, y:30,  w:155, h:52, group:'crawl',      label:'crawl_runs',             sub:'Crawl metadata' },
+    { id:'crawl_store_results',    x:205, y:120, w:155, h:52, group:'crawl',      label:'crawl_store_results',    sub:'Per-store outcome' },
+    { id:'crawl_locks',            x:205, y:210, w:155, h:52, group:'crawl',      label:'crawl_locks',            sub:'Distributed lock' },
+    { id:'job_runs',               x:205, y:300, w:155, h:52, group:'crawl',      label:'job_runs',               sub:'Job ledger' },
+    // Entity resolution
+    { id:'canonical_products',     x:390, y:30,  w:165, h:52, group:'resolution', label:'canonical_products',     sub:'Product identities' },
+    { id:'deal_mappings',          x:390, y:120, w:165, h:52, group:'resolution', label:'deal_mappings',          sub:'Deal→canonical' },
+    { id:'entity_resolution_queue',x:390, y:210, w:165, h:52, group:'resolution', label:'entity_res_queue',       sub:'Admin review' },
+    { id:'known_brands',           x:390, y:300, w:165, h:52, group:'resolution', label:'known_brands',           sub:'Brand registry' },
+    { id:'brand_remap_jobs',       x:390, y:390, w:165, h:52, group:'resolution', label:'brand_remap_jobs',       sub:'Async remap' },
+    { id:'product_groups',         x:390, y:480, w:165, h:52, group:'resolution', label:'product_groups',         sub:'Cross-brand groups' },
+    // Users & auth
+    { id:'users',                  x:585, y:30,  w:160, h:52, group:'users',      label:'users',                  sub:'Shoppers & admins' },
+    { id:'email_auth_tokens',      x:585, y:120, w:160, h:52, group:'users',      label:'email_auth_tokens',      sub:'Passwordless tokens' },
+    { id:'refresh_tokens',         x:585, y:210, w:160, h:52, group:'users',      label:'refresh_tokens',         sub:'JWT sessions' },
+    { id:'waitlist_referrals',     x:585, y:300, w:160, h:52, group:'users',      label:'waitlist_referrals',     sub:'Referral claims' },
+    { id:'shipping_tiers',         x:585, y:390, w:160, h:52, group:'users',      label:'shipping_tiers',         sub:'Shipping brackets' },
+    { id:'delivery_options',       x:585, y:480, w:160, h:52, group:'users',      label:'delivery_options',       sub:'Delivery methods' },
+    // Analytics
+    { id:'events',                 x:205, y:390, w:155, h:52, group:'analytics',  label:'events',                 sub:'Event log' },
+    { id:'search_queries',         x:205, y:480, w:155, h:52, group:'analytics',  label:'search_queries',         sub:'Search analytics' },
+    { id:'app_settings',           x:205, y:570, w:155, h:52, group:'analytics',  label:'app_settings',           sub:'KV config' },
+    // New tables
+    { id:'alert_notifications',                   x:20,  y:570, w:155, h:52, group:'core',       label:'alert_notifications',      sub:'Sent notifications' },
+    { id:'list_items',                            x:20,  y:660, w:155, h:52, group:'core',       label:'list_items',               sub:'List line items' },
+    { id:'bootstrap_product_queue',               x:390, y:570, w:165, h:52, group:'resolution', label:'bootstrap_queue',          sub:'Bootstrap pipeline' },
+    { id:'canonical_bootstrap_staging',           x:390, y:660, w:165, h:52, group:'resolution', label:'cb_staging',               sub:'AI-proposed canonicals' },
+    { id:'canonical_bootstrap_source_products',   x:390, y:750, w:165, h:52, group:'resolution', label:'cb_source_products',       sub:'Source deal refs' },
+  ];
+
+  const EDGES = [
+    { from:'deals',                  to:'stores',              cascade:false },
+    { from:'deals',                  to:'crawl_runs',          cascade:false },
+    { from:'deals',                  to:'canonical_products',  cascade:false },
+    { from:'deal_price_history',     to:'stores',              cascade:false },
+    { from:'deal_price_history',     to:'crawl_runs',          cascade:false },
+    { from:'crawl_store_results',    to:'crawl_runs',          cascade:true  },
+    { from:'crawl_store_results',    to:'stores',              cascade:false },
+    { from:'deal_mappings',          to:'deals',               cascade:true  },
+    { from:'deal_mappings',          to:'canonical_products',  cascade:true  },
+    { from:'entity_resolution_queue',to:'deals',               cascade:true  },
+    { from:'entity_resolution_queue',to:'canonical_products',  cascade:false },
+    { from:'refresh_tokens',         to:'users',               cascade:true  },
+    { from:'shopping_lists',         to:'users',               cascade:true  },
+    { from:'bookmarks',              to:'users',               cascade:true  },
+    { from:'bookmarks',              to:'deals',               cascade:true  },
+    { from:'price_alerts',           to:'users',               cascade:true  },
+    { from:'price_alerts',           to:'stores',              cascade:false },
+    { from:'shipping_tiers',         to:'stores',              cascade:false },
+    { from:'delivery_options',       to:'stores',              cascade:false },
+    { from:'events',                 to:'users',               cascade:false },
+    { from:'search_queries',         to:'users',               cascade:false },
+    { from:'alert_notifications', to:'price_alerts', cascade:true },
+    { from:'alert_notifications', to:'users',        cascade:true },
+    { from:'list_items',          to:'shopping_lists', cascade:true },
+    { from:'canonical_bootstrap_source_products', to:'canonical_bootstrap_staging', cascade:true },
+    { from:'waitlist_referrals',  to:'users',        cascade:true },
+  ];
+
+  const byId = {};
+  TABLES.forEach(t => byId[t.id] = t);
+
+  const GROUP_COLORS = {
+    core:       { fill:'rgba(22,163,74,0.08)',   stroke:'#16a34a', text:'#4ade80', sub:'#166534' },
+    crawl:      { fill:'rgba(59,130,246,0.08)',  stroke:'#3b82f6', text:'#60a5fa', sub:'#1e3a5f' },
+    resolution: { fill:'rgba(245,158,11,0.08)', stroke:'#f59e0b', text:'#fbbf24', sub:'#78350f' },
+    users:      { fill:'rgba(168,85,247,0.08)', stroke:'#a855f7', text:'#c084fc', sub:'#581c87' },
+    analytics:  { fill:'rgba(100,116,139,0.1)', stroke:'#64748b', text:'#94a3b8', sub:'#1e293b' },
+  };
+
+  const GROUPS_MAP = {
+    core:['deals','stores','deal_price_history','bookmarks','shopping_lists','price_alerts','list_items','alert_notifications'],
+    crawl:['crawl_runs','crawl_store_results','crawl_locks','job_runs'],
+    resolution:['canonical_products','deal_mappings','entity_resolution_queue','known_brands','brand_remap_jobs','product_groups','bootstrap_product_queue','canonical_bootstrap_staging','canonical_bootstrap_source_products'],
+    users:['users','email_auth_tokens','refresh_tokens','waitlist_referrals','shipping_tiers','delivery_options'],
+    analytics:['events','search_queries','app_settings'],
+  };
+
+  let activeFilter = 'all';
+  let hoveredTable = null;
+
+  function isVisible(t) {
+    if (activeFilter === 'all') return true;
+    return GROUPS_MAP[activeFilter] && GROUPS_MAP[activeFilter].includes(t.id);
+  }
+
+  function cx(t){ return t.x + t.w/2; }
+  function cy(t){ return t.y + t.h/2; }
+
+  function edgePoints(from, to) {
+    const fc = {x:cx(from),y:cy(from)};
+    const tc = {x:cx(to),y:cy(to)};
+    const dx = tc.x-fc.x, dy = tc.y-fc.y;
+    const horiz = Math.abs(dx) > Math.abs(dy);
+    let sx,sy,ex,ey;
+    if (horiz) {
+      sx = dx>0 ? from.x+from.w : from.x; sy = fc.y;
+      ex = dx>0 ? to.x : to.x+to.w;       ey = tc.y;
+    } else {
+      sx = fc.x; sy = dy>0 ? from.y+from.h : from.y;
+      ex = tc.x; ey = dy>0 ? to.y : to.y+to.h;
+    }
+    return {sx,sy,ex,ey};
+  }
+
+  function drawArrow(ctx, ex, ey, sx, sy) {
+    const angle = Math.atan2(ey-sy, ex-sx);
+    const len = 7;
+    ctx.beginPath();
+    ctx.moveTo(ex, ey);
+    ctx.lineTo(ex - len*Math.cos(angle-0.38), ey - len*Math.sin(angle-0.38));
+    ctx.moveTo(ex, ey);
+    ctx.lineTo(ex - len*Math.cos(angle+0.38), ey - len*Math.sin(angle+0.38));
+    ctx.stroke();
+  }
+
+  function drawArch() {
+    const canvas = document.getElementById('arch-canvas');
+    if (!canvas) return;
+    const PR = window.devicePixelRatio || 1;
+    const W = 770, H = 840;
+    canvas.style.width = W+'px';
+    canvas.style.height = H+'px';
+    canvas.width = W*PR;
+    canvas.height = H*PR;
+    const ctx = canvas.getContext('2d');
+    ctx.scale(PR, PR);
+
+    ctx.clearRect(0,0,W,H);
+    ctx.fillStyle = '#0a0c0f';
+    ctx.fillRect(0,0,W,H);
+
+    // edges
+    EDGES.forEach(e => {
+      const from = byId[e.from], to = byId[e.to];
+      if (!from || !to) return;
+      if (!isVisible(from) || !isVisible(to)) return;
+      const isHov = hoveredTable && (hoveredTable.id===e.from || hoveredTable.id===e.to);
+      const {sx,sy,ex,ey} = edgePoints(from, to);
+      ctx.globalAlpha = isHov ? 0.9 : (hoveredTable ? 0.08 : 0.28);
+      ctx.beginPath();
+      const mx=(sx+ex)/2, my=(sy+ey)/2;
+      if (Math.abs(sx-ex)>Math.abs(sy-ey)) {
+        ctx.moveTo(sx,sy); ctx.lineTo(mx,sy); ctx.lineTo(mx,ey); ctx.lineTo(ex,ey);
+      } else {
+        ctx.moveTo(sx,sy); ctx.lineTo(sx,my); ctx.lineTo(ex,my); ctx.lineTo(ex,ey);
+      }
+      const col = isHov ? (e.cascade ? '#4ade80' : '#f59e0b') : '#475569';
+      ctx.strokeStyle = col;
+      ctx.lineWidth = isHov ? 1.5 : 0.7;
+      ctx.setLineDash(e.cascade ? [] : [3,3]);
+      ctx.stroke();
+      ctx.setLineDash([]);
+      // arrowhead
+      ctx.lineWidth = isHov ? 1.5 : 0.8;
+      if (Math.abs(sx-ex)>Math.abs(sy-ey)) drawArrow(ctx,ex,ey,mx,ey);
+      else drawArrow(ctx,ex,ey,ex,my);
+      ctx.globalAlpha = 1;
+    });
+
+    // nodes
+    TABLES.forEach(t => {
+      const visible = isVisible(t);
+      ctx.globalAlpha = visible ? 1 : 0.1;
+      const c = GROUP_COLORS[t.group];
+      const isHov = hoveredTable && hoveredTable.id===t.id;
+
+      if (isHov) {
+        ctx.beginPath();
+        ctx.roundRect(t.x-3,t.y-3,t.w+6,t.h+6,10);
+        ctx.fillStyle = c.fill.replace('0.08','0.22');
+        ctx.fill();
+      }
+
+      ctx.beginPath();
+      ctx.roundRect(t.x,t.y,t.w,t.h,6);
+      ctx.fillStyle = c.fill;
+      ctx.fill();
+      ctx.strokeStyle = isHov ? c.text : c.stroke;
+      ctx.lineWidth = isHov ? 1.5 : 0.5;
+      ctx.stroke();
+
+      ctx.fillStyle = c.text;
+      ctx.font = `500 12px 'IBM Plex Mono', monospace`;
+      ctx.fillText(t.label, t.x+9, t.y+20);
+
+      ctx.fillStyle = '#475569';
+      ctx.font = `400 10px 'IBM Plex Mono', monospace`;
+      ctx.fillText(t.sub, t.x+9, t.y+37);
+
+      ctx.globalAlpha = 1;
+    });
+
+    // legend
+    const legendItems = [
+      {g:'core',label:'Core deals',col:'#16a34a'},
+      {g:'crawl',label:'Crawl engine',col:'#3b82f6'},
+      {g:'resolution',label:'Entity resolution',col:'#f59e0b'},
+      {g:'users',label:'Users & auth',col:'#a855f7'},
+      {g:'analytics',label:'Analytics',col:'#64748b'},
+    ];
+    let lx = 10, ly = H-12;
+    ctx.font = `400 10px 'IBM Plex Mono', monospace`;
+    legendItems.forEach(item => {
+      ctx.beginPath();
+      ctx.roundRect(lx, ly-9, 9, 9, 2);
+      ctx.fillStyle = item.col+'22';
+      ctx.fill();
+      ctx.strokeStyle = item.col;
+      ctx.lineWidth = 0.5;
+      ctx.stroke();
+      ctx.fillStyle = '#475569';
+      ctx.fillText(item.label, lx+13, ly);
+      lx += ctx.measureText(item.label).width + 28;
+    });
+
+    // cascade legend
+    ctx.globalAlpha = 0.5;
+    ctx.strokeStyle = '#4ade80'; ctx.lineWidth=1; ctx.setLineDash([]);
+    ctx.beginPath(); ctx.moveTo(W-160,H-10); ctx.lineTo(W-140,H-10); ctx.stroke();
+    ctx.fillStyle='#475569'; ctx.font=`400 10px 'IBM Plex Mono',monospace`;
+    ctx.fillText('CASCADE',W-136,H-6);
+    ctx.strokeStyle='#f59e0b'; ctx.setLineDash([3,3]);
+    ctx.beginPath(); ctx.moveTo(W-75,H-10); ctx.lineTo(W-55,H-10); ctx.stroke();
+    ctx.setLineDash([]);
+    ctx.fillText('no action',W-51,H-6);
+    ctx.globalAlpha=1;
+  }
+
+  function setFilter(f) {
+    activeFilter = f;
+    ['all','core','res','crawl','users','anal'].forEach(k => {
+      const el = document.getElementById('f-'+k);
+      if (el) el.style.color = '#475569';
+    });
+    const map = {all:'f-all',core:'f-core',resolution:'f-res',crawl:'f-crawl',users:'f-users',analytics:'f-anal'};
+    const el = document.getElementById(map[f]);
+    if (el) el.style.color = '#16a34a';
+    drawArch();
+  }
+
+  // Canvas mouse events
+  document.addEventListener('DOMContentLoaded', () => {
+    const canvas = document.getElementById('arch-canvas');
+    const tip = document.getElementById('arch-tip');
+    if (!canvas) return;
+
+    function getHit(e) {
+      const rect = canvas.getBoundingClientRect();
+      const scaleX = 770 / rect.width;
+      const mx = (e.clientX - rect.left) * scaleX;
+      const my = (e.clientY - rect.top) * scaleX;
+      return TABLES.find(t => mx>=t.x && mx<=t.x+t.w && my>=t.y && my<=t.y+t.h && isVisible(t));
+    }
+
+    canvas.addEventListener('mousemove', e => {
+      const hit = getHit(e);
+      hoveredTable = hit || null;
+      canvas.style.cursor = hit ? 'pointer' : 'default';
+      drawArch();
+      if (hit) {
+        tip.style.opacity = '1';
+        const rect = canvas.getBoundingClientRect();
+        const tx = Math.min(e.clientX - rect.left + 12, rect.width - 230);
+        const ty = Math.min(e.clientY - rect.top + 12, rect.height - 80);
+        tip.style.left = tx+'px';
+        tip.style.top = ty+'px';
+        const connCount = EDGES.filter(edge => edge.from===hit.id||edge.to===hit.id).length;
+        tip.innerHTML = `<strong style="color:#e2e8f0;display:block;margin-bottom:3px">${hit.label}</strong><span style="color:#64748b">${hit.sub}</span><br><span style="color:#475569;font-size:10px">${connCount} FK connection${connCount!==1?'s':''}</span>`;
+      } else {
+        tip.style.opacity = '0';
+      }
+    });
+
+    canvas.addEventListener('mouseleave', () => {
+      hoveredTable = null;
+      tip.style.opacity = '0';
+      drawArch();
+    });
+
+    canvas.addEventListener('click', e => {
+      const hit = getHit(e);
+      if (!hit) return;
+      const btn = document.querySelector(`[data-table="${hit.id}"]`);
+      show(hit.id, btn);
+    });
+
+    // initial draw (overview is active by default)
+    drawArch();
+
+    // mark overview btn active
+    const ovBtn = document.querySelector('[data-table="overview"]');
+    if (ovBtn) ovBtn.classList.add('active');
+    setFilter('all');
+  });
+</script>
+</body>
+</html>
