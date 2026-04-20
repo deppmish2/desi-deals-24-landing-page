@@ -16,7 +16,8 @@ const ACTIVE_DEALS_WITH_CANONICAL_SQL = `
          d.price_per_kg, d.currency, d.availability, d.bulk_pricing,
          d.best_before,
          cp.canonical_name AS cp_canonical_name,
-         cp.category AS cp_category
+         cp.category AS cp_category,
+         cp.base_product_slots AS cp_base_product_slots
   FROM deals d
   JOIN stores s ON s.id = d.store_id
   JOIN canonical_products cp ON cp.id = d.canonical_id
@@ -38,24 +39,54 @@ function parseWeight(value, raw) {
   return m ? parseFloat(m[1].replace(",", ".")) : null;
 }
 
+// T2: exact set equality of product token slots (cross-brand same-spec matching).
+// srcSlotSet is pre-computed as a flat Set from src.base_product_slots.
+function baseProductSlotsMatch(srcSlotSet, candSlotsJson) {
+  if (!srcSlotSet || !candSlotsJson) return false;
+  const candSet = new Set(JSON.parse(candSlotsJson).flat());
+  if (srcSlotSet.size !== candSet.size) return false;
+  for (const v of srcSlotSet) if (!candSet.has(v)) return false;
+  return true;
+}
+
+// T3: subset check — catches same-product variants (e.g. "Urid Flour" ↔ "Urid Flour Roasted")
+// for brands not in the CSV catalog. One slot set must be fully contained in the other.
+function baseProductSlotsSubset(srcSlotSet, candSlotsJson) {
+  if (!srcSlotSet || !candSlotsJson) return false;
+  const candSet = new Set(JSON.parse(candSlotsJson).flat());
+  const srcInCand = [...srcSlotSet].every((v) => candSet.has(v));
+  const candInSrc = [...candSet].every((v) => srcSlotSet.has(v));
+  return srcInCand || candInSrc;
+}
+
+// Bug fix: use epsilon-based ratio check to avoid float modulo errors (e.g. 0.3 % 0.1 === 0.09999...)
 function sizeCompatible(srcWeight, candWeight) {
   if (!srcWeight || !candWeight) return true;
   if (candWeight > srcWeight) return false;
-  return srcWeight % candWeight === 0;
+  const ratio = srcWeight / candWeight;
+  return Math.abs(Math.round(ratio) - ratio) < 0.01;
 }
 
 async function getReplacements(db, { canonicalId, storeId, dealId = null }) {
   const src = await db
     .prepare(
-      `SELECT id, canonical_name, category FROM canonical_products WHERE id = ? LIMIT 1`
+      `SELECT id, canonical_name, category, weight_value, weight_unit, base_product_slots, brand_slots FROM canonical_products WHERE id = ? LIMIT 1`
     )
     .get(canonicalId);
   if (!src) return null;
 
   const srcBase = resolveBaseProduct(src.canonical_name);
   const srcBaseKey = srcBase?.base_key ?? null;
-  const srcBrand = srcBaseKey
+  const srcBrandFromCatalog = srcBaseKey
     ? detectBrandForBase(src.canonical_name, srcBaseKey)
+    : null;
+  // Fall back to brand_slots when the CSV catalog doesn't know this brand
+  // (e.g. Anjappar — in known_brands/brand_slots but absent from the product catalog).
+  const srcBrand = srcBrandFromCatalog
+    ?? (src.brand_slots ? (JSON.parse(src.brand_slots)[0]?.[0] ?? null) : null);
+  const srcBrandFromCatalogOnly = !!srcBrandFromCatalog;
+  const srcBaseSlots = src.base_product_slots
+    ? new Set(JSON.parse(src.base_product_slots).flat())
     : null;
 
   const rows = await db.prepare(ACTIVE_DEALS_WITH_CANONICAL_SQL).all(storeId);
@@ -66,7 +97,11 @@ async function getReplacements(db, { canonicalId, storeId, dealId = null }) {
     t4 = [];
   const seen = new Set();
   const srcRow = dealId ? rows.find((r) => r.id === dealId) : null;
-  const srcWeightValue = srcRow ? parseWeight(srcRow.weight_value, srcRow.weight_raw) : null;
+  // Bug fix: fall back to canonical_products.weight_value when no dealId is provided,
+  // so T1 "different size" check and sizeCompatible() work without a specific source deal.
+  const srcWeightValue = srcRow
+    ? parseWeight(srcRow.weight_value, srcRow.weight_raw)
+    : (src.weight_value ?? null);
 
   for (const row of rows) {
     if (dealId && row.id === dealId) continue;
@@ -76,46 +111,63 @@ async function getReplacements(db, { canonicalId, storeId, dealId = null }) {
     const candBase = resolveBaseProduct(row.cp_canonical_name);
     const cKey = row.canonical_id;
 
-    // T1: same brand + same base product + different size (different canonical, different weight)
+    // T1: same brand + same exact product spec + different size.
+    // Uses exact base_product_slots match so variants (split vs whole) don't qualify —
+    // only true size variants of identical product spec (e.g. 500g vs 1kg of same item).
+    const sameSpec = srcBaseSlots
+      ? baseProductSlotsMatch(srcBaseSlots, row.cp_base_product_slots)
+      : (srcBaseKey && candBase?.base_key === srcBaseKey);
     if (
-      srcBaseKey &&
       srcBrand &&
-      candBase?.base_key === srcBaseKey &&
+      sameSpec &&
       row.canonical_id !== canonicalId &&
       (srcWeightValue === null || parseWeight(row.weight_value, row.weight_raw) !== srcWeightValue) &&
       sizeCompatible(srcWeightValue, parseWeight(row.weight_value, row.weight_raw)) &&
       nameHasBrand(row.product_name, srcBrand) &&
       !seen.has(`t1:${cKey}`)
     ) {
-      const candBrand = detectBrandForBase(row.cp_canonical_name, candBase.base_key);
-      if (candBrand && candBrand === srcBrand) {
+      const candBrand = candBase?.base_key
+        ? detectBrandForBase(row.cp_canonical_name, candBase.base_key)
+        : null;
+      const brandMatch = srcBrandFromCatalogOnly
+        ? (candBrand === srcBrand)
+        : nameHasBrand(row.product_name, srcBrand);
+      if (brandMatch) {
         t1.push(row);
         seen.add(`t1:${cKey}`);
         continue;
       }
     }
 
-    // T2: same canonical (same type + size), different brand/deal
-    // always skip same-canonical rows — never let them fall through to T3/T4
-    if (row.canonical_id === canonicalId) {
-      if (!seen.has(`t2:${cKey}`)) {
-        if (
-          (!srcBrand || !nameHasBrand(row.product_name, srcBrand)) &&
-          sizeCompatible(srcWeightValue, parseWeight(row.weight_value, row.weight_raw))
-        ) {
-          t2.push(row);
-        }
-        seen.add(`t2:${cKey}`);
-      }
+    // Skip same canonical — don't surface the same product as its own replacement.
+    if (row.canonical_id === canonicalId) continue;
+
+    // T2: cross-brand alternative for the same product spec.
+    // Match when base_product_slots token sets are identical (same product, different brand).
+    if (
+      srcBaseSlots &&
+      baseProductSlotsMatch(srcBaseSlots, row.cp_base_product_slots) &&
+      sizeCompatible(srcWeightValue, parseWeight(row.weight_value, row.weight_raw)) &&
+      !seen.has(`t2:${cKey}`)
+    ) {
+      t2.push(row);
+      seen.add(`t2:${cKey}`);
       continue;
     }
 
-    // T3: same brand, same category, different base product
-    if (srcBrand && sameCategory && nameHasBrand(row.product_name, srcBrand) && sizeCompatible(srcWeightValue, parseWeight(row.weight_value, row.weight_raw)) && !seen.has(`t3:${cKey}`)) {
+    // T3: same brand + same product group (variants like "extra long" vs "original").
+    // Product group matched via base_key (catalog brands) or slot overlap ≥60% (non-catalog brands).
+    const sameProductGroup =
+      (srcBaseKey && candBase?.base_key === srcBaseKey) ||
+      baseProductSlotsSubset(srcBaseSlots, row.cp_base_product_slots);
+    if (srcBrand && sameProductGroup && nameHasBrand(row.product_name, srcBrand) && sizeCompatible(srcWeightValue, parseWeight(row.weight_value, row.weight_raw)) && !seen.has(`t3:${cKey}`)) {
       const candBrand = candBase?.base_key
         ? detectBrandForBase(row.cp_canonical_name, candBase.base_key)
         : null;
-      if (candBrand && candBrand === srcBrand) {
+      const t3BrandMatch = srcBrandFromCatalogOnly
+        ? (candBrand === srcBrand)
+        : nameHasBrand(row.cp_canonical_name, srcBrand);
+      if (t3BrandMatch) {
         t3.push(row);
         seen.add(`t3:${cKey}`);
         continue;
@@ -134,12 +186,11 @@ async function getReplacements(db, { canonicalId, storeId, dealId = null }) {
   t3.sort(byDiscountDesc);
   t4.sort(byDiscountDesc);
 
-
   const tiers = [];
   if (t1.length)
     tiers.push({ type: "same_pack", relevance: 1.0, deals: t1.slice(0, TIER_CAP) });
   if (t2.length)
-    tiers.push({ type: "same_base_product", relevance: 0.85, deals: t2.slice(0, TIER_CAP) });
+    tiers.push({ type: "same_spec", relevance: 0.85, deals: t2.slice(0, TIER_CAP) });
   if (t3.length)
     tiers.push({ type: "same_brand", relevance: 0.65, deals: t3.slice(0, TIER_CAP) });
   if (!t1.length && !t2.length && !t3.length && t4.length)

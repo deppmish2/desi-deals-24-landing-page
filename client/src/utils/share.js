@@ -96,3 +96,11 @@ export function buildWhatsAppDealShareText({
 export function buildWhatsAppDealShareUrl(payload) {
   return buildWhatsAppShareUrl(buildWhatsAppDealShareText(payload));
 }
+
+export function buildWhatsAppSuspectDiscountShareText({ dealId, productName, salePrice, storeName, storeDiscount, realSaving } = {}) {
+  const shareUrl = buildDealShareUrl(dealId);
+  const cleanStore = normalizeInlineText(storeName) || "This store";
+  const cleanName = normalizeInlineText(productName) || "this desi grocery deal";
+  const priceFormatted = Number(salePrice).toFixed(2);
+  return `⚠️ ${cleanStore} claims ${storeDiscount}% off. Real saving: ${realSaving}% vs market price.\n\n${cleanName} — ${priceFormatted} €\n\nSee what desi stores are actually charging:\n${shareUrl}`;
+}

@@ -29,9 +29,11 @@ export function formatTimeAgo(isoString) {
   return `${days}d ago`;
 }
 
-export function formatPricePerKg(ppkg) {
+export function formatPricePerKg(ppkg, weightUnit) {
   if (!ppkg) return null;
-  return `${formatPrice(ppkg)}/kg`;
+  const u = weightUnit?.toLowerCase();
+  const unit = (u === "ml" || u === "l") ? "L" : "kg";
+  return `${formatPrice(ppkg)}/${unit}`;
 }
 
 const MONTH_NAMES = [

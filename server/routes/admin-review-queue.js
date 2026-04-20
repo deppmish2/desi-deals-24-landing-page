@@ -371,9 +371,10 @@ router.post("/review-queue/:id/dismiss", async (req, res) => {
 router.get("/review-queue/canonical/:id/price-data", async (req, res) => {
   try {
     const { id } = req.params;
+    const { exclude_store_id } = req.query;
 
     const canonical = await db
-      .prepare("SELECT id, canonical_name, category FROM canonical_products WHERE id = ? LIMIT 1")
+      .prepare("SELECT id, canonical_name, category, base_product_slots FROM canonical_products WHERE id = ? LIMIT 1")
       .get(id);
     if (!canonical) return res.status(404).json({ error: "Canonical not found" });
 
@@ -410,6 +411,44 @@ router.get("/review-queue/canonical/:id/price-data", async (req, res) => {
       .prepare("SELECT COUNT(*) AS n FROM deals WHERE canonical_id = ?")
       .get(id);
 
+    // Same-spec alternatives at other stores (T2 cross-brand, cross-store)
+    let sameSpecAlts = [];
+    if (canonical.base_product_slots) {
+      const altParams = [canonical.base_product_slots, id];
+      if (exclude_store_id) altParams.push(exclude_store_id);
+      const altDeals = await db
+        .prepare(
+          `SELECT d.id, d.product_name, d.sale_price, d.discount_percent, d.weight_raw, d.product_url,
+                  s.id AS store_id, s.name AS store_name
+           FROM deals d
+           JOIN stores s ON s.id = d.store_id
+           JOIN canonical_products cp ON cp.id = d.canonical_id
+           WHERE cp.base_product_slots = ?
+             AND d.canonical_id != ?
+             AND d.is_active = 1
+             ${exclude_store_id ? "AND s.id != ?" : ""}
+           ORDER BY s.name ASC, d.sale_price ASC
+           LIMIT 60`,
+        )
+        .all(...altParams);
+
+      const altStoreMap = new Map();
+      for (const d of altDeals) {
+        if (!altStoreMap.has(d.store_id)) {
+          altStoreMap.set(d.store_id, { store_id: d.store_id, store_name: d.store_name, deals: [] });
+        }
+        altStoreMap.get(d.store_id).deals.push({
+          id: d.id,
+          product_name: d.product_name,
+          sale_price: d.sale_price,
+          discount_percent: d.discount_percent,
+          weight_raw: d.weight_raw,
+          product_url: d.product_url,
+        });
+      }
+      sameSpecAlts = [...altStoreMap.values()];
+    }
+
     res.json({
       canonical_id: id,
       canonical_name: canonical.canonical_name,
@@ -417,6 +456,7 @@ router.get("/review-queue/canonical/:id/price-data", async (req, res) => {
       stores,
       total_active: deals.length,
       total_all: totalAllRow.n,
+      same_spec_alts: sameSpecAlts,
     });
   } catch (err) {
     console.error("[review-queue] GET canonical price-data error:", err);

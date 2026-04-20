@@ -52,7 +52,7 @@ Categories: Rice & Grains, Flours & Baking, Lentils & Pulses, Spices & Masalas, 
 `crawler/utils/price-parser.js`:
 - `parsePrice(value)` — handles both English dot-decimal (`3.29`) and German comma-decimal (`3,29`)
 - `calcDiscount(salePrice, originalPrice)` — returns percent as a decimal (0–1 range) or null
-- `calcPricePerKg(price, weightValue, weightUnit)` — normalizes to kg; handles g, ml, l, pieces
+- `calcPricePerKg(price, weightValue, weightUnit)` — normalizes to kg for solids (g/kg) and to **litres for liquids (ml/l)**. Previously returned null for ml/l — fixed 2026-04-19. The field is named `price_per_kg` in the DB but stores price/L for liquid products; `weight_unit` distinguishes them at display time.
 
 ## Weight parsing
 

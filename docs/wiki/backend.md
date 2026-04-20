@@ -99,6 +99,24 @@ Accepts `{ brands: [{name, aliases}] }`. Steps:
 
 **Critical:** This runs synchronously within the HTTP request. Do **not** convert it back to a background async — Vercel kills background work when the response is sent. All prior stuck jobs (status='running' forever) were caused by the background-async pattern.
 
+## Deal serialization & enrichment
+
+`server/routes/deals.js → serializeDeal(row)` — converts a DB row to the API response shape. All deal list and detail responses pass through this.
+
+After serialization, every response path calls `batchGetRealSavings` + `computeRealSavings` and attaches two additional fields:
+
+| Field | Type | Description |
+|---|---|---|
+| `real_savings` | object \| null | Real savings data: `real_discount_pct`, `rating`, `reference_source`, `reference_price_per_kg` |
+| `real_savings_debug` | string \| null | Why `real_savings` is null (e.g. `"not_cheaper"`, `"no_history"`) |
+| `is_fake_deal` | boolean | `true` when `discount_percent - real_savings.real_discount_pct >= FAKE_DEAL_THRESHOLD_PP` |
+
+**`FAKE_DEAL_THRESHOLD_PP = 10`** — defined at top of `server/routes/deals.js`. A deal is "fake" when the store claims ≥10 percentage points more discount than the real saving vs market price. Used client-side to branch share copy, WA text, and DealSharePage headline.
+
+## DB connectivity
+
+`server/db/index.js` connects to **Turso** when `DESI_DEALS_DB_TURSO_DATABASE_URL` is present in env (including `.env.local` in local dev). Falls back to local SQLite (`./data/desiDeals24.db`) only when no Turso URL is set. **Important:** localhost dev typically runs against Turso, not the local SQLite file.
+
 ## Related pages
 
 - [Crawler](crawler.md) — the crawl pipeline called by the scheduler

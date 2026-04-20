@@ -124,7 +124,7 @@ function DealCard({ deal, onRemove }) {
     : null;
   const weightText = [
     deal.weight_raw || null,
-    deal.price_per_kg ? formatPricePerKg(deal.price_per_kg) : null,
+    deal.price_per_kg ? formatPricePerKg(deal.price_per_kg, deal.weight_unit) : null,
   ]
     .filter(Boolean)
     .join(" | ");

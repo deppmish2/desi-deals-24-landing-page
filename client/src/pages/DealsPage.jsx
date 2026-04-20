@@ -26,6 +26,7 @@ import {
   fetchDeals,
   fetchOAuthAuthUrl,
   fetchReplacements,
+  fetchSameProductOtherStores,
   getAuthSession,
   logoutUser,
   removeBookmark,
@@ -36,7 +37,7 @@ import {
 } from "../utils/dealsViewState.mjs";
 import { trackAnalyticsEvent } from "../utils/analytics";
 import { proxyDealImageUrl } from "../utils/images";
-import { buildDealPageUrl, buildWhatsAppDealShareUrl } from "../utils/share";
+import { buildDealPageUrl, buildWhatsAppDealShareUrl, buildWhatsAppShareUrl, buildWhatsAppSuspectDiscountShareText } from "../utils/share";
 
 const POST_AUTH_REDIRECT_STORAGE_KEY = "dd24_post_auth_redirect";
 const OAUTH_STATE_STORAGE_PREFIX = "dd24_oauth_state:";
@@ -418,14 +419,27 @@ function dealPermalink(dealId) {
 
 const TIER_LABELS = {
   same_pack: "Same product, different size",
+  same_spec: "Same product, other brands",
   same_base_product: "Same product, other brands",
   same_brand: "Same brand, other products",
   same_category: "More from this category",
 };
 
-function ReplacementDealRow({ deal, emphasisSize }) {
-  const discountPct = deal.discount_percent ? Math.round(deal.discount_percent) : null;
+function highlightDiffName(sourceName, targetName) {
+  const sourceTokens = new Set((sourceName || "").toLowerCase().split(/\s+/));
+  return targetName.split(/(\s+)/).map((part, i) => {
+    if (/^\s+$/.test(part)) return part;
+    return !sourceTokens.has(part.toLowerCase())
+      ? <strong key={i} className="font-bold text-slate-900">{part}</strong>
+      : <span key={i}>{part}</span>;
+  });
+}
+
+function ReplacementDealRow({ deal, emphasisSize, sourceName, sourcePricePerKg }) {
   const [imgErr, setImgErr] = React.useState(false);
+  const kgSavingPct = sourcePricePerKg && deal.price_per_kg != null
+    ? Math.round((sourcePricePerKg - deal.price_per_kg) / sourcePricePerKg * 100)
+    : null;
   return (
     <a
       href={deal.product_url}
@@ -445,32 +459,45 @@ function ReplacementDealRow({ deal, emphasisSize }) {
         <div className="w-12 h-12 rounded-lg bg-slate-50 shrink-0 flex items-center justify-center text-xl">🛒</div>
       )}
       <div className="flex-1 min-w-0">
-        <p className="text-[12px] font-semibold text-slate-800 line-clamp-2 leading-tight">{deal.product_name}</p>
-        {deal.weight_raw && (
-          <span
-            className={`inline-block mt-1 px-1.5 py-0.5 rounded text-[10px] font-bold ${
-              emphasisSize
-                ? "bg-amber-100 text-amber-700 border border-amber-300"
-                : "bg-slate-100 text-slate-500"
-            }`}
-          >
-            {deal.weight_raw}
-          </span>
+        <p className="text-[12px] font-normal text-slate-800 line-clamp-2 leading-tight">
+          {sourceName ? highlightDiffName(sourceName, deal.product_name) : deal.product_name}
+        </p>
+        {(deal.weight_raw || deal.price_per_kg != null) && (
+          <div className="flex items-center gap-1.5 mt-1 flex-wrap">
+            {deal.weight_raw && (
+              <span
+                className={`px-1.5 py-0.5 rounded text-[10px] font-bold ${
+                  emphasisSize
+                    ? "bg-amber-100 text-amber-700 border border-amber-300"
+                    : "bg-slate-100 text-slate-500"
+                }`}
+              >
+                {deal.weight_raw}
+              </span>
+            )}
+            {deal.price_per_kg != null && (
+              <span className="text-[10px] text-slate-400">{formatPricePerKg(deal.price_per_kg, deal.weight_unit)}</span>
+            )}
+          </div>
         )}
       </div>
       <div className="text-right shrink-0">
         <p className="text-[14px] font-extrabold text-slate-800">
           {deal.currency === "EUR" ? "€" : deal.currency}{Number(deal.sale_price).toFixed(2)}
         </p>
-        {discountPct > 0 && (
-          <p className="text-[10px] font-bold text-[#16a34a]">-{discountPct}%</p>
+        {kgSavingPct !== null && kgSavingPct !== 0 && (
+          <p className={`text-[10px] font-bold ${kgSavingPct > 0 ? "text-[#16a34a]" : "text-red-400"}`}>
+            {kgSavingPct > 0 ? `-${kgSavingPct}%` : `+${Math.abs(kgSavingPct)}%`}
+          </p>
         )}
       </div>
     </a>
   );
 }
 
-function ReplacementsModal({ sourceDeal, tiers, loading, onClose }) {
+function ReplacementsModal({ sourceDeal, tiers, loading, otherStores, isAdmin, onClose }) {
+  const [categoryExpanded, setCategoryExpanded] = React.useState(false);
+  const hasOtherStores = isAdmin && otherStores?.length > 0;
   return createPortal(
     <div
       className="fixed inset-0 z-50 flex items-end sm:items-center justify-center bg-black/40 backdrop-blur-sm"
@@ -484,6 +511,18 @@ function ReplacementsModal({ sourceDeal, tiers, loading, onClose }) {
           <div>
             <p className="text-[10px] font-extrabold uppercase tracking-[1.5px] text-slate-400">Other options at this store</p>
             <p className="text-[13px] font-bold text-slate-800 mt-0.5 line-clamp-1">{sourceDeal.product_name}</p>
+            {(sourceDeal.weight_raw || sourceDeal.price_per_kg != null) && (
+              <div className="flex items-center gap-1.5 mt-1 flex-wrap">
+                {sourceDeal.weight_raw && (
+                  <span className="px-1.5 py-0.5 rounded text-[10px] font-bold bg-slate-100 text-slate-500">
+                    {sourceDeal.weight_raw}
+                  </span>
+                )}
+                {sourceDeal.price_per_kg != null && (
+                  <span className="text-[10px] text-slate-400">{formatPricePerKg(sourceDeal.price_per_kg, sourceDeal.weight_unit)}</span>
+                )}
+              </div>
+            )}
           </div>
           <button
             type="button"
@@ -500,29 +539,122 @@ function ReplacementsModal({ sourceDeal, tiers, loading, onClose }) {
             <div className="flex justify-center py-10">
               <div className="w-6 h-6 border-2 border-[#16a34a] border-t-transparent rounded-full animate-spin" />
             </div>
-          ) : !tiers?.length ? (
-            <p className="text-center text-slate-400 text-[13px] py-10">No alternatives found at this store.</p>
           ) : (
-            tiers.map((tier) => (
-              <div key={tier.type} className="mb-5 last:mb-0">
-                <p className="text-[10px] font-extrabold uppercase tracking-[1.5px] text-slate-400 mb-2">
-                  {TIER_LABELS[tier.type] ?? tier.type}
-                </p>
-                <div className="flex flex-col gap-2">
-                  {tier.deals.map((d) => (
-                    <ReplacementDealRow
-                      key={d.id}
-                      deal={d}
-                      emphasisSize={
-                        d.weight_value != null && sourceDeal.weight_value != null
-                          ? d.weight_value !== sourceDeal.weight_value
-                          : d.weight_raw !== sourceDeal.weight_raw
-                      }
-                    />
-                  ))}
+            <>
+              {!tiers?.length ? (
+                <p className="text-center text-slate-400 text-[13px] py-6">No alternatives found at this store.</p>
+              ) : (
+                tiers.filter((t) => t.type !== "same_category").map((tier) => (
+                  <div key={tier.type} className="mb-5 last:mb-0">
+                    <button
+                      type="button"
+                      className="flex items-center gap-1 mb-2 w-full text-left cursor-default"
+                    >
+                      <p className="text-[10px] font-extrabold uppercase tracking-[1.5px] text-slate-400">
+                        {TIER_LABELS[tier.type] ?? tier.type}
+                      </p>
+                    </button>
+                    <div className="flex flex-col gap-2">
+                      {tier.deals.map((d) => (
+                        <ReplacementDealRow
+                          key={d.id}
+                          deal={d}
+                          sourceName={sourceDeal.product_name}
+                          sourcePricePerKg={sourceDeal.price_per_kg}
+                          emphasisSize={
+                            d.weight_value != null && sourceDeal.weight_value != null
+                              ? d.weight_value !== sourceDeal.weight_value
+                              : d.weight_raw !== sourceDeal.weight_raw
+                          }
+                        />
+                      ))}
+                    </div>
+                  </div>
+                ))
+              )}
+
+              {/* Admin-only: same product at other stores */}
+              {hasOtherStores && (
+                <div className="mt-4 pt-4 border-t border-slate-100">
+                  <p className="text-[10px] font-extrabold uppercase tracking-[1.5px] text-slate-400 mb-3">
+                    Same Product, Other Stores
+                  </p>
+                  <div className="flex flex-col gap-4">
+                    {otherStores.map((store) => (
+                      <div key={store.store_id}>
+                        <p className="text-[11px] font-bold text-slate-500 uppercase tracking-wide mb-1.5">{store.store_name}</p>
+                        <div className="flex flex-col gap-2">
+                          {store.deals.map((d) => (
+                            <ReplacementDealRow
+                              key={d.id}
+                              deal={{ ...d, store: { name: store.store_name, url: store.store_url } }}
+                              sourceName={sourceDeal.product_name}
+                              sourcePricePerKg={sourceDeal.price_per_kg}
+                              emphasisSize={
+                                d.weight_value != null && sourceDeal.weight_value != null
+                                  ? d.weight_value !== sourceDeal.weight_value
+                                  : d.weight_raw !== sourceDeal.weight_raw
+                              }
+                            />
+                          ))}
+                        </div>
+                      </div>
+                    ))}
+                  </div>
                 </div>
-              </div>
-            ))
+              )}
+              {tiers?.find((t) => t.type === "same_category") && (() => {
+                const tier = tiers.find((t) => t.type === "same_category");
+                return (
+                  <div className="mt-4 pt-4 border-t border-slate-100">
+                    {!categoryExpanded ? (
+                      <button
+                        type="button"
+                        onClick={() => setCategoryExpanded(true)}
+                        className="w-full flex items-center justify-between px-3 py-2.5 rounded-xl border border-dashed border-slate-200 bg-slate-50 hover:bg-slate-100 hover:border-slate-300 transition-colors group"
+                      >
+                        <span className="text-[12px] font-semibold text-slate-400 group-hover:text-slate-500">
+                          {tier.deals.length} more from this category
+                        </span>
+                        <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" className="text-slate-300 group-hover:text-slate-400 transition-colors">
+                          <polyline points="6 9 12 15 18 9"/>
+                        </svg>
+                      </button>
+                    ) : (
+                      <>
+                        <button
+                          type="button"
+                          onClick={() => setCategoryExpanded(false)}
+                          className="flex items-center gap-1 mb-2 w-full text-left cursor-pointer"
+                        >
+                          <p className="text-[10px] font-extrabold uppercase tracking-[1.5px] text-slate-400">
+                            {TIER_LABELS[tier.type] ?? tier.type}
+                          </p>
+                          <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" className="text-slate-400 rotate-180">
+                            <polyline points="6 9 12 15 18 9"/>
+                          </svg>
+                        </button>
+                        <div className="flex flex-col gap-2">
+                          {tier.deals.map((d) => (
+                            <ReplacementDealRow
+                              key={d.id}
+                              deal={d}
+                              sourceName={sourceDeal.product_name}
+                              sourcePricePerKg={null}
+                              emphasisSize={
+                                d.weight_value != null && sourceDeal.weight_value != null
+                                  ? d.weight_value !== sourceDeal.weight_value
+                                  : d.weight_raw !== sourceDeal.weight_raw
+                              }
+                            />
+                          ))}
+                        </div>
+                      </>
+                    )}
+                  </div>
+                );
+              })()}
+            </>
           )}
         </div>
       </div>
@@ -549,6 +681,9 @@ function DealCard({
   const [showReplacements, setShowReplacements] = useState(false);
   const [replacementTiers, setReplacementTiers] = useState(null);
   const [replacementsLoading, setReplacementsLoading] = useState(false);
+  const [otherStores, setOtherStores] = useState(null);
+  const [loadingCanonical, setLoadingCanonical] = useState(false);
+  const [canonicalData, setCanonicalData] = useState(null);
   const badgeRef = useRef(null);
 
   async function handleOpenReplacements() {
@@ -556,10 +691,17 @@ function DealCard({
     if (replacementTiers !== null) return;
     setReplacementsLoading(true);
     try {
-      const data = await fetchReplacements(deal.canonical_id, deal.store?.id, deal.id);
-      setReplacementTiers(data.tiers || []);
+      const [repData, otherStoresData] = await Promise.all([
+        fetchReplacements(deal.canonical_id, deal.store?.id, deal.id),
+        deal.canonical_id && deal.store?.id
+          ? fetchSameProductOtherStores(deal.canonical_id, deal.store?.id).catch(() => ({ stores: [] }))
+          : Promise.resolve({ stores: [] }),
+      ]);
+      setReplacementTiers(repData.tiers || []);
+      setOtherStores(otherStoresData.stores || []);
     } catch {
       setReplacementTiers([]);
+      setOtherStores([]);
     } finally {
       setReplacementsLoading(false);
     }
@@ -575,7 +717,7 @@ function DealCard({
     : null;
   const weightText = [
     deal.weight_raw || null,
-    deal.price_per_kg ? formatPricePerKg(deal.price_per_kg) : null,
+    deal.price_per_kg ? formatPricePerKg(deal.price_per_kg, deal.weight_unit) : null,
   ]
     .filter(Boolean)
     .join(" | ");
@@ -730,7 +872,7 @@ function DealCard({
                 setShowAdminTooltip(true);
                 if (realSavings.canonical_id && !canonicalData && !loadingCanonical) {
                   setLoadingCanonical(true);
-                  fetchCanonicalPriceData(realSavings.canonical_id)
+                  fetchCanonicalPriceData(realSavings.canonical_id, deal.store?.id)
                     .then((data) => setCanonicalData(data))
                     .catch(() => {})
                     .finally(() => setLoadingCanonical(false));
@@ -739,31 +881,31 @@ function DealCard({
               onMouseLeave={() => setShowAdminTooltip(false)}
             >
               <div className={`flex items-center justify-between rounded-[14px] px-3.5 py-3 ${
-                isGreat || isGood ? "bg-[#f0fdf4] border border-[#bbf7d0]" : "bg-[#f8fafc] border border-[#e2e8f0]"
+                isGreat || isGood ? "bg-[#f0fdf4] border border-[#bbf7d0]" : "bg-[#f0fdf4] border border-[#dcfce7]"
               }`}>
                 <div className="flex items-center gap-2.5">
                   <div className={`shrink-0 w-7 h-7 rounded-full flex items-center justify-center ${
-                    isGreat || isGood ? "bg-[#16a34a]" : "bg-slate-300"
+                    isGreat || isGood ? "bg-[#16a34a]" : "bg-green-100"
                   }`}>
-                    <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="3.2" strokeLinecap="round" strokeLinejoin="round">
+                    <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke={isGreat || isGood ? "white" : "#16a34a"} strokeWidth="3.2" strokeLinecap="round" strokeLinejoin="round">
                       <polyline points="20 6 9 17 4 12"/>
                     </svg>
                   </div>
                   <div>
                     <p className={`text-[10px] font-extrabold uppercase tracking-[1.4px] leading-none mb-[3px] ${
-                      isGreat || isGood ? "text-[#15803d]" : "text-slate-400"
+                      isGreat || isGood ? "text-[#15803d]" : "text-green-500"
                     }`}>Real Savings</p>
-                    <p className="text-[11px] text-slate-400 leading-none">
+                    <p className="text-[11px] text-slate-500 leading-none">
                       {realSavings.reference_source === "store_original" ? "vs store's original price" : "vs market price"}
                     </p>
                   </div>
                 </div>
                 <div className="text-right">
                   <p className={`text-[22px] font-extrabold leading-none ${
-                    isGreat || isGood ? "text-[#16a34a]" : "text-slate-500"
+                    isGreat || isGood ? "text-[#16a34a]" : "text-green-500"
                   }`}>{realPct}%</p>
                   {gap >= 3 && discountPct && (
-                    <p className="text-[10px] text-slate-400 leading-none mt-1">store says {discountPct}%</p>
+                    <p className="text-[10px] text-slate-500 leading-none mt-1">store says {discountPct}%</p>
                   )}
                 </div>
               </div>
@@ -860,6 +1002,38 @@ function DealCard({
                       <p className="text-[10px] text-slate-600">No market data</p>
                     )}
                   </div>
+
+                  {/* Same-spec alternatives at other stores */}
+                  {canonicalData?.same_spec_alts?.length > 0 && (
+                    <div className="border-t border-slate-600 mt-2.5 pt-2">
+                      <p className="text-[10px] font-extrabold uppercase tracking-[1.2px] text-slate-500 mb-1.5">Same Spec at Other Stores</p>
+                      <div className="flex flex-col gap-2">
+                        {canonicalData.same_spec_alts.map((store) => (
+                          <div key={store.store_id}>
+                            <p className="text-[10px] font-semibold text-slate-400 mb-0.5">{store.store_name}</p>
+                            {store.deals.slice(0, 3).map((d) => (
+                              <div key={d.id} className="flex justify-between items-baseline ml-1.5 gap-1">
+                                <span className="text-[10px] text-slate-500 truncate">{d.product_name}</span>
+                                <span className="text-[10px] font-semibold text-white shrink-0">
+                                  {d.sale_price != null ? `€${d.sale_price.toFixed(2)}` : "—"}
+                                  {d.discount_percent ? <span className="text-[9px] text-green-400 ml-1">-{Math.round(d.discount_percent)}%</span> : null}
+                                </span>
+                              </div>
+                            ))}
+                            {store.deals.length > 3 && (
+                              <p className="text-[9px] text-slate-600 ml-1.5">+{store.deals.length - 3} more</p>
+                            )}
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                  )}
+                  {canonicalData && !canonicalData.same_spec_alts?.length && (
+                    <div className="border-t border-slate-600 mt-2.5 pt-2">
+                      <p className="text-[10px] font-extrabold uppercase tracking-[1.2px] text-slate-500 mb-1">Same Spec at Other Stores</p>
+                      <p className="text-[10px] text-slate-600">None found</p>
+                    </div>
+                  )}
                 </div>,
                 document.body,
               )}
@@ -887,13 +1061,26 @@ function DealCard({
           </a>
           {/* WhatsApp share — shares DesiDeals24 permalink, WA shows branded OG preview */}
           <a
-            href={buildWhatsAppDealShareUrl({
-              dealId: deal.id,
-              productName: deal.product_name,
-              priceText,
-              originalPriceText,
-              storeName: deal.store?.name,
-            })}
+            href={(() => {
+              const realPct = realSavings ? Math.round(realSavings.real_discount_pct) : null;
+              const isSuspect = deal.is_fake_deal && realPct != null;
+              return isSuspect
+                ? buildWhatsAppShareUrl(buildWhatsAppSuspectDiscountShareText({
+                    dealId: deal.id,
+                    productName: deal.product_name,
+                    salePrice: deal.sale_price,
+                    storeName: deal.store?.name,
+                    storeDiscount: discountPct,
+                    realSaving: realPct,
+                  }))
+                : buildWhatsAppDealShareUrl({
+                    dealId: deal.id,
+                    productName: deal.product_name,
+                    priceText,
+                    originalPriceText,
+                    storeName: deal.store?.name,
+                  });
+            })()}
             target="_blank"
             rel="noopener noreferrer"
             onClick={() =>
@@ -960,7 +1147,9 @@ function DealCard({
         sourceDeal={deal}
         tiers={replacementTiers}
         loading={replacementsLoading}
-        onClose={() => setShowReplacements(false)}
+        otherStores={otherStores}
+        isAdmin={isAdmin}
+        onClose={() => { setShowReplacements(false); setReplacementTiers(null); setOtherStores(null); }}
       />
     )}
     </>
@@ -1341,7 +1530,7 @@ function FiltersModal({
 }
 
 // ── Sort dropdown ─────────────────────────────────────────────────────────────
-function SortDropdown({ value, onChange, isLoggedIn, onRequireLogin, toolbar = false }) {
+function SortDropdown({ value, onChange, toolbar = false }) {
   const [open, setOpen] = useState(false);
   const ref = useRef(null);
   const current = SORT_OPTIONS.find((o) => o.value === value);
@@ -1360,11 +1549,6 @@ function SortDropdown({ value, onChange, isLoggedIn, onRequireLogin, toolbar = f
   }
 
   function handleSelect(nextValue) {
-    if (!isLoggedIn && nextValue !== "") {
-      setOpen(false);
-      onRequireLogin(nextValue);
-      return;
-    }
     onChange(nextValue);
     setOpen(false);
   }
@@ -1412,7 +1596,6 @@ function SortDropdown({ value, onChange, isLoggedIn, onRequireLogin, toolbar = f
         <div className="absolute right-0 top-full z-20 mt-3 overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-xl min-w-[180px] w-max">
           {SORT_OPTIONS.map((opt) => {
             const isSelected = opt.value === value;
-            const requiresLogin = opt.value !== "" && !isLoggedIn;
             return (
               <button
                 key={opt.value || "random"}
@@ -1440,11 +1623,6 @@ function SortDropdown({ value, onChange, isLoggedIn, onRequireLogin, toolbar = f
                   <span className="w-[14px]" />
                 )}
                 <span>{opt.compactLabel}</span>
-                {requiresLogin && (
-                  <span className="ml-auto inline-flex h-6 w-6 items-center justify-center rounded-full bg-[#eef4ff] text-slate-500">
-                    <LockIcon size={11} color="currentColor" />
-                  </span>
-                )}
               </button>
             );
           })}
@@ -1867,7 +2045,7 @@ export default function DealsPage() {
     q: searchQuery || undefined,
     track_search:
       nextSearchShouldTrackRef.current && searchQuery ? "1" : undefined,
-    sort: sortValue && isLoggedIn ? sortValue : undefined,
+    sort: sortValue || undefined,
     store:
       filterStores.length > 0 && isLoggedIn
         ? filterStores.join(",")
@@ -2598,16 +2776,8 @@ export default function DealsPage() {
                   <div className="hidden sm:block">
                     <SortDropdown
                       toolbar
-                      value={isLoggedIn ? sortValue : ""}
+                      value={sortValue}
                       onChange={handleSortChange}
-                      isLoggedIn={isLoggedIn}
-                      onRequireLogin={(nextValue) =>
-                        requireLogin(
-                          "Sorting is for registered members only.",
-                          undefined,
-                          createResumeState({ sortValue: nextValue, page: 1 }),
-                        )
-                      }
                     />
                   </div>
 
@@ -2617,7 +2787,7 @@ export default function DealsPage() {
               <div className="flex flex-col gap-4">
                 <div className="flex items-center justify-between gap-3">
                   <div className="flex flex-col min-w-0 gap-2">
-                    <span className="text-[10px] sm:text-[11px] font-extrabold uppercase tracking-[1.5px] text-slate-400 leading-none">
+                    <span className="text-[10px] sm:text-[11px] font-extrabold uppercase tracking-[1.5px] text-slate-500 leading-none">
                       Matching Deals
                     </span>
                     <div className="flex items-baseline gap-1.5">
@@ -2628,7 +2798,7 @@ export default function DealsPage() {
                         totalCount != null &&
                         totalCount !== matchingCount && (
                           <span className="flex items-center gap-1.5">
-                            <span className="text-[13px] sm:text-[14px] font-semibold text-slate-400 leading-none">
+                            <span className="text-[13px] sm:text-[14px] font-semibold text-slate-500 leading-none">
                               / {totalCount.toLocaleString()}
                             </span>
                             <button
@@ -2646,16 +2816,8 @@ export default function DealsPage() {
 
                   <div className="shrink-0 sm:hidden">
                     <SortDropdown
-                      value={isLoggedIn ? sortValue : ""}
+                      value={sortValue}
                       onChange={handleSortChange}
-                      isLoggedIn={isLoggedIn}
-                      onRequireLogin={(nextValue) =>
-                        requireLogin(
-                          "Sorting is for registered members only.",
-                          undefined,
-                          createResumeState({ sortValue: nextValue, page: 1 }),
-                        )
-                      }
                     />
                   </div>
                 </div>
