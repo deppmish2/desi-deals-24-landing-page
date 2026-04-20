@@ -9,6 +9,7 @@ const PATTERNS = [
       value: parseGerman(m[1]) * parseGerman(m[2]),
       unit: normalizeUnit(m[3]),
     }),
+    isMultiPack: true,
   },
   // "1.5 kg", "500 g", "500g", "0,5 kg"
   {
@@ -51,27 +52,50 @@ function normalizeUnit(u) {
   return map[lower] || lower;
 }
 
+// "(2 Pack)", "(3 Pack)", "Pack of 4", "Pack Of 3" → multiplier
+const PACK_RE = /\((\d+)\s*[Pp]ack\)|[Pp]ack\s+[Oo]f\s+(\d+)/;
+
+function packMultiplier(str) {
+  const m = str.match(PACK_RE);
+  if (!m) return 1;
+  const n = parseInt(m[1] || m[2], 10);
+  return n > 1 ? n : 1;
+}
+
 /**
  * Extract weight from a string (usually product title or description).
  * Returns { value: number, unit: string, raw: string } or null.
  */
 function parseWeight(str) {
   if (!str) return null;
-  for (const { re, fn, last } of PATTERNS) {
+  for (const { re, fn, last, isMultiPack } of PATTERNS) {
     if (last) {
-      // Collect all matches and use the last one (e.g. total weight after
-      // per-unit spec in "(48pc x 10gm) 480gm").
       const matches = [...str.matchAll(re)];
       if (matches.length > 0) {
         const m = matches[matches.length - 1];
         const result = fn(m);
-        if (!isNaN(result.value) && result.value > 0) return result;
+        if (!isNaN(result.value) && result.value > 0) {
+          const mult = packMultiplier(str);
+          if (mult > 1) {
+            return { raw: `${mult} x ${result.raw}`, value: result.value * mult, unit: result.unit };
+          }
+          return result;
+        }
       }
     } else {
       const m = str.match(re);
       if (m) {
         const result = fn(m);
-        if (!isNaN(result.value) && result.value > 0) return result;
+        if (!isNaN(result.value) && result.value > 0) {
+          // For NxM patterns the multiplier is already baked in; skip pack check.
+          if (!isMultiPack) {
+            const mult = packMultiplier(str);
+            if (mult > 1) {
+              return { raw: `${mult} x ${result.raw}`, value: result.value * mult, unit: result.unit };
+            }
+          }
+          return result;
+        }
       }
     }
   }
