@@ -1,12 +1,12 @@
 "use strict";
 
 const PATTERNS = [
-  // "6 x 500g" → take total or first match; we take the first unit
+  // "6 x 500g" → multiply count × unit weight to get total
   {
     re: /(\d+(?:[.,]\d+)?)\s*x\s*(\d+(?:[.,]\d+)?)\s*(g|kg|ml|l)\b/i,
     fn: (m) => ({
       raw: m[0],
-      value: parseGerman(m[2]),
+      value: parseGerman(m[1]) * parseGerman(m[2]),
       unit: normalizeUnit(m[3]),
     }),
   },
