@@ -22,6 +22,10 @@ const ACTIVE_DEALS_WITH_CANONICAL_SQL = `
   JOIN stores s ON s.id = d.store_id
   JOIN canonical_products cp ON cp.id = d.canonical_id
   WHERE d.store_id = ? AND d.is_active = 1 AND d.canonical_id IS NOT NULL
+    AND (
+      d.original_price IS NULL OR d.sale_price IS NULL OR d.discount_percent IS NULL OR
+      ABS(d.discount_percent - ROUND((1.0 - d.sale_price / d.original_price) * 100.0)) <= 10
+    )
 `;
 
 const byValueAsc = (a, b) => {

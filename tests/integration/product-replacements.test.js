@@ -131,3 +131,29 @@ test("T2 excludes same-brand candidates; includes different-brand candidates", a
   assert.ok(!ids.includes("d-dup-t2b"), "same-brand duplicate must NOT be in T2");
   assert.ok(ids.includes("d-other-t2b"), "different-brand candidate must be in T2");
 });
+
+// ─── Task 4: fake-deal filter ─────────────────────────────────────────────────
+
+test("fake deals (stated discount far above arithmetic discount) excluded from all tiers", async () => {
+  const db = makeDb();
+
+  // Source: no brand/slots → only T4 category match possible
+  cp(db, { id: "src-fk", name: "Generic Flour 1kg", category: "Flours & Baking", weight: 1000 });
+  deal(db, { id: "d-src-fk", canonicalId: "src-fk", name: "Generic Flour 1kg",
+             weight: 1000, price: 3.00, ppkg: 3.00 });
+
+  // Fake: claims 60% off, but (10-9.5)/10*100 = 5% real → gap = 55pp > 10pp → must be excluded
+  cp(db, { id: "cand-fk", name: "Fake Flour 1kg", category: "Flours & Baking", weight: 1000 });
+  deal(db, { id: "d-fake", canonicalId: "cand-fk", name: "Fake Flour 1kg",
+             weight: 1000, price: 9.50, origPrice: 10.00, discount: 60, ppkg: 9.50 });
+
+  // Legit: claims 25% off, real = (5-3.75)/5*100 = 25% → gap = 0pp → must appear
+  cp(db, { id: "cand-ok", name: "Good Flour 1kg", category: "Flours & Baking", weight: 1000 });
+  deal(db, { id: "d-legit", canonicalId: "cand-ok", name: "Good Flour 1kg",
+             weight: 1000, price: 3.75, origPrice: 5.00, discount: 25, ppkg: 3.75 });
+
+  const result = await getReplacements(db, { canonicalId: "src-fk", storeId: STORE, dealId: "d-src-fk" });
+  const allDeals = result.tiers.flatMap(t => t.deals).map(d => d.id);
+  assert.ok(!allDeals.includes("d-fake"),  "fake deal must not appear in any tier");
+  assert.ok(allDeals.includes("d-legit"), "legit deal must appear");
+});
