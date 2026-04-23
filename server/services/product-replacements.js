@@ -24,9 +24,12 @@ const ACTIVE_DEALS_WITH_CANONICAL_SQL = `
   WHERE d.store_id = ? AND d.is_active = 1 AND d.canonical_id IS NOT NULL
 `;
 
-const byDiscountDesc = (a, b) =>
-  (b.discount_percent || 0) - (a.discount_percent || 0) ||
-  (a.sale_price || 0) - (b.sale_price || 0);
+const byValueAsc = (a, b) => {
+  const aUnit = a.price_per_kg ?? Infinity;
+  const bUnit = b.price_per_kg ?? Infinity;
+  if (aUnit !== bUnit) return aUnit - bUnit;
+  return (a.sale_price || 0) - (b.sale_price || 0);
+};
 
 function nameHasBrand(productName, brand) {
   if (!brand || !productName) return false;
@@ -186,9 +189,9 @@ async function getReplacements(db, { canonicalId, storeId, dealId = null }) {
   }
 
   t1.sort((a, b) => (a.weight_value || 0) - (b.weight_value || 0));
-  t2.sort(byDiscountDesc);
-  t3.sort(byDiscountDesc);
-  t4.sort(byDiscountDesc);
+  t2.sort(byValueAsc);
+  t3.sort(byValueAsc);
+  t4.sort(byValueAsc);
 
   const tiers = [];
   if (t1.length)
