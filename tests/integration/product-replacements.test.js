@@ -77,3 +77,24 @@ test("T2 ranks by price_per_kg ascending, not discount_percent descending", asyn
   assert.equal(t2.deals[0].id, "d-b", "cheaper per-kg deal must rank first");
   assert.equal(t2.deals[1].id, "d-a");
 });
+
+// ─── Task 2: T4 larger packs ─────────────────────────────────────────────────
+
+test("T4 includes larger-pack candidates from same category", async () => {
+  const db = makeDb();
+
+  // Source: 500g, no brand/slots → only category matching possible
+  cp(db, { id: "src-t4", name: "Generic Dal 500g", category: "Lentils & Pulses", weight: 500 });
+  deal(db, { id: "d-src-t4", canonicalId: "src-t4", name: "Generic Dal 500g",
+             weight: 500, price: 2.50, ppkg: 5.00 });
+
+  // Candidate: 1000g same category — blocked by current sizeCompatible (1000 > 500)
+  cp(db, { id: "cand-t4", name: "Other Dal 1kg", category: "Lentils & Pulses", weight: 1000 });
+  deal(db, { id: "d-cand-t4", canonicalId: "cand-t4", name: "Other Dal 1kg",
+             weight: 1000, price: 4.00, ppkg: 4.00 });
+
+  const result = await getReplacements(db, { canonicalId: "src-t4", storeId: STORE, dealId: "d-src-t4" });
+  const t4 = result.tiers.find(t => t.type === "same_category");
+  assert.ok(t4, "T4 same_category tier must exist");
+  assert.ok(t4.deals.some(d => d.id === "d-cand-t4"), "1kg candidate must appear in T4");
+});

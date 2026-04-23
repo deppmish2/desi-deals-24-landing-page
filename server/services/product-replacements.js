@@ -182,7 +182,7 @@ async function getReplacements(db, { canonicalId, storeId, dealId = null }) {
     }
 
     // T4: same category
-    if (sameCategory && sizeCompatible(srcWeightValue, parseWeight(row.weight_value, row.weight_raw)) && !seen.has(`t4:${cKey}`)) {
+    if (sameCategory && !seen.has(`t4:${cKey}`)) {
       t4.push(row);
       seen.add(`t4:${cKey}`);
     }
