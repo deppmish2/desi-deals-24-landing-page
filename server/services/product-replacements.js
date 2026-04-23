@@ -209,7 +209,7 @@ async function getReplacements(db, { canonicalId, storeId, dealId = null }) {
     tiers.push({ type: "same_spec", relevance: 0.85, deals: t2.slice(0, TIER_CAP) });
   if (t3.length)
     tiers.push({ type: "same_brand", relevance: 0.65, deals: t3.slice(0, TIER_CAP) });
-  if (!t1.length && !t2.length && !t3.length && t4.length)
+  if (t4.length)
     tiers.push({ type: "same_category", relevance: 0.4, deals: t4.slice(0, TIER_CAP) });
 
   return { tiers };

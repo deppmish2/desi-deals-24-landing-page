@@ -683,7 +683,11 @@ router.get("/same-product-other-stores", async (req, res, next) => {
            JOIN stores s ON s.id = d.store_id
            JOIN canonical_products cp ON cp.id = d.canonical_id
            WHERE cp.base_key = ? AND cp.category = ? AND d.store_id != ? AND d.is_active = 1
-           ORDER BY s.name ASC, d.sale_price ASC`
+             AND (
+               d.original_price IS NULL OR d.original_price = 0 OR d.sale_price IS NULL OR d.discount_percent IS NULL OR
+               ABS(d.discount_percent - ROUND((1.0 - d.sale_price / d.original_price) * 100.0)) <= 10
+             )
+           ORDER BY d.price_per_kg ASC NULLS LAST, d.sale_price ASC`
         )
         .all(src.base_key, src.category, storeId);
     } else {
@@ -696,7 +700,11 @@ router.get("/same-product-other-stores", async (req, res, next) => {
            FROM deals d
            JOIN stores s ON s.id = d.store_id
            WHERE d.canonical_id = ? AND d.store_id != ? AND d.is_active = 1
-           ORDER BY s.name ASC, d.sale_price ASC`
+             AND (
+               d.original_price IS NULL OR d.original_price = 0 OR d.sale_price IS NULL OR d.discount_percent IS NULL OR
+               ABS(d.discount_percent - ROUND((1.0 - d.sale_price / d.original_price) * 100.0)) <= 10
+             )
+           ORDER BY d.price_per_kg ASC NULLS LAST, d.sale_price ASC`
         )
         .all(canonicalId, storeId);
     }

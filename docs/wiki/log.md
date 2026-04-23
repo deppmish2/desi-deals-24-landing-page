@@ -105,6 +105,25 @@ Sources: scripts/promote-bootstrap-staging.js, scripts/seed-priority-canonicals.
 
 ---
 
+## [2026-04-24] update | Product replacement bug fixes — sort, T2 brand guard, T4 gating, fake-deal filter, fresh-produce guard
+
+Pages touched: compare-stores.md
+Sources: server/services/product-replacements.js, server/routes/deals.js, server/services/base-product-catalog.js, tests/integration/product-replacements.test.js, scripts/fix-fresh-produce-base-keys.js, data/prod_local.db
+
+**Changes recorded:**
+
+- `product-replacements.js` sort: T2/T3/T4 changed from discount% descending to `byValueAsc` (price_per_kg ascending, fallback sale_price ascending). Best value appears first.
+- `product-replacements.js` T4 gating removed: T4 now always emits alongside T1–T3, not only as last resort.
+- `product-replacements.js` T2 brand guard: `isSameBrandT2` check prevents same-brand items leaking into the cross-brand T2 tier.
+- `product-replacements.js` fake-deal SQL filter: arithmetic discount guard in `ACTIVE_DEALS_WITH_CANONICAL_SQL`; null/zero pass-throughs protect deals without original_price.
+- `product-replacements.js` T4 size gate removed: `sizeCompatible()` no longer applied to T4.
+- `base-product-catalog.js` fresh produce guard: `resolveBaseProduct()` returns null for names starting with "Fresh " — prevents fresh veg from inheriting spice/lentil base_keys.
+- `server/routes/deals.js` `/same-product-other-stores`: sort changed from `sale_price ASC` to `price_per_kg ASC NULLS LAST, sale_price ASC`; same arithmetic fake-deal filter added to both query branches.
+- `data/prod_local.db`: 23 Fresh Produce canonicals had `base_key` cleared via `scripts/fix-fresh-produce-base-keys.js`.
+- `tests/integration/product-replacements.test.js`: new file — 4 tests covering T2 sort, T4 larger packs, T2 brand guard, and fake-deal filter.
+
+---
+
 ## [2026-04-11] bootstrap | Initial wiki created from codebase sources
 Pages touched: WIKI.md, index.md, overview.md, backend.md, frontend.md, crawler.md, decisions.md, stores/jamoona.md, stores/dookan.md, stores/grocera.md, stores/little-india.md, stores/namma-markt.md
 Sources: CLAUDE.md, docs/crisp-architecture.md, server/index.js, server/db/schema.sql, crawler/index.js, crawler/utils/category-mapper.js, client/src/App.jsx, client/src/hooks/useDeals.js, client/src/utils/api.js, crawler/stores/*.js (5 stores)
