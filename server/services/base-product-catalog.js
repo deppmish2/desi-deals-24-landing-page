@@ -242,6 +242,7 @@ function scoreAlias(textNorm, textTokensSet, alias) {
 }
 
 function resolveBaseProduct(text) {
+  if (!text || /^fresh\s/i.test(text.trim())) return null;
   const textNorm = normalizeText(text);
   if (!textNorm) return null;
 
