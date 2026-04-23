@@ -152,8 +152,13 @@ async function getReplacements(db, { canonicalId, storeId, dealId = null }) {
     const sameBaseProduct =
       (srcBaseSlots && baseProductSlotsMatch(srcBaseSlots, row.cp_base_product_slots)) ||
       (srcBaseKey && candBase?.base_key === srcBaseKey && sameCategory);
+    const isSameBrandT2 = !!srcBrand && (
+      nameHasBrand(row.product_name, srcBrand) ||
+      (candBase?.base_key ? detectBrandForBase(row.cp_canonical_name, candBase.base_key) === srcBrand : false)
+    );
     if (
       sameBaseProduct &&
+      !isSameBrandT2 &&
       sizeCompatible(srcWeightValue, parseWeight(row.weight_value, row.weight_raw)) &&
       !seen.has(`t2:${cKey}`)
     ) {

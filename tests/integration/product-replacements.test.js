@@ -98,3 +98,36 @@ test("T4 includes larger-pack candidates from same category", async () => {
   assert.ok(t4, "T4 same_category tier must exist");
   assert.ok(t4.deals.some(d => d.id === "d-cand-t4"), "1kg candidate must appear in T4");
 });
+
+// ─── Task 3: T2 brand guard ───────────────────────────────────────────────────
+
+test("T2 excludes same-brand candidates; includes different-brand candidates", async () => {
+  const db = makeDb();
+
+  // Source: Xyzbrand, 1000g
+  cp(db, { id: "src-t2b", name: "Xyzbrand Urid Dal 1kg",
+           brandSlots: [["Xyzbrand"]], baseSlots: [["urid"],["dal"]], weight: 1000 });
+  deal(db, { id: "d-src-t2b", canonicalId: "src-t2b", name: "Xyzbrand Urid Dal 1kg",
+             weight: 1000, price: 3.00, ppkg: 3.00 });
+
+  // Same brand, same weight, same spec — different canonical.
+  // T1 fails: parseWeight(1000) === srcWeightValue(1000) (same size → not a size variant).
+  // Without brand guard, falls into T2. Must NOT appear there after fix.
+  cp(db, { id: "dup-t2b", name: "Xyzbrand Urid Dal Premium 1kg",
+           brandSlots: [["Xyzbrand"]], baseSlots: [["urid"],["dal"]], weight: 1000 });
+  deal(db, { id: "d-dup-t2b", canonicalId: "dup-t2b", name: "Xyzbrand Urid Dal 1kg",
+             weight: 1000, price: 3.10, ppkg: 3.10 });
+
+  // Different brand, same spec — MUST appear in T2
+  cp(db, { id: "other-t2b", name: "Abcbrand Urid Dal 1kg",
+           brandSlots: [["Abcbrand"]], baseSlots: [["urid"],["dal"]], weight: 1000 });
+  deal(db, { id: "d-other-t2b", canonicalId: "other-t2b", name: "Abcbrand Urid Dal 1kg",
+             weight: 1000, price: 2.80, ppkg: 2.80 });
+
+  const result = await getReplacements(db, { canonicalId: "src-t2b", storeId: STORE, dealId: "d-src-t2b" });
+  const t2 = result.tiers.find(t => t.type === "same_spec");
+  assert.ok(t2, "T2 tier must exist");
+  const ids = t2.deals.map(d => d.id);
+  assert.ok(!ids.includes("d-dup-t2b"), "same-brand duplicate must NOT be in T2");
+  assert.ok(ids.includes("d-other-t2b"), "different-brand candidate must be in T2");
+});
