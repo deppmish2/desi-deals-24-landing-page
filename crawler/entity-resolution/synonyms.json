@@ -1,20 +1,140 @@
 {
   "arhar": "toor",
   "tuvar": "toor",
+  "thoor": "toor",
+  "tur": "toor",
+  "split pigeon peas": "toor",
+  "pigeon peas": "toor",
+
+  "masur": "masoor",
+  "musoor": "masoor",
+  "mussoor": "masoor",
+  "red lentils": "masoor",
+  "red split lentils": "masoor",
+  "split red lentils": "masoor",
+
+  "mung": "moong",
+  "green gram": "moong",
+
+  "urad": "urid",
+  "urrad": "urid",
+  "black gram": "urid",
+
+  "rajmah": "rajma",
+  "kidney beans": "rajma",
+
+  "kala channa": "kala chana",
+  "black chickpeas": "kala chana",
+
+  "kabuli channa": "kabuli chana",
+  "white chickpeas": "kabuli chana",
+  "garbanzo": "kabuli chana",
+  "chickpeas": "kabuli chana",
+
+  "split bengal gram": "chana dal",
+
   "dhal": "dal",
+
   "besan": "chickpea flour",
   "gram flour": "chickpea flour",
+
   "sooji": "semolina",
   "rava": "semolina",
   "suji": "semolina",
+  "rawa": "semolina",
+
+  "bajri": "bajra",
+  "pearl millet": "bajra",
+
+  "jovar": "jowar",
+  "sorghum": "jowar",
+
+  "nachni": "ragi",
+  "finger millet": "ragi",
+
+  "aval": "poha",
+  "atukulu": "poha",
+  "beaten rice": "poha",
+  "flattened rice": "poha",
+  "pauwa": "poha",
+  "powwa": "poha",
+
+  "murmura": "puffed rice",
+  "mamra": "puffed rice",
+  "muri": "puffed rice",
+
   "haldi": "turmeric",
+  "tumeric": "turmeric",
+  "tumeric powder": "turmeric powder",
+
   "jeera": "cumin",
+  "zeera": "cumin",
+  "zira": "cumin",
+  "jera": "cumin",
+
   "dhania": "coriander",
+  "dhaniya": "coriander",
+
   "hing": "asafoetida",
+  "heeng": "asafoetida",
+
   "methi": "fenugreek",
+  "kasoori": "dried",
+  "kasuri": "dried",
+
+  "kali mirch": "black pepper",
+  "kaali mirch": "black pepper",
+
+  "lal mirch": "red chilli",
+  "mirch": "chilli",
+  "mirchi": "chilli",
+
+  "sarson": "mustard",
+  "rai": "mustard",
+
+  "ajwain": "ajwain",
+  "carom seeds": "ajwain",
+  "carom": "ajwain",
+
+  "saunf": "fennel",
+  "soonf": "fennel",
+  "fennel seeds": "fennel",
+
+  "kalonji": "kalonji",
+  "nigella seeds": "kalonji",
+  "nigella": "kalonji",
+
+  "elaichi": "cardamom",
+  "ilayachi": "cardamom",
+
+  "dalchini": "cinnamon",
+
+  "tejpatta": "bay leaves",
+  "bay leaf": "bay leaves",
+
   "karela": "bitter gourd",
   "shimla mirch": "capsicum",
   "kaddu": "pumpkin",
   "lauki": "bottle gourd",
-  "bhindi": "okra"
+  "bhindi": "okra",
+  "tinda": "round gourd",
+  "arbi": "taro",
+  "suran": "yam",
+  "parwal": "pointed gourd",
+
+  "papadum": "papad",
+  "pappadum": "papad",
+  "poppadom": "papad",
+  "poppadum": "papad",
+  "pappad": "papad",
+  "appalam": "papad",
+
+  "basmathi": "basmati",
+  "bismati": "basmati",
+
+  "paneer": "paneer",
+  "ghee": "ghee",
+
+  "khoya": "mawa",
+  "khoa": "mawa"
 }
