@@ -15,11 +15,17 @@
 
 const { v4: uuidv4 } = require("uuid");
 
+// Strips weights in "Brand - 100g Name" and "Name 200g" formats
+const WEIGHT_RE = /\b\d+(?:[.,]\d+)?(?:\s*x\s*\d+(?:[.,]\d+)?)?\s*(?:kg|kilo|gram|gramm|gm?|ml|ltr?|litre?|liter|oz|lb|l)\b/gi;
+const BRACKET_RE = /\([^)]*\)|\[[^\]]*\]/g;
+
 /** Normalise a product name for comparison */
 function norm(str) {
   return String(str || "")
     .toLowerCase()
-    .replace(/[^a-z0-9\s]/g, " ")
+    .replace(BRACKET_RE, " ")       // strip (parenthetical) and [bracketed] content
+    .replace(/[^a-z0-9\s]/g, " ")  // strip special chars including dashes
+    .replace(WEIGHT_RE, " ")        // strip weight values e.g. "100g", "1.5kg", "2x250g"
     .replace(/\s+/g, " ")
     .trim();
 }
@@ -79,7 +85,7 @@ function matchesCanonical(normedTitle, dealWeightValue, dealWeightUnit, canon) {
   } else {
     const allSlots = [...(brandSlots || []), ...(baseProductSlots || []), ...typeSlots];
     for (const slotGroup of allSlots) {
-      if (!slotGroup.some((v) => normedTitle.includes(v))) return false;
+      if (!slotGroup.some((v) => normedTitle.includes(v.toLowerCase()))) return false;
     }
   }
 
@@ -161,7 +167,7 @@ async function loadPriorityCanonicals(db) {
       if (!groups) return null;
       return groups.map((g) => {
         const aliases = Array.isArray(g) ? g : [g];
-        return new RegExp(aliases.map(escapeRe).join("|"));
+        return new RegExp(aliases.map(escapeRe).join("|"), "i");
       });
     }
 
