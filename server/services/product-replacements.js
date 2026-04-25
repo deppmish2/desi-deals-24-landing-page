@@ -7,6 +7,46 @@ const {
 
 const TIER_CAP = 4;
 
+// Tokens that distinguish preparation variants of the same base product.
+// Whole mung ≠ split mung ≠ chilka mung — they share a base_key but differ here.
+const VARIANT_TOKENS = new Set([
+  "whole", "sabut",
+  "split",
+  "chilka",
+  "washed", "dhuli",
+  "roasted",
+  "flour",
+]);
+
+// Normalise Hindi/regional synonyms to a single canonical variant label
+// so "sabut" and "whole" compare as equal.
+const VARIANT_NORMALISE = {
+  sabut: "whole",
+  dhuli: "washed",
+};
+
+function getVariantTokens(slotSet) {
+  if (!slotSet) return new Set();
+  const out = new Set();
+  for (const t of slotSet) {
+    if (VARIANT_TOKENS.has(t)) out.add(VARIANT_NORMALISE[t] ?? t);
+  }
+  return out;
+}
+
+// Returns true only when source and candidate agree on variant tokens.
+// Both empty → compatible. Disjoint or one-sided → not compatible.
+function variantTokensMatch(srcSlotSet, candSlotsJson) {
+  if (!candSlotsJson) return true;
+  const candSet = new Set(JSON.parse(candSlotsJson).flat());
+  const srcV = getVariantTokens(srcSlotSet);
+  const candV = getVariantTokens(candSet);
+  if (srcV.size === 0 && candV.size === 0) return true;
+  if (srcV.size !== candV.size) return false;
+  for (const v of srcV) if (!candV.has(v)) return false;
+  return true;
+}
+
 const ACTIVE_DEALS_WITH_CANONICAL_SQL = `
   SELECT d.id, d.canonical_id, d.crawl_timestamp, d.store_id,
          s.name AS store_name, s.url AS store_url,
@@ -155,7 +195,8 @@ async function getReplacements(db, { canonicalId, storeId, dealId = null }) {
     // differences (e.g. "Mung Sabut Whole" ↔ "TRS Mung Beans" both → "moong dal yellow").
     const sameBaseProduct =
       (srcBaseSlots && baseProductSlotsMatch(srcBaseSlots, row.cp_base_product_slots)) ||
-      (srcBaseKey && candBase?.base_key === srcBaseKey && sameCategory);
+      (srcBaseKey && candBase?.base_key === srcBaseKey && sameCategory &&
+        variantTokensMatch(srcBaseSlots, row.cp_base_product_slots));
     const isSameBrandT2 = !!srcBrand && (
       nameHasBrand(row.product_name, srcBrand) ||
       (candBase?.base_key ? detectBrandForBase(row.cp_canonical_name, candBase.base_key) === srcBrand : false)
@@ -215,4 +256,4 @@ async function getReplacements(db, { canonicalId, storeId, dealId = null }) {
   return { tiers };
 }
 
-module.exports = { getReplacements };
+module.exports = { getReplacements, variantTokensMatch };

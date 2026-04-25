@@ -669,16 +669,17 @@ router.get("/same-product-other-stores", async (req, res, next) => {
     // (e.g. "Mung Sabut Whole" ↔ "TRS Mung Beans" → base_key "moong dal yellow").
     // Category guard prevents cross-category false positives (snack vs ingredient).
     const src = await db
-      .prepare(`SELECT base_key, category FROM canonical_products WHERE id = ? LIMIT 1`)
+      .prepare(`SELECT base_key, category, base_product_slots FROM canonical_products WHERE id = ? LIMIT 1`)
       .get(canonicalId);
 
     let rows;
     if (src?.base_key) {
-      rows = await db
+      const allRows = await db
         .prepare(
           `SELECT d.id, d.product_name, d.sale_price, d.discount_percent,
                   d.price_per_kg, d.weight_raw, d.weight_value, d.weight_unit, d.product_url, d.image_url,
-                  s.id AS store_id, s.name AS store_name, s.url AS store_url
+                  s.id AS store_id, s.name AS store_name, s.url AS store_url,
+                  cp.base_product_slots AS cp_base_product_slots
            FROM deals d
            JOIN stores s ON s.id = d.store_id
            JOIN canonical_products cp ON cp.id = d.canonical_id
@@ -690,6 +691,16 @@ router.get("/same-product-other-stores", async (req, res, next) => {
            ORDER BY d.price_per_kg ASC NULLS LAST, d.sale_price ASC`
         )
         .all(src.base_key, src.category, storeId);
+
+      // Filter out preparation variants (whole vs split vs chilka etc.) — they share a
+      // base_key but differ on variant tokens in base_product_slots.
+      const { variantTokensMatch } = require("../services/product-replacements");
+      const srcSlotSet = src.base_product_slots
+        ? new Set(JSON.parse(src.base_product_slots).flat())
+        : null;
+      rows = srcSlotSet
+        ? allRows.filter((r) => variantTokensMatch(srcSlotSet, r.cp_base_product_slots))
+        : allRows;
     } else {
       // Fallback: exact canonical_id match (no base_key populated yet)
       rows = await db
