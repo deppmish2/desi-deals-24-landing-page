@@ -225,8 +225,8 @@ function getCatalogCategories() {
 function scoreAlias(textNorm, textTokensSet, alias) {
   if (!alias?.text) return 0;
   if (textNorm === alias.text) return 120 + alias.tokens.length;
-  if (textNorm.includes(alias.text)) return 100 + alias.tokens.length;
-  if (alias.text.includes(textNorm) && textNorm.length >= 4) {
+  if (hasWholePhrase(textNorm, alias.text)) return 100 + alias.tokens.length;
+  if (hasWholePhrase(alias.text, textNorm) && textNorm.length >= 4) {
     return 90 + alias.tokens.length;
   }
   if (!alias.tokens || alias.tokens.length === 0) return 0;
