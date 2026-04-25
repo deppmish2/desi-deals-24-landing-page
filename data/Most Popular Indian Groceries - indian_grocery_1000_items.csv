@@ -36,7 +36,7 @@ ID,Base Product,Category,Popular Brands,Search Variations,Misspellings/Regional,
 35,Pav Bhaji Masala,Spices & Masalas,"Everest, MDH, Badshah",Bhaji spice,Paav bhaji,78
 36,Chicken Masala,Spices & Masalas,"MDH, Everest, Shan, Eastern",Poultry spice,Chiken masala,90
 37,Meat Masala,Spices & Masalas,"MDH, Everest, Shan, Eastern",Mutton/Meat spice,Meet masala,93
-38,Aloo Bhujia,Snacks & Sweets,"Haldiram's, Bikano, Heera, Bikaji","Potato sev, Namkeen","Alu bhujia, Haldirams",40
+38,Aloo Bhujia,Snacks & Sweets,"Haldiram's, Bikano, Heera, Bikaji","Potato sev","Alu bhujia, Haldirams",40
 39,Moong Dal Snack,Snacks & Sweets,"Haldiram's, Bikano, Bikaji",Fried moong lentils,Mung snack,71
 40,Khatta Meetha,Snacks & Sweets,"Haldiram's, Bikano, Heera",Sweet and sour mix,Katta metha,65
 41,Bhujia Sev,Snacks & Sweets,"Haldiram's, Bikaji, Bikano",Fine spicy sev,Bhujiya,60
@@ -96,7 +96,7 @@ ID,Base Product,Category,Popular Brands,Search Variations,Misspellings/Regional,
 95,Pav Bhaji Masala,Spices & Masalas,"Everest, MDH, Badshah",Bhaji spice,Paav bhaji,71
 96,Chicken Masala,Spices & Masalas,"MDH, Everest, Shan, Eastern",Poultry spice,Chiken masala,91
 97,Meat Masala,Spices & Masalas,"MDH, Everest, Shan, Eastern",Mutton/Meat spice,Meet masala,72
-98,Aloo Bhujia,Snacks & Sweets,"Haldiram's, Bikano, Heera, Bikaji","Potato sev, Namkeen","Alu bhujia, Haldirams",42
+98,Aloo Bhujia,Snacks & Sweets,"Haldiram's, Bikano, Heera, Bikaji","Potato sev","Alu bhujia, Haldirams",42
 99,Moong Dal Snack,Snacks & Sweets,"Haldiram's, Bikano, Bikaji",Fried moong lentils,Mung snack,40
 100,Khatta Meetha,Snacks & Sweets,"Haldiram's, Bikano, Heera",Sweet and sour mix,Katta metha,71
 101,Bhujia Sev,Snacks & Sweets,"Haldiram's, Bikaji, Bikano",Fine spicy sev,Bhujiya,73
@@ -156,7 +156,7 @@ ID,Base Product,Category,Popular Brands,Search Variations,Misspellings/Regional,
 155,Pav Bhaji Masala,Spices & Masalas,"Everest, MDH, Badshah",Bhaji spice,Paav bhaji,91
 156,Chicken Masala,Spices & Masalas,"MDH, Everest, Shan, Eastern",Poultry spice,Chiken masala,86
 157,Meat Masala,Spices & Masalas,"MDH, Everest, Shan, Eastern",Mutton/Meat spice,Meet masala,88
-158,Aloo Bhujia,Snacks & Sweets,"Haldiram's, Bikano, Heera, Bikaji","Potato sev, Namkeen","Alu bhujia, Haldirams",77
+158,Aloo Bhujia,Snacks & Sweets,"Haldiram's, Bikano, Heera, Bikaji","Potato sev","Alu bhujia, Haldirams",77
 159,Moong Dal Snack,Snacks & Sweets,"Haldiram's, Bikano, Bikaji",Fried moong lentils,Mung snack,54
 160,Khatta Meetha,Snacks & Sweets,"Haldiram's, Bikano, Heera",Sweet and sour mix,Katta metha,82
 161,Bhujia Sev,Snacks & Sweets,"Haldiram's, Bikaji, Bikano",Fine spicy sev,Bhujiya,63
@@ -216,7 +216,7 @@ ID,Base Product,Category,Popular Brands,Search Variations,Misspellings/Regional,
 215,Pav Bhaji Masala,Spices & Masalas,"Everest, MDH, Badshah",Bhaji spice,Paav bhaji,84
 216,Chicken Masala,Spices & Masalas,"MDH, Everest, Shan, Eastern",Poultry spice,Chiken masala,93
 217,Meat Masala,Spices & Masalas,"MDH, Everest, Shan, Eastern",Mutton/Meat spice,Meet masala,88
-218,Aloo Bhujia,Snacks & Sweets,"Haldiram's, Bikano, Heera, Bikaji","Potato sev, Namkeen","Alu bhujia, Haldirams",60
+218,Aloo Bhujia,Snacks & Sweets,"Haldiram's, Bikano, Heera, Bikaji","Potato sev","Alu bhujia, Haldirams",60
 219,Moong Dal Snack,Snacks & Sweets,"Haldiram's, Bikano, Bikaji",Fried moong lentils,Mung snack,46
 220,Khatta Meetha,Snacks & Sweets,"Haldiram's, Bikano, Heera",Sweet and sour mix,Katta metha,51
 221,Bhujia Sev,Snacks & Sweets,"Haldiram's, Bikaji, Bikano",Fine spicy sev,Bhujiya,67
@@ -276,7 +276,7 @@ ID,Base Product,Category,Popular Brands,Search Variations,Misspellings/Regional,
 275,Pav Bhaji Masala,Spices & Masalas,"Everest, MDH, Badshah",Bhaji spice,Paav bhaji,83
 276,Chicken Masala,Spices & Masalas,"MDH, Everest, Shan, Eastern",Poultry spice,Chiken masala,70
 277,Meat Masala,Spices & Masalas,"MDH, Everest, Shan, Eastern",Mutton/Meat spice,Meet masala,92
-278,Aloo Bhujia,Snacks & Sweets,"Haldiram's, Bikano, Heera, Bikaji","Potato sev, Namkeen","Alu bhujia, Haldirams",48
+278,Aloo Bhujia,Snacks & Sweets,"Haldiram's, Bikano, Heera, Bikaji","Potato sev","Alu bhujia, Haldirams",48
 279,Moong Dal Snack,Snacks & Sweets,"Haldiram's, Bikano, Bikaji",Fried moong lentils,Mung snack,40
 280,Khatta Meetha,Snacks & Sweets,"Haldiram's, Bikano, Heera",Sweet and sour mix,Katta metha,61
 281,Bhujia Sev,Snacks & Sweets,"Haldiram's, Bikaji, Bikano",Fine spicy sev,Bhujiya,66
@@ -336,7 +336,7 @@ ID,Base Product,Category,Popular Brands,Search Variations,Misspellings/Regional,
 335,Pav Bhaji Masala,Spices & Masalas,"Everest, MDH, Badshah",Bhaji spice,Paav bhaji,92
 336,Chicken Masala,Spices & Masalas,"MDH, Everest, Shan, Eastern",Poultry spice,Chiken masala,77
 337,Meat Masala,Spices & Masalas,"MDH, Everest, Shan, Eastern",Mutton/Meat spice,Meet masala,78
-338,Aloo Bhujia,Snacks & Sweets,"Haldiram's, Bikano, Heera, Bikaji","Potato sev, Namkeen","Alu bhujia, Haldirams",54
+338,Aloo Bhujia,Snacks & Sweets,"Haldiram's, Bikano, Heera, Bikaji","Potato sev","Alu bhujia, Haldirams",54
 339,Moong Dal Snack,Snacks & Sweets,"Haldiram's, Bikano, Bikaji",Fried moong lentils,Mung snack,68
 340,Khatta Meetha,Snacks & Sweets,"Haldiram's, Bikano, Heera",Sweet and sour mix,Katta metha,49
 341,Bhujia Sev,Snacks & Sweets,"Haldiram's, Bikaji, Bikano",Fine spicy sev,Bhujiya,81
@@ -396,7 +396,7 @@ ID,Base Product,Category,Popular Brands,Search Variations,Misspellings/Regional,
 395,Pav Bhaji Masala,Spices & Masalas,"Everest, MDH, Badshah",Bhaji spice,Paav bhaji,80
 396,Chicken Masala,Spices & Masalas,"MDH, Everest, Shan, Eastern",Poultry spice,Chiken masala,73
 397,Meat Masala,Spices & Masalas,"MDH, Everest, Shan, Eastern",Mutton/Meat spice,Meet masala,78
-398,Aloo Bhujia,Snacks & Sweets,"Haldiram's, Bikano, Heera, Bikaji","Potato sev, Namkeen","Alu bhujia, Haldirams",65
+398,Aloo Bhujia,Snacks & Sweets,"Haldiram's, Bikano, Heera, Bikaji","Potato sev","Alu bhujia, Haldirams",65
 399,Moong Dal Snack,Snacks & Sweets,"Haldiram's, Bikano, Bikaji",Fried moong lentils,Mung snack,57
 400,Khatta Meetha,Snacks & Sweets,"Haldiram's, Bikano, Heera",Sweet and sour mix,Katta metha,73
 401,Bhujia Sev,Snacks & Sweets,"Haldiram's, Bikaji, Bikano",Fine spicy sev,Bhujiya,85
@@ -456,7 +456,7 @@ ID,Base Product,Category,Popular Brands,Search Variations,Misspellings/Regional,
 455,Pav Bhaji Masala,Spices & Masalas,"Everest, MDH, Badshah",Bhaji spice,Paav bhaji,94
 456,Chicken Masala,Spices & Masalas,"MDH, Everest, Shan, Eastern",Poultry spice,Chiken masala,90
 457,Meat Masala,Spices & Masalas,"MDH, Everest, Shan, Eastern",Mutton/Meat spice,Meet masala,90
-458,Aloo Bhujia,Snacks & Sweets,"Haldiram's, Bikano, Heera, Bikaji","Potato sev, Namkeen","Alu bhujia, Haldirams",76
+458,Aloo Bhujia,Snacks & Sweets,"Haldiram's, Bikano, Heera, Bikaji","Potato sev","Alu bhujia, Haldirams",76
 459,Moong Dal Snack,Snacks & Sweets,"Haldiram's, Bikano, Bikaji",Fried moong lentils,Mung snack,40
 460,Khatta Meetha,Snacks & Sweets,"Haldiram's, Bikano, Heera",Sweet and sour mix,Katta metha,43
 461,Bhujia Sev,Snacks & Sweets,"Haldiram's, Bikaji, Bikano",Fine spicy sev,Bhujiya,68
@@ -516,7 +516,7 @@ ID,Base Product,Category,Popular Brands,Search Variations,Misspellings/Regional,
 515,Pav Bhaji Masala,Spices & Masalas,"Everest, MDH, Badshah",Bhaji spice,Paav bhaji,85
 516,Chicken Masala,Spices & Masalas,"MDH, Everest, Shan, Eastern",Poultry spice,Chiken masala,87
 517,Meat Masala,Spices & Masalas,"MDH, Everest, Shan, Eastern",Mutton/Meat spice,Meet masala,84
-518,Aloo Bhujia,Snacks & Sweets,"Haldiram's, Bikano, Heera, Bikaji","Potato sev, Namkeen","Alu bhujia, Haldirams",65
+518,Aloo Bhujia,Snacks & Sweets,"Haldiram's, Bikano, Heera, Bikaji","Potato sev","Alu bhujia, Haldirams",65
 519,Moong Dal Snack,Snacks & Sweets,"Haldiram's, Bikano, Bikaji",Fried moong lentils,Mung snack,53
 520,Khatta Meetha,Snacks & Sweets,"Haldiram's, Bikano, Heera",Sweet and sour mix,Katta metha,68
 521,Bhujia Sev,Snacks & Sweets,"Haldiram's, Bikaji, Bikano",Fine spicy sev,Bhujiya,59
@@ -576,7 +576,7 @@ ID,Base Product,Category,Popular Brands,Search Variations,Misspellings/Regional,
 575,Pav Bhaji Masala,Spices & Masalas,"Everest, MDH, Badshah",Bhaji spice,Paav bhaji,77
 576,Chicken Masala,Spices & Masalas,"MDH, Everest, Shan, Eastern",Poultry spice,Chiken masala,84
 577,Meat Masala,Spices & Masalas,"MDH, Everest, Shan, Eastern",Mutton/Meat spice,Meet masala,94
-578,Aloo Bhujia,Snacks & Sweets,"Haldiram's, Bikano, Heera, Bikaji","Potato sev, Namkeen","Alu bhujia, Haldirams",53
+578,Aloo Bhujia,Snacks & Sweets,"Haldiram's, Bikano, Heera, Bikaji","Potato sev","Alu bhujia, Haldirams",53
 579,Moong Dal Snack,Snacks & Sweets,"Haldiram's, Bikano, Bikaji",Fried moong lentils,Mung snack,81
 580,Khatta Meetha,Snacks & Sweets,"Haldiram's, Bikano, Heera",Sweet and sour mix,Katta metha,77
 581,Bhujia Sev,Snacks & Sweets,"Haldiram's, Bikaji, Bikano",Fine spicy sev,Bhujiya,81
@@ -636,7 +636,7 @@ ID,Base Product,Category,Popular Brands,Search Variations,Misspellings/Regional,
 635,Pav Bhaji Masala,Spices & Masalas,"Everest, MDH, Badshah",Bhaji spice,Paav bhaji,73
 636,Chicken Masala,Spices & Masalas,"MDH, Everest, Shan, Eastern",Poultry spice,Chiken masala,80
 637,Meat Masala,Spices & Masalas,"MDH, Everest, Shan, Eastern",Mutton/Meat spice,Meet masala,88
-638,Aloo Bhujia,Snacks & Sweets,"Haldiram's, Bikano, Heera, Bikaji","Potato sev, Namkeen","Alu bhujia, Haldirams",45
+638,Aloo Bhujia,Snacks & Sweets,"Haldiram's, Bikano, Heera, Bikaji","Potato sev","Alu bhujia, Haldirams",45
 639,Moong Dal Snack,Snacks & Sweets,"Haldiram's, Bikano, Bikaji",Fried moong lentils,Mung snack,81
 640,Khatta Meetha,Snacks & Sweets,"Haldiram's, Bikano, Heera",Sweet and sour mix,Katta metha,59
 641,Bhujia Sev,Snacks & Sweets,"Haldiram's, Bikaji, Bikano",Fine spicy sev,Bhujiya,74
@@ -696,7 +696,7 @@ ID,Base Product,Category,Popular Brands,Search Variations,Misspellings/Regional,
 695,Pav Bhaji Masala,Spices & Masalas,"Everest, MDH, Badshah",Bhaji spice,Paav bhaji,75
 696,Chicken Masala,Spices & Masalas,"MDH, Everest, Shan, Eastern",Poultry spice,Chiken masala,71
 697,Meat Masala,Spices & Masalas,"MDH, Everest, Shan, Eastern",Mutton/Meat spice,Meet masala,71
-698,Aloo Bhujia,Snacks & Sweets,"Haldiram's, Bikano, Heera, Bikaji","Potato sev, Namkeen","Alu bhujia, Haldirams",60
+698,Aloo Bhujia,Snacks & Sweets,"Haldiram's, Bikano, Heera, Bikaji","Potato sev","Alu bhujia, Haldirams",60
 699,Moong Dal Snack,Snacks & Sweets,"Haldiram's, Bikano, Bikaji",Fried moong lentils,Mung snack,66
 700,Khatta Meetha,Snacks & Sweets,"Haldiram's, Bikano, Heera",Sweet and sour mix,Katta metha,85
 701,Bhujia Sev,Snacks & Sweets,"Haldiram's, Bikaji, Bikano",Fine spicy sev,Bhujiya,51
@@ -756,7 +756,7 @@ ID,Base Product,Category,Popular Brands,Search Variations,Misspellings/Regional,
 755,Pav Bhaji Masala,Spices & Masalas,"Everest, MDH, Badshah",Bhaji spice,Paav bhaji,85
 756,Chicken Masala,Spices & Masalas,"MDH, Everest, Shan, Eastern",Poultry spice,Chiken masala,76
 757,Meat Masala,Spices & Masalas,"MDH, Everest, Shan, Eastern",Mutton/Meat spice,Meet masala,82
-758,Aloo Bhujia,Snacks & Sweets,"Haldiram's, Bikano, Heera, Bikaji","Potato sev, Namkeen","Alu bhujia, Haldirams",76
+758,Aloo Bhujia,Snacks & Sweets,"Haldiram's, Bikano, Heera, Bikaji","Potato sev","Alu bhujia, Haldirams",76
 759,Moong Dal Snack,Snacks & Sweets,"Haldiram's, Bikano, Bikaji",Fried moong lentils,Mung snack,85
 760,Khatta Meetha,Snacks & Sweets,"Haldiram's, Bikano, Heera",Sweet and sour mix,Katta metha,78
 761,Bhujia Sev,Snacks & Sweets,"Haldiram's, Bikaji, Bikano",Fine spicy sev,Bhujiya,60
@@ -816,7 +816,7 @@ ID,Base Product,Category,Popular Brands,Search Variations,Misspellings/Regional,
 815,Pav Bhaji Masala,Spices & Masalas,"Everest, MDH, Badshah",Bhaji spice,Paav bhaji,72
 816,Chicken Masala,Spices & Masalas,"MDH, Everest, Shan, Eastern",Poultry spice,Chiken masala,74
 817,Meat Masala,Spices & Masalas,"MDH, Everest, Shan, Eastern",Mutton/Meat spice,Meet masala,85
-818,Aloo Bhujia,Snacks & Sweets,"Haldiram's, Bikano, Heera, Bikaji","Potato sev, Namkeen","Alu bhujia, Haldirams",56
+818,Aloo Bhujia,Snacks & Sweets,"Haldiram's, Bikano, Heera, Bikaji","Potato sev","Alu bhujia, Haldirams",56
 819,Moong Dal Snack,Snacks & Sweets,"Haldiram's, Bikano, Bikaji",Fried moong lentils,Mung snack,67
 820,Khatta Meetha,Snacks & Sweets,"Haldiram's, Bikano, Heera",Sweet and sour mix,Katta metha,56
 821,Bhujia Sev,Snacks & Sweets,"Haldiram's, Bikaji, Bikano",Fine spicy sev,Bhujiya,48
@@ -876,7 +876,7 @@ ID,Base Product,Category,Popular Brands,Search Variations,Misspellings/Regional,
 875,Pav Bhaji Masala,Spices & Masalas,"Everest, MDH, Badshah",Bhaji spice,Paav bhaji,73
 876,Chicken Masala,Spices & Masalas,"MDH, Everest, Shan, Eastern",Poultry spice,Chiken masala,87
 877,Meat Masala,Spices & Masalas,"MDH, Everest, Shan, Eastern",Mutton/Meat spice,Meet masala,95
-878,Aloo Bhujia,Snacks & Sweets,"Haldiram's, Bikano, Heera, Bikaji","Potato sev, Namkeen","Alu bhujia, Haldirams",66
+878,Aloo Bhujia,Snacks & Sweets,"Haldiram's, Bikano, Heera, Bikaji","Potato sev","Alu bhujia, Haldirams",66
 879,Moong Dal Snack,Snacks & Sweets,"Haldiram's, Bikano, Bikaji",Fried moong lentils,Mung snack,73
 880,Khatta Meetha,Snacks & Sweets,"Haldiram's, Bikano, Heera",Sweet and sour mix,Katta metha,56
 881,Bhujia Sev,Snacks & Sweets,"Haldiram's, Bikaji, Bikano",Fine spicy sev,Bhujiya,68
@@ -936,7 +936,7 @@ ID,Base Product,Category,Popular Brands,Search Variations,Misspellings/Regional,
 935,Pav Bhaji Masala,Spices & Masalas,"Everest, MDH, Badshah",Bhaji spice,Paav bhaji,89
 936,Chicken Masala,Spices & Masalas,"MDH, Everest, Shan, Eastern",Poultry spice,Chiken masala,71
 937,Meat Masala,Spices & Masalas,"MDH, Everest, Shan, Eastern",Mutton/Meat spice,Meet masala,73
-938,Aloo Bhujia,Snacks & Sweets,"Haldiram's, Bikano, Heera, Bikaji","Potato sev, Namkeen","Alu bhujia, Haldirams",71
+938,Aloo Bhujia,Snacks & Sweets,"Haldiram's, Bikano, Heera, Bikaji","Potato sev","Alu bhujia, Haldirams",71
 939,Moong Dal Snack,Snacks & Sweets,"Haldiram's, Bikano, Bikaji",Fried moong lentils,Mung snack,76
 940,Khatta Meetha,Snacks & Sweets,"Haldiram's, Bikano, Heera",Sweet and sour mix,Katta metha,43
 941,Bhujia Sev,Snacks & Sweets,"Haldiram's, Bikaji, Bikano",Fine spicy sev,Bhujiya,42
@@ -996,6 +996,6 @@ ID,Base Product,Category,Popular Brands,Search Variations,Misspellings/Regional,
 995,Pav Bhaji Masala,Spices & Masalas,"Everest, MDH, Badshah",Bhaji spice,Paav bhaji,93
 996,Chicken Masala,Spices & Masalas,"MDH, Everest, Shan, Eastern",Poultry spice,Chiken masala,72
 997,Meat Masala,Spices & Masalas,"MDH, Everest, Shan, Eastern",Mutton/Meat spice,Meet masala,86
-998,Aloo Bhujia,Snacks & Sweets,"Haldiram's, Bikano, Heera, Bikaji","Potato sev, Namkeen","Alu bhujia, Haldirams",63
+998,Aloo Bhujia,Snacks & Sweets,"Haldiram's, Bikano, Heera, Bikaji","Potato sev","Alu bhujia, Haldirams",63
 999,Moong Dal Snack,Snacks & Sweets,"Haldiram's, Bikano, Bikaji",Fried moong lentils,Mung snack,66
 1000,Khatta Meetha,Snacks & Sweets,"Haldiram's, Bikano, Heera",Sweet and sour mix,Katta metha,57
