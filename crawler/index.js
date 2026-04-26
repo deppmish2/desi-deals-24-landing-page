@@ -8,6 +8,7 @@ const { parseBestBefore } = require("./utils/best-before-parser");
 const { acquireCrawlLock, releaseCrawlLock } = require("./utils/snapshot");
 const { loadPriorityCanonicals, autoMapDeals } = require("./utils/auto-mapper");
 const { canonicalizeDeals } = require("../server/services/canonicalizer");
+const { backfillMultiStoreBaseKeys } = require("../server/services/base-product-catalog");
 const { runPass1 } = require("./utils/pass1-fetcher");
 const { recordStoreHistory, purgeOldHistory } = require("../server/services/price-history-recorder");
 const {
@@ -756,6 +757,14 @@ async function runCrawl(db, options = {}) {
         `UPDATE crawl_runs SET errors = json_patch(COALESCE(errors, '[]'), json_array(json_object('store_id', 'canonicalize', 'error_message', ?))) WHERE id = ?`,
         [canonError.message, runId],
       ).catch(() => {});
+    }
+
+    // Assign base_key to any canonicals now in 2+ stores that still lack one.
+    try {
+      const filled = await backfillMultiStoreBaseKeys(db);
+      if (filled > 0) logInfo("run", `Base key backfill: ${filled} canonicals updated`);
+    } catch (e) {
+      logWarn("run", `Base key backfill failed: ${e.message}`);
     }
 
     const finishedAt = new Date().toISOString();

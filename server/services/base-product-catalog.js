@@ -318,10 +318,40 @@ function detectBrandForBase(text, baseKey) {
   return null;
 }
 
+// Assigns base_key to canonicals appearing in 2+ stores that still have none.
+// Called at the end of each crawl so new mappings are picked up automatically.
+// Strategy: CSV catalog lookup first, normalised canonical_name as fallback.
+async function backfillMultiStoreBaseKeys(db, { minStores = 2 } = {}) {
+  const res = await db.execute(`
+    SELECT cp.id, cp.canonical_name
+    FROM canonical_products cp
+    JOIN deals d ON d.canonical_id = cp.id AND d.is_active = 1
+    WHERE (cp.base_key IS NULL OR cp.base_key = '')
+    GROUP BY cp.id
+    HAVING COUNT(DISTINCT d.store_id) >= ${minStores}
+  `);
+  const rows = res.rows ?? [];
+  if (rows.length === 0) return 0;
+
+  const stmts = [];
+  for (const row of rows) {
+    const catalog = resolveBaseProduct(row.canonical_name);
+    const key = catalog?.base_key ?? normalizeText(row.canonical_name);
+    if (key) stmts.push({ sql: "UPDATE canonical_products SET base_key = ? WHERE id = ?", args: [key, row.id] });
+  }
+
+  const BATCH = 500;
+  for (let i = 0; i < stmts.length; i += BATCH) {
+    await db.batch(stmts.slice(i, i + BATCH), "write");
+  }
+  return stmts.length;
+}
+
 module.exports = {
   CSV_PATH,
   resolveBaseProduct,
   detectBrandForBase,
   getCatalogCategories,
   normalizeCatalogText: normalizeText,
+  backfillMultiStoreBaseKeys,
 };
