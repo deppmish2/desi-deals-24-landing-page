@@ -24,8 +24,9 @@ Let users build persistent, named shopping lists of Indian grocery products, the
 | Brand flexibility | Per item: brand-agnostic (base_key) or brand-specific (canonical_id) | User declares preference when adding item. Agnostic = cheapest match any brand. Specific = exact brand only. |
 | Missing item — brand-agnostic | Auto-match cheapest available at that store | Any match is valid by definition. |
 | Missing item — brand-specific | Use market median as estimate, clearly flagged. User manually accepts substitute. | Auto-substitution undermines trust. Price difference between brands can be significant. |
+| Market median unavailable | Fallback cascade: canonical median → base_key median → category average → exclude with "price unknown" label. Never substitute €0. | €0 makes estimated total misleadingly low. Incomplete total is shown as "estimated total (X items unpriced)". |
 | Pack size equivalence | Auto-calculate (2 × 1kg = 2kg). Clearly shown. User can override. | System does the work. User stays informed. |
-| Store comparison totals | Two numbers: Confirmed total (items store actually has) + Estimated total (confirmed + market median for missing items) | Fair apples-to-apples comparison. Estimates clearly flagged. Never hidden. |
+| Store comparison totals | Two numbers: Confirmed total (items store actually has) + Estimated total (confirmed + median for missing items). If any item is unpriced, estimated total is labelled incomplete. | Fair apples-to-apples comparison. Estimates clearly flagged. Never hidden. |
 | Single store vs split order | Single store only | One checkout, one delivery fee, one delivery window. Splitting erodes savings and adds complexity. |
 | Sorting | By estimated total / confirmed total / coverage % / delivery time | User chooses their priority. |
 | Delivery data | Manually entered per store (~30-50 stores). Crawlable later. | Manageable at current scale. |
@@ -138,7 +139,7 @@ For each store, for each shopping list item:
 2. **Brand-specific item, store has it**: use current price → **confirmed**
 3. **Brand-specific item, found via search (Mode 3b)**: use search result price → **confirmed**
 4. **Brand-specific item, store has T1/T2 replacement only**: do NOT auto-substitute. Use market median → **estimated**. Surface replacement option to user manually.
-5. **Any item, search ran + no match found**: store confirmed does not carry it. Use canonical market median → **estimated**
+5. **Any item, search ran + no match found**: store confirmed does not carry it. Use market median → **estimated**
 6. **Pack size mismatch**: calculate equivalent quantity (2 × 1kg for 2kg request). Show clearly. User can override.
 
 **Availability signal quality (best → worst):**
@@ -150,6 +151,15 @@ For each store, for each shopping list item:
 | Found via search | Mode 3b crawl | Confirmed — search result price |
 | Not found via search | Mode 3b ran, no match | Estimated — market median (strong unavailable signal) |
 | Search not yet run | On-demand pending | Estimated — market median (flagged as stale) |
+
+**Market median fallback cascade** (used whenever a confirmed price is unavailable):
+
+1. Canonical market median — median sale price across all stores that have ever carried this exact canonical
+2. base_key market median — median price-per-kg across all canonicals sharing the same `base_key`, normalised to requested weight
+3. Category average — average price-per-kg for the canonical's category, normalised to requested weight
+4. None available → item marked **unpriced**, excluded from estimated total
+
+Items that reach step 4 are listed separately beneath the store total as "X items could not be priced". The estimated total label shows "(Y items unpriced)" so the user knows the number is a floor.
 
 **Store total:**
 - `confirmed_total` = sum of confirmed item prices
