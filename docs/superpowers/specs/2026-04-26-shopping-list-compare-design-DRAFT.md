@@ -140,7 +140,7 @@ For each store, for each shopping list item:
 3. **Brand-specific item, found via search (Mode 3b)**: use search result price → **confirmed**
 4. **Brand-specific item, store has T1/T2 replacement only**: do NOT auto-substitute. Use market median → **estimated**. Surface replacement option to user manually.
 5. **Any item, search ran + no match found**: store confirmed does not carry it. Use market median → **estimated**
-6. **Pack size mismatch**: calculate equivalent quantity (2 × 1kg for 2kg request). Show clearly. User can override.
+6. **Pack size mismatch**: calculate equivalent quantity (2 × 1kg for 2kg request). Show clearly. User can override. Multi-pack products (e.g. 5 × 2kg = 10kg) are treated as a single atomic unit — the minimum purchasable quantity is the whole pack. A 10kg multi-pack can only satisfy requests that are exact multiples of 10kg (10kg, 20kg, …). It cannot satisfy a 5kg or 2kg request. Granularity is enforced by `sizeCompatible()` which uses the total pack weight stored in `weight_value`.
 
 **Availability signal quality (best → worst):**
 

@@ -108,6 +108,9 @@ Fetcher
       ▼
 Normaliser
   └── Weight extraction, currency normalisation, availability flag
+      Multi-pack weight (e.g. "5 x 2kg") → weight_value = 10 (total), weight_unit = kg
+      weight_raw preserves original "5 x 2kg" string for display
+      price_per_kg computed on total pack weight, not per-unit weight
       │
       ▼
 Deduplicator
