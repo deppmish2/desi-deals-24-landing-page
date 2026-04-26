@@ -16,10 +16,9 @@ const { formatBerlinDateKey } = require("../services/berlin-time");
 const { trackSearchQuery } = require("../services/search-tracker");
 const { verifyJwt } = require("../utils/jwt");
 const { batchGetRealSavings, computeRealSavings, explainRealSavings } = require("../services/real-savings");
-const { getReplacements } = require("../services/product-replacements");
+const { getReplacements, variantTokensMatch, FAKE_DEAL_THRESHOLD_PP } = require("../services/product-replacements");
 
 const router = express.Router();
-const FAKE_DEAL_THRESHOLD_PP = 10;
 const EXCLUDED_STORE_IDS = ["dookan"];
 const EXCLUDED_STORE_IDS_SQL = EXCLUDED_STORE_IDS.map(
   (storeId) => `'${String(storeId).replace(/'/g, "''")}'`,
@@ -686,7 +685,7 @@ router.get("/same-product-other-stores", async (req, res, next) => {
            WHERE cp.base_key = ? AND cp.category = ? AND d.store_id != ? AND d.is_active = 1
              AND (
                d.original_price IS NULL OR d.original_price = 0 OR d.sale_price IS NULL OR d.discount_percent IS NULL OR
-               ABS(d.discount_percent - ROUND((1.0 - d.sale_price / d.original_price) * 100.0)) <= 10
+               ABS(d.discount_percent - ROUND((1.0 - d.sale_price / d.original_price) * 100.0)) <= ${FAKE_DEAL_THRESHOLD_PP}
              )
            ORDER BY d.price_per_kg ASC NULLS LAST, d.sale_price ASC`
         )
@@ -694,7 +693,6 @@ router.get("/same-product-other-stores", async (req, res, next) => {
 
       // Filter out preparation variants (whole vs split vs chilka etc.) — they share a
       // base_key but differ on variant tokens in base_product_slots.
-      const { variantTokensMatch } = require("../services/product-replacements");
       const srcSlotSet = src.base_product_slots
         ? new Set(JSON.parse(src.base_product_slots).flat())
         : null;
@@ -713,7 +711,7 @@ router.get("/same-product-other-stores", async (req, res, next) => {
            WHERE d.canonical_id = ? AND d.store_id != ? AND d.is_active = 1
              AND (
                d.original_price IS NULL OR d.original_price = 0 OR d.sale_price IS NULL OR d.discount_percent IS NULL OR
-               ABS(d.discount_percent - ROUND((1.0 - d.sale_price / d.original_price) * 100.0)) <= 10
+               ABS(d.discount_percent - ROUND((1.0 - d.sale_price / d.original_price) * 100.0)) <= ${FAKE_DEAL_THRESHOLD_PP}
              )
            ORDER BY d.price_per_kg ASC NULLS LAST, d.sale_price ASC`
         )

@@ -7,6 +7,8 @@ const {
 
 const TIER_CAP = 4;
 
+const FAKE_DEAL_THRESHOLD_PP = 7;
+
 // Tokens that distinguish preparation variants of the same base product.
 // Whole mung ≠ split mung ≠ chilka mung — they share a base_key but differ here.
 const VARIANT_TOKENS = new Set([
@@ -64,7 +66,7 @@ const ACTIVE_DEALS_WITH_CANONICAL_SQL = `
   WHERE d.store_id = ? AND d.is_active = 1 AND d.canonical_id IS NOT NULL
     AND (
       d.original_price IS NULL OR d.original_price = 0 OR d.sale_price IS NULL OR d.discount_percent IS NULL OR
-      ABS(d.discount_percent - ROUND((1.0 - d.sale_price / d.original_price) * 100.0)) <= 10
+      ABS(d.discount_percent - ROUND((1.0 - d.sale_price / d.original_price) * 100.0)) <= ${FAKE_DEAL_THRESHOLD_PP}
     )
 `;
 
@@ -256,4 +258,4 @@ async function getReplacements(db, { canonicalId, storeId, dealId = null }) {
   return { tiers };
 }
 
-module.exports = { getReplacements, variantTokensMatch };
+module.exports = { getReplacements, variantTokensMatch, FAKE_DEAL_THRESHOLD_PP };
