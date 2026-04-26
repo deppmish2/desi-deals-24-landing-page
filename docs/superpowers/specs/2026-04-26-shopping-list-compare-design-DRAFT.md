@@ -1,15 +1,9 @@
-# Shopping List & Cross-Store Price Comparison — Design Spec (DRAFT)
+# Shopping List & Cross-Store Price Comparison — Design Spec
 
 **Date:** 2026-04-26
 **Branch:** compare-stores
-**Status:** DRAFT — blocked pending crawl architecture spec
-**Prerequisite:** `2026-04-26-crawl-architecture-spec.md` must be completed first
-
----
-
-## Blocker
-
-This feature requires expanded crawl coverage (Mode 2: priority catalog crawl, Mode 3: full catalog crawl) before it can be built. The comparison cannot produce accurate totals if only deal-section prices are known. See crawl architecture spec.
+**Status:** APPROVED
+**Prerequisite:** `2026-04-26-crawl-architecture-spec.md` — completed
 
 ---
 
@@ -39,10 +33,10 @@ Let users build persistent, named shopping lists of Indian grocery products, the
 | Order tracking | Intent-based: record comparison snapshot + "order intent" event when user clicks order. Self-report on return ("did you complete your order?"). | Platform cannot see store checkout. Honest about what we can know. |
 | Order history | Linked to shopping list. Shows store, price snapshot, date, self-reported status. | Enables "resume last comparison" and learning. |
 | Self-report data | Ordered? / Items all available? / Why not ordered? (one-tap) | Store reliability signal, price accuracy signal, conversion funnel data. |
-| Price freshness | Targeted crawl triggered when item added to list (post-login). Fetches latest price and availability across all stores. Updates deals table and price history. | Data is always fresh for listed items by the time user compares. Crawl age not an issue. |
-| Crawl states per item | Active deal → crawl URL, get fresh price. Inactive deal → crawl URL, check if back in stock. Never listed → show as not available. | Covers all states cleanly. |
+| Price freshness | On-demand crawl (Mode 3) triggered when item added to list (post-login). Fetches latest price and availability across all stores via direct URL (3a) or search fallback (3b). | Data is always fresh for listed items by the time user compares. |
+| Crawl states per item | 3a: known URL → direct fetch. 3b: no known URL → search with base_key tokens → canonicalize. Not found via search → confirmed unavailable + market median. | Search fallback closes the "never listed" gap; confirmed unavailable is a stronger signal than "not seen in deals". |
 | Naming | New code uses `store_products` mental model. Existing `deals` table rename is a separate PR. | Rename touches every file — isolate as a focused low-risk refactor. |
-| Crawl expansion | Separate prerequisite spec. Three modes: deals (existing), priority catalog (~1,000 items), full catalog (weekly). Plus on-demand (triggered by list addition). | Shopping list comparison requires product prices beyond deals sections. |
+| Crawl expansion | See `2026-04-26-crawl-architecture-spec.md`. Three modes: deals (existing), full catalog (weekly), on-demand (triggered by list addition, with search fallback). | Shopping list comparison requires product prices beyond deals sections. |
 
 ---
 
@@ -53,7 +47,7 @@ Tier 1: Shopping List (server-side, canonical-level, persistent)
   └── What the user WANTS, independent of any store or price
   └── Items: canonical_id (brand-specific) OR base_key + weight (brand-agnostic)
   └── Named, reusable, multiple lists per user
-  └── Triggers targeted crawl on item addition (post-login)
+  └── Triggers on-demand crawl (Mode 3) on item addition (post-login)
 
 Tier 2: Comparison Result (ephemeral, computed on demand)
   └── System resolves list against all stores
@@ -69,7 +63,7 @@ Tier 3: Order (store-specific, created when user picks a store)
 
 ---
 
-## Data Model (draft — to be finalised after crawl architecture spec)
+## Data Model
 
 ### New tables
 
@@ -136,15 +130,26 @@ CREATE TABLE comparison_sessions (
 
 ---
 
-## Comparison Logic (draft)
+## Comparison Logic
 
 For each store, for each shopping list item:
 
-1. **Brand-agnostic item**: find cheapest active `store_product` matching `base_key` + weight equivalence at this store → **confirmed**
+1. **Brand-agnostic item**: find cheapest active product matching `base_key` + weight equivalence at this store → **confirmed**
 2. **Brand-specific item, store has it**: use current price → **confirmed**
-3. **Brand-specific item, store has replacement (T1/T2)**: do NOT auto-substitute. Use market median → **estimated**. Surface replacement option to user manually.
-4. **Any item, store never listed it**: use canonical market median price → **estimated**
-5. **Pack size mismatch**: calculate equivalent quantity (2 × 1kg for 2kg request). Show clearly. User can override.
+3. **Brand-specific item, found via search (Mode 3b)**: use search result price → **confirmed**
+4. **Brand-specific item, store has T1/T2 replacement only**: do NOT auto-substitute. Use market median → **estimated**. Surface replacement option to user manually.
+5. **Any item, search ran + no match found**: store confirmed does not carry it. Use canonical market median → **estimated**
+6. **Pack size mismatch**: calculate equivalent quantity (2 × 1kg for 2kg request). Show clearly. User can override.
+
+**Availability signal quality (best → worst):**
+
+| State | Source | Used as |
+|---|---|---|
+| Active deal found | Mode 1 crawl | Confirmed — deal price |
+| Catalog product found | Mode 2 crawl | Confirmed — regular price |
+| Found via search | Mode 3b crawl | Confirmed — search result price |
+| Not found via search | Mode 3b ran, no match | Estimated — market median (strong unavailable signal) |
+| Search not yet run | On-demand pending | Estimated — market median (flagged as stale) |
 
 **Store total:**
 - `confirmed_total` = sum of confirmed item prices
@@ -159,6 +164,16 @@ For each store, for each shopping list item:
 - Confirmed total with shipping (what you pay today)
 - Coverage % (items confirmed / total items)
 - Delivery time (min_delivery_days ascending)
+
+---
+
+## On-Demand Crawl UX
+
+1. User adds item to list (post-login) → server queues Mode 3 crawl, returns `{ freshness: 'stale', revalidating: true }`
+2. Client shows cached prices with "updating prices…" indicator
+3. Client polls GET `/api/v1/shopping-list/prices?list_id=X` every 3s
+4. Crawl completes → `{ freshness: 'fresh', revalidating: false }` — prices update in place
+5. Timeout: 30s → show stale prices with "last updated [date]" label
 
 ---
 
@@ -177,17 +192,16 @@ For each store, for each shopping list item:
 1. Anonymous user builds list in localStorage (`dd24_cart_v1` — existing key, existing flow)
 2. At "compare prices": login wall
 3. On login: localStorage list merged into server-side `shopping_lists` record
-4. Targeted crawl triggered for each item across all stores
-5. Comparison computed and displayed
+4. On-demand crawl (Mode 3) triggered for each item across all stores
+5. Stale-while-revalidate: comparison displayed immediately with cached prices, refreshes as crawl completes
 
 ---
 
 ## Out of Scope (this spec)
 
 - Split-order across multiple stores
-- Real-time stock check (beyond targeted crawl)
+- Real-time stock check (beyond on-demand crawl)
 - Store reliability scoring (future — built from self-report data)
 - Price alerts ("notify me when my list is under €X")
 - Full `deals` → `store_products` rename (separate PR)
-- Full catalog crawl architecture (prerequisite spec — do first)
-
+- Custom store full catalog crawl (7 stores, no common platform — Mode 1 only)
