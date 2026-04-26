@@ -87,8 +87,11 @@ function decomposeCanonical(canonicalName, commonAliases = [], brands = [], alia
     };
   }
 
-  // 1. Strip BBD/expiry patterns before any tokenisation
+  // 1. Strip BBD/expiry patterns and promotional suffixes before any tokenisation
   name = name.replace(BBD_RE, " ");
+  // Strip "- Sale Item" / "– Sale Item" suffixes added by stores for clearance listings
+  // (e.g. "Priya Fish Masala 50g - Sale Item [BBD: Sep 2023]" → "Priya Fish Masala 50g")
+  name = name.replace(/\s*[-–]\s*sale\s*item\b/gi, " ");
 
   // 2. Extract weight
   const wt = parseWeight(name);
