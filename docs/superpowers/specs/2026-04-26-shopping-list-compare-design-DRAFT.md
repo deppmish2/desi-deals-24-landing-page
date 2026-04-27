@@ -57,7 +57,7 @@ Tier 2: Comparison Result (ephemeral, computed on demand)
   └── Sortable by: estimated total, confirmed total, coverage, delivery time
 
 Tier 3: Order (store-specific, created when user picks a store)
-  └── Existing cart/Shopify transfer flow from compare-stores spec
+  └── Shopify cart permalink via stored external_variant_id; one-click transfer to store checkout
   └── Status: pending_confirmation → paid | never_placed
   └── Linked back to shopping list and comparison_session
 ```
