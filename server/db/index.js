@@ -166,7 +166,7 @@ const ready = (async () => {
   // both local and remote Turso DBs regardless of the bootstrap flag.
   const alwaysMigrations = [
     "ALTER TABLE canonical_products ADD COLUMN is_priority INTEGER DEFAULT 0",
-    "ALTER TABLE deal_price_history ADD COLUMN is_deal INTEGER DEFAULT 0",
+    "ALTER TABLE price_history ADD COLUMN is_deal INTEGER DEFAULT 0",
     // Ensure brand management tables exist on both local and remote paths
     // before the seed block below runs.
     `CREATE TABLE IF NOT EXISTS known_brands (
@@ -245,10 +245,10 @@ const ready = (async () => {
   }
 
   const migrations = [
-    "ALTER TABLE deals ADD COLUMN best_before TEXT",
-    "ALTER TABLE deals ADD COLUMN canonical_id TEXT",
-    "ALTER TABLE deals ADD COLUMN display_date TEXT",
-    "ALTER TABLE deals ADD COLUMN display_order INTEGER",
+    "ALTER TABLE store_products ADD COLUMN best_before TEXT",
+    "ALTER TABLE store_products ADD COLUMN canonical_id TEXT",
+    "ALTER TABLE store_products ADD COLUMN display_date TEXT",
+    "ALTER TABLE store_products ADD COLUMN display_order INTEGER",
     "ALTER TABLE stores ADD COLUMN free_shipping_min REAL",
     "ALTER TABLE stores ADD COLUMN address TEXT",
     "ALTER TABLE stores ADD COLUMN contact_phone TEXT",
@@ -304,11 +304,11 @@ const ready = (async () => {
       category   TEXT,
       created_at DATETIME DEFAULT CURRENT_TIMESTAMP
     )`,
-    "ALTER TABLE deal_price_history ADD COLUMN is_deal INTEGER DEFAULT 0",
+    "ALTER TABLE price_history ADD COLUMN is_deal INTEGER DEFAULT 0",
     `CREATE TABLE IF NOT EXISTS bookmarks (
       id TEXT PRIMARY KEY,
       user_id TEXT NOT NULL REFERENCES users(id) ON DELETE CASCADE,
-      deal_id TEXT NOT NULL REFERENCES deals(id) ON DELETE CASCADE,
+      deal_id TEXT NOT NULL REFERENCES store_products(id) ON DELETE CASCADE,
       created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
       UNIQUE(user_id, deal_id)
     )`,
@@ -342,7 +342,7 @@ const ready = (async () => {
        ON job_runs(job_name, started_at)`,
     `CREATE INDEX IF NOT EXISTS idx_job_runs_status_started
        ON job_runs(status, started_at)`,
-    `CREATE TABLE IF NOT EXISTS deal_price_history (
+    `CREATE TABLE IF NOT EXISTS price_history (
       id TEXT PRIMARY KEY,
       crawl_date TEXT NOT NULL,
       crawl_run_id TEXT NOT NULL REFERENCES crawl_runs(id),
@@ -393,16 +393,16 @@ const ready = (async () => {
        ON crawl_store_results(crawl_run_id)`,
     `CREATE INDEX IF NOT EXISTS idx_crawl_store_results_store
        ON crawl_store_results(store_id, crawl_date)`,
-    `CREATE INDEX IF NOT EXISTS idx_deal_price_history_crawl_date
-       ON deal_price_history(crawl_date)`,
-    `CREATE INDEX IF NOT EXISTS idx_deal_price_history_store_date
-       ON deal_price_history(store_id, crawl_date)`,
-    `CREATE INDEX IF NOT EXISTS idx_deal_price_history_product_url
-       ON deal_price_history(product_url)`,
-    `CREATE INDEX IF NOT EXISTS idx_deals_display_date_order
-       ON deals(display_date, display_order)`,
-    `CREATE INDEX IF NOT EXISTS idx_deals_active_display
-       ON deals(is_active, display_date, display_order)`,
+    `CREATE INDEX IF NOT EXISTS idx_price_history_crawl_date
+       ON price_history(crawl_date)`,
+    `CREATE INDEX IF NOT EXISTS idx_price_history_store_date
+       ON price_history(store_id, crawl_date)`,
+    `CREATE INDEX IF NOT EXISTS idx_price_history_product_url
+       ON price_history(product_url)`,
+    `CREATE INDEX IF NOT EXISTS idx_store_products_display_date_order
+       ON store_products(display_date, display_order)`,
+    `CREATE INDEX IF NOT EXISTS idx_store_products_active_display
+       ON store_products(is_active, display_date, display_order)`,
     `CREATE TABLE IF NOT EXISTS search_queries (
       id TEXT PRIMARY KEY,
       query TEXT NOT NULL,

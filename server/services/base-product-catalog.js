@@ -325,7 +325,7 @@ async function backfillMultiStoreBaseKeys(db, { minStores = 2 } = {}) {
   const res = await db.execute(`
     SELECT cp.id, cp.canonical_name
     FROM canonical_products cp
-    JOIN deals d ON d.canonical_id = cp.id AND d.is_active = 1
+    JOIN store_products d ON d.canonical_id = cp.id AND d.is_active = 1
     WHERE (cp.base_key IS NULL OR cp.base_key = '')
     GROUP BY cp.id
     HAVING COUNT(DISTINCT d.store_id) >= ${minStores}

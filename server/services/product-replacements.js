@@ -60,7 +60,7 @@ const ACTIVE_DEALS_WITH_CANONICAL_SQL = `
          cp.canonical_name AS cp_canonical_name,
          cp.category AS cp_category,
          cp.base_product_slots AS cp_base_product_slots
-  FROM deals d
+  FROM store_products d
   JOIN stores s ON s.id = d.store_id
   JOIN canonical_products cp ON cp.id = d.canonical_id
   WHERE d.store_id = ? AND d.is_active = 1 AND d.canonical_id IS NOT NULL

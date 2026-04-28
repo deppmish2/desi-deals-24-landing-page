@@ -43,7 +43,7 @@ async function main() {
   const res = await db.execute(`
     SELECT cp.id, cp.canonical_name, cp.category, COUNT(DISTINCT d.store_id) as store_count
     FROM canonical_products cp
-    JOIN deals d ON d.canonical_id = cp.id AND d.is_active = 1
+    JOIN store_products d ON d.canonical_id = cp.id AND d.is_active = 1
     WHERE (cp.base_key IS NULL OR cp.base_key = '')
     GROUP BY cp.id
     HAVING store_count >= ${MIN_STORES}
@@ -113,7 +113,7 @@ async function main() {
   const after = await db.execute(`
     SELECT COUNT(DISTINCT cp.id) as still_missing
     FROM canonical_products cp
-    JOIN deals d ON d.canonical_id = cp.id AND d.is_active = 1
+    JOIN store_products d ON d.canonical_id = cp.id AND d.is_active = 1
     WHERE (cp.base_key IS NULL OR cp.base_key = '')
     GROUP BY cp.id HAVING COUNT(DISTINCT d.store_id) >= ${MIN_STORES}
   `);

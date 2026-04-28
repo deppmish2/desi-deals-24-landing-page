@@ -43,8 +43,8 @@ async function runMigrations() {
   console.log("\n[1/3] Running schema migrations…");
   const migrations = [
     "ALTER TABLE canonical_products ADD COLUMN is_priority INTEGER DEFAULT 0",
-    "ALTER TABLE deals ADD COLUMN is_deal INTEGER DEFAULT 0",
-    "ALTER TABLE deal_price_history ADD COLUMN is_deal INTEGER DEFAULT 0",
+    "ALTER TABLE store_products ADD COLUMN is_deal INTEGER DEFAULT 0",
+    "ALTER TABLE price_history ADD COLUMN is_deal INTEGER DEFAULT 0",
   ];
 
   for (const sql of migrations) {
@@ -109,7 +109,7 @@ async function seedPriceHistory() {
     const res = await exec(`
       SELECT d.id, d.product_url, d.product_name, d.product_category,
              d.sale_price, d.original_price, d.store_id
-      FROM deals d
+      FROM store_products d
       WHERE d.is_active = 1 AND d.sale_price IS NOT NULL
       ORDER BY d.display_order ASC
       LIMIT 10
@@ -156,7 +156,7 @@ async function seedPriceHistory() {
 
       try {
         await exec(
-          `INSERT OR IGNORE INTO deal_price_history
+          `INSERT OR IGNORE INTO price_history
              (id, crawl_date, crawl_run_id, crawl_timestamp, store_id,
               product_name, product_category, product_url,
               sale_price, is_deal, currency)

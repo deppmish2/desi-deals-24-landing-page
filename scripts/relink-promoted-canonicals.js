@@ -64,7 +64,7 @@ async function main() {
     // Sample check
     const placeholders = dealIds.slice(0, 500).map(() => "?").join(",");
     const unlinked = await client.execute({
-      sql: `SELECT COUNT(*) as n FROM deals WHERE id IN (${placeholders}) AND canonical_id IS NULL`,
+      sql: `SELECT COUNT(*) as n FROM store_products WHERE id IN (${placeholders}) AND canonical_id IS NULL`,
       args: dealIds.slice(0, 500),
     });
     console.log(`[DRY RUN] Unlinked among first 500 source deals: ${unlinked.rows[0].n}`);
@@ -86,7 +86,7 @@ async function main() {
       for (const row of chunk) {
         const conf = confidenceToScore(row.ai_confidence);
         await tx.execute({
-          sql: `INSERT INTO deal_mappings (deal_id, canonical_id, match_method, match_confidence, verified_at)
+          sql: `INSERT INTO store_product_mappings (deal_id, canonical_id, match_method, match_confidence, verified_at)
                 VALUES (?, ?, 'bootstrap', ?, ?)
                 ON CONFLICT(deal_id, canonical_id) DO NOTHING`,
           args: [row.deal_id, row.promoted_canonical_id, conf, now],
@@ -94,7 +94,7 @@ async function main() {
         mappingsInserted++;
 
         const r = await tx.execute({
-          sql: `UPDATE deals SET canonical_id = ? WHERE id = ? AND canonical_id IS NULL`,
+          sql: `UPDATE store_products SET canonical_id = ? WHERE id = ? AND canonical_id IS NULL`,
           args: [row.promoted_canonical_id, row.deal_id],
         });
         dealsUpdated += r.rowsAffected;
@@ -143,7 +143,7 @@ async function main() {
 
     const placeholders = [...rawNames].map(() => "?").join(", ");
     const matchedDeals = await client.execute({
-      sql: `SELECT id FROM deals
+      sql: `SELECT id FROM store_products
             WHERE LOWER(TRIM(product_name)) IN (${placeholders})
               AND canonical_id IS NULL`,
       args: [...rawNames],
@@ -155,13 +155,13 @@ async function main() {
     try {
       for (const deal of matchedDeals.rows) {
         await tx2.execute({
-          sql: `INSERT INTO deal_mappings (deal_id, canonical_id, match_method, match_confidence, verified_at)
+          sql: `INSERT INTO store_product_mappings (deal_id, canonical_id, match_method, match_confidence, verified_at)
                 VALUES (?, ?, 'bootstrap-name-sweep', 0.85, ?)
                 ON CONFLICT(deal_id, canonical_id) DO NOTHING`,
           args: [deal.id, canonicalId, now],
         });
         await tx2.execute({
-          sql: `UPDATE deals SET canonical_id = ? WHERE id = ? AND canonical_id IS NULL`,
+          sql: `UPDATE store_products SET canonical_id = ? WHERE id = ? AND canonical_id IS NULL`,
           args: [canonicalId, deal.id],
         });
         broadMappings++;
@@ -180,8 +180,8 @@ async function main() {
   console.log(`  Broad sweep done: ${broadMappings} additional deal_mappings, ${broadDeals} deals linked`);
 
   // Final coverage
-  const covResult   = await client.execute(`SELECT COUNT(*) as cnt FROM deals WHERE canonical_id IS NOT NULL`);
-  const totalResult = await client.execute(`SELECT COUNT(*) as cnt FROM deals`);
+  const covResult   = await client.execute(`SELECT COUNT(*) as cnt FROM store_products WHERE canonical_id IS NOT NULL`);
+  const totalResult = await client.execute(`SELECT COUNT(*) as cnt FROM store_products`);
   const linkedDeals = covResult.rows[0].cnt;
   const totalDeals  = totalResult.rows[0].cnt;
   const coverage    = totalDeals > 0 ? Math.round((linkedDeals / totalDeals) * 100) : 0;

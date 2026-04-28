@@ -28,13 +28,13 @@ async function main() {
 
   if (RESET) {
     if (DRY_RUN) {
-      const count = await db.execute("SELECT COUNT(*) as n FROM deal_mappings");
+      const count = await db.execute("SELECT COUNT(*) as n FROM store_product_mappings");
       console.log(`[run-automapper] DRY RUN --reset: would delete ${count.rows[0].n} deal_mappings and clear deals.canonical_id`);
     } else {
       console.log("[run-automapper] --reset: deleting all deal_mappings…");
-      const del = await db.execute("DELETE FROM deal_mappings");
+      const del = await db.execute("DELETE FROM store_product_mappings");
       console.log(`[run-automapper] Deleted all deal_mappings`);
-      await db.execute("UPDATE deals SET canonical_id = NULL WHERE is_active = 1");
+      await db.execute("UPDATE store_products SET canonical_id = NULL WHERE is_active = 1");
       console.log("[run-automapper] Cleared deals.canonical_id for all active deals");
     }
   }
@@ -50,7 +50,7 @@ async function main() {
 
   const res = await db.execute(
     `SELECT id, product_url, product_name, weight_value, weight_unit
-     FROM deals
+     FROM store_products
      WHERE is_active = 1`,
   );
   const deals = res.rows ?? [];
@@ -82,10 +82,10 @@ async function main() {
 
   // Sync deals.canonical_id from the new mappings (first mapping per deal wins)
   await db.execute(`
-    UPDATE deals
+    UPDATE store_products
     SET canonical_id = (
-      SELECT canonical_id FROM deal_mappings
-      WHERE deal_id = deals.id
+      SELECT canonical_id FROM store_product_mappings
+      WHERE deal_id = store_products.id
       LIMIT 1
     )
     WHERE is_active = 1

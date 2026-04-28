@@ -84,7 +84,7 @@ async function main() {
 
   // Fetch all unlinked deals
   const dealRows = await client.execute(
-    `SELECT id, product_name FROM deals WHERE canonical_id IS NULL`
+    `SELECT id, product_name FROM store_products WHERE canonical_id IS NULL`
   );
 
   console.log(`Unlinked deals: ${dealRows.rows.length}`);
@@ -173,8 +173,8 @@ async function main() {
     }
 
     // Show projected coverage
-    const totalResult = await client.execute(`SELECT COUNT(*) as n FROM deals`);
-    const currentLinked = await client.execute(`SELECT COUNT(*) as n FROM deals WHERE canonical_id IS NOT NULL`);
+    const totalResult = await client.execute(`SELECT COUNT(*) as n FROM store_products`);
+    const currentLinked = await client.execute(`SELECT COUNT(*) as n FROM store_products WHERE canonical_id IS NOT NULL`);
     const currentN = Number(currentLinked.rows[0].n);
     const totalN = Number(totalResult.rows[0].n);
     const projectedN = currentN + matches.length;
@@ -191,13 +191,13 @@ async function main() {
     try {
       for (const m of chunk) {
         await tx.execute({
-          sql: `INSERT INTO deal_mappings (deal_id, canonical_id, match_method, match_confidence, verified_at)
+          sql: `INSERT INTO store_product_mappings (deal_id, canonical_id, match_method, match_confidence, verified_at)
                 VALUES (?, ?, ?, ?, ?)
                 ON CONFLICT(deal_id, canonical_id) DO NOTHING`,
           args: [m.dealId, m.canonicalId, m.method, m.confidence, now],
         });
         await tx.execute({
-          sql: `UPDATE deals SET canonical_id = ? WHERE id = ? AND canonical_id IS NULL`,
+          sql: `UPDATE store_products SET canonical_id = ? WHERE id = ? AND canonical_id IS NULL`,
           args: [m.canonicalId, m.dealId],
         });
         written++;
@@ -210,8 +210,8 @@ async function main() {
     if ((i + CHUNK) % 5000 === 0) console.log(`  Progress: ${i + CHUNK}/${matches.length}...`);
   }
 
-  const covResult   = await client.execute(`SELECT COUNT(*) as n FROM deals WHERE canonical_id IS NOT NULL`);
-  const totalResult = await client.execute(`SELECT COUNT(*) as n FROM deals`);
+  const covResult   = await client.execute(`SELECT COUNT(*) as n FROM store_products WHERE canonical_id IS NOT NULL`);
+  const totalResult = await client.execute(`SELECT COUNT(*) as n FROM store_products`);
   const linked = Number(covResult.rows[0].n);
   const total  = Number(totalResult.rows[0].n);
   console.log(`DONE: ${written} deals linked`);

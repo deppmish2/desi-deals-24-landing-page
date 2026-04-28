@@ -202,7 +202,7 @@ async function fetchActiveDealsForStore(db, storeId) {
   return await db
     .prepare(
       `SELECT *
-       FROM deals
+       FROM store_products
        WHERE store_id = ?
          AND is_active = 1`,
     )
@@ -215,7 +215,7 @@ async function markDealsInactive(db, dealIds) {
     // eslint-disable-next-line no-await-in-loop
     const result = await db
       .prepare(
-        `UPDATE deals
+        `UPDATE store_products
        SET is_active = 0
        WHERE id = ?
          AND is_active = 1`,
@@ -230,7 +230,7 @@ async function insertDeals(db, deals) {
   if (!Array.isArray(deals) || deals.length === 0) return 0;
 
   const insertDeal = db.prepare(`
-    INSERT INTO deals
+    INSERT INTO store_products
       (id, crawl_run_id, crawl_timestamp, store_id, product_name, product_category,
        product_url, image_url, weight_raw, weight_value, weight_unit,
        sale_price, original_price, discount_percent, price_per_kg, price_per_unit,
@@ -257,7 +257,7 @@ async function replaceDailyPriceHistoryForStore(
 ) {
   await db
     .prepare(
-      `DELETE FROM deal_price_history
+      `DELETE FROM price_history
        WHERE crawl_date = ?
          AND store_id = ?`,
     )
@@ -266,7 +266,7 @@ async function replaceDailyPriceHistoryForStore(
   if (!Array.isArray(deals) || deals.length === 0) return 0;
 
   const insertSql = `
-    INSERT INTO deal_price_history
+    INSERT INTO price_history
       (id, crawl_date, crawl_run_id, crawl_timestamp, store_id,
        product_name, product_category, product_url, image_url,
        weight_raw, weight_value, weight_unit,
@@ -326,7 +326,7 @@ async function replaceDailyPriceHistoryForStore(
 async function insertPass1Snapshots(db, snapshots, crawlDate) {
   if (!Array.isArray(snapshots) || snapshots.length === 0) return 0;
 
-  const sql = `INSERT OR IGNORE INTO deal_price_history
+  const sql = `INSERT OR IGNORE INTO price_history
     (id, crawl_date, crawl_run_id, crawl_timestamp, store_id,
      product_name, product_category, product_url,
      weight_raw, weight_value, weight_unit,
@@ -477,7 +477,7 @@ async function previousCompletedCrawl(db, excludeRunId) {
 async function refreshDailyDisplayOrder(db, crawlDate) {
   await db
     .prepare(
-      `UPDATE deals
+      `UPDATE store_products
        SET display_date = NULL,
            display_order = NULL
        WHERE is_active = 1`,
@@ -487,7 +487,7 @@ async function refreshDailyDisplayOrder(db, crawlDate) {
   const activeRows = await db
     .prepare(
       `SELECT id, store_id, discount_percent
-       FROM deals
+       FROM store_products
        WHERE is_active = 1
          AND lower(coalesce(store_id, '')) NOT IN (${EXCLUDED_DISPLAY_STORE_IDS_SQL})
          AND lower(coalesce(availability, '')) = 'in_stock'
@@ -507,7 +507,7 @@ async function refreshDailyDisplayOrder(db, crawlDate) {
 
   const statements = orderedRows.map((deal, index) => ({
     sql: `
-      UPDATE deals
+      UPDATE store_products
       SET display_date = ?,
           display_order = ?
       WHERE id = ?

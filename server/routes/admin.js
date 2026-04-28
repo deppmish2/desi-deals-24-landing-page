@@ -98,7 +98,7 @@ router.get("/crawl/warmup", async (req, res) => {
   const dealCount = Number(
     (
       await db
-        .prepare(`SELECT COUNT(*) as cnt FROM deals WHERE is_active = 1`)
+        .prepare(`SELECT COUNT(*) as cnt FROM store_products WHERE is_active = 1`)
         .get()
     )?.cnt || 0,
   );
@@ -206,7 +206,7 @@ router.get("/entity-resolution/queue", requireAuth, (req, res) => {
     .prepare(
       `SELECT q.*, d.product_name, d.product_url, d.store_id, c.canonical_name AS suggested_canonical_name
      FROM entity_resolution_queue q
-     JOIN deals d ON d.id = q.deal_id
+     JOIN store_products d ON d.id = q.deal_id
      LEFT JOIN canonical_products c ON c.id = q.suggested_canonical_id
      WHERE q.status = ?
      ORDER BY q.created_at DESC
@@ -257,12 +257,12 @@ router.post("/entity-resolution/resolve", requireAuth, (req, res) => {
     if (!canonical)
       return res.status(404).json({ error: "Canonical product not found" });
 
-    db.prepare("UPDATE deals SET canonical_id = ? WHERE id = ?").run(
+    db.prepare("UPDATE store_products SET canonical_id = ? WHERE id = ?").run(
       resolvedCanonicalId,
       resolvedDealId,
     );
     db.prepare(
-      `INSERT INTO deal_mappings
+      `INSERT INTO store_product_mappings
         (deal_id, canonical_id, match_method, match_confidence, verified_at)
        VALUES (?, ?, 'manual', 1.0, ?)
        ON CONFLICT(deal_id, canonical_id)

@@ -118,8 +118,8 @@ async function main() {
           sql: `SELECT d.id AS deal_id, d.store_id, s.name AS store_name,
                        d.product_name AS raw_product_name, d.product_category AS raw_category,
                        d.weight_raw, d.weight_value, d.weight_unit AS deal_weight_unit,
-                       (SELECT COUNT(*) FROM deals d2 WHERE LOWER(TRIM(d2.product_name)) = LOWER(TRIM(d.product_name))) AS store_count
-                FROM deals d
+                       (SELECT COUNT(*) FROM store_products d2 WHERE LOWER(TRIM(d2.product_name)) = LOWER(TRIM(d.product_name))) AS store_count
+                FROM store_products d
                 JOIN stores s ON s.id = d.store_id
                 WHERE LOWER(TRIM(d.product_name)) = ?
                 LIMIT 50`,

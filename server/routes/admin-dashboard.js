@@ -63,13 +63,13 @@ router.get("/canonical-stats", async (req, res) => {
   try {
     const [totalCanonicalsRow, mappedDealsRow, totalActiveRow, unmappedRows] = await Promise.all([
       safeGet(`SELECT COUNT(*) as count FROM canonical_products`, [], { count: 0 }),
-      safeGet(`SELECT COUNT(DISTINCT deal_id) as count FROM deal_mappings`, [], { count: 0 }),
-      safeGet(`SELECT COUNT(*) as count FROM deals WHERE is_active = 1`, [], { count: 0 }),
+      safeGet(`SELECT COUNT(DISTINCT deal_id) as count FROM store_product_mappings`, [], { count: 0 }),
+      safeGet(`SELECT COUNT(*) as count FROM store_products WHERE is_active = 1`, [], { count: 0 }),
       safeAll(
         `SELECT d.id, d.product_name, d.product_url, d.product_category,
                 d.sale_price, d.currency, s.name as store_name, d.store_id
-         FROM deals d
-         LEFT JOIN deal_mappings dm ON dm.deal_id = d.id
+         FROM store_products d
+         LEFT JOIN store_product_mappings dm ON dm.deal_id = d.id
          JOIN stores s ON s.id = d.store_id
          WHERE d.is_active = 1 AND dm.deal_id IS NULL
          ORDER BY d.store_id, d.product_name`,
@@ -101,8 +101,8 @@ router.get("/mapped-products", async (req, res) => {
          d.product_name,
          d.product_url
        FROM canonical_products cp
-       JOIN deal_mappings dm ON dm.canonical_id = cp.id
-       JOIN deals d ON d.id = dm.deal_id
+       JOIN store_product_mappings dm ON dm.canonical_id = cp.id
+       JOIN store_products d ON d.id = dm.deal_id
        JOIN stores s ON s.id = d.store_id
        ORDER BY cp.canonical_name, s.name`,
       [],
@@ -218,7 +218,7 @@ router.post("/brands/remap", async (req, res) => {
 
         if (decomposed.brandSlots === null) {
           redecomposeStmts.push(
-            { sql: `UPDATE deals SET canonical_id = NULL WHERE canonical_id = ?`, args: [canonical.id] },
+            { sql: `UPDATE store_products SET canonical_id = NULL WHERE canonical_id = ?`, args: [canonical.id] },
             { sql: `DELETE FROM canonical_products WHERE id = ?`, args: [canonical.id] },
           );
           canonicalsDeleted++;
@@ -247,8 +247,8 @@ router.post("/brands/remap", async (req, res) => {
 
       const existingMappings = await db.prepare(
         `SELECT dm.deal_id, dm.canonical_id, d.product_name, d.weight_value, d.weight_unit
-         FROM deal_mappings dm
-         JOIN deals d ON d.id = dm.deal_id
+         FROM store_product_mappings dm
+         JOIN store_products d ON d.id = dm.deal_id
          WHERE d.is_active = 1`,
       ).all();
 
@@ -257,7 +257,7 @@ router.post("/brands/remap", async (req, res) => {
         const canon = canonMap.get(m.canonical_id);
         if (!canon || matchesCanonical(norm(m.product_name), m.weight_value ?? null, m.weight_unit ?? null, canon) !== true) {
           purgeStmts.push({
-            sql: `DELETE FROM deal_mappings WHERE deal_id = ? AND canonical_id = ?`,
+            sql: `DELETE FROM store_product_mappings WHERE deal_id = ? AND canonical_id = ?`,
             args: [m.deal_id, m.canonical_id],
           });
         }
@@ -268,8 +268,8 @@ router.post("/brands/remap", async (req, res) => {
       // 2c. Map previously-unmapped active deals
       const unmappedDeals = await db.prepare(
         `SELECT d.id, d.product_url, d.product_name, d.weight_value, d.weight_unit
-         FROM deals d
-         LEFT JOIN deal_mappings dm ON dm.deal_id = d.id
+         FROM store_products d
+         LEFT JOIN store_product_mappings dm ON dm.deal_id = d.id
          WHERE d.is_active = 1 AND dm.deal_id IS NULL`,
       ).all();
 

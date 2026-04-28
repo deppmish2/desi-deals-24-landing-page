@@ -139,7 +139,7 @@ const BASE_DEALS_SQL = `
     d.image_url, d.weight_raw, d.weight_value, d.weight_unit,
     d.sale_price, d.original_price, d.discount_percent,
     d.price_per_kg, d.currency, d.availability, d.bulk_pricing, d.best_before
-  FROM deals d
+  FROM store_products d
   JOIN stores s ON s.id = d.store_id
 `;
 
@@ -167,7 +167,7 @@ router.get("/stores", async (req, res, next) => {
            d.store_id,
            s.name AS store_name,
            COUNT(*) AS deal_count
-         FROM deals d
+         FROM store_products d
          JOIN stores s ON s.id = d.store_id
          WHERE d.is_active = 1
            AND lower(d.store_id) NOT IN (${EXCLUDED_STORE_IDS_SQL})
@@ -356,7 +356,7 @@ router.get("/", async (req, res, next) => {
              d.sale_price, d.original_price, d.discount_percent,
              d.price_per_kg, d.currency, d.availability, d.bulk_pricing, d.best_before,
              COUNT(*) OVER() AS total_count
-           FROM deals d
+           FROM store_products d
            JOIN stores s ON s.id = d.store_id
            WHERE ${FAST_CURRENT_DEALS_WHERE_SQL}
            ORDER BY d.display_order ASC
@@ -372,7 +372,7 @@ router.get("/", async (req, res, next) => {
               await db
                 .prepare(
                   `SELECT COUNT(*) AS total
-                 FROM deals d
+                 FROM store_products d
                  WHERE ${FAST_CURRENT_DEALS_WHERE_SQL}`,
                 )
                 .get(crawlDate)
@@ -679,7 +679,7 @@ router.get("/same-product-other-stores", async (req, res, next) => {
                   d.price_per_kg, d.weight_raw, d.weight_value, d.weight_unit, d.product_url, d.image_url,
                   s.id AS store_id, s.name AS store_name, s.url AS store_url,
                   cp.base_product_slots AS cp_base_product_slots
-           FROM deals d
+           FROM store_products d
            JOIN stores s ON s.id = d.store_id
            JOIN canonical_products cp ON cp.id = d.canonical_id
            WHERE cp.base_key = ? AND cp.category = ? AND d.store_id != ? AND d.is_active = 1
@@ -706,7 +706,7 @@ router.get("/same-product-other-stores", async (req, res, next) => {
           `SELECT d.id, d.product_name, d.sale_price, d.discount_percent,
                   d.price_per_kg, d.weight_raw, d.weight_value, d.weight_unit, d.product_url, d.image_url,
                   s.id AS store_id, s.name AS store_name, s.url AS store_url
-           FROM deals d
+           FROM store_products d
            JOIN stores s ON s.id = d.store_id
            WHERE d.canonical_id = ? AND d.store_id != ? AND d.is_active = 1
              AND (

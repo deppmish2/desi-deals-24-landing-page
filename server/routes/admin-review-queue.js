@@ -130,7 +130,7 @@ router.patch("/review-queue/:id", async (req, res) => {
     const now = new Date().toISOString();
     await db
       .prepare(
-        `INSERT INTO deal_mappings (deal_id, canonical_id, match_method, match_confidence, verified_at)
+        `INSERT INTO store_product_mappings (deal_id, canonical_id, match_method, match_confidence, verified_at)
          VALUES (?, ?, 'manual', ?, ?)
          ON CONFLICT(deal_id, canonical_id) DO UPDATE SET
            match_method = 'manual',
@@ -140,7 +140,7 @@ router.patch("/review-queue/:id", async (req, res) => {
       .run(item.deal_id, canonical_id, item.confidence, now);
 
     await db
-      .prepare("UPDATE deals SET canonical_id = ? WHERE id = ?")
+      .prepare("UPDATE store_products SET canonical_id = ? WHERE id = ?")
       .run(canonical_id, item.deal_id);
 
     res.json({ ok: true });
@@ -223,7 +223,7 @@ router.post("/review-queue/canonical", async (req, res) => {
     // Insert deal_mapping for originating deal
     await db
       .prepare(
-        `INSERT INTO deal_mappings (deal_id, canonical_id, match_method, match_confidence, verified_at)
+        `INSERT INTO store_product_mappings (deal_id, canonical_id, match_method, match_confidence, verified_at)
          VALUES (?, ?, 'manual', 1.0, ?)
          ON CONFLICT(deal_id, canonical_id) DO UPDATE SET
            match_method = 'manual',
@@ -233,7 +233,7 @@ router.post("/review-queue/canonical", async (req, res) => {
       .run(originItem.deal_id, newId, now);
 
     await db
-      .prepare("UPDATE deals SET canonical_id = ? WHERE id = ?")
+      .prepare("UPDATE store_products SET canonical_id = ? WHERE id = ?")
       .run(newId, originItem.deal_id);
 
     // Re-scan pending items in same category
@@ -259,7 +259,7 @@ router.post("/review-queue/canonical", async (req, res) => {
 
         await db
           .prepare(
-            `INSERT INTO deal_mappings (deal_id, canonical_id, match_method, match_confidence, verified_at)
+            `INSERT INTO store_product_mappings (deal_id, canonical_id, match_method, match_confidence, verified_at)
              VALUES (?, ?, 'fuzzy', ?, ?)
              ON CONFLICT(deal_id, canonical_id) DO UPDATE SET
                match_method = 'fuzzy',
@@ -269,7 +269,7 @@ router.post("/review-queue/canonical", async (req, res) => {
           .run(pending.deal_id, newId, matchResult.confidence, now);
 
         await db
-          .prepare("UPDATE deals SET canonical_id = ? WHERE id = ?")
+          .prepare("UPDATE store_products SET canonical_id = ? WHERE id = ?")
           .run(newId, pending.deal_id);
 
         autoConfirmed += 1;
@@ -332,9 +332,9 @@ router.patch("/review-queue/canonical/:id", async (req, res) => {
         existing.created_at ?? new Date().toISOString(),
       );
       // Cascade references before deleting old record
-      await db.prepare(`UPDATE deal_mappings SET canonical_id = ? WHERE canonical_id = ?`).run(newId, id);
+      await db.prepare(`UPDATE store_product_mappings SET canonical_id = ? WHERE canonical_id = ?`).run(newId, id);
       await db.prepare(`UPDATE entity_resolution_queue SET suggested_canonical_id = ? WHERE suggested_canonical_id = ?`).run(newId, id);
-      await db.prepare(`UPDATE deals SET canonical_id = ? WHERE canonical_id = ?`).run(newId, id);
+      await db.prepare(`UPDATE store_products SET canonical_id = ? WHERE canonical_id = ?`).run(newId, id);
       await db.prepare(`DELETE FROM canonical_products WHERE id = ?`).run(id);
     } else {
       await db.prepare(
@@ -389,9 +389,9 @@ router.get("/review-queue/canonical/:id/price-data", async (req, res) => {
         `SELECT d.id, d.product_name, d.sale_price, d.price_per_kg, d.currency,
                 s.name AS store_name,
                 dm.match_method, dm.match_confidence
-         FROM deals d
+         FROM store_products d
          JOIN stores s ON s.id = d.store_id
-         LEFT JOIN deal_mappings dm ON dm.deal_id = d.id AND dm.canonical_id = ?
+         LEFT JOIN store_product_mappings dm ON dm.deal_id = d.id AND dm.canonical_id = ?
          WHERE d.canonical_id = ? AND d.is_active = 1
          ORDER BY d.sale_price ASC`,
       )
@@ -414,7 +414,7 @@ router.get("/review-queue/canonical/:id/price-data", async (req, res) => {
     }));
 
     const totalAllRow = await db
-      .prepare("SELECT COUNT(*) AS n FROM deals WHERE canonical_id = ?")
+      .prepare("SELECT COUNT(*) AS n FROM store_products WHERE canonical_id = ?")
       .get(id);
 
     // Same-spec alternatives at other stores (T2 cross-brand, cross-store)
@@ -426,7 +426,7 @@ router.get("/review-queue/canonical/:id/price-data", async (req, res) => {
         .prepare(
           `SELECT d.id, d.product_name, d.sale_price, d.discount_percent, d.weight_raw, d.product_url,
                   s.id AS store_id, s.name AS store_name
-           FROM deals d
+           FROM store_products d
            JOIN stores s ON s.id = d.store_id
            JOIN canonical_products cp ON cp.id = d.canonical_id
            WHERE cp.base_product_slots = ?

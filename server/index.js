@@ -216,7 +216,7 @@ async function getShareableDeal(dealId) {
          d.product_url,
          s.url AS store_url,
          s.name AS store_name
-       FROM deals d
+       FROM store_products d
        JOIN stores s ON s.id = d.store_id
        WHERE d.id = ?
          AND ${DISPLAYABLE_SHARE_DISCOUNT_SQL}
@@ -482,7 +482,7 @@ if (require.main === module) {
     // Pre-warm SQLite page cache so the first real request is fast
     db.ready
       .then(() =>
-        db.prepare("SELECT COUNT(*) FROM deals WHERE is_active = 1").get(),
+        db.prepare("SELECT COUNT(*) FROM store_products WHERE is_active = 1").get(),
       )
       .catch(() => {});
 

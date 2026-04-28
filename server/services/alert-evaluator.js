@@ -28,7 +28,7 @@ function shouldSkipDueCooldown(alert) {
 async function queryMatchesForAlert(db, alert) {
   let sql = `
     SELECT d.*, s.name AS store_name
-    FROM deals d
+    FROM store_products d
     JOIN stores s ON s.id = d.store_id
     WHERE d.is_active = 1
       AND d.availability = 'in_stock'

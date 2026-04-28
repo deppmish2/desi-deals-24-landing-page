@@ -34,7 +34,7 @@ async function main() {
     SELECT
       COUNT(*) as total,
       SUM(CASE WHEN canonical_id IS NULL THEN 1 ELSE 0 END) as unmapped
-    FROM deals WHERE is_active = 1
+    FROM store_products WHERE is_active = 1
   `);
   const { total, unmapped } = before.rows[0];
   console.log(`[backfill] Active deals: ${total} total, ${unmapped} unmapped`);
@@ -52,7 +52,7 @@ async function main() {
   // Load only unmapped deals
   const res = await db.execute(`
     SELECT id, product_url, product_name, weight_value, weight_unit
-    FROM deals
+    FROM store_products
     WHERE is_active = 1
       AND canonical_id IS NULL
   `);
@@ -91,10 +91,10 @@ async function main() {
 
   // Sync deals.canonical_id from new mappings (first match per deal wins)
   await db.execute(`
-    UPDATE deals
+    UPDATE store_products
     SET canonical_id = (
-      SELECT canonical_id FROM deal_mappings
-      WHERE deal_id = deals.id
+      SELECT canonical_id FROM store_product_mappings
+      WHERE deal_id = store_products.id
         AND match_method = 'slot_match'
       LIMIT 1
     )
@@ -107,7 +107,7 @@ async function main() {
     SELECT
       COUNT(*) as total,
       SUM(CASE WHEN canonical_id IS NULL THEN 1 ELSE 0 END) as still_unmapped
-    FROM deals WHERE is_active = 1
+    FROM store_products WHERE is_active = 1
   `);
   const { total: total2, still_unmapped } = after.rows[0];
   const resolved = unmapped - still_unmapped;

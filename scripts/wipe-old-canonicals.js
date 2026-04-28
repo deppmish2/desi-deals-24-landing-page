@@ -52,7 +52,7 @@ async function main() {
     counts.canonical_products = canonicalRows.rows[0]?.c || 0;
 
     const mappingRows = await client.execute(
-      "SELECT COUNT(*) as c FROM deal_mappings"
+      "SELECT COUNT(*) as c FROM store_product_mappings"
     );
     counts.deal_mappings = mappingRows.rows[0]?.c || 0;
 
@@ -62,7 +62,7 @@ async function main() {
     counts.entity_resolution_queue = erqRows.rows[0]?.c || 0;
 
     const dealsRows = await client.execute(
-      "SELECT COUNT(*) as c FROM deals WHERE canonical_id IS NOT NULL"
+      "SELECT COUNT(*) as c FROM store_products WHERE canonical_id IS NOT NULL"
     );
     counts.deals_with_canonical = dealsRows.rows[0]?.c || 0;
 
@@ -123,10 +123,10 @@ async function main() {
     await client.batch([
       "UPDATE list_items SET canonical_id = NULL WHERE canonical_id IS NOT NULL",
       "UPDATE price_alerts SET canonical_id = NULL WHERE canonical_id IS NOT NULL",
-      "UPDATE deals SET canonical_id = NULL WHERE canonical_id IS NOT NULL",
+      "UPDATE store_products SET canonical_id = NULL WHERE canonical_id IS NOT NULL",
       "UPDATE entity_resolution_queue SET suggested_canonical_id = NULL WHERE suggested_canonical_id IS NOT NULL",
       "DELETE FROM entity_resolution_queue",
-      "DELETE FROM deal_mappings",
+      "DELETE FROM store_product_mappings",
       "DELETE FROM canonical_products",
     ], "write");
     console.log("  ✓ All tables wiped atomically");
@@ -138,7 +138,7 @@ async function main() {
       "SELECT COUNT(*) as c FROM canonical_products"
     );
     const afterDm = await client.execute(
-      "SELECT COUNT(*) as c FROM deal_mappings"
+      "SELECT COUNT(*) as c FROM store_product_mappings"
     );
     const afterErq = await client.execute(
       "SELECT COUNT(*) as c FROM entity_resolution_queue"

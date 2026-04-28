@@ -279,7 +279,7 @@ async function main() {
 
   const dealsRes = await db.execute(
     `SELECT id, product_name, product_url, store_id
-     FROM deals
+     FROM store_products
      WHERE is_active = 1
        AND product_url IS NOT NULL
        AND product_name IS NOT NULL`,
@@ -295,8 +295,8 @@ async function main() {
     `SELECT cp.canonical_name,
             COUNT(DISTINCT d.store_id) AS stores,
             COUNT(*) AS deal_count
-     FROM deal_mappings dm
-     JOIN deals d ON d.id = dm.deal_id
+     FROM store_product_mappings dm
+     JOIN store_products d ON d.id = dm.deal_id
      JOIN canonical_products cp ON cp.id = dm.canonical_id
      WHERE cp.is_priority = 1 AND d.is_active = 1
      GROUP BY cp.canonical_name

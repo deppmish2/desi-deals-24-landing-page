@@ -61,7 +61,7 @@ async function batchGetRealSavings(db, deals) {
   try {
     const placeholders = dealIds.map(() => "?").join(", ");
     const mappingRes = await db.execute(
-      `SELECT id AS deal_id, canonical_id FROM deals WHERE id IN (${placeholders}) AND canonical_id IS NOT NULL`,
+      `SELECT id AS deal_id, canonical_id FROM store_products WHERE id IN (${placeholders}) AND canonical_id IS NOT NULL`,
       dealIds,
     );
     canonicalMap = new Map((mappingRes.rows ?? []).map((r) => [r.deal_id, r.canonical_id]));
@@ -82,9 +82,9 @@ async function batchGetRealSavings(db, deals) {
         `SELECT dm.canonical_id,
                 dph.store_id,
                 COALESCE(dph.original_price, dph.sale_price) * dph.price_per_kg / dph.sale_price AS normal_price_per_kg
-         FROM deal_price_history dph
-         JOIN deals d ON d.product_url = dph.product_url
-         JOIN deal_mappings dm ON dm.deal_id = d.id
+         FROM price_history dph
+         JOIN store_products d ON d.product_url = dph.product_url
+         JOIN store_product_mappings dm ON dm.deal_id = d.id
          WHERE dm.canonical_id IN (${placeholders})
            AND dph.crawl_date >= date('now', '-90 days')
            AND dph.price_per_kg IS NOT NULL

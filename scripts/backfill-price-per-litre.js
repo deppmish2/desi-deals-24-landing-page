@@ -29,12 +29,12 @@ require("dotenv").config({ path: ".env.local", override: true });
 const dryRun   = process.argv.includes("--dry-run");
 const useTurso = process.argv.includes("--turso");
 
-const SQL_COUNT_ML  = `SELECT COUNT(*) AS cnt FROM deals WHERE weight_unit = 'ml' AND weight_value > 0 AND sale_price > 0 AND price_per_kg IS NULL`;
-const SQL_COUNT_L   = `SELECT COUNT(*) AS cnt FROM deals WHERE weight_unit = 'l'  AND weight_value > 0 AND sale_price > 0 AND price_per_kg IS NULL`;
-const SQL_SAMPLE_ML = `SELECT product_name, sale_price, weight_value, ROUND(sale_price / weight_value * 1000 * 100) / 100 AS computed FROM deals WHERE weight_unit = 'ml' AND weight_value > 0 AND sale_price > 0 AND price_per_kg IS NULL LIMIT 5`;
-const SQL_SAMPLE_L  = `SELECT product_name, sale_price, weight_value, ROUND(sale_price / weight_value * 100) / 100 AS computed FROM deals WHERE weight_unit = 'l'  AND weight_value > 0 AND sale_price > 0 AND price_per_kg IS NULL LIMIT 5`;
-const SQL_UPDATE_ML = `UPDATE deals SET price_per_kg = ROUND(sale_price / weight_value * 1000 * 100) / 100 WHERE weight_unit = 'ml' AND weight_value > 0 AND sale_price > 0 AND price_per_kg IS NULL`;
-const SQL_UPDATE_L  = `UPDATE deals SET price_per_kg = ROUND(sale_price / weight_value * 100) / 100 WHERE weight_unit = 'l'  AND weight_value > 0 AND sale_price > 0 AND price_per_kg IS NULL`;
+const SQL_COUNT_ML  = `SELECT COUNT(*) AS cnt FROM store_products WHERE weight_unit = 'ml' AND weight_value > 0 AND sale_price > 0 AND price_per_kg IS NULL`;
+const SQL_COUNT_L   = `SELECT COUNT(*) AS cnt FROM store_products WHERE weight_unit = 'l'  AND weight_value > 0 AND sale_price > 0 AND price_per_kg IS NULL`;
+const SQL_SAMPLE_ML = `SELECT product_name, sale_price, weight_value, ROUND(sale_price / weight_value * 1000 * 100) / 100 AS computed FROM store_products WHERE weight_unit = 'ml' AND weight_value > 0 AND sale_price > 0 AND price_per_kg IS NULL LIMIT 5`;
+const SQL_SAMPLE_L  = `SELECT product_name, sale_price, weight_value, ROUND(sale_price / weight_value * 100) / 100 AS computed FROM store_products WHERE weight_unit = 'l'  AND weight_value > 0 AND sale_price > 0 AND price_per_kg IS NULL LIMIT 5`;
+const SQL_UPDATE_ML = `UPDATE store_products SET price_per_kg = ROUND(sale_price / weight_value * 1000 * 100) / 100 WHERE weight_unit = 'ml' AND weight_value > 0 AND sale_price > 0 AND price_per_kg IS NULL`;
+const SQL_UPDATE_L  = `UPDATE store_products SET price_per_kg = ROUND(sale_price / weight_value * 100) / 100 WHERE weight_unit = 'l'  AND weight_value > 0 AND sale_price > 0 AND price_per_kg IS NULL`;
 
 function readEnv(...keys) {
   for (const key of keys) {

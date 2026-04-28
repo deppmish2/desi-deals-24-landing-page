@@ -135,7 +135,7 @@ async function upsertDealMapping(
 ) {
   await db
     .prepare(
-      `INSERT INTO deal_mappings
+      `INSERT INTO store_product_mappings
       (deal_id, canonical_id, match_method, match_confidence, verified_at)
      VALUES (?, ?, ?, ?, ?)
      ON CONFLICT(deal_id, canonical_id)
@@ -147,7 +147,7 @@ async function upsertDealMapping(
     .run(dealId, canonicalId, method, confidence, new Date().toISOString());
 
   await db
-    .prepare("UPDATE deals SET canonical_id = ? WHERE id = ?")
+    .prepare("UPDATE store_products SET canonical_id = ? WHERE id = ?")
     .run(canonicalId, dealId);
 }
 
@@ -255,14 +255,14 @@ async function canonicalizeDeals(db, { runId, unmappedOnly } = {}) {
     params.push(runId);
   }
   const join = unmappedOnly
-    ? "LEFT JOIN deal_mappings dm ON dm.deal_id = d.id"
+    ? "LEFT JOIN store_product_mappings dm ON dm.deal_id = d.id"
     : "";
   if (unmappedOnly) where += " AND dm.deal_id IS NULL";
 
   const deals = await db
     .prepare(
       `SELECT d.id, d.product_name, d.product_category, d.image_url, d.store_id
-     FROM deals d
+     FROM store_products d
      ${join}
      WHERE ${where}`,
     )
