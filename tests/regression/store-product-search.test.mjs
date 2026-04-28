@@ -1,6 +1,6 @@
 import test from "node:test";
 import assert from "node:assert/strict";
-import dealSearch from "../../server/services/deal-search.js";
+import dealSearch from "../../server/services/store-product-search.js";
 import { expandQueryWord } from "../../server/services/search-synonyms.js";
 import { phoneticMatchScore } from "../../server/services/phonetic-search.js";
 

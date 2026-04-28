@@ -1,7 +1,7 @@
 import test from "node:test";
 import assert from "node:assert/strict";
 
-import dealOrder from "../../server/services/deal-order.js";
+import dealOrder from "../../server/services/store-product-order.js";
 
 const { buildStableDisplayOrder, dateSeed } = dealOrder;
 
