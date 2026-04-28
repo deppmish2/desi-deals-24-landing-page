@@ -103,16 +103,16 @@ On each keystroke (debounced 80ms):
 
 ### Auto-Suggest UI
 
-Dropdown below search input, grouped into three sections:
+Dropdown below search input, grouped into three sections, ending with a "see all" link:
 
 ```
 ┌─────────────────────────────────────────┐
 │ 🔍 toor dal                             │
 ├─────────────────────────────────────────┤
 │ PRODUCTS                                │
-│ [img] TRS Toor Dal          €3.49/kg ▸  │
-│ [img] East End Toor Dal     €3.80/kg ▸  │
-│ [img] Heera Toor Dal        €4.10/kg ▸  │
+│ [img] TRS **Toor Dal**      €3.49/kg ▸  │
+│ [img] East End **Toor Dal** €3.80/kg ▸  │
+│ [img] Heera **Toor Dal**    €4.10/kg ▸  │
 ├─────────────────────────────────────────┤
 │ BRANDS                                  │
 │ TRS  →                                  │
@@ -120,6 +120,8 @@ Dropdown below search input, grouped into three sections:
 ├─────────────────────────────────────────┤
 │ CATEGORIES                              │
 │ Lentils & Dal  →                        │
+├─────────────────────────────────────────┤
+│ See all results for "toor dal"  →       │
 └─────────────────────────────────────────┘
 ```
 
@@ -127,6 +129,8 @@ Dropdown below search input, grouped into three sections:
 - Product rows show thumbnail + name + cheapest price (from suggest index, pre-computed at index build time)
 - Brand / category rows open a filtered search results page
 - Clicking a product row goes directly to the canonical product page
+- **Term highlighting:** matched query tokens are wrapped in `<mark>` within product names, brand names, and category names. Matching is case-insensitive, applied after scoring. Alias matches (e.g. "arhar" matching "Toor Dal") highlight the canonical name, not the alias — the alias itself is not shown.
+- **"See all results" row:** always shown at the bottom of the dropdown when suggestions are visible. Submits the current query to the full search results page (`/search?q=<query>`). Also triggered by pressing Enter or clicking the search button.
 
 ---
 
