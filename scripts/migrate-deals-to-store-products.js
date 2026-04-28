@@ -111,9 +111,11 @@ const migration = db.transaction(() => {
   console.log('Recreated new indexes (no-op if already present)');
 });
 
-migration();
-
-db.pragma('foreign_keys = ON');
+try {
+  migration();
+} finally {
+  db.pragma('foreign_keys = ON');
+}
 db.close();
 
 console.log('Migration complete.');
