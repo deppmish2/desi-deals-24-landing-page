@@ -49,7 +49,7 @@ app.use("/api", async (req, res, next) => {
 });
 
 // ── API Routes ────────────────────────────────────────────────────────────────
-app.use("/api/v1/deals", storeProductsRouter);
+app.use("/api/v1/store-products", storeProductsRouter);
 app.use("/api/v1/auth", authRouter);
 app.use("/api/auth", authRouter); // compatibility for older frontend builds
 app.use("/api/v1/admin", adminRouter);
@@ -409,7 +409,7 @@ function sendClientApp(res, options = {}) {
   return res.status(200).json({
     message: "DesiDeals24 API is running.",
     hint: "Build the client with: npm run build:client",
-    api: "/api/v1/deals?curated=daily_live_pool",
+    api: "/api/v1/store-products?curated=daily_live_pool",
   });
 }
 
@@ -477,7 +477,7 @@ app.use((err, req, res, next) => {
 if (require.main === module) {
   app.listen(PORT, () => {
     console.log(`\nDesiDeals24 server running on http://localhost:${PORT}`);
-    console.log(`API: http://localhost:${PORT}/api/v1/deals`);
+    console.log(`API: http://localhost:${PORT}/api/v1/store-products`);
 
     // Pre-warm SQLite page cache so the first real request is fast
     db.ready

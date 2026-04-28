@@ -11,10 +11,14 @@
             "id": "27afdb38dc5ed226",
             "type": "leaf",
             "state": {
-              "type": "empty",
-              "state": {},
+              "type": "markdown",
+              "state": {
+                "file": "WIKI.md",
+                "mode": "source",
+                "source": false
+              },
               "icon": "lucide-file",
-              "title": "New tab"
+              "title": "WIKI"
             }
           }
         ]
@@ -70,8 +74,7 @@
               "title": "Bookmarks"
             }
           }
-        ],
-        "currentTab": 1
+        ]
       }
     ],
     "direction": "horizontal",
@@ -177,12 +180,15 @@
       "bases:Create new base": false
     }
   },
-  "active": "461d83b40c7ec29b",
+  "active": "27afdb38dc5ed226",
   "lastOpenFiles": [
+    "frontend.md",
+    "frontend 2.md",
+    "decisions 2.md",
+    "decisions.md",
+    "Untitled.canvas",
     "2026-04-11.md",
     "backend.md",
-    "crawler.md",
-    "decisions.md",
-    "frontend.md"
+    "crawler.md"
   ]
 }

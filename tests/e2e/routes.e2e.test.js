@@ -520,17 +520,17 @@ test("public deals/stores/categories/contact route e2e", async () => {
   const api = await startServer(app);
 
   try {
-    const deals = await api.request("/api/v1/deals?limit=10");
+    const deals = await api.request("/api/v1/store-products?limit=10");
     assert.equal(deals.status, 200);
     assert.ok(Array.isArray(deals.json.data));
     assert.equal(deals.json.data.length, 1);
     assert.equal(deals.json.data[0].id, "deal-main");
 
-    const suggest = await api.request("/api/v1/deals/suggest?q=jee");
+    const suggest = await api.request("/api/v1/store-products/suggest?q=jee");
     assert.equal(suggest.status, 200);
     assert.ok(suggest.json.suggestions.some((name) => name.includes("Jeera")));
 
-    const dealDetail = await api.request("/api/v1/deals/deal-main");
+    const dealDetail = await api.request("/api/v1/store-products/deal-main");
     assert.equal(dealDetail.status, 200);
     assert.equal(dealDetail.json.id, "deal-main");
     assert.equal(dealDetail.json.store.id, "shop-main");

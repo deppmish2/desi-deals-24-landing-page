@@ -116,7 +116,7 @@ function buildAppWithDb(dbMock) {
 
     const app = express();
     app.use(express.json());
-    app.use("/api/v1/deals", dealsRouter);
+    app.use("/api/v1/store-products", dealsRouter);
     app.use("/api/v1/stores", storesRouter);
     app.use("/api/v1/categories", categoriesRouter);
     app.use("/api/v1/contact", contactRouter);

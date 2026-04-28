@@ -139,7 +139,7 @@ async function main() {
     const runs = await Promise.all([
       timed("browse_deals", 80, async () => {
         const res = await api.request(
-          "/api/v1/deals?limit=24&sort=discount_desc",
+          "/api/v1/store-products?limit=24&sort=discount_desc",
         );
         if (res.status !== 200) throw new Error(`browse status ${res.status}`);
       }),

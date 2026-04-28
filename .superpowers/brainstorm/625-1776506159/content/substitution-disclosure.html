@@ -1,0 +1,135 @@
+<h2>How should substitutions be disclosed in store cards?</h2>
+<p class="subtitle">After accepting a replacement, the basket is no longer identical across stores — how do we communicate this?</p>
+
+<div class="cards">
+
+  <!-- Option A: Inline disclosure + incomparability warning -->
+  <div class="card" data-choice="a" onclick="toggleSelect(this)">
+    <div class="card-image" style="background:#0f1a10;padding:10px;border-radius:8px;font-family:system-ui">
+
+      <!-- Winner card with substitution -->
+      <div style="background:linear-gradient(135deg,#14532d,#166534);border-radius:8px;padding:8px;margin-bottom:6px;border:1px solid #22c55e55">
+        <div style="display:flex;justify-content:space-between;align-items:flex-start">
+          <div>
+            <div style="font-size:8px;color:#86efac;font-weight:700;letter-spacing:.08em">BEST PRICE</div>
+            <div style="font-size:12px;font-weight:800;color:#fff">Jamoona</div>
+            <div style="display:flex;gap:4px;margin-top:3px;flex-wrap:wrap">
+              <span style="background:#22c55e22;color:#86efac;font-size:7px;font-weight:700;padding:1px 5px;border-radius:8px">12/13 matched</span>
+              <span style="background:#f59e0b22;color:#fbbf24;font-size:7px;font-weight:700;padding:1px 5px;border-radius:8px">2 substitutions</span>
+            </div>
+          </div>
+          <div style="text-align:right">
+            <div style="font-size:15px;font-weight:800;color:#4ade80">€47.20<span style="font-size:9px;color:#86efac">*</span></div>
+            <div style="font-size:7.5px;color:#86efac">incl. shipping</div>
+          </div>
+        </div>
+
+        <!-- Item list -->
+        <div style="margin-top:6px;background:#0f2518;border-radius:5px;padding:5px;display:flex;flex-direction:column;gap:3px">
+          <div style="display:flex;justify-content:space-between;font-size:8px;color:#d1d5db">
+            <span>✓ Daawat Basmati 5kg</span><span style="color:#4ade80">€8.99</span>
+          </div>
+          <!-- Substituted item -->
+          <div style="background:#1a2e1a;border-radius:4px;padding:4px 5px;border-left:2px solid #f59e0b">
+            <div style="display:flex;justify-content:space-between;font-size:7.5px">
+              <span style="color:#6b7280;text-decoration:line-through">Amul Butter 500g</span>
+              <span style="color:#6b7280;text-decoration:line-through">—</span>
+            </div>
+            <div style="display:flex;justify-content:space-between;font-size:7.5px;margin-top:1px">
+              <span style="color:#fbbf24">↳ Milkfood Butter 500g</span>
+              <span style="color:#fbbf24">€3.49</span>
+            </div>
+          </div>
+          <!-- Another substituted item -->
+          <div style="background:#1a2e1a;border-radius:4px;padding:4px 5px;border-left:2px solid #f59e0b">
+            <div style="display:flex;justify-content:space-between;font-size:7.5px">
+              <span style="color:#6b7280;text-decoration:line-through">Aashirvaad Ghee 1L</span>
+              <span style="color:#6b7280;text-decoration:line-through">—</span>
+            </div>
+            <div style="display:flex;justify-content:space-between;font-size:7.5px;margin-top:1px">
+              <span style="color:#fbbf24">↳ Gowardhan Ghee 1L</span>
+              <span style="color:#fbbf24">€6.99</span>
+            </div>
+          </div>
+        </div>
+
+        <!-- Incomparability notice -->
+        <div style="margin-top:5px;background:#78350f22;border:1px solid #f59e0b33;border-radius:4px;padding:4px 6px;font-size:7.5px;color:#fcd34d">
+          * Total includes 2 substitutes — not a direct comparison with other stores
+        </div>
+
+        <div style="margin-top:5px;background:#22c55e;color:#fff;font-size:8.5px;font-weight:700;text-align:center;padding:4px;border-radius:5px">Shop at Jamoona →</div>
+      </div>
+
+      <!-- Other store (no substitutions — clean comparison) -->
+      <div style="background:#1f2f22;border-radius:6px;padding:5px 8px;display:flex;justify-content:space-between;align-items:center">
+        <div>
+          <span style="font-size:9px;color:#9ca3af">Dookan · 13/13 · exact match</span>
+        </div>
+        <span style="font-size:10px;font-weight:700;color:#d1d5db">€51.80 ›</span>
+      </div>
+    </div>
+    <div class="card-body">
+      <h3>A — Inline disclosure + warning</h3>
+      <p>Each substituted item shows original crossed out with replacement below (amber left-border). Card total gets an asterisk. A small notice explains the comparison caveat. Stores without substitutions show "exact match" label.</p>
+    </div>
+  </div>
+
+  <!-- Option B: Split totals -->
+  <div class="card" data-choice="b" onclick="toggleSelect(this)">
+    <div class="card-image" style="background:#0f1a10;padding:10px;border-radius:8px;font-family:system-ui">
+
+      <div style="background:linear-gradient(135deg,#14532d,#166534);border-radius:8px;padding:8px;margin-bottom:6px;border:1px solid #22c55e55">
+        <div style="display:flex;justify-content:space-between;align-items:flex-start">
+          <div>
+            <div style="font-size:8px;color:#86efac;font-weight:700">BEST PRICE</div>
+            <div style="font-size:12px;font-weight:800;color:#fff">Jamoona</div>
+            <span style="background:#f59e0b22;color:#fbbf24;font-size:7px;font-weight:700;padding:1px 5px;border-radius:8px">2 substitutions</span>
+          </div>
+          <div style="text-align:right">
+            <!-- Split pricing -->
+            <div style="font-size:8px;color:#86efac">Exact items only</div>
+            <div style="font-size:11px;font-weight:800;color:#4ade80;line-height:1.1">€36.72</div>
+            <div style="font-size:7.5px;color:#6b7280;margin-top:2px">With substitutes</div>
+            <div style="font-size:11px;font-weight:800;color:#fbbf24;line-height:1.1">€47.20</div>
+          </div>
+        </div>
+
+        <div style="margin-top:6px;background:#0f2518;border-radius:5px;padding:5px;display:flex;flex-direction:column;gap:3px">
+          <div style="display:flex;justify-content:space-between;font-size:8px;color:#d1d5db">
+            <span>✓ Daawat Basmati 5kg</span><span style="color:#4ade80">€8.99</span>
+          </div>
+          <div style="background:#1a2e1a;border-radius:4px;padding:4px 5px;border-left:2px solid #f59e0b">
+            <div style="display:flex;justify-content:space-between;font-size:7.5px">
+              <span style="color:#6b7280;text-decoration:line-through">Amul Butter 500g</span>
+            </div>
+            <div style="display:flex;justify-content:space-between;font-size:7.5px;margin-top:1px">
+              <span style="color:#fbbf24">↳ Milkfood Butter 500g</span>
+              <span style="color:#fbbf24">€3.49</span>
+            </div>
+          </div>
+        </div>
+
+        <!-- Sort note -->
+        <div style="margin-top:5px;background:#0f2518;border-radius:4px;padding:4px 6px;font-size:7.5px;color:#6b7280">
+          Sorted by "with substitutes" total. Switch to "exact only" to compare like-for-like.
+        </div>
+
+        <div style="margin-top:5px;background:#22c55e;color:#fff;font-size:8.5px;font-weight:700;text-align:center;padding:4px;border-radius:5px">Shop at Jamoona →</div>
+      </div>
+
+      <div style="background:#1f2f22;border-radius:6px;padding:5px 8px;display:flex;justify-content:space-between;align-items:center">
+        <span style="font-size:9px;color:#9ca3af">Dookan · 13/13</span>
+        <div style="text-align:right">
+          <div style="font-size:8px;color:#4ade80;font-weight:700">€51.80</div>
+          <div style="font-size:7px;color:#6b7280">exact match</div>
+        </div>
+      </div>
+    </div>
+    <div class="card-body">
+      <h3>B — Split totals (exact vs. with substitutes)</h3>
+      <p>Store card shows two totals: "exact items only" (what matched perfectly) and "with substitutes" (actual purchase total). User can toggle sort between the two. Makes the apples-to-oranges issue explicit.</p>
+    </div>
+  </div>
+
+</div>

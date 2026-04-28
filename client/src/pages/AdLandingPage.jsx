@@ -175,7 +175,7 @@ async function trackLandingSearch(query) {
         return "dd24-anon";
       }
     })();
-    const url = `/api/v1/deals?search=${encodeURIComponent(query)}&track_search=1&limit=0`;
+    const url = `/api/v1/store-products?search=${encodeURIComponent(query)}&track_search=1&limit=0`;
     await fetch(url, { headers: { "x-dd24-session-id": sessionId } });
   } catch {
     /* fire-and-forget */
