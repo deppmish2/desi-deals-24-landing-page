@@ -89,6 +89,13 @@ Auth:       None — Store API is public (available on WC stores with WooCommerc
 Product ID: product.id (integer)
 Deal check: product.prices.sale_price < product.prices.regular_price → is_on_deal = 1
 
+Price format: ⚠ wc/store/v1 returns prices as INTEGER STRINGS in minor currency units.
+            €3.29 is returned as "329", not "3.29". currency_minor_unit is provided in
+            the response (product.prices.currency_minor_unit — always 2 for EUR).
+            Normaliser MUST divide by 10 ** currency_minor_unit before storing:
+              sale_price = parseInt(product.prices.sale_price) / 10 ** currency_minor_unit
+            Failing to do this silently stores all prices 100× too high.
+
 Fallback:   If wc/store/v1 returns 404 → fall back to sitemap scraping:
             1. Fetch /product-sitemap.xml → list of product URLs
             2. Scrape each product page (same HTML pipeline as Mode 1 custom adapters)
@@ -103,6 +110,7 @@ No fallback to wc/v3: the v3 products endpoint requires OAuth consumer keys on a
             We do not control these stores and cannot obtain keys. No fallback endpoint exists.
 On failure: If wc/store/v1 returns 404 or empty → store marked "search-unavailable" for this
             canonical. User sees market median estimate, same as confirmed-unavailable state.
+Price format: Same as Mode 2 — integer strings in minor units. Divide by 10 ** currency_minor_unit.
 Match:      Canonicalize each result → accept only if confidence score ≥ 80 (see Mode 3b below)
 ```
 
