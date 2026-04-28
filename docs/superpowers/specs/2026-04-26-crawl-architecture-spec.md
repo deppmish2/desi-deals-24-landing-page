@@ -252,7 +252,7 @@ Search results are canonicalized via `resolveBaseProduct()`. Only accept a match
 | Mode | Mechanism | Frequency |
 |---|---|---|
 | Mode 1 (Deals) | Existing GitHub Actions workflow | Daily 08:00 Europe/Berlin |
-| Mode 2 (Full Catalog) | New GitHub Actions workflow | Weekly (Sunday 02:00 Europe/Berlin) |
+| Mode 2 (Full Catalog) | New GitHub Actions workflow | Weekly (Sunday 02:00 Europe/Berlin) — all stores in one run, with inter-store delay (≥ 1s between stores, ≥ 500ms between pages within a store) |
 | Mode 3 (On-Demand) | In-process async, `pending_on_demand_crawls` queue | Per shopping list item add |
 
 ---
