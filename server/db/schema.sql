@@ -15,7 +15,7 @@ CREATE TABLE IF NOT EXISTS stores (
 );
 
 -- Individual deals/offers
-CREATE TABLE IF NOT EXISTS deals (
+CREATE TABLE IF NOT EXISTS store_products (
   id                TEXT PRIMARY KEY,
   crawl_run_id      TEXT NOT NULL,
   crawl_timestamp   DATETIME NOT NULL,
@@ -78,12 +78,14 @@ CREATE TABLE IF NOT EXISTS crawl_store_results (
 );
 
 -- Daily price history for every crawled product
-CREATE TABLE IF NOT EXISTS deal_price_history (
+CREATE TABLE IF NOT EXISTS price_history (
   id                TEXT PRIMARY KEY,
   crawl_date        TEXT NOT NULL,
   crawl_run_id      TEXT NOT NULL REFERENCES crawl_runs(id),
   crawl_timestamp   DATETIME NOT NULL,
   store_id          TEXT NOT NULL REFERENCES stores(id),
+  -- deal_id: references store_products(id). Column name not renamed (SQLite column rename
+  -- requires full table recreation). Accepted naming drift — semantically equivalent.
   product_name      TEXT NOT NULL,
   product_category  TEXT NOT NULL,
   product_url       TEXT NOT NULL,
@@ -105,11 +107,11 @@ CREATE TABLE IF NOT EXISTS deal_price_history (
   UNIQUE (crawl_date, store_id, product_url)
 );
 
-CREATE INDEX IF NOT EXISTS idx_deals_display_date_order
-  ON deals(display_date, display_order);
+CREATE INDEX IF NOT EXISTS idx_store_products_display_date_order
+  ON store_products(display_date, display_order);
 
-CREATE INDEX IF NOT EXISTS idx_deals_active_display
-  ON deals(is_active, display_date, display_order);
+CREATE INDEX IF NOT EXISTS idx_store_products_active_display
+  ON store_products(is_active, display_date, display_order);
 
 CREATE INDEX IF NOT EXISTS idx_crawl_store_results_run
   ON crawl_store_results(crawl_run_id);
@@ -287,8 +289,10 @@ CREATE TABLE IF NOT EXISTS product_groups (
 );
 
 -- Maps deal rows to canonical products
-CREATE TABLE IF NOT EXISTS deal_mappings (
-  deal_id           TEXT NOT NULL REFERENCES deals(id) ON DELETE CASCADE,
+CREATE TABLE IF NOT EXISTS store_product_mappings (
+  deal_id           TEXT NOT NULL REFERENCES store_products(id) ON DELETE CASCADE,
+  -- deal_id: references store_products(id). Column name not renamed (SQLite column rename
+  -- requires full table recreation). Accepted naming drift — semantically equivalent.
   canonical_id      TEXT NOT NULL REFERENCES canonical_products(id) ON DELETE CASCADE,
   match_method      TEXT NOT NULL,
   match_confidence  REAL,
@@ -299,7 +303,9 @@ CREATE TABLE IF NOT EXISTS deal_mappings (
 -- Ambiguous resolution queue for admin review
 CREATE TABLE IF NOT EXISTS entity_resolution_queue (
   id                    INTEGER PRIMARY KEY AUTOINCREMENT,
-  deal_id               TEXT NOT NULL REFERENCES deals(id) ON DELETE CASCADE,
+  deal_id               TEXT NOT NULL REFERENCES store_products(id) ON DELETE CASCADE,
+  -- deal_id: references store_products(id). Column name not renamed (SQLite column rename
+  -- requires full table recreation). Accepted naming drift — semantically equivalent.
   suggested_canonical_id TEXT REFERENCES canonical_products(id) ON DELETE SET NULL,
   confidence            REAL,
   raw_name              TEXT NOT NULL,
@@ -371,18 +377,18 @@ CREATE TABLE IF NOT EXISTS app_settings (
 );
 
 -- Indexes
-CREATE INDEX IF NOT EXISTS idx_deals_store_id   ON deals(store_id);
-CREATE INDEX IF NOT EXISTS idx_deals_name       ON deals(product_name);
-CREATE INDEX IF NOT EXISTS idx_deals_category   ON deals(product_category);
-CREATE INDEX IF NOT EXISTS idx_deals_is_active  ON deals(is_active);
-CREATE INDEX IF NOT EXISTS idx_deals_sale_price ON deals(sale_price);
-CREATE INDEX IF NOT EXISTS idx_deals_discount   ON deals(discount_percent);
-CREATE INDEX IF NOT EXISTS idx_deals_crawl_run  ON deals(crawl_run_id);
-CREATE INDEX IF NOT EXISTS idx_deals_canonical  ON deals(canonical_id);
+CREATE INDEX IF NOT EXISTS idx_store_products_store_id   ON store_products(store_id);
+CREATE INDEX IF NOT EXISTS idx_store_products_name       ON store_products(product_name);
+CREATE INDEX IF NOT EXISTS idx_store_products_category   ON store_products(product_category);
+CREATE INDEX IF NOT EXISTS idx_store_products_is_active  ON store_products(is_active);
+CREATE INDEX IF NOT EXISTS idx_store_products_sale_price ON store_products(sale_price);
+CREATE INDEX IF NOT EXISTS idx_store_products_discount   ON store_products(discount_percent);
+CREATE INDEX IF NOT EXISTS idx_store_products_crawl_run  ON store_products(crawl_run_id);
+CREATE INDEX IF NOT EXISTS idx_store_products_canonical  ON store_products(canonical_id);
 CREATE INDEX IF NOT EXISTS idx_crawl_runs_crawl_date ON crawl_runs(crawl_date);
-CREATE INDEX IF NOT EXISTS idx_deal_price_history_crawl_date ON deal_price_history(crawl_date);
-CREATE INDEX IF NOT EXISTS idx_deal_price_history_store_date ON deal_price_history(store_id, crawl_date);
-CREATE INDEX IF NOT EXISTS idx_deal_price_history_product_url ON deal_price_history(product_url);
+CREATE INDEX IF NOT EXISTS idx_price_history_crawl_date ON price_history(crawl_date);
+CREATE INDEX IF NOT EXISTS idx_price_history_store_date ON price_history(store_id, crawl_date);
+CREATE INDEX IF NOT EXISTS idx_price_history_product_url ON price_history(product_url);
 CREATE INDEX IF NOT EXISTS idx_crawl_locks_expires ON crawl_locks(expires_at);
 CREATE INDEX IF NOT EXISTS idx_job_runs_job_name_started ON job_runs(job_name, started_at);
 CREATE INDEX IF NOT EXISTS idx_job_runs_status_started ON job_runs(status, started_at);
@@ -405,7 +411,7 @@ CREATE INDEX IF NOT EXISTS idx_alerts_type      ON price_alerts(alert_type);
 CREATE INDEX IF NOT EXISTS idx_alerts_active    ON price_alerts(is_active);
 CREATE INDEX IF NOT EXISTS idx_alerts_store     ON price_alerts(target_store_id);
 CREATE INDEX IF NOT EXISTS idx_alert_notify     ON alert_notifications(alert_id);
-CREATE INDEX IF NOT EXISTS idx_map_canonical    ON deal_mappings(canonical_id);
+CREATE INDEX IF NOT EXISTS idx_map_canonical    ON store_product_mappings(canonical_id);
 CREATE INDEX IF NOT EXISTS idx_queue_status     ON entity_resolution_queue(status);
 CREATE INDEX IF NOT EXISTS idx_delivery_updated ON delivery_options(updated_at);
 CREATE INDEX IF NOT EXISTS idx_events_name      ON events(event_name);
