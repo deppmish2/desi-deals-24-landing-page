@@ -14,7 +14,7 @@ CREATE TABLE IF NOT EXISTS stores (
   webhook_secret    TEXT
 );
 
--- Individual deals/offers
+-- Store product rows (one per crawl per product URL)
 CREATE TABLE IF NOT EXISTS store_products (
   id                TEXT PRIMARY KEY,
   crawl_run_id      TEXT NOT NULL,
