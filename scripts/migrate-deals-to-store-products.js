@@ -1,5 +1,21 @@
 'use strict';
 
+/**
+ * migrate-deals-to-store-products.js
+ *
+ * One-time migration: renames three tables and their indexes.
+ *   deals              → store_products
+ *   deal_price_history → price_history
+ *   deal_mappings      → store_product_mappings
+ *
+ * Idempotent — safe to re-run. Each rename checks source exists and
+ * target absent before acting. Index operations use IF EXISTS / IF NOT EXISTS.
+ *
+ * Usage:
+ *   node scripts/migrate-deals-to-store-products.js
+ *   DB_FILE=data/backup.db node scripts/migrate-deals-to-store-products.js
+ */
+
 const Database = require('better-sqlite3');
 const path = require('path');
 
@@ -18,22 +34,34 @@ const migration = db.transaction(() => {
   if (tableExists('deals') && !tableExists('store_products')) {
     db.prepare('ALTER TABLE deals RENAME TO store_products').run();
     console.log('Renamed deals → store_products');
+  } else if (!tableExists('deals') && tableExists('store_products')) {
+    console.log('Skip: deals→store_products (already done)');
+  } else if (!tableExists('deals') && !tableExists('store_products')) {
+    console.log('Skip: deals→store_products (source absent — clean DB)');
   } else {
-    console.log('Skip: deals→store_products (already done or source absent)');
+    throw new Error('Both deals and store_products exist — ambiguous state, aborting');
   }
 
   if (tableExists('deal_price_history') && !tableExists('price_history')) {
     db.prepare('ALTER TABLE deal_price_history RENAME TO price_history').run();
     console.log('Renamed deal_price_history → price_history');
+  } else if (!tableExists('deal_price_history') && tableExists('price_history')) {
+    console.log('Skip: deal_price_history→price_history (already done)');
+  } else if (!tableExists('deal_price_history') && !tableExists('price_history')) {
+    console.log('Skip: deal_price_history→price_history (source absent — clean DB)');
   } else {
-    console.log('Skip: deal_price_history→price_history (already done or source absent)');
+    throw new Error('Both deal_price_history and price_history exist — ambiguous state, aborting');
   }
 
   if (tableExists('deal_mappings') && !tableExists('store_product_mappings')) {
     db.prepare('ALTER TABLE deal_mappings RENAME TO store_product_mappings').run();
     console.log('Renamed deal_mappings → store_product_mappings');
+  } else if (!tableExists('deal_mappings') && tableExists('store_product_mappings')) {
+    console.log('Skip: deal_mappings→store_product_mappings (already done)');
+  } else if (!tableExists('deal_mappings') && !tableExists('store_product_mappings')) {
+    console.log('Skip: deal_mappings→store_product_mappings (source absent — clean DB)');
   } else {
-    console.log('Skip: deal_mappings→store_product_mappings (already done or source absent)');
+    throw new Error('Both deal_mappings and store_product_mappings exist — ambiguous state, aborting');
   }
 
   // Phase B — Drop old indexes (IF EXISTS — safe no-ops if already gone)
@@ -113,9 +141,11 @@ const migration = db.transaction(() => {
 
 try {
   migration();
+  console.log('Migration complete.');
+} catch (err) {
+  console.error('Migration failed:', err.message);
+  process.exit(1);
 } finally {
   db.pragma('foreign_keys = ON');
+  db.close();
 }
-db.close();
-
-console.log('Migration complete.');
