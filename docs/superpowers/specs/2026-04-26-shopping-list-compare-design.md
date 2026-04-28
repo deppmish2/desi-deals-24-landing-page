@@ -202,10 +202,14 @@ Items that reach step 4 are listed separately beneath the store total as "X item
 1. Anonymous user builds list in localStorage (`dd24_cart_v1` — existing key, existing flow)
 2. At "compare prices": login wall
 3. On login: localStorage list merged into server-side `shopping_lists` record
-4. On-demand crawl (Mode 3) triggered for each item across all stores
+4. On-demand crawl (Mode 3) triggered for each item across all stores — items processed sequentially, max 5 concurrent store fetches per item, 500ms inter-store delay (see crawl architecture spec for rate limiting detail)
 5. Stale-while-revalidate: comparison displayed immediately with cached prices, refreshes as crawl completes
 
 ---
+
+## Known Limitations
+
+- **Custom stores (7 of 32):** covered by Mode 1 (deals) only. These stores will always show as "unknown availability" for items not currently on deal. Market median used as estimate. Clearly surfaced to users — not hidden.
 
 ## Out of Scope (this spec)
 

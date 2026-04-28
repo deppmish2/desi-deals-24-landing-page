@@ -15,7 +15,7 @@ A platform where Indian grocery shoppers in Germany can discover deals, build sh
 
 | Feature | Status | Spec |
 |---|---|---|
-| Shopping list & cross-store comparison | Approved | [shopping-list-compare-design](2026-04-26-shopping-list-compare-design-DRAFT.md) |
+| Shopping list & cross-store comparison | Approved | [shopping-list-compare-design](2026-04-26-shopping-list-compare-design.md) |
 | Crawl architecture (deals, full catalog, on-demand) | Approved | [crawl-architecture-spec](2026-04-26-crawl-architecture-spec.md) |
 | Order history & product alerts | Approved | [order-history-and-alerts-design](2026-04-28-order-history-and-alerts-design.md) |
 | Search experience | Approved | [search-experience-design](2026-04-28-search-experience-design.md) |

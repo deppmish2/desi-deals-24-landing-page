@@ -76,23 +76,32 @@ Resumable:  cursor stored in store_crawl_state.catalog_cursor
 ```
 Endpoint:   GET /search/suggest.json?q=<base_key_tokens>&resources[type]=product&resources[limit]=10
 Returns:    resources.results.products[]
-Match:      Canonicalize each result title → accept if canonical_id matches
+Match:      Canonicalize each result title → accept only if confidence score ≥ 80 (see Mode 3b below)
 ```
 
 ### WooCommerce Full Catalog (Mode 2)
 
+**⚠ Auth risk:** The `wc/v3` REST API requires OAuth consumer keys on every WooCommerce store. We do not control these stores and cannot obtain API keys. Use the public WooCommerce Store API instead.
+
 ```
-Endpoint:   GET /wp-json/wc/v3/products?per_page=100&page=N&status=publish
-Auth:       Consumer key + secret (store config) or public if available
+Primary:    GET /wp-json/wc/store/v1/products?per_page=100&page=N
+Auth:       None — Store API is public (available on WC stores with WooCommerce Blocks)
 Product ID: product.id (integer)
-Deal check: product.sale_price set and < product.regular_price → is_on_deal = 1
+Deal check: product.prices.sale_price < product.prices.regular_price → is_on_deal = 1
+
+Fallback:   If wc/store/v1 returns 404 → fall back to sitemap scraping:
+            1. Fetch /product-sitemap.xml → list of product URLs
+            2. Scrape each product page (same HTML pipeline as Mode 1 custom adapters)
+            Note: sitemap fallback is slow and should be flagged in store_crawl_state
 ```
 
 ### WooCommerce On-Demand Search (Mode 3b)
 
 ```
-Endpoint:   GET /wp-json/wc/v3/products?search=<base_key_tokens>&per_page=10
-Match:      Canonicalize each result → accept if canonical_id matches
+Primary:    GET /wp-json/wc/store/v1/products?search=<base_key_tokens>&per_page=10
+Fallback:   GET /wp-json/wc/v3/products?search=<base_key_tokens>&per_page=10
+            (v3 search endpoint is sometimes public even when product listing is not)
+Match:      Canonicalize each result → accept only if confidence score ≥ 80 (see Mode 3b below)
 ```
 
 ---
@@ -189,6 +198,15 @@ On server startup: drain any rows where `started_at IS NULL` from a prior restar
 
 ## On-Demand Crawl Flow
 
+**⚠ Deployment assumption:** In-process async requires a persistent, long-lived Node.js process. Verify server deployment model before implementation. If the server runs in a containerised environment with frequent restarts (e.g. auto-scaling, serverless containers), the `pending_on_demand_crawls` DB queue provides restart resilience but crawls already in-flight will be lost. If frequent restarts are confirmed, escalate Mode 3 execution to GitHub Actions `workflow_dispatch` instead.
+
+**Rate limiting — login-time crawl storm risk:** When a user logs in with N items in their anonymous cart, Mode 3 fires for N items × ~25 stores simultaneously. Without limits this is 250+ outbound fetches, risking IP bans from stores. Mitigation:
+
+- Process items **sequentially**, not in parallel (one item at a time across all stores)
+- Per item: fan out to stores with **max 5 concurrent fetches**
+- **500ms minimum delay** between successive requests to the same store
+- Total on-demand crawl for a cart of 10 items: ~2-3 minutes worst case (acceptable given stale-while-revalidate UX)
+
 ```
 1. User adds item to shopping list (POST /api/v1/shopping-list/items)
 2. Server:
@@ -197,18 +215,23 @@ On server startup: drain any rows where `started_at IS NULL` from a prior restar
    c. Fires unawaited Promise → runOnDemandCrawl(canonical_id)
    d. Returns { saved: true, prices: <cached>, freshness: 'stale', revalidating: true }
 
-3. runOnDemandCrawl(canonical_id) — for each store:
+3. runOnDemandCrawl(canonical_id) — for each store (max 5 concurrent, 500ms inter-store delay):
    a. Has known product_url?  → Mode 3a: fetch URL directly
    b. No known URL?           → Mode 3b: search with base_key tokens
-      → result found + canonicalizes correctly → ingest, link canonical_id
+      → result found, confidence ≥ 80 → ingest, link canonical_id
+      → result found, confidence < 80 → discard (do not ingest false match)
       → result not found → mark store as confirmed_unavailable for this canonical
 
-4. On completion: update pending_on_demand_crawls row (delete or mark done)
+4. On completion: delete row from pending_on_demand_crawls
    Notify via SSE or next poll response: { freshness: 'fresh', revalidating: false }
 
 5. Client polls GET /api/v1/shopping-list/prices?list_id=X every 3s while revalidating: true
    Timeout: 30s → show cached prices with "last updated [date]" label
 ```
+
+### Mode 3b Confidence Threshold
+
+Search results are canonicalized via `resolveBaseProduct()`. Only accept a match if the canonicalization score ≥ 80 (the existing threshold that rejects loose accidental hits — see `base-product-catalog.js` line 282). Below this threshold the result is discarded; the store remains "unknown" for this canonical rather than being incorrectly linked. This prevents the Haldiram/haldi class of false-positive bugs from silently corrupting shopping list comparison data.
 
 ---
 
@@ -234,10 +257,13 @@ On server startup: drain any rows where `started_at IS NULL` from a prior restar
 
 ---
 
+## Known Limitations
+
+- **Custom stores (7):** Mode 1 (deals) only. These stores will systematically show as "unknown availability" in shopping list comparisons. Users see market median estimate for their items. This is a permanent product limitation until per-store custom adapters are extended for full catalog.
+- **WooCommerce Store API availability:** `wc/store/v1` requires WooCommerce Blocks to be active. Stores without it fall back to sitemap scraping which is slower and less structured. Store-level fallback behaviour tracked in `store_crawl_state`.
+
 ## Out of Scope (this spec)
 
-- Custom store full catalog (7 stores, no common platform)
-- `deals` → `store_products` rename (separate PR)
-- WooCommerce auth credential management (store config UI)
-- Crawl rate limiting / politeness delays (inherit from existing adapter defaults)
+- `deals` → `store_products` rename (separate PR — but note: every developer will read "deals" to mean "all store products including non-deal catalog items" during implementation. Consider making this PR #1.)
+- WooCommerce Store API availability check tooling (verify per store at first Mode 2 run)
 - Store reliability scoring from crawl success/failure data
