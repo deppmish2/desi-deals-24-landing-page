@@ -229,7 +229,7 @@ function seedShareableDeal(db, { id, imageUrl }) {
   );
 
   db.prepare(
-    `INSERT INTO deals (
+    `INSERT INTO store_products (
       id, crawl_run_id, crawl_timestamp, store_id, product_name,
       product_category, product_url, image_url, sale_price,
       original_price, discount_percent, currency, is_active

@@ -17,7 +17,7 @@ test("canonicalizeDeals queues no-match deals instead of creating canonical prod
     "https://jamoona.com",
   );
   db.prepare(
-    `INSERT INTO deals
+    `INSERT INTO store_products
       (id, crawl_run_id, crawl_timestamp, store_id, product_name, product_category, product_url,
        sale_price, currency, availability, is_active)
      VALUES (?, ?, ?, ?, ?, ?, ?, ?, 'EUR', 'in_stock', 1)`,
@@ -103,7 +103,7 @@ test("canonicalizeDeals queues sub-threshold deals without creating canonicals",
 
   // Deal: "urid dal" — similar to "toor dal" but below 0.90 fuzzy threshold
   db.prepare(
-    `INSERT INTO deals
+    `INSERT INTO store_products
       (id, crawl_run_id, crawl_timestamp, store_id, product_name, product_category, product_url,
        sale_price, currency, availability, is_active)
      VALUES (?, ?, ?, ?, ?, ?, ?, ?, 'EUR', 'in_stock', 1)`,
@@ -125,9 +125,9 @@ test("canonicalizeDeals queues sub-threshold deals without creating canonicals",
   assert.equal(stats.mapped, 0, "sub-threshold deal must NOT be mapped");
 
   const mapping = db
-    .prepare("SELECT * FROM deal_mappings WHERE deal_id = ?")
+    .prepare("SELECT * FROM store_product_mappings WHERE deal_id = ?")
     .get("d1");
-  assert.equal(mapping, undefined, "sub-threshold deal must NOT be in deal_mappings");
+  assert.equal(mapping, undefined, "sub-threshold deal must NOT be in store_product_mappings");
 
   const canonCount = db
     .prepare("SELECT COUNT(*) AS c FROM canonical_products")

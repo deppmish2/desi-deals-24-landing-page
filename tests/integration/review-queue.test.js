@@ -13,7 +13,7 @@ function seedStore(db) {
 
 function seedDeal(db, id, name, category = "Lentils & Pulses") {
   db.prepare(
-    `INSERT INTO deals (id, crawl_run_id, crawl_timestamp, store_id, product_name, product_category, product_url, sale_price, currency, availability, is_active)
+    `INSERT INTO store_products (id, crawl_run_id, crawl_timestamp, store_id, product_name, product_category, product_url, sale_price, currency, availability, is_active)
      VALUES (?, ?, ?, ?, ?, ?, ?, ?, 'EUR', 'in_stock', 1)`,
   ).run(id, "run-1", nowIso(), "jamoona", name, category, `https://jamoona.com/p/${id}`, 2.49);
 }

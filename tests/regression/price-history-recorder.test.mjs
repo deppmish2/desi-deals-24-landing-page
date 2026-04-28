@@ -11,7 +11,7 @@ function makeDb() {
   return {
     rows,
     execute: async (sql, params) => {
-      if (/INSERT OR IGNORE INTO deal_price_history/i.test(sql)) rows.push(params);
+      if (/INSERT OR IGNORE INTO price_history/i.test(sql)) rows.push(params);
       return { rows: [] };
     },
   };

@@ -15,7 +15,7 @@ function makeDb() {
       base_key TEXT, weight_value REAL, weight_unit TEXT
     );
     CREATE TABLE stores (id TEXT PRIMARY KEY, name TEXT NOT NULL, url TEXT NOT NULL);
-    CREATE TABLE deals (
+    CREATE TABLE store_products (
       id TEXT PRIMARY KEY, canonical_id TEXT, store_id TEXT NOT NULL,
       is_active INTEGER NOT NULL DEFAULT 1,
       product_name TEXT, product_category TEXT, product_url TEXT,
@@ -43,7 +43,7 @@ function cp(db, { id, name, category = "Lentils & Pulses", brandSlots = null, ba
 
 function deal(db, { id, canonicalId, name, weight = null, price = 5.00, origPrice = null, discount = null, ppkg = null }) {
   db.prepare(
-    `INSERT INTO deals (id, canonical_id, store_id, is_active, product_name, weight_value, weight_unit,
+    `INSERT INTO store_products (id, canonical_id, store_id, is_active, product_name, weight_value, weight_unit,
                         sale_price, original_price, discount_percent, price_per_kg, currency)
      VALUES (?, ?, ?, 1, ?, ?, 'g', ?, ?, ?, ?, 'EUR')`
   ).run(id, canonicalId, STORE, name, weight, price, origPrice, discount, ppkg);

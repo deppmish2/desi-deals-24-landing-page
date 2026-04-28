@@ -24,7 +24,7 @@ test("evaluateAlertsAfterCrawl triggers matching price alerts and writes audit",
   );
 
   db.prepare(
-    `INSERT INTO deals
+    `INSERT INTO store_products
       (id, crawl_run_id, crawl_timestamp, store_id, product_name, product_category,
        product_url, sale_price, currency, availability, is_active)
      VALUES (?, ?, ?, ?, ?, ?, ?, ?, 'EUR', 'in_stock', 1)`,
