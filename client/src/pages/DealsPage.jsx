@@ -12,7 +12,7 @@ import {
   useParams,
   useSearchParams,
 } from "react-router-dom";
-import useDeals from "../hooks/useDeals";
+import useDeals from "../hooks/useStoreProducts";
 import {
   formatBestBefore,
   formatPrice,

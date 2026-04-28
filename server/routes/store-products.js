@@ -8,8 +8,8 @@ const {
   dateSeed,
   getDealStoreId,
   seededShuffle,
-} = require("../services/deal-order");
-const { filterAndRankDealsByQuery } = require("../services/deal-search");
+} = require("../services/store-product-order");
+const { filterAndRankDealsByQuery } = require("../services/store-product-search");
 const { phoneticFallback } = require("../services/phonetic-search");
 const { trackEvent } = require("../services/event-tracker");
 const { formatBerlinDateKey } = require("../services/berlin-time");

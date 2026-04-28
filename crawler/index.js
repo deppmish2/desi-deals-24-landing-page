@@ -19,7 +19,7 @@ const {
 const {
   buildStableDisplayOrder,
   dateSeed,
-} = require("../server/services/deal-order");
+} = require("../server/services/store-product-order");
 const { formatBerlinDateKey } = require("../server/services/berlin-time");
 const { finishJobRun, startJobRun } = require("../server/services/job-runs");
 

@@ -8,7 +8,7 @@ const fs = require("fs");
 const path = require("path");
 
 const db = require("./db");
-const dealsRouter = require("./routes/deals");
+const storeProductsRouter = require("./routes/store-products");
 const authRouter = require("./routes/auth");
 const adminRouter = require("./routes/admin");
 const adminDashboardRouter = require("./routes/admin-dashboard");
@@ -49,7 +49,7 @@ app.use("/api", async (req, res, next) => {
 });
 
 // ── API Routes ────────────────────────────────────────────────────────────────
-app.use("/api/v1/deals", dealsRouter);
+app.use("/api/v1/deals", storeProductsRouter);
 app.use("/api/v1/auth", authRouter);
 app.use("/api/auth", authRouter); // compatibility for older frontend builds
 app.use("/api/v1/admin", adminRouter);
