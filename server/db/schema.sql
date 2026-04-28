@@ -84,8 +84,6 @@ CREATE TABLE IF NOT EXISTS price_history (
   crawl_run_id      TEXT NOT NULL REFERENCES crawl_runs(id),
   crawl_timestamp   DATETIME NOT NULL,
   store_id          TEXT NOT NULL REFERENCES stores(id),
-  -- deal_id: references store_products(id). Column name not renamed (SQLite column rename
-  -- requires full table recreation). Accepted naming drift — semantically equivalent.
   product_name      TEXT NOT NULL,
   product_category  TEXT NOT NULL,
   product_url       TEXT NOT NULL,
@@ -290,9 +288,9 @@ CREATE TABLE IF NOT EXISTS product_groups (
 
 -- Maps deal rows to canonical products
 CREATE TABLE IF NOT EXISTS store_product_mappings (
-  deal_id           TEXT NOT NULL REFERENCES store_products(id) ON DELETE CASCADE,
   -- deal_id: references store_products(id). Column name not renamed (SQLite column rename
   -- requires full table recreation). Accepted naming drift — semantically equivalent.
+  deal_id           TEXT NOT NULL REFERENCES store_products(id) ON DELETE CASCADE,
   canonical_id      TEXT NOT NULL REFERENCES canonical_products(id) ON DELETE CASCADE,
   match_method      TEXT NOT NULL,
   match_confidence  REAL,
@@ -303,9 +301,9 @@ CREATE TABLE IF NOT EXISTS store_product_mappings (
 -- Ambiguous resolution queue for admin review
 CREATE TABLE IF NOT EXISTS entity_resolution_queue (
   id                    INTEGER PRIMARY KEY AUTOINCREMENT,
-  deal_id               TEXT NOT NULL REFERENCES store_products(id) ON DELETE CASCADE,
   -- deal_id: references store_products(id). Column name not renamed (SQLite column rename
   -- requires full table recreation). Accepted naming drift — semantically equivalent.
+  deal_id               TEXT NOT NULL REFERENCES store_products(id) ON DELETE CASCADE,
   suggested_canonical_id TEXT REFERENCES canonical_products(id) ON DELETE SET NULL,
   confidence            REAL,
   raw_name              TEXT NOT NULL,
