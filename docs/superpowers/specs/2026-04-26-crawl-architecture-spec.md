@@ -99,8 +99,10 @@ Fallback:   If wc/store/v1 returns 404 → fall back to sitemap scraping:
 
 ```
 Primary:    GET /wp-json/wc/store/v1/products?search=<base_key_tokens>&per_page=10
-Fallback:   GET /wp-json/wc/v3/products?search=<base_key_tokens>&per_page=10
-            (v3 search endpoint is sometimes public even when product listing is not)
+No fallback to wc/v3: the v3 products endpoint requires OAuth consumer keys on all WC stores.
+            We do not control these stores and cannot obtain keys. No fallback endpoint exists.
+On failure: If wc/store/v1 returns 404 or empty → store marked "search-unavailable" for this
+            canonical. User sees market median estimate, same as confirmed-unavailable state.
 Match:      Canonicalize each result → accept only if confidence score ≥ 80 (see Mode 3b below)
 ```
 

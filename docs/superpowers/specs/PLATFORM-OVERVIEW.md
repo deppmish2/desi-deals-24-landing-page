@@ -133,7 +133,7 @@ Items in step 3 are independent of each other and can be built in parallel.
 | Title normalisation | BBD/expiry keywords + "Sale Item" suffix stripped in `canonical-decomposer.js` before canonical matching |
 | Fake deal filter | `FAKE_DEAL_THRESHOLD_PP = 7%` — deals where stated discount deviates >7pp from computed are excluded |
 | Market median fallback | Canonical median → base_key median → category average → unpriced (never €0) |
-| `deals` rename | `deals` → `store_products` rename deferred to a separate PR |
+| `deals` rename | `deals` → `store_products` rename approved — branch `rename/deals-to-store-products`, spec at [deals-rename-spec](2026-04-28-deals-rename-spec.md) |
 | Anonymous cart | localStorage (`dd24_cart_v1`), merged to server-side on login |
 | Login gate | Required at "compare prices" — highest-intent moment |
 | Single store ordering | One store per order. No split-order across stores. |

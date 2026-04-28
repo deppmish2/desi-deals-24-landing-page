@@ -419,48 +419,20 @@ Each phase is a separate git commit. If any phase fails, revert that commit and 
 
 1. Verify branch: `git branch --show-current` → must be `rename/deals-to-store-products`
 2. Confirm clean baseline: run full test suite — all tests must pass before any changes
-3. Delete iCloud duplicate files from git:
+3. Remove iCloud duplicate files. Two categories require different commands:
+
+   **Tracked duplicates** (`" 2.*"` — 68+ files across `.js`, `.jsx`, `.mjs`, `.md`, `.png`, `.jpg`, etc.) — remove from git tracking and disk:
+   ```sh
+   git ls-files | grep ' 2\.' | xargs -I{} git rm "{}"
    ```
-   git rm "client/src/utils/analytics 2.js"
-   git rm "client/src/utils/images 2.js"
-   git rm "client/src/utils/share 2.js"
-   git rm "crawler/stores/asiangrocerystore 2.js"
-   git rm "crawler/stores/bajwa-shop 2.js"
-   git rm "crawler/stores/barkatfood 2.js"
-   git rm "crawler/stores/desistore 2.js"
-   git rm "crawler/stores/indianspicebasket 2.js"
-   git rm "crawler/stores/masimpex 2.js"
-   git rm "crawler/stores/transfoodlev 2.js"
-   git rm "crawler/stores/villagefoods 2.js"
-   git rm "crawler/stores/yogimart 2.js"
-   git rm "crawler/stores/zakiasianfoods 2.js"
-   git rm "crawler/utils/auto-mapper 2.js"
-   git rm "crawler/utils/canonical-decomposer 2.js"
-   git rm "crawler/utils/crawl-logger 2.js"
-   git rm "crawler/utils/discount-badge 2.js"
-   git rm "crawler/utils/pass1-fetcher 2.js"
-   git rm "crawler/utils/shopify-deals-factory 2.js"
-   git rm "scripts/migrate-canonical-slots 2.js"
-   git rm "scripts/migrate-real-savings 2.js"
-   git rm "scripts/run-automapper-all-deals 2.js"
-   git rm "scripts/run-automapper-all-deals 3.js"
-   git rm "scripts/seed-priority-canonicals 2.js"
-   git rm "scripts/snapshot-prod 2.js"
-   git rm "scripts/snapshot-prod 3.js"
-   git rm "server/routes/admin-stats 2.js"
-   git rm "server/routes/bookmarks 2.js"
-   git rm "server/services/deal-order 2.js"
-   git rm "server/services/deal-search 2.js"
-   git rm "server/services/deal-search 3.js"
-   git rm "server/services/kit 2.js"
-   git rm "server/services/kit 3.js"
-   git rm "server/services/price-history-recorder 2.js"
-   git rm "server/services/real-savings 2.js"
-   git rm "server/services/search-tracker 2.js"
-   git rm "server/utils/admin-access 2.js"
-   git rm "tests/integration/auth-kit-subscribe.test 2.js"
-   git rm "tests/integration/share-meta.test 2.js"
+
+   **Untracked duplicates** (`" 3.*"` — not in git, disk-only) — delete from disk only:
+   ```sh
+   git ls-files --others --exclude-standard | grep ' [23]\.' | xargs -I{} rm "{}"
    ```
+
+   Verify nothing remains: `find . -name "* 2.*" -o -name "* 3.*" | grep -v node_modules | grep -v ".git"` → zero hits.
+
 4. Commit: `chore: remove iCloud duplicate files`
 5. Verify test suite still passes
 6. Back up local DB: `cp local.db local.db.pre-rename`
