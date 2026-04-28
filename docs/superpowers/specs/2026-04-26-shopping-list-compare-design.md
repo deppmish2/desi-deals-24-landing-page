@@ -57,7 +57,7 @@ Tier 2: Comparison Result (ephemeral, computed on demand)
   └── Sortable by: estimated total, confirmed total, coverage, delivery time
 
 Tier 3: Order (store-specific, created when user picks a store)
-  └── Shopify cart permalink via stored external_variant_id; one-click transfer to store checkout
+  └── Shopify cart permalink: `{store_url}/cart/{external_variant_id}:{qty}` — `external_variant_id` is a nullable column on `store_products` (captured as `variants[0].id` at crawl time). Qty = `requested_weight / variant_weight_value`. Dedup key unchanged (`store_id + product_url`).
   └── Status: pending_confirmation → paid | never_placed
   └── Linked back to shopping list and comparison_session
 ```

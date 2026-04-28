@@ -128,7 +128,9 @@ Items in step 3 are independent of each other and can be built in parallel.
 
 | Decision | Choice |
 |---|---|
-| Deduplication key | `store_id + external_product_id` (Shopify/WooCommerce); `store_id + product_url` fallback |
+| Deduplication key | `store_id + product_url` — one row per product page URL. For Shopify this is already one row per size (stores use separate pages per size, not Shopify variant system). |
+| Shopify cart permalink | `{store_url}/cart/{external_variant_id}:{qty}`. `external_variant_id` = `variants[0].id` captured at crawl time, stored as nullable column on `store_products`. Dedup key unchanged. Qty = `requested_weight / variant_weight_value` (integer — `sizeCompatible()` already guarantees this). |
+| Alert system migration | Existing `price_alerts` table (4 types, flag-based) dropped and replaced by `product_alerts` (2 types: `price_below`, `back_in_stock`, one-shot row-deletion model). Pre-launch: only 2 dev rows in `price_alerts` — no real data to migrate. `alert-evaluator.js` rewritten. |
 | Multi-pack weight | Stored as total weight (5×2kg → 10kg). `weight_raw` preserves "5×2kg" for display. Minimum purchasable unit = whole pack. |
 | Title normalisation | BBD/expiry keywords + "Sale Item" suffix stripped in `canonical-decomposer.js` before canonical matching |
 | Fake deal filter | `FAKE_DEAL_THRESHOLD_PP = 7%` — deals where stated discount deviates >7pp from computed are excluded |

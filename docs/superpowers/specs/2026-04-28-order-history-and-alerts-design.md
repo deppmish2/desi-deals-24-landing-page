@@ -105,6 +105,10 @@ One question at a time — tap to answer, next question appears. Answers saved i
 
 ## Product Alerts
 
+### Migration Note
+
+The existing `price_alerts` table (4 types: `price`, `deal`, `restock_any`, `restock_store`; flag-based lifecycle) is **dropped and replaced** by `product_alerts`. Pre-launch: only 2 dev rows exist — no real user data to migrate. `alert-evaluator.js` is rewritten for the new 2-type, one-shot model.
+
 ### Data Model
 
 **New `product_alerts` table:**

@@ -345,6 +345,51 @@ Lines: 45, 57
 Lines: 12, 193, 214 (and comment text)
 - `deal_mappings` → `store_product_mappings` in SQL and comments
 
+### Tests (12 files)
+
+These files create their own in-memory fixtures or assert against SQL strings — all must be updated in Phase 8.
+
+**`tests/integration/mapped-products.test.js`**
+- `INSERT INTO deals (...)` → `INSERT INTO store_products (...)`
+- `JOIN deal_mappings dm` → `JOIN store_product_mappings dm`
+- `INSERT INTO deal_mappings` → `INSERT INTO store_product_mappings`
+
+**`tests/integration/product-replacements.test.js`**
+- `CREATE TABLE deals (` → `CREATE TABLE store_products (`
+- `INSERT INTO deals (...)` → `INSERT INTO store_products (...)`
+
+**`tests/integration/recommender.test.js`** (~20 occurrences)
+- All `INSERT INTO deals` → `INSERT INTO store_products`
+
+**`tests/integration/recommender-exact-combination.test.js`**
+- `INSERT INTO deals` → `INSERT INTO store_products`
+
+**`tests/integration/review-queue.test.js`**
+- `INSERT INTO deals (...)` → `INSERT INTO store_products (...)`
+
+**`tests/integration/canonicalizer.test.js`**
+- `INSERT INTO deals` → `INSERT INTO store_products`
+- `FROM deal_mappings` → `FROM store_product_mappings`
+
+**`tests/integration/alerts.test.js`**
+- `INSERT INTO deals` → `INSERT INTO store_products`
+
+**`tests/integration/share-meta.test.js`**
+- `INSERT INTO deals (...)` → `INSERT INTO store_products (...)`
+
+**`tests/regression/auto-mapper.test.mjs`**
+- `INSERT INTO deal_mappings` string match → `INSERT INTO store_product_mappings`
+
+**`tests/regression/slot-matching.test.mjs`**
+- `INSERT INTO deal_mappings` string match → `INSERT INTO store_product_mappings`
+
+**`tests/regression/price-history-recorder.test.mjs`**
+- `INSERT OR IGNORE INTO deal_price_history` string match → `INSERT OR IGNORE INTO price_history`
+
+**`tests/e2e/routes.e2e.test.js`**
+- `INSERT INTO deals` → `INSERT INTO store_products` (fixture setup, ~10 occurrences)
+- `/api/v1/deals` API path references (lines 523, 529, 533) → `/api/v1/store-products`
+
 ---
 
 ## Schema File Changes (`server/db/schema.sql`)
@@ -404,9 +449,9 @@ Migration must be run with `PRAGMA foreign_keys = OFF` during rename, then re-en
 
 **Test the migration on a local DB copy before running on the real local DB.** Procedure:
 ```
-cp local.db local.db.backup
-node scripts/migrate-deals-to-store-products.js --db=local.db.backup
-node scripts/migrate-deals-to-store-products.js --db=local.db.backup  # idempotency check — must succeed cleanly
+cp data/prod_local.db data/prod_local.db.pre-rename
+DB_FILE=data/prod_local.db.pre-rename node scripts/migrate-deals-to-store-products.js
+DB_FILE=data/prod_local.db.pre-rename node scripts/migrate-deals-to-store-products.js  # idempotency check — must succeed cleanly
 ```
 
 ---
@@ -418,7 +463,7 @@ Each phase is a separate git commit. If any phase fails, revert that commit and 
 ### Phase 0 — Pre-flight (no code changes)
 
 1. Verify branch: `git branch --show-current` → must be `rename/deals-to-store-products`
-2. Confirm clean baseline: run full test suite — all tests must pass before any changes
+2. Confirm clean baseline: `npm run test:integration && npm run test:regression && npm run test:e2e` — all must pass before any changes
 3. Remove iCloud duplicate files. Two categories require different commands:
 
    **Tracked duplicates** (`" 2.*"` — 68+ files across `.js`, `.jsx`, `.mjs`, `.md`, `.png`, `.jpg`, etc.) — remove from git tracking and disk:
@@ -435,7 +480,7 @@ Each phase is a separate git commit. If any phase fails, revert that commit and 
 
 4. Commit: `chore: remove iCloud duplicate files`
 5. Verify test suite still passes
-6. Back up local DB: `cp local.db local.db.pre-rename`
+6. Back up local DB: `cp data/prod_local.db data/prod_local.db.pre-rename` (active DB per `DB_FILE` in `.env.local`)
 
 ### Phase 1 — `server/db/schema.sql` update
 
@@ -485,31 +530,47 @@ Commit: `refactor: update import paths for renamed files`
 
 ### Phase 6 — API path rename
 
-Update `/api/v1/deals` → `/api/v1/store-products` in `server/index.js` and all client-side API calls in `client/src/utils/api.js`.
+Update `/api/v1/deals` → `/api/v1/store-products` in:
+- `server/index.js` (mount point + inline references)
+- `client/src/utils/api.js` (all `/deals` request paths)
+- `tests/e2e/routes.e2e.test.js` (lines 523, 529, 533)
+- `.github/workflows/crawl.yml` ("Warm public deals cache" curl step)
 
 Commit: `feat: rename API path /api/v1/deals → /api/v1/store-products`
 
 ### Phase 7 — Run migration on local DB
 
+The active local DB is `data/prod_local.db` (set via `DB_FILE` in `.env.local`). Run:
+
 ```
-node scripts/migrate-deals-to-store-products.js
+DB_FILE=data/prod_local.db node scripts/migrate-deals-to-store-products.js
+```
+
+First test on the backup copy for safety:
+```
+DB_FILE=data/prod_local.db.pre-rename node scripts/migrate-deals-to-store-products.js
+DB_FILE=data/prod_local.db.pre-rename node scripts/migrate-deals-to-store-products.js  # idempotency check
+```
+
+Then run on the real DB:
+```
+DB_FILE=data/prod_local.db node scripts/migrate-deals-to-store-products.js
 ```
 
 Verify:
 ```
-sqlite3 local.db ".tables"  -- must show store_products, price_history, store_product_mappings; must NOT show deals, deal_price_history, deal_mappings
-sqlite3 local.db ".schema store_products"  -- confirm all indexes present with new names
+sqlite3 data/prod_local.db ".tables"  -- must show store_products, price_history, store_product_mappings; must NOT show deals, deal_price_history, deal_mappings
+sqlite3 data/prod_local.db ".schema store_products"  -- confirm all indexes present with new names
 ```
 
 This step does not produce a git commit (DB file not tracked).
 
 ### Phase 8 — Test suite
 
-Run full test suite. All tests must pass.
+Apply all SQL string changes in the "Tests (12 files)" subsection of "SQL Strings in Source Files".
+Run full test suite — `npm run test:integration && npm run test:regression && npm run test:e2e` — all must pass.
 
-If tests reference `deals` table by name (fixture setup, assertions), update those to `store_products`.
-
-Commit (if test fixes needed): `test: update test fixtures and assertions for store_products rename`
+Commit: `test: update test fixtures and assertions for store_products rename`
 
 ### Phase 9 — Smoke test
 
@@ -525,17 +586,17 @@ Commit (if test fixes needed): `test: update test fixtures and assertions for st
 
 All of the following must pass before the PR is merged to `compare-stores`:
 
-1. **SQL string grep:** `grep -rn "\bdeals\b" --include="*.js" --include="*.sql" server/ crawler/ client/ scripts/` — only intentional log messages / comments remain. Zero table-name references.
+1. **SQL string grep:** `grep -rn "\bdeals\b" --include="*.js" --include="*.mjs" --include="*.sql" --include="*.yml" server/ crawler/ client/ scripts/ tests/ .github/` — only intentional log messages / comments remain. Zero table-name references.
 
-2. **History table grep:** `grep -rn "deal_price_history" --include="*.js" --include="*.sql" server/ crawler/ client/ scripts/` — zero hits.
+2. **History table grep:** `grep -rn "deal_price_history" --include="*.js" --include="*.mjs" --include="*.sql" server/ crawler/ client/ scripts/ tests/` — zero hits.
 
-3. **Mappings table grep:** `grep -rn "deal_mappings" --include="*.js" --include="*.sql" server/ crawler/ client/ scripts/` — zero hits.
+3. **Mappings table grep:** `grep -rn "deal_mappings" --include="*.js" --include="*.mjs" --include="*.sql" server/ crawler/ client/ scripts/ tests/` — zero hits.
 
 4. **Old file check:** `ls server/routes/deals.js server/services/deal-search.js server/services/deal-order.js crawler/utils/shopify-deals-factory.js` — all must return "no such file".
 
 5. **Schema consistency:** `sqlite3 local.db ".schema"` output must match `server/db/schema.sql` table and index definitions (diff manually or via script).
 
-6. **Full test suite:** `npm test` — all pass.
+6. **Full test suite:** `npm run test:integration && npm run test:regression && npm run test:e2e` — all pass.
 
 7. **Server smoke test:** Start + hit `/api/v1/store-products` — returns data.
 
@@ -551,6 +612,8 @@ All of the following must pass before the PR is merged to `compare-stores`:
 | Missing SQL reference not caught by grep | Low | Grep verification gate + integration test run |
 | Test fixtures referencing old table names | Medium | Run test suite in Phase 8; fix any failures before merge |
 | Index column definitions in schema.sql contain old table reference in expression | Low | Check each index definition in schema.sql for ON clause pointing to correct table |
+| `server/db/index.js` bootstrapStatements lines 402-405: two `CREATE INDEX … ON deals(…)` calls (`idx_deals_display_date_order`, `idx_deals_active_display`) are wrapped in try-catch — after rename they fail silently on fresh DB init | Low | Non-blocking: `schema.sql` (applied first) already creates correct `idx_store_products_*` equivalents. Log a warning; functionally safe. No code change required in this PR. |
+| `server/db/index.js` line 311: `deal_id TEXT NOT NULL REFERENCES deals(id)` inside a `bookmarks` CREATE TABLE in bootstrapStatements — FK references old table name | Low | Non-blocking: SQLite does not enforce FK constraints by default. Semantic only. No code change required in this PR — sweep in a follow-up cleanup of `db/index.js` bootstrapStatements. |
 
 ---
 
@@ -560,4 +623,4 @@ All of the following must pass before the PR is merged to `compare-stores`:
 - React component names (`DealsPage`, `DealSharePage`, `DealSharePageContent`)
 - User-facing URL slugs (confirm none exist — `client/src/` routing does not expose `/deals` as a public URL path)
 - Turso remote DB migration (handled separately once local rename is proven)
-- GitHub Actions workflow files that reference `deals` table (check and update separately if any)
+- `docs/` and `README.md` — ~71 references to `/api/v1/deals` and `FROM deals`; sweep in a follow-up docs PR
