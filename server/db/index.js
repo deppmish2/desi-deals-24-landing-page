@@ -165,6 +165,10 @@ const ready = (async () => {
   // Always-run migrations — idempotent ALTER TABLE columns that must exist on
   // both local and remote Turso DBs regardless of the bootstrap flag.
   const alwaysMigrations = [
+    // Table renames (deals → store_products, etc.) — safe to re-run, fail silently if already renamed
+    "ALTER TABLE deals RENAME TO store_products",
+    "ALTER TABLE deal_mappings RENAME TO store_product_mappings",
+    "ALTER TABLE deal_price_history RENAME TO price_history",
     "ALTER TABLE canonical_products ADD COLUMN is_priority INTEGER DEFAULT 0",
     "ALTER TABLE price_history ADD COLUMN is_deal INTEGER DEFAULT 0",
     // Ensure brand management tables exist on both local and remote paths
