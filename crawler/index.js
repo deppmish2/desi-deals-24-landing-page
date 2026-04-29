@@ -8,6 +8,7 @@ const { parseBestBefore } = require("./utils/best-before-parser");
 const { acquireCrawlLock, releaseCrawlLock } = require("./utils/snapshot");
 const { loadPriorityCanonicals, autoMapDeals } = require("./utils/auto-mapper");
 const { canonicalizeDeals } = require("../server/services/canonicalizer");
+const { backfillMultiStoreBaseKeys } = require("../server/services/base-product-catalog");
 const { runPass1 } = require("./utils/pass1-fetcher");
 const { recordStoreHistory, purgeOldHistory } = require("../server/services/price-history-recorder");
 const {
@@ -18,7 +19,7 @@ const {
 const {
   buildStableDisplayOrder,
   dateSeed,
-} = require("../server/services/deal-order");
+} = require("../server/services/store-product-order");
 const { formatBerlinDateKey } = require("../server/services/berlin-time");
 const { finishJobRun, startJobRun } = require("../server/services/job-runs");
 
@@ -201,7 +202,7 @@ async function fetchActiveDealsForStore(db, storeId) {
   return await db
     .prepare(
       `SELECT *
-       FROM deals
+       FROM store_products
        WHERE store_id = ?
          AND is_active = 1`,
     )
@@ -214,7 +215,7 @@ async function markDealsInactive(db, dealIds) {
     // eslint-disable-next-line no-await-in-loop
     const result = await db
       .prepare(
-        `UPDATE deals
+        `UPDATE store_products
        SET is_active = 0
        WHERE id = ?
          AND is_active = 1`,
@@ -229,7 +230,7 @@ async function insertDeals(db, deals) {
   if (!Array.isArray(deals) || deals.length === 0) return 0;
 
   const insertDeal = db.prepare(`
-    INSERT INTO deals
+    INSERT INTO store_products
       (id, crawl_run_id, crawl_timestamp, store_id, product_name, product_category,
        product_url, image_url, weight_raw, weight_value, weight_unit,
        sale_price, original_price, discount_percent, price_per_kg, price_per_unit,
@@ -256,7 +257,7 @@ async function replaceDailyPriceHistoryForStore(
 ) {
   await db
     .prepare(
-      `DELETE FROM deal_price_history
+      `DELETE FROM price_history
        WHERE crawl_date = ?
          AND store_id = ?`,
     )
@@ -265,7 +266,7 @@ async function replaceDailyPriceHistoryForStore(
   if (!Array.isArray(deals) || deals.length === 0) return 0;
 
   const insertSql = `
-    INSERT INTO deal_price_history
+    INSERT INTO price_history
       (id, crawl_date, crawl_run_id, crawl_timestamp, store_id,
        product_name, product_category, product_url, image_url,
        weight_raw, weight_value, weight_unit,
@@ -325,7 +326,7 @@ async function replaceDailyPriceHistoryForStore(
 async function insertPass1Snapshots(db, snapshots, crawlDate) {
   if (!Array.isArray(snapshots) || snapshots.length === 0) return 0;
 
-  const sql = `INSERT OR IGNORE INTO deal_price_history
+  const sql = `INSERT OR IGNORE INTO price_history
     (id, crawl_date, crawl_run_id, crawl_timestamp, store_id,
      product_name, product_category, product_url,
      weight_raw, weight_value, weight_unit,
@@ -476,7 +477,7 @@ async function previousCompletedCrawl(db, excludeRunId) {
 async function refreshDailyDisplayOrder(db, crawlDate) {
   await db
     .prepare(
-      `UPDATE deals
+      `UPDATE store_products
        SET display_date = NULL,
            display_order = NULL
        WHERE is_active = 1`,
@@ -486,7 +487,7 @@ async function refreshDailyDisplayOrder(db, crawlDate) {
   const activeRows = await db
     .prepare(
       `SELECT id, store_id, discount_percent
-       FROM deals
+       FROM store_products
        WHERE is_active = 1
          AND lower(coalesce(store_id, '')) NOT IN (${EXCLUDED_DISPLAY_STORE_IDS_SQL})
          AND lower(coalesce(availability, '')) = 'in_stock'
@@ -506,7 +507,7 @@ async function refreshDailyDisplayOrder(db, crawlDate) {
 
   const statements = orderedRows.map((deal, index) => ({
     sql: `
-      UPDATE deals
+      UPDATE store_products
       SET display_date = ?,
           display_order = ?
       WHERE id = ?
@@ -756,6 +757,14 @@ async function runCrawl(db, options = {}) {
         `UPDATE crawl_runs SET errors = json_patch(COALESCE(errors, '[]'), json_array(json_object('store_id', 'canonicalize', 'error_message', ?))) WHERE id = ?`,
         [canonError.message, runId],
       ).catch(() => {});
+    }
+
+    // Assign base_key to any canonicals now in 2+ stores that still lack one.
+    try {
+      const filled = await backfillMultiStoreBaseKeys(db);
+      if (filled > 0) logInfo("run", `Base key backfill: ${filled} canonicals updated`);
+    } catch (e) {
+      logWarn("run", `Base key backfill failed: ${e.message}`);
     }
 
     const finishedAt = new Date().toISOString();

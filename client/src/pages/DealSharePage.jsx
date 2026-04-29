@@ -298,14 +298,16 @@ export default function DealSharePage() {
                   const isGood  = realSavings.rating === "good";
                   return (
                     <div className={`flex items-center justify-between rounded-[14px] px-3.5 py-3 ${
-                      isGreat || isGood ? "bg-[#f0fdf4] border border-[#bbf7d0]" : "bg-[#f0fdf4] border border-[#dcfce7]"
+                      isFakeDeal ? "bg-amber-50 border border-amber-200"
+                      : isGreat || isGood ? "bg-[#f0fdf4] border border-[#bbf7d0]"
+                      : "bg-[#f0fdf4] border border-[#dcfce7]"
                     }`}>
                       <div className="flex items-center gap-2.5">
                         <div className={`shrink-0 w-7 h-7 rounded-full flex items-center justify-center ${
                           isFakeDeal ? "bg-amber-100" : isGreat || isGood ? "bg-[#16a34a]" : "bg-green-100"
                         }`}>
                           {isFakeDeal ? (
-                            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="#f59e0b" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="#d97706" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
                               <circle cx="12" cy="12" r="10"/>
                               <line x1="12" y1="8" x2="12" y2="13"/>
                               <line x1="12" y1="16" x2="12.01" y2="16"/>
@@ -318,7 +320,7 @@ export default function DealSharePage() {
                         </div>
                         <div>
                           <p className={`text-[10px] font-extrabold uppercase tracking-[1.4px] leading-none mb-[3px] ${
-                            isGreat || isGood ? "text-[#15803d]" : "text-green-500"
+                            isFakeDeal ? "text-amber-700" : isGreat || isGood ? "text-[#15803d]" : "text-green-500"
                           }`}>Real Savings</p>
                           <p className="text-[11px] text-slate-500 leading-none">
                             {realSavings.reference_source === "store_original" ? "vs store's original price" : "vs market price"}
@@ -327,7 +329,7 @@ export default function DealSharePage() {
                       </div>
                       <div className="text-right">
                         <p className={`text-[28px] font-extrabold leading-none ${
-                          isGreat || isGood ? "text-[#16a34a]" : "text-green-500"
+                          isFakeDeal ? "text-amber-600" : isGreat || isGood ? "text-[#16a34a]" : "text-green-500"
                         }`}>{realPct}%</p>
                         {gap >= 3 && discountPct && (
                           <p className="text-[10px] text-slate-500 leading-none mt-1">store says {discountPct}%</p>

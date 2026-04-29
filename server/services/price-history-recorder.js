@@ -2,18 +2,18 @@
 /**
  * price-history-recorder.js
  *
- * Snapshots current deal prices into deal_price_history after each crawl.
+ * Snapshots current deal prices into price_history after each crawl.
  * Extracted so the crawler and any future jobs can call it without duplicating
  * the INSERT logic.
  *
- * Requires: deal_price_history.is_deal column (added by setup-real-savings-local.js
+ * Requires: price_history.is_deal column (added by setup-real-savings-local.js
  * locally, or by the production migration when deployed).
  */
 
 const { randomUUID } = require("crypto");
 
 /**
- * Record a set of deals into deal_price_history for the given crawl run.
+ * Record a set of deals into price_history for the given crawl run.
  *
  * @param {object} db        - The db shim from server/db/index.js
  * @param {object} opts
@@ -29,7 +29,7 @@ async function recordStoreHistory(db, { crawlRunId, crawlDate, crawlTimestamp, s
 
   // Replace today's history for this store (same behaviour as crawler's existing logic)
   await db.execute(
-    `DELETE FROM deal_price_history WHERE crawl_date = ? AND store_id = ?`,
+    `DELETE FROM price_history WHERE crawl_date = ? AND store_id = ?`,
     [crawlDate, storeId],
   );
 
@@ -47,7 +47,7 @@ async function recordStoreHistory(db, { crawlRunId, crawlDate, crawlTimestamp, s
 
     try {
       await db.execute(
-        `INSERT OR IGNORE INTO deal_price_history
+        `INSERT OR IGNORE INTO price_history
            (id, crawl_date, crawl_run_id, crawl_timestamp, store_id,
             product_name, product_category, product_url, image_url,
             weight_raw, weight_value, weight_unit,
@@ -103,7 +103,7 @@ async function recordStoreHistory(db, { crawlRunId, crawlDate, crawlTimestamp, s
  */
 async function purgeOldHistory(db, maxDays = 180) {
   await db.execute(
-    `DELETE FROM deal_price_history WHERE crawl_date < date('now', ?)`,
+    `DELETE FROM price_history WHERE crawl_date < date('now', ?)`,
     [`-${maxDays} days`],
   );
 }

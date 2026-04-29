@@ -1,0 +1,79 @@
+<h2>How do replacement options appear?</h2>
+<p class="subtitle">User taps "see alternatives" on an unavailable item inside a store card</p>
+
+<div class="cards">
+
+  <!-- Option A: Inline expand -->
+  <div class="card" data-choice="a" onclick="toggleSelect(this)">
+    <div class="card-image" style="background:#0f1a10;padding:10px;border-radius:8px;font-family:system-ui">
+      <div style="font-size:8px;color:#86efac;font-weight:700;margin-bottom:6px">Jamoona — €47.20 · 12/13 matched</div>
+
+      <div style="display:flex;flex-direction:column;gap:3px">
+        <div style="display:flex;justify-content:space-between;font-size:9px;color:#d1d5db;padding:3px 0;border-bottom:1px solid #1f2f22"><span>✓ Daawat Basmati 5kg</span><span style="color:#4ade80">€8.99</span></div>
+
+        <!-- Unavailable item with inline expansion -->
+        <div style="padding:3px 0;border-bottom:1px solid #1f2f22">
+          <div style="display:flex;justify-content:space-between;font-size:9px">
+            <span style="color:#f87171">✗ Amul Butter 500g</span>
+            <span style="color:#fbbf24;font-size:8px;text-decoration:underline">▼ alternatives</span>
+          </div>
+          <!-- Inline expanded alternatives -->
+          <div style="margin-top:5px;background:#0a130b;border-radius:5px;padding:5px;display:flex;flex-direction:column;gap:3px">
+            <div style="font-size:8px;color:#6b7280;margin-bottom:2px">Replacements at Jamoona:</div>
+            <div style="display:flex;align-items:center;gap:5px;background:#1f2f22;border-radius:4px;padding:4px">
+              <div style="width:20px;height:20px;background:#2d4a30;border-radius:3px;flex-shrink:0"></div>
+              <div style="flex:1"><div style="font-size:8px;color:#d1d5db">Milkfood Butter 500g</div><div style="font-size:8px;color:#4ade80">€3.49</div></div>
+              <button style="background:#22c55e;color:#fff;font-size:7px;font-weight:700;border:none;border-radius:3px;padding:2px 5px">Accept</button>
+            </div>
+            <div style="display:flex;align-items:center;gap:5px;background:#1f2f22;border-radius:4px;padding:4px">
+              <div style="width:20px;height:20px;background:#2d4a30;border-radius:3px;flex-shrink:0"></div>
+              <div style="flex:1"><div style="font-size:8px;color:#d1d5db">Gowardhan Butter 500g</div><div style="font-size:8px;color:#4ade80">€3.79</div></div>
+              <button style="background:#22c55e;color:#fff;font-size:7px;font-weight:700;border:none;border-radius:3px;padding:2px 5px">Accept</button>
+            </div>
+          </div>
+        </div>
+        <div style="display:flex;justify-content:space-between;font-size:9px;color:#d1d5db;padding:3px 0"><span>✓ Aashirvaad Atta 10kg</span><span style="color:#4ade80">€12.49</span></div>
+      </div>
+    </div>
+    <div class="card-body">
+      <h3>A — Inline Expansion</h3>
+      <p>Alternatives expand directly below the unavailable item, inside the store card. No context switch. Accepting replaces the row in place and recalculates totals immediately.</p>
+    </div>
+  </div>
+
+  <!-- Option B: Bottom Sheet Modal -->
+  <div class="card" data-choice="b" onclick="toggleSelect(this)">
+    <div class="card-image" style="background:#0f1a10;padding:10px;border-radius:8px;font-family:system-ui;position:relative;overflow:hidden">
+      <!-- Store card behind -->
+      <div style="opacity:0.4;filter:blur(1px)">
+        <div style="font-size:8px;color:#86efac;font-weight:700;margin-bottom:6px">Jamoona — €47.20 · 12/13 matched</div>
+        <div style="display:flex;flex-direction:column;gap:3px">
+          <div style="display:flex;justify-content:space-between;font-size:9px;color:#d1d5db;padding:3px 0"><span>✓ Daawat Basmati 5kg</span><span style="color:#4ade80">€8.99</span></div>
+          <div style="display:flex;justify-content:space-between;font-size:9px;color:#f87171;padding:3px 0"><span>✗ Amul Butter 500g</span><span style="color:#fbbf24;font-size:8px">alternatives</span></div>
+        </div>
+      </div>
+      <!-- Bottom sheet -->
+      <div style="position:absolute;bottom:0;left:0;right:0;background:#102016;border-top:1px solid #22c55e33;border-radius:8px 8px 0 0;padding:8px">
+        <div style="font-size:9px;color:#86efac;font-weight:700;margin-bottom:5px">Alternatives for "Amul Butter 500g" at Jamoona</div>
+        <div style="display:flex;flex-direction:column;gap:3px">
+          <div style="display:flex;align-items:center;gap:5px;background:#1f2f22;border-radius:4px;padding:4px">
+            <div style="width:20px;height:20px;background:#2d4a30;border-radius:3px;flex-shrink:0"></div>
+            <div style="flex:1"><div style="font-size:8px;color:#d1d5db">Milkfood Butter 500g</div><div style="font-size:8px;color:#4ade80">€3.49</div></div>
+            <button style="background:#22c55e;color:#fff;font-size:7px;font-weight:700;border:none;border-radius:3px;padding:2px 5px">Accept</button>
+          </div>
+          <div style="display:flex;align-items:center;gap:5px;background:#1f2f22;border-radius:4px;padding:4px">
+            <div style="width:20px;height:20px;background:#2d4a30;border-radius:3px;flex-shrink:0"></div>
+            <div style="flex:1"><div style="font-size:8px;color:#d1d5db">Gowardhan Butter 500g</div><div style="font-size:8px;color:#4ade80">€3.79</div></div>
+            <button style="background:#22c55e;color:#fff;font-size:7px;font-weight:700;border:none;border-radius:3px;padding:2px 5px">Accept</button>
+          </div>
+        </div>
+        <button style="width:100%;margin-top:5px;background:transparent;border:none;color:#6b7280;font-size:8px">Cancel</button>
+      </div>
+    </div>
+    <div class="card-body">
+      <h3>B — Bottom Sheet</h3>
+      <p>Tapping "see alternatives" slides up a bottom sheet over the page. More space for replacement options. Dismissing returns to the comparison. Accepting closes the sheet and updates the card.</p>
+    </div>
+  </div>
+
+</div>

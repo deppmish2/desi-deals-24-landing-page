@@ -219,7 +219,7 @@ test("lists + recommendation + canonical/search route e2e", async () => {
   ).run("shop2", "Shop 2", "https://shop2.example", "custom", "active");
 
   db.prepare(
-    `INSERT INTO deals
+    `INSERT INTO store_products
       (id, crawl_run_id, crawl_timestamp, store_id, product_name, product_category,
        product_url, sale_price, currency, availability, is_active)
      VALUES (?, ?, ?, ?, ?, ?, ?, ?, 'EUR', 'in_stock', 1)`,
@@ -235,7 +235,7 @@ test("lists + recommendation + canonical/search route e2e", async () => {
   );
 
   db.prepare(
-    `INSERT INTO deals
+    `INSERT INTO store_products
       (id, crawl_run_id, crawl_timestamp, store_id, product_name, product_category,
        product_url, sale_price, currency, availability, is_active)
      VALUES (?, ?, ?, ?, ?, ?, ?, ?, 'EUR', 'in_stock', 1)`,
@@ -323,7 +323,7 @@ test("recommendation works after local user row is missing (serverless cold-star
   ).run("shop1", "Shop 1", "https://shop1.example", "shopify", "active");
 
   db.prepare(
-    `INSERT INTO deals
+    `INSERT INTO store_products
       (id, crawl_run_id, crawl_timestamp, store_id, product_name, product_category,
        product_url, sale_price, currency, availability, is_active)
      VALUES (?, ?, ?, ?, ?, ?, ?, ?, 'EUR', 'in_stock', 1)`,
@@ -405,7 +405,7 @@ test("alerts + inbound webhook + admin activity route e2e", async () => {
   );
 
   db.prepare(
-    `INSERT INTO deals
+    `INSERT INTO store_products
       (id, crawl_run_id, crawl_timestamp, store_id, product_name, product_category,
        product_url, sale_price, currency, availability, is_active)
      VALUES (?, ?, ?, ?, ?, ?, ?, ?, 'EUR', 'in_stock', 1)`,
@@ -499,7 +499,7 @@ test("public deals/stores/categories/contact route e2e", async () => {
   ).run("shop-main", "Main Shop", "https://main-shop.example", "active");
 
   db.prepare(
-    `INSERT INTO deals
+    `INSERT INTO store_products
       (id, crawl_run_id, crawl_timestamp, store_id, product_name, product_category,
        product_url, sale_price, original_price, discount_percent, currency, availability, is_active)
      VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 'EUR', 'in_stock', 1)`,
@@ -520,17 +520,17 @@ test("public deals/stores/categories/contact route e2e", async () => {
   const api = await startServer(app);
 
   try {
-    const deals = await api.request("/api/v1/deals?limit=10");
+    const deals = await api.request("/api/v1/store-products?limit=10");
     assert.equal(deals.status, 200);
     assert.ok(Array.isArray(deals.json.data));
     assert.equal(deals.json.data.length, 1);
     assert.equal(deals.json.data[0].id, "deal-main");
 
-    const suggest = await api.request("/api/v1/deals/suggest?q=jee");
+    const suggest = await api.request("/api/v1/store-products/suggest?q=jee");
     assert.equal(suggest.status, 200);
     assert.ok(suggest.json.suggestions.some((name) => name.includes("Jeera")));
 
-    const dealDetail = await api.request("/api/v1/deals/deal-main");
+    const dealDetail = await api.request("/api/v1/store-products/deal-main");
     assert.equal(dealDetail.status, 200);
     assert.equal(dealDetail.json.id, "deal-main");
     assert.equal(dealDetail.json.store.id, "shop-main");
@@ -580,7 +580,7 @@ test("admin delivery options and analytics KPI route e2e", async () => {
     "INSERT INTO stores (id, name, url, crawl_status) VALUES (?, ?, ?, ?)",
   ).run("kpi-shop", "KPI Shop", "https://kpi-shop.example", "active");
   db.prepare(
-    `INSERT INTO deals
+    `INSERT INTO store_products
       (id, crawl_run_id, crawl_timestamp, store_id, product_name, product_category,
        product_url, sale_price, currency, availability, is_active)
      VALUES (?, ?, ?, ?, ?, ?, ?, ?, 'EUR', 'in_stock', 1)`,
@@ -814,7 +814,7 @@ test("creating a list with structured deal items preserves size and avoids the w
     "INSERT INTO stores (id, name, url, crawl_status) VALUES (?, ?, ?, ?)",
   ).run("zora", "Zora", "https://zora.example", "active");
   db.prepare(
-    `INSERT INTO deals
+    `INSERT INTO store_products
       (id, crawl_run_id, crawl_timestamp, store_id, canonical_id, product_name, product_category,
        product_url, sale_price, currency, availability, is_active, weight_value, weight_unit)
      VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, 'EUR', 'in_stock', 1, ?, ?)`,
@@ -832,7 +832,7 @@ test("creating a list with structured deal items preserves size and avoids the w
     "kg",
   );
   db.prepare(
-    `INSERT INTO deals
+    `INSERT INTO store_products
       (id, crawl_run_id, crawl_timestamp, store_id, canonical_id, product_name, product_category,
        product_url, sale_price, currency, availability, is_active, weight_value, weight_unit)
      VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, 'EUR', 'in_stock', 1, ?, ?)`,
@@ -929,7 +929,7 @@ test("recommendation prefers structured fallback size over stale pcs list rows",
     "INSERT INTO stores (id, name, url, crawl_status) VALUES (?, ?, ?, ?)",
   ).run("jamoona", "Jamoona", "https://jamoona.example", "active");
   db.prepare(
-    `INSERT INTO deals
+    `INSERT INTO store_products
       (id, crawl_run_id, crawl_timestamp, store_id, canonical_id, product_name, product_category,
        product_url, sale_price, currency, availability, is_active, weight_value, weight_unit)
      VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, 'EUR', 'in_stock', 1, ?, ?)`,
@@ -947,7 +947,7 @@ test("recommendation prefers structured fallback size over stale pcs list rows",
     "g",
   );
   db.prepare(
-    `INSERT INTO deals
+    `INSERT INTO store_products
       (id, crawl_run_id, crawl_timestamp, store_id, canonical_id, product_name, product_category,
        product_url, sale_price, currency, availability, is_active, weight_value, weight_unit)
      VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, 'EUR', 'in_stock', 1, ?, ?)`,

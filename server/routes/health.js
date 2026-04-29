@@ -42,7 +42,7 @@ async function gatherHealthData() {
        LIMIT 1`,
       )
       .get(),
-    db.prepare(`SELECT COUNT(*) AS cnt FROM deals WHERE is_active = 1`).get(),
+    db.prepare(`SELECT COUNT(*) AS cnt FROM store_products WHERE is_active = 1`).get(),
     db
       .prepare(
         `SELECT COUNT(*) AS cnt FROM crawl_runs WHERE status = 'running'`,
@@ -54,7 +54,7 @@ async function gatherHealthData() {
     ? await db
         .prepare(
           `SELECT COUNT(*) AS cnt
-         FROM deal_price_history
+         FROM price_history
          WHERE crawl_date = ?`,
         )
         .get(lastCrawlRow.crawl_date)

@@ -1,0 +1,98 @@
+<h2>How should the comparison page be laid out?</h2>
+<p class="subtitle">Each approach shows the same cart across all stores — pick the structure that feels most natural</p>
+
+<div class="cards">
+
+  <!-- Option A: Ranked Store Cards -->
+  <div class="card" data-choice="a" onclick="toggleSelect(this)">
+    <div class="card-image" style="background:#0f1a10;padding:12px;border-radius:8px;font-family:system-ui">
+      <div style="display:flex;gap:6px;align-items:center;margin-bottom:8px">
+        <span style="background:#f59e0b;color:#000;font-size:9px;font-weight:700;padding:2px 6px;border-radius:10px">#1 CHEAPEST</span>
+        <span style="color:#86efac;font-size:11px;font-weight:700">Jamoona</span>
+        <span style="color:#4ade80;font-size:12px;font-weight:800;margin-left:auto">€47.20</span>
+      </div>
+      <div style="font-size:9px;color:#6b7280;margin-bottom:6px">12/13 matched · €2.99 shipping · €2.81 to free shipping</div>
+      <div style="height:3px;background:#1f2f22;border-radius:2px;margin-bottom:8px">
+        <div style="height:100%;width:85%;background:#22c55e;border-radius:2px"></div>
+      </div>
+      <div style="display:flex;flex-direction:column;gap:3px">
+        <div style="display:flex;justify-content:space-between;font-size:9px;color:#d1d5db"><span>Daawat Basmati 5kg</span><span style="color:#4ade80">€8.99</span></div>
+        <div style="display:flex;justify-content:space-between;font-size:9px;color:#d1d5db"><span>Aashirvaad Atta 10kg</span><span style="color:#4ade80">€12.49</span></div>
+        <div style="display:flex;justify-content:space-between;font-size:9px;color:#6b7280;text-decoration:line-through"><span>Amul Butter 500g</span><span>—</span></div>
+      </div>
+      <div style="margin-top:8px;background:#14532d;color:#4ade80;font-size:9px;font-weight:700;text-align:center;padding:4px 8px;border-radius:6px">Shop at Jamoona →</div>
+    </div>
+    <div class="card-body">
+      <h3>A — Ranked Store Cards</h3>
+      <p>Stores ranked by total. Each card shows match stat, free-shipping progress, item list (available/unavailable), and a "Shop here" CTA. Scroll down to see next store.</p>
+    </div>
+  </div>
+
+  <!-- Option B: Table / Matrix -->
+  <div class="card" data-choice="b" onclick="toggleSelect(this)">
+    <div class="card-image" style="background:#0f1a10;padding:10px;border-radius:8px;font-family:system-ui;overflow:auto">
+      <table style="width:100%;border-collapse:collapse;font-size:8.5px">
+        <thead>
+          <tr>
+            <th style="text-align:left;color:#6b7280;padding:3px 4px;border-bottom:1px solid #1f2f22">Product</th>
+            <th style="color:#4ade80;padding:3px 4px;border-bottom:1px solid #1f2f22;text-align:right">Jamoona<br><span style="color:#6b7280;font-weight:400">€47.20</span></th>
+            <th style="color:#d1d5db;padding:3px 4px;border-bottom:1px solid #1f2f22;text-align:right">Dookan<br><span style="color:#6b7280;font-weight:400">€51.80</span></th>
+            <th style="color:#d1d5db;padding:3px 4px;border-bottom:1px solid #1f2f22;text-align:right">Grocera<br><span style="color:#6b7280;font-weight:400">€54.10</span></th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr><td style="color:#d1d5db;padding:3px 4px;border-bottom:1px solid #1f2f22">Daawat Basmati 5kg</td><td style="color:#4ade80;text-align:right;padding:3px 4px;border-bottom:1px solid #1f2f22">€8.99</td><td style="color:#d1d5db;text-align:right;padding:3px 4px;border-bottom:1px solid #1f2f22">€9.49</td><td style="color:#d1d5db;text-align:right;padding:3px 4px;border-bottom:1px solid #1f2f22">€9.99</td></tr>
+          <tr><td style="color:#d1d5db;padding:3px 4px;border-bottom:1px solid #1f2f22">Aashirvaad Atta 10kg</td><td style="color:#4ade80;text-align:right;padding:3px 4px;border-bottom:1px solid #1f2f22">€12.49</td><td style="color:#d1d5db;text-align:right;padding:3px 4px;border-bottom:1px solid #1f2f22">€13.99</td><td style="color:#f87171;text-align:right;padding:3px 4px;border-bottom:1px solid #1f2f22">—</td></tr>
+          <tr><td style="color:#d1d5db;padding:3px 4px">Amul Butter 500g</td><td style="color:#f87171;text-align:right;padding:3px 4px">—</td><td style="color:#4ade80;text-align:right;padding:3px 4px">€3.29</td><td style="color:#d1d5db;text-align:right;padding:3px 4px">€3.49</td></tr>
+        </tbody>
+        <tfoot>
+          <tr><td style="color:#6b7280;padding:4px 4px 2px;font-size:8px">Total incl. shipping</td><td style="color:#4ade80;font-weight:700;text-align:right;padding:4px 4px 2px">€47.20</td><td style="color:#d1d5db;text-align:right;padding:4px 4px 2px">€51.80</td><td style="color:#d1d5db;text-align:right;padding:4px 4px 2px">€54.10</td></tr>
+        </tfoot>
+      </table>
+    </div>
+    <div class="card-body">
+      <h3>B — Price Matrix Table</h3>
+      <p>Products as rows, stores as columns. Instantly see which store is cheapest per item and overall. Compact but harder to show replacements and free-shipping info.</p>
+    </div>
+  </div>
+
+  <!-- Option C: Split — Winner hero + others collapsed -->
+  <div class="card" data-choice="c" onclick="toggleSelect(this)">
+    <div class="card-image" style="background:#0f1a10;padding:10px;border-radius:8px;font-family:system-ui">
+      <div style="background:linear-gradient(135deg,#14532d,#166534);border-radius:8px;padding:8px;margin-bottom:6px">
+        <div style="display:flex;justify-content:space-between;align-items:center">
+          <div>
+            <div style="font-size:8px;color:#86efac;font-weight:700;letter-spacing:.08em">BEST PRICE</div>
+            <div style="font-size:13px;font-weight:800;color:#fff">Jamoona</div>
+            <div style="font-size:8px;color:#86efac">12/13 matched · free shipping at €50</div>
+          </div>
+          <div style="text-align:right">
+            <div style="font-size:16px;font-weight:800;color:#4ade80">€47.20</div>
+            <div style="font-size:8px;color:#86efac">incl. shipping</div>
+          </div>
+        </div>
+        <div style="margin-top:6px;background:#14532d55;border-radius:4px;padding:5px">
+          <div style="font-size:8px;color:#d1d5db">✓ Daawat Basmati 5kg — €8.99</div>
+          <div style="font-size:8px;color:#d1d5db">✓ Aashirvaad Atta 10kg — €12.49</div>
+          <div style="font-size:8px;color:#f87171">✗ Amul Butter — not available <span style="color:#fbbf24;text-decoration:underline">see alternatives</span></div>
+        </div>
+        <div style="margin-top:6px;background:#22c55e;color:#fff;font-size:9px;font-weight:700;text-align:center;padding:4px;border-radius:5px">Shop at Jamoona →</div>
+      </div>
+      <div style="display:flex;flex-direction:column;gap:3px">
+        <div style="background:#1f2f22;border-radius:5px;padding:5px 8px;display:flex;justify-content:space-between;align-items:center">
+          <span style="font-size:9px;color:#9ca3af">Dookan · 13/13</span>
+          <span style="font-size:10px;font-weight:700;color:#d1d5db">€51.80 ›</span>
+        </div>
+        <div style="background:#1f2f22;border-radius:5px;padding:5px 8px;display:flex;justify-content:space-between;align-items:center">
+          <span style="font-size:9px;color:#9ca3af">Grocera · 11/13</span>
+          <span style="font-size:10px;font-weight:700;color:#d1d5db">€54.10 ›</span>
+        </div>
+      </div>
+    </div>
+    <div class="card-body">
+      <h3>C — Winner Hero + Collapsed Others</h3>
+      <p>Best-price store shown expanded with full detail. Other stores collapsed into rows — tap to expand. Fast to scan, surfaces the answer immediately.</p>
+    </div>
+  </div>
+
+</div>

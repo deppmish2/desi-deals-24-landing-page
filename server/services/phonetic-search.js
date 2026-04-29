@@ -1,6 +1,6 @@
 "use strict";
 
-const { normalizeSearchValue, levenshtein } = require("./deal-search");
+const { normalizeSearchValue, levenshtein } = require("./store-product-search");
 
 // Strip vowels to get consonant skeleton — catches vowel swaps and missing vowels.
 // "turmeric" → "trmrc", "tumeric" → "tmrc" (distance 1)

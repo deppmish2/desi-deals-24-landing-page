@@ -1,5 +1,14 @@
 "use strict";
 
+// Multi-word snack phrases that must be checked before the single-word lentil/spice keywords
+// (first-match-wins). "Moong Dal Masala" and "Chana Dal Masala" are fried snacks, not raw lentils.
+const SNACK_PHRASES = [
+  "moong dal masala",
+  "moong dal plain",
+  "mung dal masala",
+  "mung dal plain",
+];
+
 const CATEGORIES = [
   [
     "Rice & Grains",
@@ -157,6 +166,7 @@ const CATEGORIES = [
 function mapCategory(productName) {
   if (!productName) return "Other";
   const lower = productName.toLowerCase();
+  if (SNACK_PHRASES.some((phrase) => lower.includes(phrase))) return "Snacks & Sweets";
   for (const [category, keywords] of CATEGORIES) {
     if (keywords.some((kw) => new RegExp(`\\b${kw}\\b`).test(lower))) return category;
   }

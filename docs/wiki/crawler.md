@@ -1,6 +1,6 @@
 ---
 title: Crawler
-last_updated: 2026-04-17
+last_updated: 2026-04-20
 source_count: 3
 ---
 
@@ -56,9 +56,22 @@ Categories: Rice & Grains, Flours & Baking, Lentils & Pulses, Spices & Masalas, 
 
 ## Weight parsing
 
-`crawler/utils/weight-parser.js` — extracts weight from product titles. Matches patterns like `500g`, `1kg`, `1.5 kg`, `2x500ml`, `480gm`.
+`crawler/utils/weight-parser.js` — extracts weight from product titles. Matches patterns in priority order:
+
+| Pattern | Example | Result |
+|---|---|---|
+| `N x Munit` | `2 x 5kg` | `10kg` (total = N × M) |
+| `(N Pack)` / `Pack of N` | `(290g) (2 Pack)` | `580g` (unit × N) |
+| `valueUnit` | `500g`, `1.5 kg` | `500g` |
+| `valuegm` (last match) | `(48pc x 10gm) 480gm` | `480g` |
+
+**Multi-pack logic (fixed 2026-04-20):**
+- `N x Munit` — first capture group (count) was previously ignored; the `fn` now returns `parseGerman(m[1]) * parseGerman(m[2])`. The `isMultiPack: true` flag prevents the pack-multiplier step from doubling the result.
+- `(N Pack)` / `Pack of N` — new `packMultiplier()` function scans for these patterns after a unit weight is found and multiplies. Applies to `valueUnit` and `gm` patterns; skipped for `isMultiPack` patterns.
 
 The `gm` (Indian abbreviation) pattern uses `matchAll` and returns the **last** match in the string. This ensures multi-pack titles like `(48pc x 10gm) 480gm` return the total weight (480g) rather than the per-unit weight (10g). Earlier versions used `match()` (first match only), causing phantom `€399/kg` reference prices for bouillon cubes.
+
+Backfill scripts for existing DB rows: inline one-off Node.js run against `better-sqlite3` (see `scripts/backfill-*.js` for pattern).
 
 ## Canonical products & auto-mapping
 

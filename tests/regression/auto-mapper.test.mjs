@@ -9,12 +9,12 @@ function makeDb() {
   return {
     inserts,
     execute: async (sql, params) => {
-      if (/INSERT INTO deal_mappings/i.test(sql)) inserts.push(params);
+      if (/INSERT INTO store_product_mappings/i.test(sql)) inserts.push(params);
       return { rows: [] };
     },
     batch: async (stmts) => {
       for (const { sql, args } of stmts) {
-        if (/INSERT INTO deal_mappings/i.test(sql)) inserts.push(args);
+        if (/INSERT INTO store_product_mappings/i.test(sql)) inserts.push(args);
       }
     },
   };

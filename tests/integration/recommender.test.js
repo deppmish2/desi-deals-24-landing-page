@@ -33,7 +33,7 @@ test("recommendForList returns cheapest winner and cart transfer method", async 
   ).run("l1", "toor-dal", "toor dal", 1, "kg");
 
   db.prepare(
-    `INSERT INTO deals
+    `INSERT INTO store_products
       (id, crawl_run_id, crawl_timestamp, store_id, canonical_id, product_name, product_category,
        product_url, sale_price, currency, availability, is_active)
      VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, 'EUR', 'in_stock', 1)`,
@@ -50,7 +50,7 @@ test("recommendForList returns cheapest winner and cart transfer method", async 
   );
 
   db.prepare(
-    `INSERT INTO deals
+    `INSERT INTO store_products
       (id, crawl_run_id, crawl_timestamp, store_id, canonical_id, product_name, product_category,
        product_url, sale_price, currency, availability, is_active)
      VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, 'EUR', 'in_stock', 1)`,
@@ -117,7 +117,7 @@ test("recommendForList prioritizes coverage over subtotal", async () => {
   ).run("l2", "garam-masala", "garam masala");
 
   db.prepare(
-    `INSERT INTO deals
+    `INSERT INTO store_products
       (id, crawl_run_id, crawl_timestamp, store_id, canonical_id, product_name, product_category,
        product_url, sale_price, currency, availability, is_active)
      VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, 'EUR', 'in_stock', 1)`,
@@ -134,7 +134,7 @@ test("recommendForList prioritizes coverage over subtotal", async () => {
   );
 
   db.prepare(
-    `INSERT INTO deals
+    `INSERT INTO store_products
       (id, crawl_run_id, crawl_timestamp, store_id, canonical_id, product_name, product_category,
        product_url, sale_price, currency, availability, is_active)
      VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, 'EUR', 'in_stock', 1)`,
@@ -151,7 +151,7 @@ test("recommendForList prioritizes coverage over subtotal", async () => {
   );
 
   db.prepare(
-    `INSERT INTO deals
+    `INSERT INTO store_products
       (id, crawl_run_id, crawl_timestamp, store_id, canonical_id, product_name, product_category,
        product_url, sale_price, currency, availability, is_active)
      VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, 'EUR', 'in_stock', 1)`,
@@ -202,7 +202,7 @@ test("recommendForList token fallback matches noisy item text", async () => {
   ).run("l3", "maggie 5 packet of 500 gm");
 
   db.prepare(
-    `INSERT INTO deals
+    `INSERT INTO store_products
       (id, crawl_run_id, crawl_timestamp, store_id, canonical_id, product_name, product_category,
        product_url, sale_price, currency, availability, is_active)
      VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, 'EUR', 'in_stock', 1)`,
@@ -260,7 +260,7 @@ test("recommendForList exposes transfer payload for each ranked store", async ()
   ).run("l4", "toor dal");
 
   db.prepare(
-    `INSERT INTO deals
+    `INSERT INTO store_products
       (id, crawl_run_id, crawl_timestamp, store_id, canonical_id, product_name, product_category,
        product_url, sale_price, currency, availability, is_active)
      VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, 'EUR', 'in_stock', 1)`,
@@ -276,7 +276,7 @@ test("recommendForList exposes transfer payload for each ranked store", async ()
     2.2,
   );
   db.prepare(
-    `INSERT INTO deals
+    `INSERT INTO store_products
       (id, crawl_run_id, crawl_timestamp, store_id, canonical_id, product_name, product_category,
        product_url, sale_price, currency, availability, is_active)
      VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, 'EUR', 'in_stock', 1)`,
@@ -293,7 +293,7 @@ test("recommendForList exposes transfer payload for each ranked store", async ()
   );
 
   db.prepare(
-    `INSERT INTO deals
+    `INSERT INTO store_products
       (id, crawl_run_id, crawl_timestamp, store_id, canonical_id, product_name, product_category,
        product_url, sale_price, currency, availability, is_active)
      VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, 'EUR', 'in_stock', 1)`,
@@ -309,7 +309,7 @@ test("recommendForList exposes transfer payload for each ranked store", async ()
     2.4,
   );
   db.prepare(
-    `INSERT INTO deals
+    `INSERT INTO store_products
       (id, crawl_run_id, crawl_timestamp, store_id, canonical_id, product_name, product_category,
        product_url, sale_price, currency, availability, is_active)
      VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, 'EUR', 'in_stock', 1)`,
@@ -360,7 +360,7 @@ test("recommendForList rejects match when requested brand differs", async () => 
   ).run("l5", "toor dal", "Annam");
 
   db.prepare(
-    `INSERT INTO deals
+    `INSERT INTO store_products
         (id, crawl_run_id, crawl_timestamp, store_id, canonical_id, product_name, product_category,
          product_url, sale_price, currency, availability, is_active)
        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, 'EUR', 'in_stock', 1)`,
@@ -409,7 +409,7 @@ test("recommendForList rejects lowercase requested brand when matched brand diff
   ).run("l6", "annam toor dal");
 
   db.prepare(
-    `INSERT INTO deals
+    `INSERT INTO store_products
         (id, crawl_run_id, crawl_timestamp, store_id, canonical_id, product_name, product_category,
          product_url, sale_price, currency, availability, is_active)
        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, 'EUR', 'in_stock', 1)`,
@@ -463,7 +463,7 @@ test("recommendForList treats 'brandA or brandB' as exact when either brand is m
   ).run("l7", "everest or mdh garam masala");
 
   db.prepare(
-    `INSERT INTO deals
+    `INSERT INTO store_products
         (id, crawl_run_id, crawl_timestamp, store_id, canonical_id, product_name, product_category,
          product_url, sale_price, currency, availability, is_active)
        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, 'EUR', 'in_stock', 1)`,
@@ -518,7 +518,7 @@ test("recommendForList rejects rice snack and wrong-brand rice for 'annam idly r
   ).run("l9", "annam idly rice");
 
   db.prepare(
-    `INSERT INTO deals
+    `INSERT INTO store_products
         (id, crawl_run_id, crawl_timestamp, store_id, canonical_id, product_name, product_category,
          product_url, sale_price, currency, availability, is_active)
        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, 'EUR', 'in_stock', 1)`,
@@ -535,7 +535,7 @@ test("recommendForList rejects rice snack and wrong-brand rice for 'annam idly r
   );
 
   db.prepare(
-    `INSERT INTO deals
+    `INSERT INTO store_products
         (id, crawl_run_id, crawl_timestamp, store_id, canonical_id, product_name, product_category,
          product_url, sale_price, currency, availability, is_active)
        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, 'EUR', 'in_stock', 1)`,
@@ -587,7 +587,7 @@ test("recommendForList snaps near-250g dal requests to practical 250g/500g packs
   ).run("l8", "toor dal", 252, "g");
 
   db.prepare(
-    `INSERT INTO deals
+    `INSERT INTO store_products
         (id, crawl_run_id, crawl_timestamp, store_id, canonical_id, product_name, product_category,
          product_url, sale_price, currency, availability, is_active, weight_value, weight_unit)
        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, 'EUR', 'in_stock', 1, ?, ?)`,
@@ -605,7 +605,7 @@ test("recommendForList snaps near-250g dal requests to practical 250g/500g packs
     "g",
   );
   db.prepare(
-    `INSERT INTO deals
+    `INSERT INTO store_products
         (id, crawl_run_id, crawl_timestamp, store_id, canonical_id, product_name, product_category,
          product_url, sale_price, currency, availability, is_active, weight_value, weight_unit)
        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, 'EUR', 'in_stock', 1, ?, ?)`,
@@ -624,7 +624,7 @@ test("recommendForList snaps near-250g dal requests to practical 250g/500g packs
   );
 
   db.prepare(
-    `INSERT INTO deals
+    `INSERT INTO store_products
         (id, crawl_run_id, crawl_timestamp, store_id, canonical_id, product_name, product_category,
          product_url, sale_price, currency, availability, is_active, weight_value, weight_unit)
        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, 'EUR', 'in_stock', 1, ?, ?)`,
@@ -642,7 +642,7 @@ test("recommendForList snaps near-250g dal requests to practical 250g/500g packs
     "g",
   );
   db.prepare(
-    `INSERT INTO deals
+    `INSERT INTO store_products
         (id, crawl_run_id, crawl_timestamp, store_id, canonical_id, product_name, product_category,
          product_url, sale_price, currency, availability, is_active, weight_value, weight_unit)
        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, 'EUR', 'in_stock', 1, ?, ?)`,
@@ -709,7 +709,7 @@ test("recommendForList returns partial match diagnostics when no store has full 
   ).run("l9", "toor dal");
 
   db.prepare(
-    `INSERT INTO deals
+    `INSERT INTO store_products
         (id, crawl_run_id, crawl_timestamp, store_id, canonical_id, product_name, product_category,
          product_url, sale_price, currency, availability, is_active)
        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, 'EUR', 'in_stock', 1)`,

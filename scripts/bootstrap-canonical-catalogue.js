@@ -261,7 +261,7 @@ async function step2_populateQueue() {
   // Already-canonicalized product names (deals with canonical_id set)
   const canonicalizedRes = await db.execute(
     `SELECT DISTINCT LOWER(TRIM(product_name)) AS norm
-     FROM deals
+     FROM store_products
      WHERE canonical_id IS NOT NULL AND product_name IS NOT NULL`
   );
   const canonicalizedNorms = new Set(canonicalizedRes.rows.map((r) => r.norm));
@@ -274,7 +274,7 @@ async function step2_populateQueue() {
        COUNT(*) AS deal_count,
        MAX(CASE WHEN is_active = 1 THEN 1 ELSE 0 END) AS has_active,
        MAX(CASE WHEN is_active = 0 THEN 1 ELSE 0 END) AS has_inactive
-     FROM deals
+     FROM store_products
      WHERE product_name IS NOT NULL AND TRIM(product_name) != ''
      GROUP BY LOWER(TRIM(product_name))
      ORDER BY deal_count DESC`
@@ -338,7 +338,7 @@ async function step3_buildGroups(limit = 0) {
        d.weight_raw, d.weight_value, d.weight_unit,
        s.name AS store_name
      FROM bootstrap_product_queue q
-     JOIN deals d
+     JOIN store_products d
        ON LOWER(TRIM(d.product_name)) = q.norm_name
      JOIN stores s ON s.id = d.store_id
      ${limitClause}

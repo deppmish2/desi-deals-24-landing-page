@@ -8,7 +8,7 @@ const fs = require("fs");
 const path = require("path");
 
 const db = require("./db");
-const dealsRouter = require("./routes/deals");
+const storeProductsRouter = require("./routes/store-products");
 const authRouter = require("./routes/auth");
 const adminRouter = require("./routes/admin");
 const adminDashboardRouter = require("./routes/admin-dashboard");
@@ -49,7 +49,7 @@ app.use("/api", async (req, res, next) => {
 });
 
 // ── API Routes ────────────────────────────────────────────────────────────────
-app.use("/api/v1/deals", dealsRouter);
+app.use("/api/v1/store-products", storeProductsRouter);
 app.use("/api/v1/auth", authRouter);
 app.use("/api/auth", authRouter); // compatibility for older frontend builds
 app.use("/api/v1/admin", adminRouter);
@@ -216,7 +216,7 @@ async function getShareableDeal(dealId) {
          d.product_url,
          s.url AS store_url,
          s.name AS store_name
-       FROM deals d
+       FROM store_products d
        JOIN stores s ON s.id = d.store_id
        WHERE d.id = ?
          AND ${DISPLAYABLE_SHARE_DISCOUNT_SQL}
@@ -409,7 +409,7 @@ function sendClientApp(res, options = {}) {
   return res.status(200).json({
     message: "DesiDeals24 API is running.",
     hint: "Build the client with: npm run build:client",
-    api: "/api/v1/deals?curated=daily_live_pool",
+    api: "/api/v1/store-products?curated=daily_live_pool",
   });
 }
 
@@ -477,12 +477,12 @@ app.use((err, req, res, next) => {
 if (require.main === module) {
   app.listen(PORT, () => {
     console.log(`\nDesiDeals24 server running on http://localhost:${PORT}`);
-    console.log(`API: http://localhost:${PORT}/api/v1/deals`);
+    console.log(`API: http://localhost:${PORT}/api/v1/store-products`);
 
     // Pre-warm SQLite page cache so the first real request is fast
     db.ready
       .then(() =>
-        db.prepare("SELECT COUNT(*) FROM deals WHERE is_active = 1").get(),
+        db.prepare("SELECT COUNT(*) FROM store_products WHERE is_active = 1").get(),
       )
       .catch(() => {});
 

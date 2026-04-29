@@ -132,15 +132,15 @@ function persistAuthPayload(json) {
 }
 
 export function fetchDeals(params) {
-  return request("/deals", params);
+  return request("/store-products", params);
 }
 
 export function fetchDealStores(params) {
-  return request("/deals/stores", params);
+  return request("/store-products/stores", params);
 }
 
 export async function fetchDealById(dealId) {
-  const res = await request("/deals", { deal_id: dealId, limit: 1 });
+  const res = await request("/store-products", { deal_id: dealId, limit: 1 });
   return res?.data?.[0] || null;
 }
 
@@ -385,7 +385,7 @@ export function fetchMappedProducts() {
 }
 
 export function fetchReplacements(canonicalId, storeId, dealId) {
-  return request("/deals/replacements", {
+  return request("/store-products/replacements", {
     canonical_id: canonicalId,
     store_id: storeId,
     ...(dealId && { deal_id: dealId }),
@@ -393,7 +393,7 @@ export function fetchReplacements(canonicalId, storeId, dealId) {
 }
 
 export function fetchSameProductOtherStores(canonicalId, storeId) {
-  return request("/deals/same-product-other-stores", {
+  return request("/store-products/same-product-other-stores", {
     canonical_id: canonicalId,
     store_id: storeId,
   });

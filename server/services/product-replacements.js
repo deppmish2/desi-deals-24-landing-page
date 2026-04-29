@@ -7,6 +7,48 @@ const {
 
 const TIER_CAP = 4;
 
+const FAKE_DEAL_THRESHOLD_PP = 7;
+
+// Tokens that distinguish preparation variants of the same base product.
+// Whole mung ≠ split mung ≠ chilka mung — they share a base_key but differ here.
+const VARIANT_TOKENS = new Set([
+  "whole", "sabut",
+  "split",
+  "chilka",
+  "washed", "dhuli",
+  "roasted",
+  "flour",
+]);
+
+// Normalise Hindi/regional synonyms to a single canonical variant label
+// so "sabut" and "whole" compare as equal.
+const VARIANT_NORMALISE = {
+  sabut: "whole",
+  dhuli: "washed",
+};
+
+function getVariantTokens(slotSet) {
+  if (!slotSet) return new Set();
+  const out = new Set();
+  for (const t of slotSet) {
+    if (VARIANT_TOKENS.has(t)) out.add(VARIANT_NORMALISE[t] ?? t);
+  }
+  return out;
+}
+
+// Returns true only when source and candidate agree on variant tokens.
+// Both empty → compatible. Disjoint or one-sided → not compatible.
+function variantTokensMatch(srcSlotSet, candSlotsJson) {
+  if (!candSlotsJson) return true;
+  const candSet = new Set(JSON.parse(candSlotsJson).flat());
+  const srcV = getVariantTokens(srcSlotSet);
+  const candV = getVariantTokens(candSet);
+  if (srcV.size === 0 && candV.size === 0) return true;
+  if (srcV.size !== candV.size) return false;
+  for (const v of srcV) if (!candV.has(v)) return false;
+  return true;
+}
+
 const ACTIVE_DEALS_WITH_CANONICAL_SQL = `
   SELECT d.id, d.canonical_id, d.crawl_timestamp, d.store_id,
          s.name AS store_name, s.url AS store_url,
@@ -18,15 +60,22 @@ const ACTIVE_DEALS_WITH_CANONICAL_SQL = `
          cp.canonical_name AS cp_canonical_name,
          cp.category AS cp_category,
          cp.base_product_slots AS cp_base_product_slots
-  FROM deals d
+  FROM store_products d
   JOIN stores s ON s.id = d.store_id
   JOIN canonical_products cp ON cp.id = d.canonical_id
   WHERE d.store_id = ? AND d.is_active = 1 AND d.canonical_id IS NOT NULL
+    AND (
+      d.original_price IS NULL OR d.original_price = 0 OR d.sale_price IS NULL OR d.discount_percent IS NULL OR
+      ABS(d.discount_percent - ROUND((1.0 - d.sale_price / d.original_price) * 100.0)) <= ${FAKE_DEAL_THRESHOLD_PP}
+    )
 `;
 
-const byDiscountDesc = (a, b) =>
-  (b.discount_percent || 0) - (a.discount_percent || 0) ||
-  (a.sale_price || 0) - (b.sale_price || 0);
+const byValueAsc = (a, b) => {
+  const aUnit = a.price_per_kg ?? Infinity;
+  const bUnit = b.price_per_kg ?? Infinity;
+  if (aUnit !== bUnit) return aUnit - bUnit;
+  return (a.sale_price || 0) - (b.sale_price || 0);
+};
 
 function nameHasBrand(productName, brand) {
   if (!brand || !productName) return false;
@@ -143,10 +192,20 @@ async function getReplacements(db, { canonicalId, storeId, dealId = null }) {
     if (row.canonical_id === canonicalId) continue;
 
     // T2: cross-brand alternative for the same product spec.
-    // Match when base_product_slots token sets are identical (same product, different brand).
+    // Primary: exact base_product_slots set match.
+    // Fallback: catalog base_key equality — handles Hindi/English terminology
+    // differences (e.g. "Mung Sabut Whole" ↔ "TRS Mung Beans" both → "moong dal yellow").
+    const sameBaseProduct =
+      (srcBaseSlots && baseProductSlotsMatch(srcBaseSlots, row.cp_base_product_slots)) ||
+      (srcBaseKey && candBase?.base_key === srcBaseKey && sameCategory &&
+        variantTokensMatch(srcBaseSlots, row.cp_base_product_slots));
+    const isSameBrandT2 = !!srcBrand && (
+      nameHasBrand(row.product_name, srcBrand) ||
+      (candBase?.base_key ? detectBrandForBase(row.cp_canonical_name, candBase.base_key) === srcBrand : false)
+    );
     if (
-      srcBaseSlots &&
-      baseProductSlotsMatch(srcBaseSlots, row.cp_base_product_slots) &&
+      sameBaseProduct &&
+      !isSameBrandT2 &&
       sizeCompatible(srcWeightValue, parseWeight(row.weight_value, row.weight_raw)) &&
       !seen.has(`t2:${cKey}`)
     ) {
@@ -175,16 +234,16 @@ async function getReplacements(db, { canonicalId, storeId, dealId = null }) {
     }
 
     // T4: same category
-    if (sameCategory && sizeCompatible(srcWeightValue, parseWeight(row.weight_value, row.weight_raw)) && !seen.has(`t4:${cKey}`)) {
+    if (sameCategory && !seen.has(`t4:${cKey}`)) {
       t4.push(row);
       seen.add(`t4:${cKey}`);
     }
   }
 
   t1.sort((a, b) => (a.weight_value || 0) - (b.weight_value || 0));
-  t2.sort(byDiscountDesc);
-  t3.sort(byDiscountDesc);
-  t4.sort(byDiscountDesc);
+  t2.sort(byValueAsc);
+  t3.sort(byValueAsc);
+  t4.sort(byValueAsc);
 
   const tiers = [];
   if (t1.length)
@@ -193,10 +252,10 @@ async function getReplacements(db, { canonicalId, storeId, dealId = null }) {
     tiers.push({ type: "same_spec", relevance: 0.85, deals: t2.slice(0, TIER_CAP) });
   if (t3.length)
     tiers.push({ type: "same_brand", relevance: 0.65, deals: t3.slice(0, TIER_CAP) });
-  if (!t1.length && !t2.length && !t3.length && t4.length)
+  if (t4.length)
     tiers.push({ type: "same_category", relevance: 0.4, deals: t4.slice(0, TIER_CAP) });
 
   return { tiers };
 }
 
-module.exports = { getReplacements };
+module.exports = { getReplacements, variantTokensMatch, FAKE_DEAL_THRESHOLD_PP };

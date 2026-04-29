@@ -217,9 +217,9 @@ Each deal row is evaluated and placed into the **first** matching tier, then ski
 | Tier | Label | Relevance | Criteria |
 |---|---|---|---|
 | T1 | `same_pack` | 1.0 | Same brand + **exact `base_product_slots` match** + different weight. Exact slot match prevents variants (e.g. "Split Chilka" vs "Whole") from being treated as size variants. Falls back to `base_key` equality when slots are null. |
-| T2 | `same_spec` | 0.85 | **Cross-brand alternative**: different canonical whose `base_product_slots` token set is identical to source. Populated by `scripts/backfill-base-product-slots.js`. |
+| T2 | `same_spec` | 0.85 | **Cross-brand alternative**: different canonical whose `base_product_slots` token set is identical to source. **Same-brand candidates are excluded** (`isSameBrandT2` guard). Populated by `scripts/backfill-base-product-slots.js`. |
 | T3 | `same_brand` | 0.65 | Same brand + **same product group** — surfaces variants ("Extra Long" ↔ "Original", "Urid Flour" ↔ "Urid Flour Roasted"). Matched via `base_key` equality (catalog brands) or slot-subset check (non-catalog brands: one slot set fully contained in the other). |
-| T4 | `same_category` | 0.4 | Same category only — **only emitted when T1+T2+T3 are all empty**. Displayed collapsed as a CTA pill ("N more from this category"); expands on click. |
+| T4 | `same_category` | 0.4 | Same category only — **always emitted** alongside T1/T2/T3 (not suppressed when higher tiers have results). Displayed collapsed as a CTA pill ("N more from this category"); expands on click. |
 
 Same-canonical deals (identical `canonical_id`) are always skipped — they represent the same product variant and would not be useful replacements.
 
@@ -228,12 +228,31 @@ Same-canonical deals (identical `canonical_id`) are always skipped — they repr
 ### Step 3 — Sort and cap
 
 - T1: weight ascending (smallest pack first)
-- T2, T3, T4: discount % descending, then price ascending
+- T2, T3, T4: `price_per_kg` ascending (`byValueAsc`), fallback `sale_price` ascending — best value first
 - Each tier capped at 4 results
 
 ### `sizeCompatible(src, cand)`
 
 Accepts candidates whose size divides evenly into the source (500g fits inside 1kg; 700g does not). Uses epsilon ratio check — `|round(src/cand) - src/cand| < 0.01` — instead of float modulo to avoid precision errors on decimal weights (oils, spices).
+
+Applied to T1, T2, T3 only. **T4 has no size gate** — larger packs are valid same-category suggestions.
+
+### Fake-deal filter (SQL-level)
+
+Both `/replacements` and `/same-product-other-stores` exclude deals where the advertised `discount_percent` diverges from the arithmetic discount by more than 10 percentage points:
+
+```sql
+AND (
+  d.original_price IS NULL OR d.original_price = 0 OR d.sale_price IS NULL OR d.discount_percent IS NULL OR
+  ABS(d.discount_percent - ROUND((1.0 - d.sale_price / d.original_price) * 100.0)) <= 10
+)
+```
+
+`original_price = 0` rows pass through (avoid division by zero; these deals have no discount claim).
+
+### Fresh produce `base_key` guard
+
+`resolveBaseProduct()` returns `null` for any product name starting with "Fresh " (case-insensitive). This prevents "Fresh Coriander" from matching the "coriander" spice catalog entry and receiving a spice `base_key`. The 23 canonicals already assigned wrong keys were cleared from prod_local.db via `scripts/fix-fresh-produce-base-keys.js`.
 
 Items without a `canonicalId` cannot receive replacements — this is a data quality issue for deals ingested before canonical matching.
 
@@ -244,7 +263,18 @@ Items without a `canonicalId` cannot receive replacements — this is a data qua
 **Display order** (always):
 1. Non-category tiers (T1, T2, T3) — in server-returned order
 2. "Same Product, Other Stores" (admin-only)
-3. "More from this category" (T4) — **always last**, rendered after other stores
+3. "More from this category" (T4) — **always last**, rendered after other stores (shown even when T1–T3 have results)
+
+### Same Product, Other Stores
+
+**Entry point:** `GET /api/v1/deals/same-product-other-stores?canonical_id=X&store_id=Y`  
+**Service:** inline SQL in `server/routes/deals.js`
+
+Uses `canonical_products.base_key + category` to find the same product (e.g. "toor dal") at other stores, regardless of which canonical_id each store uses. Falls back to exact `canonical_id` match when `base_key` is null.
+
+- **Sort:** `price_per_kg ASC NULLS LAST, sale_price ASC` — best value first
+- **Filter:** same arithmetic fake-deal guard as `/replacements`
+- **Grouping:** results grouped by store for display (client-side `storeMap`)
 
 **Kg-saving % badge** on each replacement row:
 - Shows `(sourcePricePerKg - deal.price_per_kg) / sourcePricePerKg * 100` — how much cheaper/pricier vs the source deal

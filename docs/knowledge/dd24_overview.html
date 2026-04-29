@@ -1,0 +1,1337 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>DesiDeals24 — Project Knowledge Hub</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500;600&family=Syne:wght@400;600;700;800&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg: #0a0c0f;
+    --surface: #111318;
+    --surface2: #181c23;
+    --border: #1e2430;
+    --border2: #252d3a;
+    --text: #e2e8f0;
+    --text2: #8b95a7;
+    --text3: #556070;
+
+    --green: #22c55e;
+    --green-dim: #16a34a;
+    --green-bg: rgba(34,197,94,0.08);
+    --green-border: rgba(34,197,94,0.2);
+
+    --blue: #3b82f6;
+    --blue-dim: #2563eb;
+    --blue-bg: rgba(59,130,246,0.08);
+    --blue-border: rgba(59,130,246,0.2);
+
+    --amber: #f59e0b;
+    --amber-dim: #d97706;
+    --amber-bg: rgba(245,158,11,0.08);
+    --amber-border: rgba(245,158,11,0.2);
+
+    --purple: #a855f7;
+    --purple-dim: #9333ea;
+    --purple-bg: rgba(168,85,247,0.08);
+    --purple-border: rgba(168,85,247,0.2);
+
+    --red: #ef4444;
+    --red-bg: rgba(239,68,68,0.08);
+    --red-border: rgba(239,68,68,0.2);
+
+    --slate: #64748b;
+    --slate-bg: rgba(100,116,139,0.08);
+    --slate-border: rgba(100,116,139,0.2);
+
+    --sidebar-w: 240px;
+    --header-h: 52px;
+    --mono: 'IBM Plex Mono', monospace;
+    --sans: 'Syne', sans-serif;
+  }
+
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+  html { scroll-behavior: smooth; }
+
+  body {
+    background: var(--bg);
+    color: var(--text);
+    font-family: var(--mono);
+    font-size: 13px;
+    line-height: 1.6;
+    min-height: 100vh;
+    background-image:
+      linear-gradient(rgba(34,197,94,0.025) 1px, transparent 1px),
+      linear-gradient(90deg, rgba(34,197,94,0.025) 1px, transparent 1px);
+    background-size: 32px 32px;
+  }
+
+  /* ── Header ── */
+  header {
+    position: fixed;
+    top: 0; left: 0; right: 0;
+    height: var(--header-h);
+    background: rgba(10,12,15,0.92);
+    backdrop-filter: blur(12px);
+    border-bottom: 1px solid var(--border);
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 0 20px;
+    z-index: 100;
+  }
+
+  .logo {
+    font-family: var(--sans);
+    font-weight: 800;
+    font-size: 16px;
+    color: var(--green);
+    letter-spacing: -0.3px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+  .logo span { color: var(--text2); font-weight: 400; font-size: 12px; }
+
+  .header-actions { display: flex; align-items: center; gap: 10px; }
+
+  .pill-btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    padding: 5px 12px;
+    border-radius: 20px;
+    font-family: var(--mono);
+    font-size: 11px;
+    font-weight: 500;
+    text-decoration: none;
+    border: 1px solid var(--green-border);
+    background: var(--green-bg);
+    color: var(--green);
+    transition: background 0.15s, border-color 0.15s;
+    cursor: pointer;
+  }
+  .pill-btn:hover { background: rgba(34,197,94,0.15); border-color: rgba(34,197,94,0.4); }
+
+  /* ── Layout ── */
+  .layout {
+    display: flex;
+    padding-top: var(--header-h);
+    min-height: 100vh;
+  }
+
+  /* ── Sidebar ── */
+  aside {
+    position: fixed;
+    top: var(--header-h);
+    left: 0;
+    width: var(--sidebar-w);
+    height: calc(100vh - var(--header-h));
+    background: var(--surface);
+    border-right: 1px solid var(--border);
+    overflow-y: auto;
+    padding: 16px 0;
+    z-index: 90;
+  }
+
+  aside::-webkit-scrollbar { width: 4px; }
+  aside::-webkit-scrollbar-track { background: transparent; }
+  aside::-webkit-scrollbar-thumb { background: var(--border2); border-radius: 2px; }
+
+  .nav-section {
+    padding: 0 8px 8px;
+  }
+  .nav-section + .nav-section { border-top: 1px solid var(--border); padding-top: 12px; margin-top: 4px; }
+
+  .nav-label {
+    font-family: var(--sans);
+    font-size: 9px;
+    font-weight: 700;
+    letter-spacing: 1px;
+    text-transform: uppercase;
+    color: var(--text3);
+    padding: 4px 8px 6px;
+  }
+
+  .nav-btn {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    width: 100%;
+    padding: 7px 8px;
+    background: none;
+    border: none;
+    border-left: 2px solid transparent;
+    color: var(--text2);
+    font-family: var(--mono);
+    font-size: 11.5px;
+    text-align: left;
+    cursor: pointer;
+    border-radius: 0 4px 4px 0;
+    transition: color 0.12s, background 0.12s, border-color 0.12s;
+  }
+  .nav-btn:hover { color: var(--text); background: var(--surface2); }
+  .nav-btn.active {
+    color: var(--green);
+    border-left-color: var(--green);
+    background: var(--green-bg);
+  }
+  .nav-btn .dot {
+    width: 6px; height: 6px;
+    border-radius: 50%;
+    flex-shrink: 0;
+    background: currentColor;
+    opacity: 0.5;
+  }
+
+  /* ── Main ── */
+  main {
+    margin-left: var(--sidebar-w);
+    flex: 1;
+    padding: 32px 40px;
+    max-width: 960px;
+  }
+
+  .view { display: none; }
+  .view.active { display: block; }
+
+  /* ── Section header ── */
+  .section-header { margin-bottom: 24px; }
+  .section-title {
+    font-family: var(--sans);
+    font-weight: 700;
+    font-size: 22px;
+    color: var(--text);
+    margin-bottom: 4px;
+  }
+  .section-sub { color: var(--text2); font-size: 12px; }
+
+  /* ── Cards ── */
+  .card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 20px;
+    margin-bottom: 20px;
+  }
+  .card-title {
+    font-family: var(--sans);
+    font-weight: 600;
+    font-size: 13px;
+    margin-bottom: 12px;
+    color: var(--text);
+  }
+
+  .card.green  { border-color: var(--green-border);  background: var(--green-bg);  }
+  .card.amber  { border-color: var(--amber-border);  background: var(--amber-bg);  }
+  .card.blue   { border-color: var(--blue-border);   background: var(--blue-bg);   }
+  .card.purple { border-color: var(--purple-border); background: var(--purple-bg); }
+
+  /* ── Badges ── */
+  .badge {
+    display: inline-flex;
+    align-items: center;
+    padding: 2px 8px;
+    border-radius: 10px;
+    font-size: 10px;
+    font-weight: 600;
+    letter-spacing: 0.3px;
+    text-transform: uppercase;
+  }
+  .badge-green  { background: var(--green-bg);  color: var(--green);  border: 1px solid var(--green-border);  }
+  .badge-blue   { background: var(--blue-bg);   color: var(--blue);   border: 1px solid var(--blue-border);   }
+  .badge-amber  { background: var(--amber-bg);  color: var(--amber);  border: 1px solid var(--amber-border);  }
+  .badge-red    { background: var(--red-bg);    color: var(--red);    border: 1px solid var(--red-border);    }
+  .badge-purple { background: var(--purple-bg); color: var(--purple); border: 1px solid var(--purple-border); }
+  .badge-slate  { background: var(--slate-bg);  color: var(--slate);  border: 1px solid var(--slate-border);  }
+
+  /* ── Tables ── */
+  .data-table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 12px;
+  }
+  .data-table th {
+    text-align: left;
+    padding: 8px 12px;
+    border-bottom: 1px solid var(--border2);
+    color: var(--text3);
+    font-size: 10px;
+    font-weight: 600;
+    letter-spacing: 0.5px;
+    text-transform: uppercase;
+    background: var(--surface2);
+  }
+  .data-table td {
+    padding: 9px 12px;
+    border-bottom: 1px solid var(--border);
+    color: var(--text2);
+    vertical-align: top;
+  }
+  .data-table tr:last-child td { border-bottom: none; }
+  .data-table tr:hover td { background: var(--surface2); }
+  .data-table td:first-child { color: var(--text); }
+
+  /* ── Code block ── */
+  .code-block {
+    background: var(--surface2);
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    padding: 14px 16px;
+    font-family: var(--mono);
+    font-size: 11.5px;
+    line-height: 1.7;
+    overflow-x: auto;
+    margin: 12px 0;
+  }
+  .code-block .kw  { color: #7dd3fc; }
+  .code-block .fn  { color: var(--green); }
+  .code-block .cm  { color: var(--text3); font-style: italic; }
+  .code-block .str { color: #fde68a; }
+  .code-block .num { color: #f9a8d4; }
+
+  /* ── Canvas container ── */
+  .canvas-wrap {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 16px;
+    margin-bottom: 20px;
+    position: relative;
+  }
+  #arch-canvas { display: block; width: 100%; cursor: default; }
+
+  #canvas-tooltip {
+    position: absolute;
+    background: var(--surface2);
+    border: 1px solid var(--border2);
+    border-radius: 6px;
+    padding: 8px 12px;
+    font-size: 11px;
+    pointer-events: none;
+    display: none;
+    z-index: 10;
+    max-width: 200px;
+    color: var(--text);
+  }
+  #canvas-tooltip .tip-name { font-weight: 600; color: var(--green); margin-bottom: 2px; }
+  #canvas-tooltip .tip-sub  { color: var(--text2); font-size: 10px; }
+
+  /* ── Feature boxes ── */
+  .feature-row { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; margin-top: 16px; }
+  .feature-box {
+    border-radius: 8px;
+    padding: 16px;
+    border: 1px solid;
+  }
+  .feature-box.green { border-color: var(--green-border); background: var(--green-bg); }
+  .feature-box.amber { border-color: var(--amber-border); background: var(--amber-bg); }
+  .feature-box h4 {
+    font-family: var(--sans);
+    font-size: 13px;
+    font-weight: 700;
+    margin-bottom: 6px;
+  }
+  .feature-box.green h4 { color: var(--green); }
+  .feature-box.amber h4 { color: var(--amber); }
+  .feature-box p { color: var(--text2); font-size: 11.5px; }
+
+  /* ── Flow diagram (bootstrap pipeline) ── */
+  .flow-diagram {
+    background: var(--surface2);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 16px 20px;
+    font-size: 12px;
+    color: var(--text2);
+    margin: 12px 0;
+    line-height: 2;
+    white-space: pre-wrap;
+    font-family: var(--mono);
+  }
+
+  /* ── Divider ── */
+  .divider { border: none; border-top: 1px solid var(--border); margin: 24px 0; }
+
+  /* ── Explorer link card ── */
+  .explorer-card {
+    background: var(--surface);
+    border: 1px solid var(--green-border);
+    border-radius: 8px;
+    padding: 20px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 20px;
+    text-decoration: none;
+  }
+  .explorer-card:hover { background: var(--green-bg); }
+  .explorer-card .ec-left h3 { font-family: var(--sans); font-size: 14px; font-weight: 700; color: var(--green); margin-bottom: 4px; }
+  .explorer-card .ec-left p  { font-size: 11.5px; color: var(--text2); }
+  .explorer-card .ec-arrow    { color: var(--green); font-size: 20px; }
+
+  /* ── Tier row colors ── */
+  tr.tier-t1 td:first-child { color: var(--green); }
+  tr.tier-t2 td:first-child { color: var(--blue); }
+  tr.tier-t3 td:first-child { color: var(--amber); }
+  tr.tier-t4 td:first-child { color: var(--slate); }
+
+  /* ── responsive ── */
+  @media (max-width: 800px) {
+    :root { --sidebar-w: 0px; }
+    aside { display: none; }
+    main { margin-left: 0; padding: 20px 16px; }
+    .feature-row { grid-template-columns: 1fr; }
+  }
+</style>
+</head>
+<body>
+
+<!-- ── Header ── -->
+<header>
+  <div class="logo">
+    DesiDeals24
+    <span>/ Project Knowledge Hub</span>
+  </div>
+  <div class="header-actions">
+    <a class="pill-btn" href="dd24_db_explorer.html">DB Explorer →</a>
+  </div>
+</header>
+
+<!-- ── Layout ── -->
+<div class="layout">
+
+  <!-- ── Sidebar ── -->
+  <aside>
+    <div class="nav-section">
+      <div class="nav-label">Overview</div>
+      <button class="nav-btn active" onclick="show('view-system-map',this)"><span class="dot"></span>System Map</button>
+    </div>
+
+    <div class="nav-section">
+      <div class="nav-label">Crawl Pipeline</div>
+      <button class="nav-btn" onclick="show('view-trigger',this)"><span class="dot"></span>Trigger</button>
+      <button class="nav-btn" onclick="show('view-scrape',this)"><span class="dot"></span>Scrape</button>
+      <button class="nav-btn" onclick="show('view-reconcile',this)"><span class="dot"></span>Reconcile</button>
+      <button class="nav-btn" onclick="show('view-history',this)"><span class="dot"></span>Price History</button>
+      <button class="nav-btn" onclick="show('view-automap',this)"><span class="dot"></span>Auto-mapper</button>
+      <button class="nav-btn" onclick="show('view-canonicalize',this)"><span class="dot"></span>Canonicalize</button>
+    </div>
+
+    <div class="nav-section">
+      <div class="nav-label">Canonical System</div>
+      <button class="nav-btn" onclick="show('view-canonicals',this)"><span class="dot"></span>What is a canonical</button>
+      <button class="nav-btn" onclick="show('view-canonicals',this)"><span class="dot"></span>Slot fields</button>
+      <button class="nav-btn" onclick="show('view-canonicals',this)"><span class="dot"></span>Creation routes</button>
+    </div>
+
+    <div class="nav-section">
+      <div class="nav-label">Features</div>
+      <button class="nav-btn" onclick="show('view-real-savings',this)"><span class="dot"></span>Real Savings</button>
+      <button class="nav-btn" onclick="show('view-replacements',this)"><span class="dot"></span>Product Replacements</button>
+    </div>
+
+    <div class="nav-section">
+      <div class="nav-label">Reference</div>
+      <button class="nav-btn" onclick="show('view-source-files',this)"><span class="dot"></span>Source Files</button>
+    </div>
+  </aside>
+
+  <!-- ── Main ── -->
+  <main>
+
+    <!-- ═══════════════════════════════════════ SYSTEM MAP ═══ -->
+    <div id="view-system-map" class="view active">
+      <div class="section-header">
+        <div class="section-title">System Map</div>
+        <div class="section-sub">End-to-end architecture — from store crawl to deal card. Click any node to jump to that section.</div>
+      </div>
+
+      <div class="canvas-wrap">
+        <canvas id="arch-canvas" width="800" height="290"></canvas>
+        <div id="canvas-tooltip">
+          <div class="tip-name" id="tip-name"></div>
+          <div class="tip-sub"  id="tip-sub"></div>
+        </div>
+      </div>
+
+      <div class="feature-row">
+        <div class="feature-box green">
+          <h4>Real Savings</h4>
+          <p>Canonical price_per_kg × 90-day deal_price_history → verified savings badge. Requires ≥3 observations across ≥2 stores.</p>
+        </div>
+        <div class="feature-box amber">
+          <h4>Product Replacements</h4>
+          <p>Slot fields + product_group_id → T1/T2/T3/T4 alternatives. Same canonical-linked deals always skipped.</p>
+        </div>
+      </div>
+    </div>
+
+    <!-- ═══════════════════════════════════════ TRIGGER ═══ -->
+    <div id="view-trigger" class="view">
+      <div class="section-header">
+        <div class="section-title">What Triggers a Crawl</div>
+        <div class="section-sub">Three paths into the crawl pipeline — cron, startup flag, and manual admin call.</div>
+      </div>
+      <div class="card">
+        <table class="data-table">
+          <thead><tr><th>Trigger</th><th>When</th></tr></thead>
+          <tbody>
+            <tr><td>Daily cron</td><td>08:00 Europe/Berlin — <code>0 8 * * *</code> via node-cron</td></tr>
+            <tr><td>Startup flag</td><td><code>CRAWL_ON_STARTUP=true</code> env var; fires 2s after server boot</td></tr>
+            <tr><td>Manual</td><td>Admin HTTP call (Bearer token required)</td></tr>
+          </tbody>
+        </table>
+      </div>
+      <div class="card blue">
+        <div class="card-title">crawler/scheduler.js</div>
+        <p style="color:var(--text2);font-size:12px;">Owns all three trigger paths. Cron expression and timezone are both configured here. The startup path uses <code>setTimeout(runCrawl, 2000)</code> to let the server fully bind before crawling begins.</p>
+      </div>
+    </div>
+
+    <!-- ═══════════════════════════════════════ SCRAPE ═══ -->
+    <div id="view-scrape" class="view">
+      <div class="section-header">
+        <div class="section-title">Scraping — adapter.scrape()</div>
+        <div class="section-sub">Each store adapter exports a standard interface. The crawler calls <code>scrape()</code> and normalises the output.</div>
+      </div>
+
+      <div class="card">
+        <div class="card-title">Adapter types</div>
+        <table class="data-table">
+          <thead><tr><th>Type</th><th>Stores</th><th>Method</th></tr></thead>
+          <tbody>
+            <tr>
+              <td><span class="badge badge-blue">Shopify JSON</span></td>
+              <td>jamoona, dookan, namma-markt</td>
+              <td><code>/collections/{handle}/products.json?limit=250</code> — paginated JSON, no HTML parsing needed</td>
+            </tr>
+            <tr>
+              <td><span class="badge badge-amber">WooCommerce HTML</span></td>
+              <td>little-india</td>
+              <td>Cheerio HTML scrape with pagination <code>/page/N/</code>; parses product cards from DOM</td>
+            </tr>
+            <tr>
+              <td><span class="badge badge-slate">HTMX + Cheerio</span></td>
+              <td>grocera</td>
+              <td>Multi-selector fallback; lazy-loaded JS limits yield to ~1–3 deals (known limitation)</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+
+      <div class="card">
+        <div class="card-title">Normalised deal object (scrape() output)</div>
+        <div class="code-block"><span class="cm">// Each scrape() must return an array of objects with this shape</span>
+{
+  <span class="str">productUrl</span>:       <span class="str">"https://..."</span>,       <span class="cm">// dedup key per crawl run</span>
+  <span class="str">name</span>:             <span class="str">"Heera Basmati Rice 5kg"</span>,
+  <span class="str">salePrice</span>:        <span class="num">7.99</span>,               <span class="cm">// always a Number</span>
+  <span class="str">originalPrice</span>:    <span class="num">9.99</span>,               <span class="cm">// null if not on sale</span>
+  <span class="str">discountPercent</span>: <span class="num">20</span>,                 <span class="cm">// null if not available</span>
+  <span class="str">imageUrl</span>:         <span class="str">"https://..."</span>,
+  <span class="str">category</span>:         <span class="str">"Rice &amp; Grains"</span>,     <span class="cm">// from category-mapper.js</span>
+  <span class="str">weightValue</span>:      <span class="num">5000</span>,               <span class="cm">// grams, parsed by weight parser</span>
+  <span class="str">weightUnit</span>:       <span class="str">"g"</span>,
+  <span class="str">pricePerKg</span>:       <span class="num">1.598</span>,              <span class="cm">// computed; null for non-weight items</span>
+  <span class="str">pricePerL</span>:        <span class="kw">null</span>,               <span class="cm">// for liquids (oil, beverages)</span>
+  <span class="str">inStock</span>:          <span class="kw">true</span>
+}</div>
+      </div>
+
+      <div class="card">
+        <div class="card-title">Price parser note</div>
+        <p style="color:var(--text2);font-size:12px;">Handles both <code>3.29</code> (Shopify) and <code>3,29</code> (WooCommerce/EU locale). Do not simplify — both formats are in production.</p>
+      </div>
+
+      <div class="card">
+        <div class="card-title">Weight parser — multi-pack patterns (fixed 2026-04-20)</div>
+        <p style="color:var(--text2);font-size:12px;margin-bottom:8px;"><code>crawler/utils/weight-parser.js</code> handles three multi-pack forms:</p>
+        <table class="data-table">
+          <thead><tr><th>Pattern</th><th>Example title</th><th>weight_value</th></tr></thead>
+          <tbody>
+            <tr><td><code>N x Munit</code></td><td>Bundle of 2 x 5kg</td><td>10kg (N × M)</td></tr>
+            <tr><td><code>(N Pack)</code></td><td>Maggi 290g (2 Pack)</td><td>580g (unit × N)</td></tr>
+            <tr><td><code>Pack of N</code></td><td>Pears 375g Pack of 3</td><td>1125g (unit × N)</td></tr>
+          </tbody>
+        </table>
+        <p style="color:var(--text2);font-size:12px;margin-top:8px;">The <code>isMultiPack</code> flag on the <code>N x Munit</code> pattern prevents double-multiplication when a title contains both forms. <code>weight_raw</code> stores the matched string (e.g. <code>2 x 290g</code>) for display; <code>weight_value</code> stores the total.</p>
+      </div>
+    </div>
+
+    <!-- ═══════════════════════════════════════ RECONCILE ═══ -->
+    <div id="view-reconcile" class="view">
+      <div class="section-header">
+        <div class="section-title">Reconciling Deals (deals table)</div>
+        <div class="section-sub"><code>reconcileStoreDeals()</code> compares incoming scraped URLs against existing rows in the <code>deals</code> table.</div>
+      </div>
+
+      <div class="card">
+        <table class="data-table">
+          <thead><tr><th>Situation</th><th>Action</th><th>Notes</th></tr></thead>
+          <tbody>
+            <tr>
+              <td><span class="badge badge-green">New URL</span></td>
+              <td>INSERT new row, <code>is_active=1</code></td>
+              <td>Fresh deal seen for the first time</td>
+            </tr>
+            <tr>
+              <td><span class="badge badge-amber">Price changed</span></td>
+              <td>UPDATE price fields, keep <code>is_active=1</code></td>
+              <td>URL matched but sale_price or discount differs</td>
+            </tr>
+            <tr>
+              <td><span class="badge badge-slate">Same price</span></td>
+              <td>Touch <code>updated_at</code>, keep <code>is_active=1</code></td>
+              <td>No data change; only timestamp refreshed</td>
+            </tr>
+            <tr>
+              <td><span class="badge badge-red">Removed</span></td>
+              <td>SET <code>is_active=0</code></td>
+              <td>URL not returned by scraper this run</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+
+      <div class="card amber">
+        <div class="card-title">Soft-delete pattern</div>
+        <p style="color:var(--text2);font-size:12px;">Deals are <strong>never hard-deleted</strong>. <code>is_active=0</code> is the soft-delete pattern. Historical price data and canonical mappings are preserved. A deal that reappears simply gets <code>is_active=1</code> again on the next crawl.</p>
+      </div>
+
+      <div class="card">
+        <div class="card-title">Deduplication key</div>
+        <p style="color:var(--text2);font-size:12px;"><code>deals.product_url</code> is the dedup key scoped per store. Two different stores can have the same product URL without conflict because each adapter belongs to exactly one <code>store_id</code>.</p>
+      </div>
+    </div>
+
+    <!-- ═══════════════════════════════════════ HISTORY ═══ -->
+    <div id="view-history" class="view">
+      <div class="section-header">
+        <div class="section-title">Daily Price Snapshots (deal_price_history)</div>
+        <div class="section-sub">Provides the 90-day historical baseline required by the Real Savings engine.</div>
+      </div>
+
+      <div class="card">
+        <div class="card-title">Why this table exists</div>
+        <p style="color:var(--text2);font-size:12px;">The <code>deals</code> table only keeps the <em>current</em> price. To compute whether today's price is genuinely low, Real Savings needs a reference baseline — the median normal price over the past 90 days. <code>deal_price_history</code> stores one row per deal per crawl day, giving that time series.</p>
+      </div>
+
+      <div class="card">
+        <div class="card-title">Write pattern — delete-then-insert</div>
+        <p style="color:var(--text2);font-size:12px;margin-bottom:10px;">Each crawl run calls <code>recordStoreHistory(storeId)</code>. It deletes today's existing rows for that store, then re-inserts fresh rows from current active deals. This ensures idempotency — rerunning a crawl on the same day produces exactly one row per deal, not duplicates.</p>
+      </div>
+
+      <div class="card">
+        <div class="card-title"><code>is_deal</code> flag</div>
+        <p style="color:var(--text2);font-size:12px;margin-bottom:10px;"><code>is_deal=1</code> — the product was on sale during this snapshot (has a discount).<br><code>is_deal=0</code> — inserted in Pass 1 (post-crawl) for priority products at their normal price, using <code>INSERT OR IGNORE</code> to preserve any <code>is_deal=1</code> record if it already exists that day.<br><br>This two-pass approach captures both "on sale" and "not on sale" price points, enabling a clean normal-price baseline even for products that are sometimes discounted.</p>
+      </div>
+
+      <div class="card">
+        <div class="card-title">Baseline SQL (Real Savings)</div>
+        <div class="code-block"><span class="kw">SELECT</span>
+  dm.canonical_id,
+  <span class="fn">MEDIAN</span>(dph.price_per_kg)  <span class="kw">AS</span> baseline_price_per_kg,
+  <span class="fn">COUNT</span>(*)                  <span class="kw">AS</span> observation_count
+<span class="kw">FROM</span> deal_price_history dph
+<span class="kw">JOIN</span> deals d              <span class="kw">ON</span> dph.deal_id = d.id
+<span class="kw">JOIN</span> deal_mappings dm     <span class="kw">ON</span> d.id = dm.deal_id
+<span class="kw">WHERE</span>
+  dph.snapshot_date &gt;= <span class="fn">DATE</span>(<span class="str">'now'</span>, <span class="str">'-90 days'</span>)
+  <span class="kw">AND</span> dph.is_deal = <span class="num">0</span>            <span class="cm">-- normal-price days only</span>
+  <span class="kw">AND</span> dph.price_per_kg <span class="kw">IS NOT NULL</span>
+<span class="kw">GROUP BY</span> dm.canonical_id
+<span class="kw">HAVING</span> <span class="fn">COUNT</span>(*) &gt;= <span class="num">3</span>           <span class="cm">-- minimum 3 observations required</span></div>
+      </div>
+    </div>
+
+    <!-- ═══════════════════════════════════════ AUTO-MAPPER ═══ -->
+    <div id="view-automap" class="view">
+      <div class="section-header">
+        <div class="section-title">Pass A — Slot-based Auto-mapping</div>
+        <div class="section-sub">Fast, high-precision matching using pre-compiled slot regex patterns from canonical_products.</div>
+      </div>
+
+      <div class="card">
+        <div class="card-title">How it works</div>
+        <table class="data-table">
+          <thead><tr><th>Function</th><th>Role</th></tr></thead>
+          <tbody>
+            <tr>
+              <td><code>loadPriorityCanonicals()</code></td>
+              <td>Loads all canonicals WHERE <code>is_match_priority=1</code> AND <code>brand_slots IS NOT NULL</code>. Pre-compiles slot regex patterns once per crawl run — not per deal.</td>
+            </tr>
+            <tr>
+              <td><code>matchesCanonical(deal, canon)</code></td>
+              <td>Checks: all brand_slots patterns match the normalised name AND all base_product_slots patterns match AND weight is within ±10%. Returns true only if ALL conditions pass.</td>
+            </tr>
+            <tr>
+              <td><code>autoMapDeals(storeDeals)</code></td>
+              <td>For each unmatched deal, iterates priority canonicals, calls matchesCanonical. On match: writes <code>deal_mappings</code> row with <code>match_method='slot_match'</code>, <code>confidence=0.85</code>.</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+
+      <div class="card">
+        <div class="card-title">Concrete example</div>
+        <div class="code-block"><span class="cm">// canonical_products row</span>
+canonical_name:      <span class="str">"Heera Soan Papdi 500g"</span>
+brand_slots:         <span class="str">[["heera"]]</span>
+base_product_slots:  <span class="str">[["soan"],["papdi"]]</span>
+weight_value:        <span class="num">500</span>  <span class="cm">// grams</span>
+is_match_priority:   <span class="num">1</span>
+
+<span class="cm">// incoming deal</span>
+name: <span class="str">"HEERA SOAN PAPDI 500GMS"</span>
+<span class="cm">// normalised → "heera soan papdi 500g"</span>
+
+<span class="cm">// matchesCanonical checks:</span>
+<span class="cm">// ✓ "heera" matches brand_slots[0]</span>
+<span class="cm">// ✓ "soan" matches base_product_slots[0]</span>
+<span class="cm">// ✓ "papdi" matches base_product_slots[1]</span>
+<span class="cm">// ✓ 500g weight within ±10% of canonical 500g</span>
+<span class="cm">// → MAPPED with confidence=0.85</span></div>
+      </div>
+
+      <div class="card amber">
+        <div class="card-title">Important: canonical_id sync</div>
+        <p style="color:var(--text2);font-size:12px;"><code>autoMapDeals()</code> writes <code>deal_mappings</code> rows but does <strong>NOT</strong> update <code>deals.canonical_id</code>. That sync only happens when <code>upsertDealMapping()</code> is called from the canonicalizer in Pass B. A slot-matched deal gets its <code>deals.canonical_id</code> set during Phase 4 of the same crawl run.</p>
+      </div>
+    </div>
+
+    <!-- ═══════════════════════════════════════ CANONICALIZE ═══ -->
+    <div id="view-canonicalize" class="view">
+      <div class="section-header">
+        <div class="section-title">Pass B — Fuzzy Canonicalization</div>
+        <div class="section-sub">Runs after all stores are scraped. Processes all unmapped active deals via <code>canonicalizeDeals(unmappedOnly=true)</code>.</div>
+      </div>
+
+      <div class="card">
+        <div class="card-title">Three-outcome decision tree</div>
+        <div class="flow-diagram">  normalise(deal.name)
+         │
+         ├─ exact match in canonical_products?
+         │    └─ YES → map, confidence=1.0, done
+         │
+         ├─ fuzzy match ≥ 0.90?
+         │    └─ YES → auto-map, write deal_mappings,
+         │             update deals.canonical_id, done
+         │
+         └─ NO match / confidence &lt; 0.90
+              └─ INSERT into entity_resolution_queue
+                 (status='pending', for admin review)</div>
+      </div>
+
+      <div class="card">
+        <div class="card-title">Normalisation</div>
+        <p style="color:var(--text2);font-size:12px;margin-bottom:10px;"><code>normaliser.js</code> lower-cases, removes punctuation, expands common abbreviations (e.g. <code>gms</code> → <code>g</code>, <code>kgs</code> → <code>kg</code>), strips stop words, and strips weight tokens before fuzzy string comparison. Canonicals are also normalised the same way before comparison, so the comparison is always normalised↔normalised.</p>
+      </div>
+
+      <div class="card">
+        <div class="card-title">The 0.90 threshold</div>
+        <p style="color:var(--text2);font-size:12px;">Below 0.90 the match is considered ambiguous. A suggested canonical is still recorded alongside the raw/normalised name in <code>entity_resolution_queue</code> so an admin can confirm or reject without looking the product up from scratch.</p>
+      </div>
+
+      <div class="card">
+        <div class="card-title"><code>entity_resolution_queue</code> schema</div>
+        <table class="data-table">
+          <thead><tr><th>Column</th><th>Type</th><th>Purpose</th></tr></thead>
+          <tbody>
+            <tr><td>id</td><td>INTEGER PK</td><td>Auto-increment</td></tr>
+            <tr><td>deal_id</td><td>INTEGER</td><td>FK → deals.id</td></tr>
+            <tr><td>suggested_canonical_id</td><td>TEXT</td><td>Best fuzzy match candidate</td></tr>
+            <tr><td>confidence</td><td>REAL</td><td>0.0–1.0 fuzzy score</td></tr>
+            <tr><td>raw_name</td><td>TEXT</td><td>Original scraped name</td></tr>
+            <tr><td>normalised_name</td><td>TEXT</td><td>Post-normalisation string</td></tr>
+            <tr><td>status</td><td>TEXT</td><td>'pending' / 'approved' / 'rejected'</td></tr>
+            <tr><td>created_at</td><td>DATETIME</td><td>Auto timestamp</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+    <!-- ═══════════════════════════════════════ CANONICALS ═══ -->
+    <div id="view-canonicals" class="view">
+      <div class="section-header">
+        <div class="section-title">canonical_products — The Entity Resolution Hub</div>
+        <div class="section-sub">A store-agnostic product identity. One canonical = one real-world product regardless of which store sells it or how they name it.</div>
+      </div>
+
+      <div class="card">
+        <div class="card-title">What is a canonical?</div>
+        <p style="color:var(--text2);font-size:12px;margin-bottom:10px;">A canonical product is a normalised product identity that multiple store deals can be linked to via <code>deal_mappings</code>. It answers: "Is the Heera Basmati 5kg at Jamoona the same product as HEERA BASMATI RICE 5KG at Dookan?" — yes, one canonical, two deals.</p>
+        <p style="color:var(--text2);font-size:12px;">Currently ~300+ canonical identities in the database.</p>
+      </div>
+
+      <div class="card">
+        <div class="card-title">Key fields</div>
+        <table class="data-table">
+          <thead><tr><th>Field</th><th>Type</th><th>Purpose</th></tr></thead>
+          <tbody>
+            <tr><td>id</td><td>TEXT PK</td><td>Slug-style ID e.g. <code>heera-basmati-5kg</code></td></tr>
+            <tr><td>canonical_name</td><td>TEXT</td><td>Human-readable reference name</td></tr>
+            <tr><td>brand_slots</td><td>JSON</td><td>Nested array of token patterns for brand matching: <code>[["heera"]]</code></td></tr>
+            <tr><td>base_product_slots</td><td>JSON</td><td>Core product tokens: <code>[["basmati"],["rice"]]</code></td></tr>
+            <tr><td>type_slots</td><td>JSON</td><td>Variant qualifier tokens (e.g. <code>[["chakki"]]</code> for chakki atta)</td></tr>
+            <tr><td>product_group_id</td><td>TEXT</td><td>Groups related products (e.g. all Heera Atta variants)</td></tr>
+            <tr><td>weight_value / weight_unit</td><td>REAL / TEXT</td><td>Canonical weight in grams/kg for size matching</td></tr>
+          </tbody>
+        </table>
+      </div>
+
+      <div class="card">
+        <div class="card-title">Two match-control flags</div>
+        <table class="data-table">
+          <thead><tr><th>Flag</th><th>Meaning</th></tr></thead>
+          <tbody>
+            <tr><td><code>is_match_priority</code></td><td>Loaded into auto-mapper (Pass A). Must also have <code>brand_slots IS NOT NULL</code> to qualify.</td></tr>
+            <tr><td><code>verified</code></td><td>Admin has confirmed this canonical identity is correct. Affects display trust signals.</td></tr>
+          </tbody>
+        </table>
+      </div>
+
+      <div class="card">
+        <div class="card-title">Three creation routes</div>
+        <table class="data-table">
+          <thead><tr><th>Route</th><th>How</th></tr></thead>
+          <tbody>
+            <tr>
+              <td><span class="badge badge-green">Auto</span></td>
+              <td>Pass B canonicalizer calls <code>resolveQueryToCanonicalId()</code>. If confidence ≥ 0.90 and no existing match → INSERT new canonical, then map the deal.</td>
+            </tr>
+            <tr>
+              <td><span class="badge badge-amber">Bootstrap pipeline</span></td>
+              <td>Offline batch process — source products → staging table → admin review → canonical. Used to bulk-create canonicals from historical deal data.</td>
+            </tr>
+            <tr>
+              <td><span class="badge badge-blue">Admin UI</span></td>
+              <td>Admin creates/edits canonicals directly via the admin dashboard; also approves entity_resolution_queue entries.</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+
+      <div class="card">
+        <div class="card-title">Bootstrap pipeline flow</div>
+        <div class="flow-diagram">  bootstrap_product_queue
+         │
+         │  (batch scoring + dedup)
+         ▼
+  canonical_bootstrap_staging ◄── canonical_bootstrap_source_products
+         │
+         │  (admin review: approve / reject / merge)
+         ▼
+  canonical_products</div>
+      </div>
+    </div>
+
+    <!-- ═══════════════════════════════════════ REAL SAVINGS ═══ -->
+    <div id="view-real-savings" class="view">
+      <div class="section-header">
+        <div class="section-title">Real Savings — How It Works</div>
+        <div class="section-sub">Computes whether a current sale price is genuinely low relative to historical norms — not just the store's own stated discount.</div>
+      </div>
+
+      <div class="card">
+        <div class="card-title">Computation steps</div>
+        <table class="data-table">
+          <thead><tr><th>Step</th><th>Detail</th></tr></thead>
+          <tbody>
+            <tr><td>1. Load history</td><td>Query <code>deal_price_history</code> for last 90 days, <code>is_deal=0</code> rows (normal-price days), joined through <code>deal_mappings</code> to group by <code>canonical_id</code></td></tr>
+            <tr><td>2. Qualify baseline</td><td>Require ≥3 observations. Canonical grouping pools <em>all</em> pack sizes of the same brand+product across all stores into one reference price</td></tr>
+            <tr><td>3. Compute median</td><td>Median of <code>normal_price_per_kg</code> (= <code>COALESCE(original_price, sale_price) × price_per_kg / sale_price</code>) as baseline</td></tr>
+            <tr><td>4. Compare</td><td>Current deal's <code>price_per_kg</code> vs baseline → <code>real_discount_pct = (baseline − current) / baseline × 100</code></td></tr>
+            <tr><td>5. Badge</td><td>Apply thresholds (see below). Two suppression rules filter out noise.</td></tr>
+          </tbody>
+        </table>
+      </div>
+
+      <div class="card">
+        <div class="card-title">Rating thresholds</div>
+        <table class="data-table">
+          <thead><tr><th>Rating</th><th>Threshold</th><th>Badge</th></tr></thead>
+          <tbody>
+            <tr><td>Great deal</td><td>real_discount_pct ≥ 25%</td><td><span class="badge badge-green">Great</span></td></tr>
+            <tr><td>Good deal</td><td>real_discount_pct ≥ 15%</td><td><span class="badge badge-blue">Good</span></td></tr>
+            <tr><td>Low saving</td><td>real_discount_pct ≥ 5%</td><td><span class="badge badge-amber">Low</span></td></tr>
+            <tr><td>Not shown</td><td>&lt; 5% or suppressed</td><td><span class="badge badge-slate">None</span></td></tr>
+          </tbody>
+        </table>
+      </div>
+
+      <div class="card amber">
+        <div class="card-title">Badge suppression rules</div>
+        <p style="color:var(--text2);font-size:12px;margin-bottom:8px;"><strong>Rule 1:</strong> Suppress if computed real savings &gt; store's stated <code>discount_percent</code>. Distrusts data that claims <em>more</em> saving than the store itself states.</p>
+        <p style="color:var(--text2);font-size:12px;"><strong>Rule 2:</strong> Suppress if |real savings − stated discount| &lt; 5pp. Badge adds no meaningful information when both values are nearly identical.</p>
+      </div>
+
+      <div class="card">
+        <div class="card-title">Fake-deal detection</div>
+        <p style="color:var(--text2);font-size:12px;">Deals where the price_per_kg is implausibly low (below <code>FAKE_DEAL_THRESHOLD_PP</code>) are flagged. The constant is defined in <code>real-savings.js</code> and the flag is surfaced in the admin dashboard.</p>
+      </div>
+
+      <div class="card">
+        <div class="card-title">Fallback layer</div>
+        <p style="color:var(--text2);font-size:12px;">When no canonical history exists (new product, &lt;3 observations), Layer 2 falls back to the store's own stated <code>original_price</code> vs <code>sale_price</code>. This is a weaker signal — it trusts the store's own data — so it is displayed differently in the UI.</p>
+      </div>
+    </div>
+
+    <!-- ═══════════════════════════════════════ REPLACEMENTS ═══ -->
+    <div id="view-replacements" class="view">
+      <div class="section-header">
+        <div class="section-title">Product Replacements — Compare Stores</div>
+        <div class="section-sub">When a deal is out of stock, the replacement engine finds the best alternatives within the same store, ranked by tier.</div>
+      </div>
+
+      <div class="card">
+        <div class="card-title">API endpoints</div>
+        <div class="code-block"><span class="kw">GET</span> /api/v1/deals/replacements
+  ?canonical_id=<span class="str">{id}</span>
+  &amp;store_id=<span class="str">{id}</span>
+  &amp;deal_id=<span class="str">{id}</span>     <span class="cm">// optional; source weight falls back to canonical if omitted</span>
+
+<span class="kw">GET</span> /api/v1/deals/same-product-other-stores
+  ?canonical_id=<span class="str">{id}</span>
+  &amp;store_id=<span class="str">{id}</span>     <span class="cm">// cross-store alternatives via base_key + category SQL join</span></div>
+      </div>
+
+      <div class="card">
+        <div class="card-title">Four-tier classification</div>
+        <table class="data-table">
+          <thead><tr><th>Tier</th><th>Name</th><th>Relevance</th><th>Logic</th><th>Example</th></tr></thead>
+          <tbody>
+            <tr class="tier-t1">
+              <td>T1</td>
+              <td>same_pack</td>
+              <td><span class="badge badge-green">1.0</span></td>
+              <td>Same brand + exact base_product_slots match + <em>different</em> weight. Sorted weight ascending.</td>
+              <td>Heera Soan Papdi 250g as alternative to 500g (same brand+product, different size)</td>
+            </tr>
+            <tr class="tier-t2">
+              <td>T2</td>
+              <td>same_spec</td>
+              <td><span class="badge badge-blue">0.85</span></td>
+              <td>Cross-brand, same base product. Primary: exact <code>base_product_slots</code> set match. Fallback: catalog <code>base_key</code> equality <strong>with <code>sameCategory</code> guard</strong> — handles Hindi/English term divergence (e.g. "Mung Sabut Whole" ↔ "TRS Mung Beans" both → <code>"moong dal yellow"</code>); category guard prevents fried dal snacks matching raw lentils.</td>
+              <td>Natco Soan Papdi 500g as alternative to Heera; Mung Sabut 500g as alternative to TRS Mung Beans</td>
+            </tr>
+            <tr class="tier-t3">
+              <td>T3</td>
+              <td>same_brand</td>
+              <td><span class="badge badge-amber">0.65</span></td>
+              <td>Same brand + same product_group_id (base_key equality or slot-subset check). Sorted discount% desc then price asc.</td>
+              <td>Heera Gulab Jamun Mix as alternative when no Soan Papdi alternatives exist</td>
+            </tr>
+            <tr class="tier-t4">
+              <td>T4</td>
+              <td>same_category</td>
+              <td><span class="badge badge-slate">0.4</span></td>
+              <td>Fallback only — emitted when T1+T2+T3 are ALL empty. Displayed as collapsed CTA pill in UI.</td>
+              <td>Any Snacks &amp; Sweets deal in-store when no brand/spec match found</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+
+      <div class="card">
+        <div class="card-title">Implementation details</div>
+        <table class="data-table">
+          <thead><tr><th>Detail</th><th>Notes</th></tr></thead>
+          <tbody>
+            <tr><td>TIER_CAP</td><td>Max 4 results per tier</td></tr>
+            <tr><td>Same canonical skip</td><td>Same-canonical deals are always excluded — no "replace with identical product"</td></tr>
+            <tr><td>sizeCompatible()</td><td>Uses epsilon ratio check (<code>|round(src/cand) − src/cand| &lt; 0.01</code>) instead of float modulo to handle decimal weights (oils, spices)</td></tr>
+            <tr><td>Brand detection</td><td>Uses base-product-catalog CSV via <code>detectBrandForBase()</code>; falls back to <code>brand_slots[0][0]</code> for non-catalog brands</td></tr>
+            <tr><td>T1 slot check</td><td>Requires exact slot match to prevent "Split Chilka" vs "Whole" from being treated as size variants</td></tr>
+            <tr><td>Cross-store matching</td><td><code>same-product-other-stores</code> uses SQL <code>JOIN canonical_products ON cp.base_key = ? AND cp.category = ?</code>. Category guard blocks snack/lentil false positives. Falls back to exact <code>canonical_id</code> when <code>base_key</code> is null.</td></tr>
+            <tr><td><code>canonical_products.base_key</code></td><td>TEXT column; populated by <code>resolveBaseProduct()</code> at canonical write time (canonicalizer, admin-review-queue, brand remap, promote-bootstrap-staging, seed-priority-canonicals). 3,003 of 14,598 rows populated. Indexed. All INSERT sites now set this field.</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+    <!-- ═══════════════════════════════════════ SOURCE FILES ═══ -->
+    <div id="view-source-files" class="view">
+      <div class="section-header">
+        <div class="section-title">Key Source Files</div>
+        <div class="section-sub">Primary files to read when debugging or extending the system.</div>
+      </div>
+
+      <a class="explorer-card" href="dd24_db_explorer.html">
+        <div class="ec-left">
+          <h3>DB Explorer →</h3>
+          <p>Browse live database tables, run queries, and inspect canonical products, deals, and mappings.</p>
+        </div>
+        <div class="ec-arrow">→</div>
+      </a>
+
+      <div class="card">
+        <table class="data-table">
+          <thead><tr><th>File</th><th>Role</th><th>Key function / export</th></tr></thead>
+          <tbody>
+            <tr>
+              <td><code>crawler/index.js</code></td>
+              <td>Crawl orchestrator</td>
+              <td><code>runCrawl()</code> — full 5-phase pipeline</td>
+            </tr>
+            <tr>
+              <td><code>crawler/scheduler.js</code></td>
+              <td>Cron + startup triggers</td>
+              <td>Node-cron <code>0 8 * * *</code>, startup setTimeout</td>
+            </tr>
+            <tr>
+              <td><code>crawler/utils/auto-mapper.js</code></td>
+              <td>Pass A slot matching</td>
+              <td><code>autoMapDeals()</code>, <code>matchesCanonical()</code></td>
+            </tr>
+            <tr>
+              <td><code>crawler/entity-resolution/index.js</code></td>
+              <td>Pass B fuzzy canonicalization</td>
+              <td><code>canonicalizeDeals()</code>, <code>resolveName()</code></td>
+            </tr>
+            <tr>
+              <td><code>crawler/entity-resolution/fuzzy-matcher.js</code></td>
+              <td>String similarity engine</td>
+              <td>0.90 threshold, Jaro-Winkler / token sort</td>
+            </tr>
+            <tr>
+              <td><code>crawler/entity-resolution/normaliser.js</code></td>
+              <td>Name normalisation</td>
+              <td>Abbreviation expansion, stop-word removal, weight stripping</td>
+            </tr>
+            <tr>
+              <td><code>crawler/utils/canonical-decomposer.js</code></td>
+              <td>Slot extraction from canonical name</td>
+              <td>Parses brand/base/type tokens into slot arrays</td>
+            </tr>
+            <tr>
+              <td><code>crawler/utils/category-mapper.js</code></td>
+              <td>Product → category classifier</td>
+              <td>16 categories; <code>SNACK_PHRASES</code> pre-check prevents fried dal snacks matching lentil keywords</td>
+            </tr>
+            <tr>
+              <td><code>server/services/canonicalizer.js</code></td>
+              <td>Runtime canonical resolution</td>
+              <td><code>upsertDealMapping()</code> — writes canonical_id back to deals</td>
+            </tr>
+            <tr>
+              <td><code>server/services/real-savings.js</code></td>
+              <td>Real savings computation</td>
+              <td><code>batchGetRealSavings()</code>, <code>computeRealSavings()</code></td>
+            </tr>
+            <tr>
+              <td><code>server/services/product-replacements.js</code></td>
+              <td>Same-store replacement engine</td>
+              <td><code>getReplacements()</code> — T1/T2/T3/T4; T2 <code>base_key</code> fallback requires <code>sameCategory</code> (exact slot-match branch unchanged)</td>
+            </tr>
+            <tr>
+              <td><code>server/services/price-history-recorder.js</code></td>
+              <td>Deal price history writer</td>
+              <td><code>recordStoreHistory(storeId)</code> — delete-then-insert pattern</td>
+            </tr>
+            <tr>
+              <td><code>server/routes/deals.js</code></td>
+              <td>Main deals API</td>
+              <td>Dynamic SQL query builder; no ORM</td>
+            </tr>
+            <tr>
+              <td><code>server/routes/admin-dashboard.js</code></td>
+              <td>Admin: brands, canonical stats, remap</td>
+              <td>Write path for brand_slots, base_product_slots</td>
+            </tr>
+            <tr>
+              <td><code>server/routes/admin-review-queue.js</code></td>
+              <td>Entity resolution queue UI</td>
+              <td>Primary write path for brand_slots; approve/reject queue items</td>
+            </tr>
+            <tr>
+              <td><code>server/db/schema.sql</code></td>
+              <td>DB schema</td>
+              <td>All table definitions: deals, canonical_products, deal_mappings, entity_resolution_queue, deal_price_history</td>
+            </tr>
+            <tr>
+              <td><code>server/db/index.js</code></td>
+              <td>DB singleton + migrations</td>
+              <td>better-sqlite3 setup; ALTER TABLE migrations; store seeds</td>
+            </tr>
+            <tr>
+              <td><code>scripts/backfill-base-product-slots.js</code></td>
+              <td>Slot backfill script</td>
+              <td>Populates base_product_slots on existing canonical_products</td>
+            </tr>
+            <tr>
+              <td><code>client/src/pages/DealSharePage.jsx</code></td>
+              <td>Compare Stores UI page</td>
+              <td>Replacement modal, tier display, T4 collapsed CTA</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+  </main>
+</div>
+
+<script>
+// ── Navigation ──────────────────────────────────────────────────
+function show(id, btn) {
+  document.querySelectorAll('.view').forEach(v => v.classList.remove('active'));
+  document.querySelectorAll('.nav-btn').forEach(b => b.classList.remove('active'));
+  const target = document.getElementById(id);
+  if (target) target.classList.add('active');
+  if (btn) btn.classList.add('active');
+}
+
+// ── Canvas ──────────────────────────────────────────────────────
+const COLORS = {
+  crawl:      { fill: 'rgba(59,130,246,0.13)',  stroke: 'rgba(59,130,246,0.5)',  text: '#93c5fd' },
+  core:       { fill: 'rgba(34,197,94,0.10)',   stroke: 'rgba(34,197,94,0.45)',  text: '#86efac' },
+  resolution: { fill: 'rgba(245,158,11,0.10)',  stroke: 'rgba(245,158,11,0.45)', text: '#fcd34d' },
+};
+
+const NODES = [
+  { id:'stores',        x:14,  y:115, w:118, h:52, group:'crawl',      label:'Stores ×32',         sub:'Shopify, WooCommerce',  section:'view-scrape' },
+  { id:'crawler',       x:154, y:115, w:118, h:52, group:'crawl',      label:'Crawler',             sub:'Sequential, 2–5s delay', section:'view-trigger' },
+  { id:'deals_table',   x:302, y:50,  w:130, h:52, group:'core',       label:'deals',               sub:'INSERT / deactivate',    section:'view-reconcile' },
+  { id:'price_history', x:302, y:175, w:130, h:52, group:'core',       label:'deal_price_history',  sub:'Daily snapshots',        section:'view-history' },
+  { id:'auto_mapper',   x:462, y:50,  w:130, h:52, group:'resolution', label:'Auto-mapper',         sub:'Slot-based, Pass A',     section:'view-automap' },
+  { id:'fuzzy_canon',   x:462, y:175, w:130, h:52, group:'resolution', label:'Fuzzy canonicalizer', sub:'Pass B, ≥0.90',          section:'view-canonicalize' },
+  { id:'canonicals',    x:622, y:50,  w:138, h:52, group:'resolution', label:'canonical_products',  sub:'~300+ identities',       section:'view-canonicals' },
+  { id:'erq',           x:622, y:175, w:138, h:52, group:'resolution', label:'entity_res_queue',    sub:'Admin review',           section:'view-canonicalize' },
+];
+
+const EDGES = [
+  { from:'stores',       to:'crawler',      label:'' },
+  { from:'crawler',      to:'deals_table',  label:'' },
+  { from:'crawler',      to:'price_history',label:'' },
+  { from:'deals_table',  to:'auto_mapper',  label:'' },
+  { from:'auto_mapper',  to:'canonicals',   label:'' },
+  { from:'deals_table',  to:'fuzzy_canon',  label:'' },
+  { from:'fuzzy_canon',  to:'canonicals',   label:'' },
+  { from:'fuzzy_canon',  to:'erq',          label:'' },
+];
+
+function nodeCx(n) { return n.x + n.w / 2; }
+function nodeCy(n) { return n.y + n.h / 2; }
+
+function nodeById(id) { return NODES.find(n => n.id === id); }
+
+// Edge port — pick nearest horizontal edge
+function edgePorts(a, b) {
+  // a right → b left or a left → b right
+  const ax = nodeCx(a), bx = nodeCx(b);
+  if (ax < bx) {
+    return { x1: a.x + a.w, y1: nodeCy(a), x2: b.x, y2: nodeCy(b) };
+  }
+  return { x1: a.x, y1: nodeCy(a), x2: b.x + b.w, y2: nodeCy(b) };
+}
+
+function drawArrow(ctx, x1, y1, x2, y2, color) {
+  const headLen = 8;
+  const angle = Math.atan2(y2 - y1, x2 - x1);
+
+  // Line
+  ctx.beginPath();
+  ctx.moveTo(x1, y1);
+  // slight curve for parallel edges
+  const mx = (x1 + x2) / 2;
+  const my = (y1 + y2) / 2;
+  ctx.lineTo(x2 - Math.cos(angle) * headLen, y2 - Math.sin(angle) * headLen);
+  ctx.strokeStyle = color;
+  ctx.lineWidth = 1.5;
+  ctx.stroke();
+
+  // Arrowhead
+  ctx.beginPath();
+  ctx.moveTo(x2, y2);
+  ctx.lineTo(
+    x2 - headLen * Math.cos(angle - Math.PI / 7),
+    y2 - headLen * Math.sin(angle - Math.PI / 7)
+  );
+  ctx.lineTo(
+    x2 - headLen * Math.cos(angle + Math.PI / 7),
+    y2 - headLen * Math.sin(angle + Math.PI / 7)
+  );
+  ctx.closePath();
+  ctx.fillStyle = color;
+  ctx.fill();
+}
+
+function drawNode(ctx, n, hovered) {
+  const c = COLORS[n.group];
+  const r = 7;
+  const x = n.x, y = n.y, w = n.w, h = n.h;
+
+  // Shadow when hovered
+  if (hovered) {
+    ctx.shadowBlur = 14;
+    ctx.shadowColor = c.stroke;
+  }
+
+  // Background
+  ctx.beginPath();
+  ctx.moveTo(x + r, y);
+  ctx.lineTo(x + w - r, y);
+  ctx.quadraticCurveTo(x + w, y, x + w, y + r);
+  ctx.lineTo(x + w, y + h - r);
+  ctx.quadraticCurveTo(x + w, y + h, x + w - r, y + h);
+  ctx.lineTo(x + r, y + h);
+  ctx.quadraticCurveTo(x, y + h, x, y + h - r);
+  ctx.lineTo(x, y + r);
+  ctx.quadraticCurveTo(x, y, x + r, y);
+  ctx.closePath();
+  ctx.fillStyle = hovered ? c.stroke.replace('0.5', '0.22').replace('0.45', '0.22') : c.fill;
+  ctx.fill();
+
+  ctx.shadowBlur = 0;
+
+  // Border
+  ctx.beginPath();
+  ctx.moveTo(x + r, y);
+  ctx.lineTo(x + w - r, y);
+  ctx.quadraticCurveTo(x + w, y, x + w, y + r);
+  ctx.lineTo(x + w, y + h - r);
+  ctx.quadraticCurveTo(x + w, y + h, x + w - r, y + h);
+  ctx.lineTo(x + r, y + h);
+  ctx.quadraticCurveTo(x, y + h, x, y + h - r);
+  ctx.lineTo(x, y + r);
+  ctx.quadraticCurveTo(x, y, x + r, y);
+  ctx.closePath();
+  ctx.strokeStyle = hovered ? c.stroke.replace('0.5','0.9').replace('0.45','0.9') : c.stroke;
+  ctx.lineWidth = hovered ? 1.5 : 1;
+  ctx.stroke();
+
+  // Label
+  ctx.fillStyle = c.text;
+  ctx.font = '600 11px "IBM Plex Mono", monospace';
+  ctx.textAlign = 'center';
+  ctx.textBaseline = 'middle';
+  ctx.fillText(n.label, x + w / 2, y + h / 2 - 8);
+
+  // Sub-label
+  ctx.fillStyle = 'rgba(148,163,184,0.7)';
+  ctx.font = '400 9.5px "IBM Plex Mono", monospace';
+  ctx.fillText(n.sub, x + w / 2, y + h / 2 + 9);
+}
+
+function drawCanvas(hoveredId) {
+  const canvas = document.getElementById('arch-canvas');
+  if (!canvas) return;
+  const ctx = canvas.getContext('2d');
+
+  // Scale for device pixel ratio
+  const dpr = window.devicePixelRatio || 1;
+  const displayW = canvas.clientWidth;
+  const displayH = 290;
+  if (canvas.width !== displayW * dpr || canvas.height !== displayH * dpr) {
+    canvas.width = displayW * dpr;
+    canvas.height = displayH * dpr;
+    canvas.style.height = displayH + 'px';
+    ctx.scale(dpr, dpr);
+  }
+
+  ctx.clearRect(0, 0, displayW, displayH);
+
+  // Draw edges first
+  EDGES.forEach(e => {
+    const a = nodeById(e.from);
+    const b = nodeById(e.to);
+    if (!a || !b) return;
+    const p = edgePorts(a, b);
+    const edgeColor = 'rgba(100,116,139,0.45)';
+    drawArrow(ctx, p.x1, p.y1, p.x2, p.y2, edgeColor);
+  });
+
+  // Draw nodes
+  NODES.forEach(n => {
+    drawNode(ctx, n, n.id === hoveredId);
+  });
+}
+
+// ── Canvas events ──
+function initCanvas() {
+  const canvas = document.getElementById('arch-canvas');
+  const tooltip = document.getElementById('canvas-tooltip');
+  const tipName = document.getElementById('tip-name');
+  const tipSub  = document.getElementById('tip-sub');
+  if (!canvas) return;
+
+  let hoveredId = null;
+
+  function getHoveredNode(e) {
+    const rect = canvas.getBoundingClientRect();
+    const scaleX = canvas.clientWidth / canvas.getBoundingClientRect().width;
+    const mx = (e.clientX - rect.left) * scaleX;
+    const my = (e.clientY - rect.top) * (290 / rect.height);
+    return NODES.find(n => mx >= n.x && mx <= n.x + n.w && my >= n.y && my <= n.y + n.h) || null;
+  }
+
+  canvas.addEventListener('mousemove', e => {
+    const node = getHoveredNode(e);
+    const newId = node ? node.id : null;
+    if (newId !== hoveredId) {
+      hoveredId = newId;
+      drawCanvas(hoveredId);
+    }
+    if (node) {
+      canvas.style.cursor = 'pointer';
+      tipName.textContent = node.label;
+      tipSub.textContent  = node.sub;
+      const rect = canvas.getBoundingClientRect();
+      const wrap = canvas.parentElement.getBoundingClientRect();
+      let tx = e.clientX - wrap.left + 12;
+      let ty = e.clientY - wrap.top + 12;
+      if (tx + 210 > wrap.width) tx -= 220;
+      tooltip.style.left = tx + 'px';
+      tooltip.style.top  = ty + 'px';
+      tooltip.style.display = 'block';
+    } else {
+      canvas.style.cursor = 'default';
+      tooltip.style.display = 'none';
+    }
+  });
+
+  canvas.addEventListener('mouseleave', () => {
+    hoveredId = null;
+    tooltip.style.display = 'none';
+    drawCanvas(null);
+  });
+
+  canvas.addEventListener('click', e => {
+    const node = getHoveredNode(e);
+    if (node && node.section) {
+      // Find nav button that targets this section and click it
+      const btns = document.querySelectorAll('.nav-btn');
+      let found = false;
+      btns.forEach(btn => {
+        if (!found) {
+          const onclick = btn.getAttribute('onclick') || '';
+          if (onclick.includes(node.section)) {
+            show(node.section, btn);
+            found = true;
+          }
+        }
+      });
+      if (!found) show(node.section, null);
+    }
+  });
+
+  drawCanvas(null);
+}
+
+// Redraw canvas on resize
+window.addEventListener('resize', () => {
+  const canvas = document.getElementById('arch-canvas');
+  if (canvas) {
+    canvas.width = 0; // force recalc
+    drawCanvas(null);
+  }
+});
+
+document.addEventListener('DOMContentLoaded', initCanvas);
+</script>
+</body>
+</html>

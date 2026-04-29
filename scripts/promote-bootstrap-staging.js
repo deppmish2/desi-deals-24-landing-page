@@ -13,6 +13,7 @@ require("dotenv").config();
 require("dotenv").config({ path: ".env.local", override: true });
 
 const path = require("path");
+const { resolveBaseProduct } = require("../server/services/base-product-catalog");
 
 function slugify(value) {
   const base = String(value || "")
@@ -131,10 +132,11 @@ async function main() {
         }
 
         // Insert canonical_products
+        const baseKey = resolveBaseProduct(row.canonical_name)?.base_key ?? null;
         await tx.execute({
           sql: `INSERT INTO canonical_products
-                (id, canonical_name, category, common_aliases, verified, created_at, brand_slots)
-                VALUES (?, ?, ?, ?, ?, datetime('now'), ?)`,
+                (id, canonical_name, category, common_aliases, verified, created_at, brand_slots, base_key)
+                VALUES (?, ?, ?, ?, ?, datetime('now'), ?, ?)`,
           args: [
             canonicalId,
             row.canonical_name,
@@ -142,6 +144,7 @@ async function main() {
             JSON.stringify(aliases),
             1,
             brandSlots ? JSON.stringify(brandSlots) : null,
+            baseKey,
           ],
         });
         canonicalsInserted++;
@@ -154,7 +157,7 @@ async function main() {
         const dealLinks = dealsByStaging.get(row.id) || [];
         for (const dealId of dealLinks) {
           await tx.execute({
-            sql: `INSERT OR IGNORE INTO deal_mappings
+            sql: `INSERT OR IGNORE INTO store_product_mappings
                   (deal_id, canonical_id, match_method, match_confidence, verified_at)
                   VALUES (?, ?, ?, ?, datetime('now'))`,
             args: [dealId, canonicalId, "bootstrap", matchConfidence],
@@ -162,7 +165,7 @@ async function main() {
           mappingsInserted++;
 
           const updateResult = await tx.execute({
-            sql: `UPDATE deals SET canonical_id = ? WHERE id = ? AND canonical_id IS NULL`,
+            sql: `UPDATE store_products SET canonical_id = ? WHERE id = ? AND canonical_id IS NULL`,
             args: [canonicalId, dealId],
           });
           dealsUpdated += updateResult.rowsAffected;
@@ -242,7 +245,7 @@ async function main() {
     // Fetch all deals matching any of the raw names (case-insensitive)
     const placeholders = [...rawNames].map(() => "?").join(", ");
     const matchedDeals = await client.execute({
-      sql: `SELECT id FROM deals
+      sql: `SELECT id FROM store_products
             WHERE LOWER(TRIM(product_name)) IN (${placeholders})
               AND canonical_id IS NULL`,
       args: [...rawNames],
@@ -254,13 +257,13 @@ async function main() {
     try {
       for (const deal of matchedDeals.rows) {
         await tx2.execute({
-          sql: `INSERT INTO deal_mappings (deal_id, canonical_id, match_method, match_confidence, verified_at)
+          sql: `INSERT INTO store_product_mappings (deal_id, canonical_id, match_method, match_confidence, verified_at)
                 VALUES (?, ?, 'bootstrap-name-sweep', 0.85, ?)
                 ON CONFLICT(deal_id, canonical_id) DO NOTHING`,
           args: [deal.id, canonicalId, now],
         });
         await tx2.execute({
-          sql: `UPDATE deals SET canonical_id = ? WHERE id = ? AND canonical_id IS NULL`,
+          sql: `UPDATE store_products SET canonical_id = ? WHERE id = ? AND canonical_id IS NULL`,
           args: [canonicalId, deal.id],
         });
         broadMappings++;
@@ -279,8 +282,8 @@ async function main() {
   console.log(`  Broad sweep done: ${broadMappings} additional deal_mappings, ${broadDeals} deals linked`);
 
   // Final coverage
-  const covResult   = await client.execute(`SELECT COUNT(*) as cnt FROM deals WHERE canonical_id IS NOT NULL`);
-  const totalResult = await client.execute(`SELECT COUNT(*) as cnt FROM deals`);
+  const covResult   = await client.execute(`SELECT COUNT(*) as cnt FROM store_products WHERE canonical_id IS NOT NULL`);
+  const totalResult = await client.execute(`SELECT COUNT(*) as cnt FROM store_products`);
   const linkedDeals = covResult.rows[0].cnt;
   const totalDeals  = totalResult.rows[0].cnt;
   const coverage    = totalDeals > 0 ? Math.round((linkedDeals / totalDeals) * 100) : 0;

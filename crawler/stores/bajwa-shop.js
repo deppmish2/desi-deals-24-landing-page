@@ -1,6 +1,6 @@
 "use strict";
 
-const { createShopifyDealsAdapter } = require("../utils/shopify-deals-factory");
+const { createShopifyDealsAdapter } = require("../utils/shopify-product-factory");
 
 module.exports = createShopifyDealsAdapter({
   storeId: "bajwa-shop",

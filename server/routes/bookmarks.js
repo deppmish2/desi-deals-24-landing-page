@@ -49,7 +49,7 @@ router.get("/", async (req, res, next) => {
       .prepare(
         `SELECT b.deal_id
          FROM bookmarks b
-         JOIN deals d ON d.id = b.deal_id
+         JOIN store_products d ON d.id = b.deal_id
          WHERE b.user_id = ?
            AND d.is_active = 1
            AND lower(coalesce(d.availability, '')) = 'in_stock'

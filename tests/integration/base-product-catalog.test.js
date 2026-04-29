@@ -27,3 +27,12 @@ test("detectBrandForBase finds known CSV brand for a base product", () => {
   const brand = detectBrandForBase("TRS Toor Dal 1kg", resolved.base_key);
   assert.equal(brand, "TRS");
 });
+
+test("resolveBaseProduct returns null for fresh produce names (Fresh prefix guard)", () => {
+  assert.equal(resolveBaseProduct("Fresh Green Chilli"), null,
+    "should not match 'red chili powder'");
+  assert.equal(resolveBaseProduct("Fresh Red Sambhar Onions"), null,
+    "should not match 'sambar masala'");
+  assert.equal(resolveBaseProduct("fresh coriander"), null);
+  assert.equal(resolveBaseProduct("Fresh Haldi"), null);
+});

@@ -6,7 +6,7 @@
  *
  * Adds two columns to the Turso (production) database:
  *   - canonical_products.is_priority  INTEGER DEFAULT 0
- *   - deal_price_history.is_deal      INTEGER DEFAULT 0
+ *   - price_history.is_deal      INTEGER DEFAULT 0
  *
  * Run once when merging the real-savings-feature branch to main:
  *
@@ -41,10 +41,10 @@ const MIGRATIONS = [
     verifyDescription: "canonical_products.is_priority",
   },
   {
-    description: "Add is_deal to deal_price_history",
-    sql: "ALTER TABLE deal_price_history ADD COLUMN is_deal INTEGER DEFAULT 0",
-    verify: "SELECT is_deal FROM deal_price_history LIMIT 1",
-    verifyDescription: "deal_price_history.is_deal",
+    description: "Add is_deal to price_history",
+    sql: "ALTER TABLE price_history ADD COLUMN is_deal INTEGER DEFAULT 0",
+    verify: "SELECT is_deal FROM price_history LIMIT 1",
+    verifyDescription: "price_history.is_deal",
   },
 ];
 

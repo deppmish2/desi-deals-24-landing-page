@@ -1,6 +1,6 @@
 ---
 title: Backend
-last_updated: 2026-04-13
+last_updated: 2026-04-21
 source_count: 3
 ---
 
@@ -23,6 +23,8 @@ Static assets: `client/dist/assets/` served with `Cache-Control: max-age=1y, imm
 | Route | Handler | Notes |
 |---|---|---|
 | `GET /api/v1/deals` | `server/routes/deals.js` | Paginated, filterable. Main data endpoint. |
+| `GET /api/v1/deals/replacements` | `server/routes/deals.js` | Same-store replacement tiers (T1–T4) via `getReplacements()`. Params: `canonical_id`, `store_id`, `deal_id`. |
+| `GET /api/v1/deals/same-product-other-stores` | `server/routes/deals.js` | Cross-store alternatives. Uses `canonical_products.base_key + category` SQL JOIN — expands to all canonicals sharing the same catalog base product. Falls back to exact `canonical_id` match when `base_key` is null. |
 | `POST /api/v1/auth/email-link/start` | `server/routes/auth.js` | Sends magic link email |
 | `POST /api/v1/auth/email-link/complete` | `server/routes/auth.js` | Validates token, issues JWT |
 | `GET /api/v1/auth/google/url` | `server/routes/auth.js` | OAuth URL generation |
@@ -93,7 +95,7 @@ Accepts `{ brands: [{name, aliases}] }`. Steps:
 
 1. **Deduplicate** by lowercase name — merges aliases when the same name appears twice (e.g. chip-added "aashirvaad" + existing "Aashirvaad"). Prevents `UNIQUE constraint` errors.
 2. **Replace `known_brands`** — DELETE all, INSERT deduped set.
-3. **Re-decompose canonicals** — for every `canonical_products` row, calls `decomposeCanonical()` with fresh brands. Canonicals that no longer resolve a brand slot are deleted (and their `deals.canonical_id` NULLed). Others get updated `brand_slots`, `base_product_slots`, `product_group_id`. All writes go through a single `db.batch()` call.
+3. **Re-decompose canonicals** — for every `canonical_products` row, calls `decomposeCanonical()` with fresh brands. Canonicals that no longer resolve a brand slot are deleted (and their `deals.canonical_id` NULLed). Others get updated `brand_slots`, `base_product_slots`, `product_group_id`, `base_key`. All writes go through a single `db.batch()` call.
 4. **Map unmapped deals** — loads all active deals with no `deal_mappings` entry, runs `autoMapDeals()`, batch-inserts new mappings.
 5. Returns `{ jobId, status: "completed", stats }` synchronously.
 
@@ -115,7 +117,9 @@ After serialization, every response path calls `batchGetRealSavings` + `computeR
 
 ## DB connectivity
 
-`server/db/index.js` connects to **Turso** when `DESI_DEALS_DB_TURSO_DATABASE_URL` is present in env (including `.env.local` in local dev). Falls back to local SQLite (`./data/desiDeals24.db`) only when no Turso URL is set. **Important:** localhost dev typically runs against Turso, not the local SQLite file.
+`server/db/index.js` connects to **Turso** when `DESI_DEALS_DB_TURSO_DATABASE_URL` is present in env. Falls back to local SQLite (`./data/desiDeals24.db`) when no Turso URL is set. Override with `DB_FILE=data/prod_local.db npm run dev` to run against a local snapshot.
+
+**prod_local.db (as of 2026-04-21):** `data/prod_local.db` is the curated local snapshot used as the replacement for the live Turso DB. State: 14,598 canonical products (12,443 with `is_match_priority=1`), 3,003 with `base_key` populated, 22 unmapped active deals in entity_resolution_queue. `base_key` column added 2026-04-21 and backfilled from `resolveBaseProduct()`. All active `deals.product_category` values synced to match `canonical_products.category` (18,507 rows updated, 0 active drift).
 
 ## Related pages
 

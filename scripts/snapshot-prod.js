@@ -23,12 +23,12 @@ const db = require("../server/db");
 
 const TABLES = [
   "stores",
-  "deals",
+  "store_products",
   "crawl_runs",
   "crawl_store_results",
-  "deal_price_history",
+  "price_history",
   "canonical_products",
-  "deal_mappings",
+  "store_product_mappings",
   "known_brands",
   "brand_remap_jobs",
   "entity_resolution_queue",
