@@ -210,7 +210,10 @@ CREATE TABLE IF NOT EXISTS shopping_lists (
   input_method          TEXT,
   created_at            DATETIME DEFAULT CURRENT_TIMESTAMP,
   last_used_at          DATETIME,
-  reorder_reminder_days INTEGER
+  reorder_reminder_days INTEGER,
+  status                TEXT DEFAULT 'pending',
+  completed_store_id    TEXT REFERENCES stores(id),
+  completed_at          DATETIME
 );
 
 -- Items inside a list. canonical_id is optional until entity-resolution epic lands.
