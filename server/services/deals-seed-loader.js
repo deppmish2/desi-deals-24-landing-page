@@ -23,7 +23,7 @@ async function restoreDealsFromSeed(db, options = {}) {
   }
 
   const insert = db.prepare(`
-    INSERT OR IGNORE INTO deals
+    INSERT OR IGNORE INTO store_products
       (id, crawl_run_id, crawl_timestamp, store_id, product_name, product_category,
        product_url, image_url, weight_raw, weight_value, weight_unit,
        sale_price, original_price, discount_percent, price_per_kg, price_per_unit,
@@ -50,7 +50,7 @@ async function restoreDealsFromSeed(db, options = {}) {
   }
 
   const activeDeals =
-    (await db.prepare("SELECT COUNT(*) AS n FROM deals WHERE is_active = 1").get())
+    (await db.prepare("SELECT COUNT(*) AS n FROM store_products WHERE is_active = 1").get())
       ?.n || 0;
 
   return {
