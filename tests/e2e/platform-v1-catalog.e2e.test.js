@@ -76,14 +76,29 @@ test("GET /api/v1/catalog filters by store", async () => {
 test("GET /api/v1/catalog?is_discounted=1 returns only discounted products", async () => {
   const { db } = createTestDb();
   seed(db);
+  // Add a canonical whose ONLY listing has no discount
+  db.prepare(`INSERT INTO canonical_products (id, canonical_name, category) VALUES
+    ('c3','Plain Salt 1kg','Other')`).run();
+  db.prepare(`INSERT INTO store_products
+    (id,crawl_run_id,crawl_timestamp,store_id,product_name,product_category,
+     product_url,sale_price,original_price,discount_percent,price_per_kg,best_before,is_active)
+    VALUES ('sp4','r1','2026-04-30T00:00:00Z','s1','Salt 1kg','Other',
+     'https://jamoona.de/p/salt',0.99,NULL,NULL,NULL,NULL,1)`).run();
+  db.prepare(`INSERT INTO store_product_mappings (deal_id,canonical_id,match_method,match_confidence)
+    VALUES ('sp4','c3','exact',1.0)`).run();
+
   const app = buildAppWithDb(db);
   const api = await startServer(app);
 
-  // sp1 (c1) has discount_percent=33.4, sp3 (c2) has 30.1; sp2 (c1) has no discount
-  // Both c1 and c2 have at least one discounted listing
+  // Without filter: all 3 canonical products appear
+  const resAll = await api.request("/api/v1/catalog");
+  assert.equal(resAll.json.data.length, 3);
+
+  // With filter: only c1 and c2 (have discount_percent > 0 on cheapest listing)
   const res = await api.request("/api/v1/catalog?is_discounted=1");
   assert.equal(res.status, 200);
   assert.equal(res.json.data.length, 2);
+  assert.ok(!res.json.data.find(p => p.canonical_id === "c3"), "non-discounted product must be excluded");
 });
 
 test("GET /api/v1/catalog?hide_expired=1 excludes products with past best_before", async () => {
@@ -123,4 +138,16 @@ test("GET /api/v1/catalog paginates correctly", async () => {
   assert.ok(res.json.pagination);
   assert.equal(res.json.pagination.total, 2);
   assert.equal(res.json.pagination.total_pages, 2);
+});
+
+test("GET /api/v1/catalog?q= filters by product name", async () => {
+  const { db } = createTestDb();
+  seed(db);
+  const app = buildAppWithDb(db);
+  const api = await startServer(app);
+
+  const res = await api.request("/api/v1/catalog?q=Toor");
+  assert.equal(res.status, 200);
+  assert.equal(res.json.data.length, 1);
+  assert.equal(res.json.data[0].canonical_id, "c1");
 });

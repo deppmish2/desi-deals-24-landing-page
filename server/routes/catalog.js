@@ -17,12 +17,17 @@ const CATALOG_SQL = `
     JOIN store_products sp ON sp.id = spm.deal_id AND sp.is_active = 1
   ),
   cheapest AS (
-    SELECT r.*
-    FROM ranked r
-    WHERE r.sale_price = (
-      SELECT MIN(r2.sale_price) FROM ranked r2 WHERE r2.canonical_id = r.canonical_id
+    SELECT canonical_id, sale_price, original_price, discount_percent,
+           price_per_kg, best_before, store_id
+    FROM (
+      SELECT r.*,
+             ROW_NUMBER() OVER (
+               PARTITION BY r.canonical_id
+               ORDER BY r.sale_price ASC, r.store_id ASC
+             ) AS rn
+      FROM ranked r
     )
-    GROUP BY r.canonical_id
+    WHERE rn = 1
   ),
   counts AS (
     SELECT canonical_id, COUNT(DISTINCT store_id) AS store_count
