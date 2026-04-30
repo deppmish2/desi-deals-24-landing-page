@@ -47,10 +47,14 @@ function createSqliteWrapper(db) {
 
 function createTestDb() {
   const raw = new DatabaseSync(":memory:");
+  // node:sqlite's built-in SQLite does not include the FTS5 extension,
+  // so strip all CREATE VIRTUAL TABLE ... USING fts5(...) blocks before
+  // running the schema. Those tables are rebuilt by the crawler hook and
+  // are not needed in unit/e2e tests.
   const schema = fs.readFileSync(
     path.join(__dirname, "../../server/db/schema.sql"),
     "utf8",
-  );
+  ).replace(/CREATE VIRTUAL TABLE[\s\S]*?USING fts5[\s\S]*?\);/gi, "");
   raw.exec(schema);
   return { raw, db: createSqliteWrapper(raw) };
 }
@@ -77,6 +81,7 @@ function buildAppWithDb(dbMock) {
     "../../server/routes/search",
     "../../server/routes/inbound",
     "../../server/routes/admin",
+    "../../server/routes/catalog",
   ];
 
   const serviceModules = [
@@ -113,6 +118,7 @@ function buildAppWithDb(dbMock) {
     const searchRouter = require("../../server/routes/search");
     const inboundRouter = require("../../server/routes/inbound");
     const adminRouter = require("../../server/routes/admin");
+    const catalogRouter = require("../../server/routes/catalog");
 
     const app = express();
     app.use(express.json());
@@ -128,6 +134,7 @@ function buildAppWithDb(dbMock) {
     app.use("/api/v1/search", searchRouter);
     app.use("/api/v1/inbound", inboundRouter);
     app.use("/api/v1/admin", adminRouter);
+    app.use("/api/v1/catalog", catalogRouter);
     return app;
   } finally {
     if (previousDb) {
