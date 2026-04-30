@@ -28,6 +28,7 @@ router.get("/", requireUserAuth, (req, res) => {
       SELECT id, raw_item_text, quantity, quantity_unit, item_count
       FROM list_items
       WHERE list_id = ?
+      ORDER BY id ASC
     `).all(list.id);
     return { ...list, items };
   });
@@ -50,6 +51,10 @@ router.patch("/:id/complete", requireUserAuth, (req, res) => {
 
   if (!list) return res.status(404).json({ error: "Order not found" });
 
+  const store = db.prepare("SELECT id FROM stores WHERE id = ?").get(store_id);
+  if (!store) return res.status(400).json({ error: "store_id not found" });
+
+  // Re-completing an already-completed list overwrites the store — intentional for now
   const completedAt = new Date().toISOString();
   db.prepare(`
     UPDATE shopping_lists
