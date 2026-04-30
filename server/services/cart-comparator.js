@@ -4,14 +4,14 @@
  * Compares a cart of canonical items across all stores.
  * Returns ranked store results with confirmed totals, coverage, and per-item status.
  *
- * @param {object} db    - better-sqlite3 db instance
+ * @param {object} db    - db instance (async: .prepare().all/.get/.run return Promises)
  * @param {Array}  items - [{ canonical_id, quantity, any_brand }]
- * @returns {object} { stores: [...], item_count: N }
+ * @returns {Promise<object>} { stores: [...], item_count: N }
  */
-function compareCart(db, items) {
+async function compareCart(db, items) {
   if (!items || items.length === 0) return { stores: [], item_count: 0 };
 
-  const allStores = db.prepare("SELECT id, name, url, platform FROM stores").all();
+  const allStores = await db.prepare("SELECT id, name, url, platform FROM stores").all();
   const listingStmt = db.prepare(`
     SELECT sp.id, sp.product_name, sp.sale_price, sp.original_price,
            sp.discount_percent, sp.price_per_kg
@@ -34,7 +34,7 @@ function compareCart(db, items) {
     for (const cartItem of items) {
       const qty = cartItem.quantity || 1;
 
-      const listing = listingStmt.get(cartItem.canonical_id, store.id);
+      const listing = await listingStmt.get(cartItem.canonical_id, store.id);
 
       if (listing) {
         availableCount++;
@@ -67,7 +67,7 @@ function compareCart(db, items) {
     results.push({
       store: { id: store.id, name: store.name },
       confirmed_total: Math.round(confirmedTotal * 100) / 100,
-      estimated_total: null, // market price estimation is aspirational
+      estimated_total: null,
       shipping_cost: 0,
       coverage_pct: coveragePct,
       items: storeItems,
