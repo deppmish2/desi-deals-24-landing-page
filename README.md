@@ -1,6 +1,6 @@
 # DesiDeals24
 
-Desi grocery deals aggregator for Germany. Automatically crawls 5 online stores, aggregates current sales and discounts, and presents them in a searchable, filterable React UI.
+Desi grocery deals aggregator for Germany. Automatically crawls 25 online stores, aggregates current sales and discounts, and presents them in a searchable, filterable React UI.
 
 **Live stores:** Jamoona · Dookan · Namma Markt · Little India · Grocera
 
@@ -99,6 +99,8 @@ npm run build:client
 ```
 
 This builds the React app into `client/dist/`. The Express server automatically serves it from that path.
+
+Production server at desideals24.com
 
 ---
 
