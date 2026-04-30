@@ -241,6 +241,9 @@ const ready = (async () => {
     )`,
     "CREATE INDEX IF NOT EXISTS idx_on_demand_queued  ON pending_on_demand_crawls(queued_at)",
     "CREATE INDEX IF NOT EXISTS idx_on_demand_started ON pending_on_demand_crawls(started_at)",
+    "ALTER TABLE shopping_lists ADD COLUMN status TEXT DEFAULT 'pending'",
+    "ALTER TABLE shopping_lists ADD COLUMN completed_store_id TEXT",
+    "ALTER TABLE shopping_lists ADD COLUMN completed_at DATETIME",
   ];
   for (const sql of alwaysMigrations) {
     try {
@@ -383,9 +386,6 @@ const ready = (async () => {
     "ALTER TABLE shopping_lists ADD COLUMN last_order_store_id TEXT REFERENCES stores(id)",
     "ALTER TABLE shopping_lists ADD COLUMN last_order_total REAL",
     "ALTER TABLE shopping_lists ADD COLUMN last_ordered_at DATETIME",
-    "ALTER TABLE shopping_lists ADD COLUMN status TEXT DEFAULT 'pending'",
-    "ALTER TABLE shopping_lists ADD COLUMN completed_store_id TEXT",
-    "ALTER TABLE shopping_lists ADD COLUMN completed_at DATETIME",
   ];
 
   for (const sql of migrations) {

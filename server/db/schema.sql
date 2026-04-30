@@ -212,7 +212,7 @@ CREATE TABLE IF NOT EXISTS shopping_lists (
   last_used_at          DATETIME,
   reorder_reminder_days INTEGER,
   status                TEXT DEFAULT 'pending',
-  completed_store_id    TEXT REFERENCES stores(id),
+  completed_store_id    TEXT REFERENCES stores(id),  -- FK enforced on fresh install only; ALTER TABLE cannot add FK in SQLite
   completed_at          DATETIME
 );
 
