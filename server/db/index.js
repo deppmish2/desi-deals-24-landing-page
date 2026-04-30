@@ -195,6 +195,18 @@ const ready = (async () => {
     "CREATE INDEX IF NOT EXISTS idx_queue_category ON entity_resolution_queue(category, status)",
     "ALTER TABLE canonical_products ADD COLUMN base_key TEXT",
     "CREATE INDEX IF NOT EXISTS idx_canonical_base_key ON canonical_products(base_key)",
+    `CREATE TABLE IF NOT EXISTS product_alerts (
+      id              TEXT PRIMARY KEY,
+      user_id         TEXT NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+      canonical_id    TEXT NOT NULL REFERENCES canonical_products(id),
+      store_id        TEXT REFERENCES stores(id),
+      alert_type      TEXT NOT NULL CHECK (alert_type IN ('price_below', 'back_in_stock')),
+      price_threshold REAL,
+      created_at      TEXT NOT NULL,
+      notified_at     TEXT
+    )`,
+    "CREATE INDEX IF NOT EXISTS idx_product_alerts_user ON product_alerts(user_id)",
+    "CREATE INDEX IF NOT EXISTS idx_product_alerts_canonical ON product_alerts(canonical_id, alert_type)",
   ];
   for (const sql of alwaysMigrations) {
     try {
@@ -317,6 +329,17 @@ const ready = (async () => {
       UNIQUE(user_id, deal_id)
     )`,
     "CREATE INDEX IF NOT EXISTS idx_bookmarks_user ON bookmarks(user_id)",
+    // store_products — crawl architecture columns
+    "ALTER TABLE store_products ADD COLUMN crawl_mode TEXT DEFAULT 'deal'",
+    "ALTER TABLE store_products ADD COLUMN is_on_deal INTEGER DEFAULT 1",
+    "ALTER TABLE store_products ADD COLUMN external_product_id TEXT",
+    "CREATE INDEX IF NOT EXISTS idx_sp_external_id ON store_products(store_id, external_product_id)",
+    "CREATE INDEX IF NOT EXISTS idx_sp_crawl_mode ON store_products(crawl_mode, is_active)",
+    // shopping_lists — order history tracking
+    "ALTER TABLE shopping_lists ADD COLUMN last_compared_at DATETIME",
+    "ALTER TABLE shopping_lists ADD COLUMN last_order_store_id TEXT REFERENCES stores(id)",
+    "ALTER TABLE shopping_lists ADD COLUMN last_order_total REAL",
+    "ALTER TABLE shopping_lists ADD COLUMN last_ordered_at DATETIME",
   ];
 
   for (const sql of migrations) {
