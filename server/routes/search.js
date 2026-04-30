@@ -292,4 +292,15 @@ router.get("/autocomplete", (req, res) => {
   });
 });
 
+router.get("/suggest-index", async (req, res) => {
+  try {
+    const { getCachedSuggestIndex, generateSuggestIndex } = require("../../crawler/fts-rebuild");
+    let idx = getCachedSuggestIndex();
+    if (!idx) idx = await generateSuggestIndex();
+    res.json(idx);
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
 module.exports = router;

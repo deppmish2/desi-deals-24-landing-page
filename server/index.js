@@ -510,6 +510,9 @@ if (require.main === module) {
       const { startScheduler } = require("../crawler/scheduler");
       startScheduler(db);
     }
+
+    const { drainPendingCrawls } = require("../crawler/on-demand-crawl");
+    drainPendingCrawls().catch(err => console.error("[startup] drainPendingCrawls error:", err));
   });
 }
 
