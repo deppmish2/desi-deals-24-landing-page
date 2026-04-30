@@ -19,7 +19,7 @@ npm start                                 # prod server
 npm run dev                               # backend dev (auto-reload)
 cd client && npm run dev                  # frontend dev (:5173 → proxies /api to :3000)
 npm run build:client                      # build frontend
-rm data/desiDeals24.db && node -e "require('./server/db')"  # reset DB
+DB_FILE=data/fresh.db node -e "require('./server/db')"  # reset DB (creates fresh SQLite)
 ```
 
 ## Architecture
@@ -59,7 +59,7 @@ rm data/desiDeals24.db && node -e "require('./server/db')"  # reset DB
 - **DB is async (libsql/Turso)** — always `await` DB calls. `db.prepare().get/all/run()` return Promises. Route handlers must be `async` with `try/catch/next(err)`. Test shim is sync so tests pass either way — don't be fooled.
 - **No Playwright/Puppeteer** — node-fetch + Cheerio only.
 - **Price parser** handles `3.29` (Shopify) and `3,29` (WooCommerce). Don't simplify.
-- **Local DB** `./data/prod_local.db` — production data. `desiDeals24.db` is a dev fallback.
+- **Local DB** `./data/prod_local.db` — production data snapshot. Run with `DB_FILE=data/prod_local.db npm run dev`.
 
 ## Known Issues
 - **Grocera** — `/category/deals` lazy-loads JS; Cheerio gets ~1–3 deals. Playwright would fix.

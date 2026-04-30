@@ -29,7 +29,7 @@ Edit `.env` if needed (defaults work for local development):
 | Variable                 | Default                  | Description                                          |
 | ------------------------ | ------------------------ | ---------------------------------------------------- |
 | `PORT`                   | `3000`                   | Express server port                                  |
-| `DB_PATH`                | `./data/desiDeals24.db`  | SQLite database file                                 |
+| `DB_FILE`                | `./data/prod_local.db`   | Local SQLite DB (overrides Turso when set)           |
 | `TURSO_DATABASE_URL`     | —                        | Remote Turso/libsql database URL                     |
 | `TURSO_AUTH_TOKEN`       | —                        | Turso auth token                                     |
 | `ADMIN_SECRET`           | `changeme-in-production` | Bearer token for admin endpoints                     |
