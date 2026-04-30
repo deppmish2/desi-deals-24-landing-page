@@ -829,6 +829,10 @@ async function runCrawl(db, options = {}) {
       },
     });
 
+    require("./fts-rebuild").rebuildAll().catch(err =>
+      console.error("[crawl] fts-rebuild error:", err.message)
+    );
+
     return {
       runId,
       crawlDate,
