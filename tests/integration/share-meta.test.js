@@ -57,7 +57,7 @@ function buildServerApp(dbMock) {
   const serverIndexPath = require.resolve("../../server/index");
   const dependentModules = [
     "../../server/index",
-    "../../server/routes/deals",
+    "../../server/routes/store-products",
     "../../server/routes/auth",
     "../../server/routes/admin",
     "../../server/routes/admin-dashboard",

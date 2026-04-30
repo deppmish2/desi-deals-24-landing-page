@@ -65,7 +65,7 @@ function buildAppWithDb(dbMock) {
   const dbModulePath = require.resolve("../../server/db");
 
   const routeModules = [
-    "../../server/routes/deals",
+    "../../server/routes/store-products",
     "../../server/routes/stores",
     "../../server/routes/categories",
     "../../server/routes/contact",
@@ -101,7 +101,7 @@ function buildAppWithDb(dbMock) {
   };
 
   try {
-    const dealsRouter = require("../../server/routes/deals");
+    const dealsRouter = require("../../server/routes/store-products");
     const storesRouter = require("../../server/routes/stores");
     const categoriesRouter = require("../../server/routes/categories");
     const contactRouter = require("../../server/routes/contact");

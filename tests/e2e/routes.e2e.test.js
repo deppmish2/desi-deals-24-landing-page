@@ -250,6 +250,10 @@ test("lists + recommendation + canonical/search route e2e", async () => {
     2.7,
   );
 
+  db.prepare(
+    `INSERT INTO canonical_products (id, canonical_name, category, verified) VALUES (?, ?, ?, 1)`,
+  ).run("cp-toor-dal", "Toor Dal", "Lentils & Pulses");
+
   await canonicalizeDeals(db, { runId: "run-1" });
 
   const app = buildAppWithDb(db);
