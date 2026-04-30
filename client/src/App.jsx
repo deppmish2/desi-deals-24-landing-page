@@ -9,12 +9,16 @@ import {
 import AdLandingPage from "./pages/AdLandingPage";
 import DealsPage from "./pages/DealsPage";
 import { initGoogleAnalytics, trackPageView } from "./utils/analytics";
+import { useCart } from "./hooks/useCart";
+import { CartContext } from "./hooks/CartContext";
 
 const OAuthCallbackPage = lazy(() => import("./pages/OAuthCallbackPage"));
 const SavedDealsPage = lazy(() => import("./pages/SavedDealsPage"));
 const DealSharePage = lazy(() => import("./pages/DealSharePage"));
 const AdminPage = lazy(() => import("./landing/AdminPage"));
 const FeedbackWidget = lazy(() => import("./components/FeedbackWidget"));
+const ListPage = lazy(() => import("./pages/ListPage"));
+const ComparePage = lazy(() => import("./pages/ComparePage"));
 
 class ErrorBoundary extends React.Component {
   constructor(props) {
@@ -98,6 +102,8 @@ function AppShell() {
           <Route path="/deal/:dealId" element={<DealsPage />} />
           <Route path="/share/deal/:dealId" element={<DealSharePage />} />
           <Route path="/saved" element={<SavedDealsPage />} />
+          <Route path="/list" element={<ListPage />} />
+          <Route path="/list/:id/compare" element={<ComparePage />} />
           <Route path="/admin" element={<AdminPage />} />
           <Route
             path="/oauth/:provider/callback"
@@ -112,9 +118,12 @@ function AppShell() {
 }
 
 export default function App() {
+  const cart = useCart();
   return (
     <ErrorBoundary>
-      <AppShell />
+      <CartContext.Provider value={cart}>
+        <AppShell />
+      </CartContext.Provider>
     </ErrorBoundary>
   );
 }
