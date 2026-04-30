@@ -151,3 +151,64 @@ test("GET /api/v1/catalog?q= filters by product name", async () => {
   assert.equal(res.json.data.length, 1);
   assert.equal(res.json.data[0].canonical_id, "c1");
 });
+
+test("GET /api/v1/catalog/suggest returns products, categories, stores grouped", async () => {
+  const { db } = createTestDb();
+  seed(db);
+  const app = buildAppWithDb(db);
+  const api = await startServer(app);
+
+  const res = await api.request("/api/v1/catalog/suggest?q=toor");
+  assert.equal(res.status, 200);
+
+  const { products, categories, stores } = res.json;
+  assert.ok(Array.isArray(products));
+  assert.ok(Array.isArray(categories));
+  assert.ok(Array.isArray(stores));
+
+  // "Toor Dal 500g" matches query "toor"
+  assert.ok(products.some(p => p.canonical_id === "c1"));
+  // "Lentils & Pulses" does not match "toor" — no category match expected
+  assert.equal(categories.length, 0);
+  // no store name contains "toor"
+  assert.equal(stores.length, 0);
+
+  // max 3 per group
+  assert.ok(products.length <= 3);
+});
+
+test("GET /api/v1/catalog/suggest matches categories and stores", async () => {
+  const { db } = createTestDb();
+  seed(db);
+  const app = buildAppWithDb(db);
+  const api = await startServer(app);
+
+  // "rice" matches canonical_name "Basmati Rice 1kg", category "Rice & Grains", no store
+  const res = await api.request("/api/v1/catalog/suggest?q=rice");
+  assert.equal(res.status, 200);
+  assert.ok(res.json.products.some(p => p.canonical_id === "c2"));
+  assert.ok(res.json.categories.some(c => c.name === "Rice & Grains"));
+});
+
+test("GET /api/v1/catalog/suggest returns empty groups for no match", async () => {
+  const { db } = createTestDb();
+  seed(db);
+  const app = buildAppWithDb(db);
+  const api = await startServer(app);
+
+  const res = await api.request("/api/v1/catalog/suggest?q=zzznomatch");
+  assert.equal(res.status, 200);
+  assert.equal(res.json.products.length, 0);
+  assert.equal(res.json.categories.length, 0);
+  assert.equal(res.json.stores.length, 0);
+});
+
+test("GET /api/v1/catalog/suggest returns 400 without q param", async () => {
+  const { db } = createTestDb();
+  seed(db);
+  const app = buildAppWithDb(db);
+  const api = await startServer(app);
+
+  const res = await api.request("/api/v1/catalog/suggest");
+  assert.equal(res.status, 400);
+});

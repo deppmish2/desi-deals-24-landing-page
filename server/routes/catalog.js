@@ -118,4 +118,40 @@ router.get("/", (req, res) => {
   });
 });
 
+router.get("/suggest", (req, res) => {
+  const q = String(req.query.q || "").trim();
+  if (!q) return res.status(400).json({ error: "q is required" });
+
+  const like = `%${q}%`;
+
+  const products = db.prepare(`
+    SELECT cp.id AS canonical_id, cp.canonical_name
+    FROM canonical_products cp
+    WHERE cp.canonical_name LIKE ?
+      AND EXISTS (
+        SELECT 1 FROM store_product_mappings spm
+        JOIN store_products sp ON sp.id = spm.deal_id AND sp.is_active = 1
+        WHERE spm.canonical_id = cp.id
+      )
+    LIMIT 3
+  `).all(like);
+
+  const categories = db.prepare(`
+    SELECT DISTINCT cp.category AS name
+    FROM canonical_products cp
+    WHERE cp.category LIKE ?
+      AND cp.category IS NOT NULL
+    LIMIT 3
+  `).all(like);
+
+  const stores = db.prepare(`
+    SELECT id AS store_id, name
+    FROM stores
+    WHERE name LIKE ?
+    LIMIT 3
+  `).all(like);
+
+  res.json({ products, categories, stores });
+});
+
 module.exports = router;
