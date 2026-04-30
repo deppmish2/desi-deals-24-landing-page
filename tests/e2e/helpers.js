@@ -82,6 +82,8 @@ function buildAppWithDb(dbMock) {
     "../../server/routes/inbound",
     "../../server/routes/admin",
     "../../server/routes/catalog",
+    "../../server/routes/compare",
+    "../../server/routes/orders",
   ];
 
   const serviceModules = [
@@ -91,6 +93,7 @@ function buildAppWithDb(dbMock) {
     "../../server/services/alert-evaluator",
     "../../server/services/alert-notifier",
     "../../server/services/list-parser",
+    "../../server/services/cart-comparator",
   ];
 
   for (const rel of [...routeModules, ...serviceModules]) {
@@ -119,6 +122,8 @@ function buildAppWithDb(dbMock) {
     const inboundRouter = require("../../server/routes/inbound");
     const adminRouter = require("../../server/routes/admin");
     const catalogRouter = require("../../server/routes/catalog");
+    const compareRouter = require("../../server/routes/compare");
+    const ordersRouter  = require("../../server/routes/orders");
 
     const app = express();
     app.use(express.json());
@@ -135,6 +140,8 @@ function buildAppWithDb(dbMock) {
     app.use("/api/v1/inbound", inboundRouter);
     app.use("/api/v1/admin", adminRouter);
     app.use("/api/v1/catalog", catalogRouter);
+    app.use("/api/v1/compare", compareRouter);
+    app.use("/api/v1/orders", ordersRouter);
     return app;
   } finally {
     if (previousDb) {

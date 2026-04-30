@@ -27,6 +27,8 @@ const waitlistRouter = require("./routes/waitlist");
 const healthRouter = require("./routes/health");
 const bookmarksRouter = require("./routes/bookmarks");
 const catalogRouter = require("./routes/catalog");
+const compareRouter = require("./routes/compare");
+const ordersRouter  = require("./routes/orders");
 const {
   productionLikeRuntime,
   smtpConfigured,
@@ -78,6 +80,8 @@ app.use("/api/v1/waitlist", waitlistRouter);
 app.use("/api/v1/health", healthRouter);
 app.use("/api/v1/bookmarks", bookmarksRouter);
 app.use("/api/v1/catalog", catalogRouter);
+app.use("/api/v1/compare", compareRouter);
+app.use("/api/v1/orders", ordersRouter);
 
 app.get("/api/v1/member-count", async (_req, res) => {
   try {
