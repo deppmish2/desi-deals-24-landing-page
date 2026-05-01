@@ -171,7 +171,7 @@ router.get("/:id/brands", async (req, res, next) => {
     if (!row) return res.status(404).json({ error: "Not found" });
     let brands = [];
     try { brands = JSON.parse(row.brand_slots || "[]"); } catch { brands = []; }
-    res.json({ data: brands.filter(Boolean) });
+    res.json({ data: brands.flat().filter(Boolean) });
   } catch (err) {
     next(err);
   }
