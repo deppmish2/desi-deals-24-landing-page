@@ -76,9 +76,11 @@ function BrandPickerSheet({ canonicalId, canonicalName, currentBrand, anyBrand, 
   const [loadError, setLoadError] = useState(false);
 
   useEffect(() => {
+    let cancelled = false;
     fetchProductBrands(canonicalId)
-      .then(data => setBrands(data.data || []))
-      .catch(() => { setLoadError(true); setBrands([]); });
+      .then(data => { if (!cancelled) setBrands(data.data || []); })
+      .catch(() => { if (!cancelled) { setLoadError(true); setBrands([]); } });
+    return () => { cancelled = true; };
   }, [canonicalId]);
 
   return createPortal(
@@ -250,6 +252,7 @@ function CartItemCard({ item, index, onRemove, onDecrement, onIncrement, onBrand
 export default function CartPage() {
   const { items, removeItem, updateItem, clearCart, setBrand } = useContext(CartContext);
   const [finding, setFinding] = useState(false);
+  const [findError, setFindError] = useState(null);
   const navigate = useNavigate();
   const session = getAuthSession();
 
@@ -270,19 +273,19 @@ export default function CartPage() {
       return;
     }
     setFinding(true);
+    setFindError(null);
     try {
-      const listsRes = await fetchLists();
-      const listsData = listsRes.ok ? await listsRes.json() : null;
+      const listsData = await fetchLists();
       let list = listsData?.data?.[0];
       if (!list) {
-        const createRes = await createList("My Shopping List");
-        const createData = await createRes.json();
+        const createData = await createList("My Shopping List");
         list = createData.data || createData;
       }
       await mergeCartIntoList(list.id, items);
       clearCart();
       navigate(`/compare/${list.id}`);
     } catch (err) {
+      setFindError("Something went wrong. Please try again.");
       console.error("Find best price error:", err);
     } finally {
       setFinding(false);
@@ -365,6 +368,9 @@ export default function CartPage() {
             </span>
             <span style={{ fontSize: 11, color: "#94a3b8" }}>Prices shown at comparison →</span>
           </div>
+          {findError && (
+            <p style={{ margin: "0 0 8px", fontSize: 12, color: "#ef4444", textAlign: "center" }}>{findError}</p>
+          )}
           <button
             onClick={handleFindBestPrice}
             disabled={!items.length || finding}
