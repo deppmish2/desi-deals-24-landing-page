@@ -1,164 +1,143 @@
 import React, { useEffect, useState } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { runComparison, cartTransfer } from "../utils/api";
+import StoreComparisonCard from "../components/comparison/StoreComparisonCard";
 
-function StoreCard({ result, onOrder, ordering }) {
-  const { store, confirmed_total, estimated_total, shipping_cost, coverage_pct, items } = result;
-  const total = ((estimated_total ?? confirmed_total ?? 0) + (shipping_cost ?? 0));
+const SORT_OPTIONS = [
+  { key: "confirmed_total", label: "Best value" },
+  { key: "estimated_total", label: "Confirmed" },
+  { key: "coverage_pct",    label: "Coverage" },
+];
 
-  return (
-    <div className="bg-white rounded-2xl border border-gray-200 p-4 mb-3 shadow-sm">
-      <div className="flex items-center justify-between mb-3">
-        <div>
-          <p className="font-bold text-gray-900">{store.name}</p>
-          {coverage_pct != null && (
-            <p className="text-xs text-gray-400 mt-0.5">
-              {Math.round(coverage_pct * 100)}% items available
-            </p>
-          )}
-        </div>
-        <div className="text-right">
-          <p className="text-2xl font-bold text-orange-600">€{total.toFixed(2)}</p>
-          {shipping_cost > 0 && (
-            <p className="text-xs text-gray-400">incl. €{shipping_cost.toFixed(2)} shipping</p>
-          )}
-        </div>
-      </div>
-
-      {(items || []).length > 0 && (
-        <ul className="text-xs text-gray-500 space-y-1 mb-3 border-t border-gray-100 pt-3">
-          {(items || []).slice(0, 5).map((item, i) => (
-            <li key={i} className="flex justify-between">
-              <span className={item.status === "estimated" ? "text-amber-600" : ""}>
-                {item.name || item.raw_item_text}
-                {item.status === "estimated" ? " (est.)" : ""}
-              </span>
-              <span className="font-medium">{item.price != null ? `€${item.price.toFixed(2)}` : "—"}</span>
-            </li>
-          ))}
-          {(items || []).length > 5 && (
-            <li className="text-gray-300">+{(items || []).length - 5} more items</li>
-          )}
-        </ul>
-      )}
-
-      <button
-        onClick={() => onOrder(store.id)}
-        disabled={ordering === store.id}
-        className="w-full bg-orange-500 text-white font-semibold text-sm py-2.5 rounded-xl hover:bg-orange-600 disabled:opacity-50 transition-colors"
-      >
-        {ordering === store.id ? "Redirecting…" : `Order from ${store.name} →`}
-      </button>
-    </div>
-  );
+function sortStores(stores, key) {
+  return [...stores].sort((a, b) => {
+    if (key === "coverage_pct") return (b.coverage_pct ?? 0) - (a.coverage_pct ?? 0);
+    return (a[key] ?? Infinity) - (b[key] ?? Infinity);
+  });
 }
 
 export default function ComparePage() {
-  const { id: listId } = useParams();
+  const { id } = useParams();
   const navigate = useNavigate();
-  const [results, setResults] = useState(null);
+  const [stores, setStores] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
-  const [ordering, setOrdering] = useState(null);
-  const [sortBy, setSortBy] = useState("estimated_total");
+  const [sort, setSort] = useState("confirmed_total");
+  const [itemCount, setItemCount] = useState(0);
 
   useEffect(() => {
-    runComparison(listId)
-      .then(async (res) => {
-        if (!res.ok) {
-          const err = await res.json().catch(() => ({}));
-          setError(err.error || "Failed to compare");
-          setLoading(false);
-          return;
-        }
-        const data = await res.json();
-        setResults(data);
-        setLoading(false);
+    if (!id) return;
+    setLoading(true);
+    runComparison(id)
+      .then(data => {
+        const raw = data.stores || data.data || data || [];
+        setStores(raw);
+        if (raw[0]?.coverage?.total) setItemCount(raw[0].coverage.total);
+        else if (raw[0]?.items?.length) setItemCount(raw[0].items.length);
       })
-      .catch(err => { setError(err.message); setLoading(false); });
-  }, [listId]);
+      .catch(err => setError(err.message))
+      .finally(() => setLoading(false));
+  }, [id]);
 
-  async function handleOrder(storeId) {
-    setOrdering(storeId);
+  const sorted = sortStores(stores, sort);
+
+  const handleShop = async (store) => {
     try {
-      const res = await cartTransfer(listId, storeId, results?.items);
-      const data = await res.json();
-      if (data.cart_url) {
-        window.location.href = data.cart_url;
-      } else {
-        window.open(data.store_url || "#", "_blank");
-        setOrdering(null);
-      }
+      await cartTransfer(id, store.store_id, store.items || []);
     } catch {
-      setOrdering(null);
+      // best-effort; navigate regardless
     }
-  }
-
-  const sorted = [...(results?.stores || [])].sort((a, b) => {
-    const aTotal = (a.estimated_total ?? a.confirmed_total ?? 999) + (a.shipping_cost ?? 0);
-    const bTotal = (b.estimated_total ?? b.confirmed_total ?? 999) + (b.shipping_cost ?? 0);
-    if (sortBy === "estimated_total") return aTotal - bTotal;
-    if (sortBy === "confirmed_total") {
-      return ((a.confirmed_total ?? 999) + (a.shipping_cost ?? 0)) - ((b.confirmed_total ?? 999) + (b.shipping_cost ?? 0));
-    }
-    if (sortBy === "coverage") return (b.coverage_pct ?? 0) - (a.coverage_pct ?? 0);
-    return 0;
-  });
-
-  if (loading) return (
-    <div className="p-8 text-center">
-      <div className="text-gray-400 text-sm mb-2">Comparing prices across stores…</div>
-      <div className="w-8 h-8 border-2 border-orange-500 border-t-transparent rounded-full animate-spin mx-auto" />
-    </div>
-  );
-
-  if (error) return (
-    <div className="max-w-2xl mx-auto px-4 py-8 text-center">
-      <p className="text-red-500 mb-4">{error}</p>
-      <button onClick={() => navigate("/list")} className="text-orange-600 text-sm">← Back to list</button>
-    </div>
-  );
+    if (store.store_url) window.open(store.store_url, "_blank", "noopener");
+  };
 
   return (
-    <div className="max-w-2xl mx-auto px-4 py-8">
-      <div className="flex items-center justify-between mb-6">
-        <button onClick={() => navigate("/list")} className="text-sm text-orange-600 hover:text-orange-700">← Back to list</button>
-        <h1 className="text-xl font-bold text-gray-900">Price Comparison</h1>
+    <div style={{
+      background: "radial-gradient(circle at top, #ffffff 0%, #f8fbff 32%, #f3f6fb 100%)",
+      minHeight: "100vh",
+      fontFamily: "'DM Sans', system-ui, sans-serif",
+    }}>
+      {/* Header */}
+      <div style={{
+        background: "#fff", borderBottom: "1px solid #f1f5f9",
+        position: "sticky", top: 0, zIndex: 50,
+        padding: "14px 16px", display: "flex", alignItems: "center", gap: 10,
+      }}>
+        <button
+          type="button"
+          onClick={() => navigate("/cart")}
+          style={{ background: "none", border: "none", cursor: "pointer", fontSize: 16, color: "#94a3b8", padding: 0 }}
+          aria-label="Back to cart"
+        >←</button>
+        <div style={{ flex: 1 }}>
+          <p style={{ margin: 0, fontSize: 16, fontWeight: 700, color: "#1e293b" }}>Compare prices</p>
+          {itemCount > 0 && (
+            <p style={{ margin: "1px 0 0", fontSize: 11, color: "#94a3b8" }}>
+              {itemCount} item{itemCount !== 1 ? "s" : ""}
+            </p>
+          )}
+        </div>
       </div>
 
-      {results?.freshness === "stale" && (
-        <div className="bg-amber-50 text-amber-700 text-xs rounded-xl px-3 py-2 mb-4 border border-amber-100">
-          Prices may be updating — results could be slightly stale.
+      {/* Sort pills */}
+      <div style={{ background: "#fff", borderBottom: "1px solid #f1f5f9", padding: "10px 16px" }}>
+        <div className="max-w-2xl mx-auto flex gap-2">
+          {SORT_OPTIONS.map(opt => (
+            <button
+              key={opt.key}
+              type="button"
+              onClick={() => setSort(opt.key)}
+              aria-pressed={sort === opt.key}
+              style={{
+                padding: "6px 14px", borderRadius: 99, border: "none", cursor: "pointer",
+                fontSize: 12, fontWeight: sort === opt.key ? 700 : 500,
+                background: sort === opt.key ? "#16a34a" : "#f1f5f9",
+                color: sort === opt.key ? "#fff" : "#64748b",
+              }}
+            >
+              {opt.label}
+            </button>
+          ))}
         </div>
-      )}
+      </div>
 
-      <div className="flex gap-2 mb-5">
-        {[
-          { key: "estimated_total", label: "Best price" },
-          { key: "confirmed_total", label: "In stock" },
-          { key: "coverage", label: "Coverage" },
-        ].map(({ key, label }) => (
-          <button
-            key={key}
-            onClick={() => setSortBy(key)}
-            className={`px-3 py-1.5 rounded-full border text-xs font-semibold transition-colors ${
-              sortBy === key
-                ? "bg-orange-500 text-white border-orange-500"
-                : "bg-white text-gray-600 border-gray-200 hover:border-orange-300"
-            }`}
-          >
-            {label}
-          </button>
+      {/* Content */}
+      <div className="max-w-2xl mx-auto px-4 py-4" style={{ display: "flex", flexDirection: "column", gap: 12 }}>
+        {loading && (
+          <div style={{ display: "flex", flexDirection: "column", alignItems: "center", padding: 48, gap: 12 }}>
+            <div style={{ width: 28, height: 28, borderRadius: "50%", border: "3px solid #16a34a", borderTopColor: "transparent", animation: "spin 0.7s linear infinite" }} role="status" aria-label="Loading" />
+            <p style={{ margin: 0, fontSize: 14, color: "#94a3b8" }}>Comparing prices…</p>
+          </div>
+        )}
+
+        {error && (
+          <div style={{ textAlign: "center", padding: 48 }}>
+            <p style={{ fontSize: 14, color: "#ef4444", marginBottom: 16 }}>{error}</p>
+            <button
+              type="button"
+              onClick={() => window.location.reload()}
+              style={{ padding: "10px 24px", background: "#16a34a", color: "#fff", border: "none", borderRadius: 14, cursor: "pointer", fontSize: 14, fontWeight: 600 }}
+            >
+              Try again
+            </button>
+          </div>
+        )}
+
+        {!loading && !error && sorted.length === 0 && (
+          <p style={{ fontSize: 14, color: "#94a3b8", textAlign: "center", padding: 48 }}>
+            No stores found for this cart.
+          </p>
+        )}
+
+        {!loading && !error && sorted.map(store => (
+          <StoreComparisonCard
+            key={store.store_id}
+            store={store}
+            onShop={handleShop}
+          />
         ))}
       </div>
 
-      {sorted.length === 0 ? (
-        <p className="text-gray-400 text-sm text-center py-12">No stores could price your list yet.</p>
-      ) : (
-        sorted.map(r => (
-          <StoreCard key={r.store.id} result={r} onOrder={handleOrder} ordering={ordering} />
-        ))
-      )}
+      <style>{`@keyframes spin { to { transform: rotate(360deg); } }`}</style>
     </div>
   );
 }
