@@ -5,7 +5,7 @@
 | | |
 |---|---|
 | **Engine** | Turso (libSQL) — remote production, SQLite file for local dev |
-| **Local path** | `./data/desiDeals24.db` |
+| **Local path** | `./data/prod_local.db` (set via `DB_FILE` env var) |
 | **Module** | `server/db/index.js` |
 | **Env vars** | `TURSO_DATABASE_URL`, `TURSO_AUTH_TOKEN` (or `DESI_DEALS_DB_*` prefixed variants) |
 

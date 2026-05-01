@@ -749,5 +749,59 @@ router.get("/same-product-other-stores", async (req, res, next) => {
   }
 });
 
+// GET /api/v1/store-products/suggest?q=<query>
+router.get("/suggest", (req, res) => {
+  const startedAt = Date.now();
+  const q = (req.query.q || "").trim();
+  if (q.length < 2) {
+    res.json({ suggestions: [] });
+    trackEvent(db, "search.suggest", {
+      route: req.originalUrl,
+      payload: { duration_ms: Date.now() - startedAt, query_length: q.length, result_count: 0 },
+    });
+    return;
+  }
+
+  const rows = db
+    .prepare(
+      `SELECT product_name, MAX(crawl_timestamp) AS latest_seen
+       FROM store_products
+       WHERE product_name LIKE ?
+         AND is_active = 1
+         AND lower(coalesce(availability, '')) = 'in_stock'
+       GROUP BY lower(trim(product_name))
+       ORDER BY latest_seen DESC
+       LIMIT 8`,
+    )
+    .all(`%${q}%`);
+
+  const suggestions = rows.map((r) => r.product_name);
+  res.json({ suggestions });
+  trackEvent(db, "search.suggest", {
+    route: req.originalUrl,
+    payload: { duration_ms: Date.now() - startedAt, query_length: q.length, result_count: suggestions.length },
+  });
+});
+
+// GET /api/v1/store-products/:id
+router.get("/:id", (req, res) => {
+  const row = db
+    .prepare(
+      `SELECT d.*, s.name AS store_name, s.url AS store_url
+       FROM store_products d JOIN stores s ON d.store_id = s.id
+       WHERE d.id = ?`,
+    )
+    .get(req.params.id);
+
+  if (!row) return res.status(404).json({ error: "Product not found" });
+
+  res.json({
+    ...row,
+    canonical_id: row.canonical_id || null,
+    store: { id: row.store_id, name: row.store_name, url: row.store_url },
+    bulk_pricing: row.bulk_pricing ? JSON.parse(row.bulk_pricing) : null,
+  });
+});
+
 module.exports = router;
 module.exports.serializeDeal = serializeDeal;

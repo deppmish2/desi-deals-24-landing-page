@@ -398,3 +398,55 @@ export function fetchSameProductOtherStores(canonicalId, storeId) {
     store_id: storeId,
   });
 }
+
+// ── Shopping lists ────────────────────────────────────────────────────────────
+
+export function fetchLists() {
+  return authRequest("/lists");
+}
+
+export async function createList(name) {
+  return authRequest("/lists", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ name }),
+  });
+}
+
+export async function fetchList(listId) {
+  return authRequest(`/lists/${listId}`);
+}
+
+export async function addListItem(listId, item) {
+  return authRequest(`/lists/${listId}/items`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(item),
+  });
+}
+
+export async function removeListItem(listId, itemId) {
+  return authRequest(`/lists/${listId}/items/${itemId}`, { method: "DELETE" });
+}
+
+export async function mergeCartIntoList(listId, cartItems) {
+  return Promise.all(cartItems.map(item => addListItem(listId, item)));
+}
+
+// ── Comparison ────────────────────────────────────────────────────────────────
+
+export async function runComparison(listId) {
+  return authRequest(`/lists/${listId}/recommend`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({}),
+  });
+}
+
+export async function cartTransfer(listId, storeId, items) {
+  return authRequest(`/lists/${listId}/cart-transfer`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ store_id: storeId, items }),
+  });
+}

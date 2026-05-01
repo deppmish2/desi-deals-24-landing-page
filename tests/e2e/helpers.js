@@ -47,10 +47,14 @@ function createSqliteWrapper(db) {
 
 function createTestDb() {
   const raw = new DatabaseSync(":memory:");
+  // node:sqlite's built-in SQLite does not include the FTS5 extension,
+  // so strip all CREATE VIRTUAL TABLE ... USING fts5(...) blocks before
+  // running the schema. Those tables are rebuilt by the crawler hook and
+  // are not needed in unit/e2e tests.
   const schema = fs.readFileSync(
     path.join(__dirname, "../../server/db/schema.sql"),
     "utf8",
-  );
+  ).replace(/CREATE VIRTUAL TABLE[\s\S]*?USING fts5[\s\S]*?\);/gi, "");
   raw.exec(schema);
   return { raw, db: createSqliteWrapper(raw) };
 }
@@ -65,7 +69,7 @@ function buildAppWithDb(dbMock) {
   const dbModulePath = require.resolve("../../server/db");
 
   const routeModules = [
-    "../../server/routes/deals",
+    "../../server/routes/store-products",
     "../../server/routes/stores",
     "../../server/routes/categories",
     "../../server/routes/contact",
@@ -77,6 +81,9 @@ function buildAppWithDb(dbMock) {
     "../../server/routes/search",
     "../../server/routes/inbound",
     "../../server/routes/admin",
+    "../../server/routes/catalog",
+    "../../server/routes/compare",
+    "../../server/routes/orders",
   ];
 
   const serviceModules = [
@@ -86,6 +93,7 @@ function buildAppWithDb(dbMock) {
     "../../server/services/alert-evaluator",
     "../../server/services/alert-notifier",
     "../../server/services/list-parser",
+    "../../server/services/cart-comparator",
   ];
 
   for (const rel of [...routeModules, ...serviceModules]) {
@@ -101,7 +109,7 @@ function buildAppWithDb(dbMock) {
   };
 
   try {
-    const dealsRouter = require("../../server/routes/deals");
+    const dealsRouter = require("../../server/routes/store-products");
     const storesRouter = require("../../server/routes/stores");
     const categoriesRouter = require("../../server/routes/categories");
     const contactRouter = require("../../server/routes/contact");
@@ -113,6 +121,9 @@ function buildAppWithDb(dbMock) {
     const searchRouter = require("../../server/routes/search");
     const inboundRouter = require("../../server/routes/inbound");
     const adminRouter = require("../../server/routes/admin");
+    const catalogRouter = require("../../server/routes/catalog");
+    const compareRouter = require("../../server/routes/compare");
+    const ordersRouter  = require("../../server/routes/orders");
 
     const app = express();
     app.use(express.json());
@@ -128,6 +139,9 @@ function buildAppWithDb(dbMock) {
     app.use("/api/v1/search", searchRouter);
     app.use("/api/v1/inbound", inboundRouter);
     app.use("/api/v1/admin", adminRouter);
+    app.use("/api/v1/catalog", catalogRouter);
+    app.use("/api/v1/compare", compareRouter);
+    app.use("/api/v1/orders", ordersRouter);
     return app;
   } finally {
     if (previousDb) {

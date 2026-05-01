@@ -9,6 +9,14 @@ const path = require("path");
 
 const db = require("./db");
 const storeProductsRouter = require("./routes/store-products");
+const storesRouter = require("./routes/stores");
+const categoriesRouter = require("./routes/categories");
+const profileRouter = require("./routes/profile");
+const listsRouter = require("./routes/lists");
+const recommendRouter = require("./routes/recommend");
+const canonicalRouter = require("./routes/canonical");
+const searchRouter = require("./routes/search");
+const inboundRouter = require("./routes/inbound");
 const authRouter = require("./routes/auth");
 const adminRouter = require("./routes/admin");
 const adminDashboardRouter = require("./routes/admin-dashboard");
@@ -18,6 +26,9 @@ const contactRouter = require("./routes/contact");
 const waitlistRouter = require("./routes/waitlist");
 const healthRouter = require("./routes/health");
 const bookmarksRouter = require("./routes/bookmarks");
+const catalogRouter = require("./routes/catalog");
+const compareRouter = require("./routes/compare");
+const ordersRouter  = require("./routes/orders");
 const {
   productionLikeRuntime,
   smtpConfigured,
@@ -50,6 +61,14 @@ app.use("/api", async (req, res, next) => {
 
 // ── API Routes ────────────────────────────────────────────────────────────────
 app.use("/api/v1/store-products", storeProductsRouter);
+app.use("/api/v1/stores", storesRouter);
+app.use("/api/v1/categories", categoriesRouter);
+app.use("/api/v1/me", profileRouter);
+app.use("/api/v1/lists", listsRouter);
+app.use("/api/v1/lists", recommendRouter);
+app.use("/api/v1/canonical", canonicalRouter);
+app.use("/api/v1/search", searchRouter);
+app.use("/api/v1/inbound", inboundRouter);
 app.use("/api/v1/auth", authRouter);
 app.use("/api/auth", authRouter); // compatibility for older frontend builds
 app.use("/api/v1/admin", adminRouter);
@@ -60,6 +79,9 @@ app.use("/api/v1/contact", contactRouter);
 app.use("/api/v1/waitlist", waitlistRouter);
 app.use("/api/v1/health", healthRouter);
 app.use("/api/v1/bookmarks", bookmarksRouter);
+app.use("/api/v1/catalog", catalogRouter);
+app.use("/api/v1/compare", compareRouter);
+app.use("/api/v1/orders", ordersRouter);
 
 app.get("/api/v1/member-count", async (_req, res) => {
   try {
@@ -433,7 +455,7 @@ app.get("/share/deal/:dealId", async (req, res, next) => {
       deal,
       sharePath: `/share/deal/${encodeURIComponent(String(deal.id))}`,
     });
-    return sendClientApp(res, { meta });
+    return sendDealShareRedirect(res, meta, resolveDealProductUrl(deal));
   } catch (error) {
     return next(error);
   }
@@ -494,6 +516,9 @@ if (require.main === module) {
       const { startScheduler } = require("../crawler/scheduler");
       startScheduler(db);
     }
+
+    const { drainPendingCrawls } = require("../crawler/on-demand-crawl");
+    drainPendingCrawls().catch(err => console.error("[startup] drainPendingCrawls error:", err));
   });
 }
 

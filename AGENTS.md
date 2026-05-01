@@ -53,7 +53,7 @@ npm run build:client
 **Reset the database (wipe all deals, re-seed stores):**
 
 ```bash
-rm data/desiDeals24.db && node -e "require('./server/db')"
+DB_FILE=data/fresh.db node -e "require('./server/db')"  # creates fresh SQLite
 ```
 
 ## Architecture
@@ -93,7 +93,7 @@ rm data/desiDeals24.db && node -e "require('./server/db')"
 - **better-sqlite3 is synchronous** — never `await` database calls. All `db.prepare().get/all/run()` calls are synchronous.
 - **No Playwright/Puppeteer** — crawlers use node-fetch + Cheerio only (no headless browser).
 - **Price parser handles two formats**: English dot-decimal (`3.29` from Shopify) and German comma-decimal (`3,29` from WooCommerce/custom sites). Do not simplify this logic.
-- **SQLite path** is relative: `./data/desiDeals24.db` — the `data/` directory must exist (it's gitignored but present locally).
+- **Local DB** is `./data/prod_local.db` — run with `DB_FILE=data/prod_local.db npm run dev`. The `data/` directory is gitignored but present locally.
 
 ## Known Issues
 

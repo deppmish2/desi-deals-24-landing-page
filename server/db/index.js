@@ -195,6 +195,55 @@ const ready = (async () => {
     "CREATE INDEX IF NOT EXISTS idx_queue_category ON entity_resolution_queue(category, status)",
     "ALTER TABLE canonical_products ADD COLUMN base_key TEXT",
     "CREATE INDEX IF NOT EXISTS idx_canonical_base_key ON canonical_products(base_key)",
+    `CREATE TABLE IF NOT EXISTS product_alerts (
+      id              TEXT PRIMARY KEY,
+      user_id         TEXT NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+      canonical_id    TEXT NOT NULL REFERENCES canonical_products(id),
+      store_id        TEXT REFERENCES stores(id),
+      alert_type      TEXT NOT NULL CHECK (alert_type IN ('price_below', 'back_in_stock')),
+      price_threshold REAL,
+      created_at      TEXT NOT NULL,
+      notified_at     TEXT
+    )`,
+    "CREATE INDEX IF NOT EXISTS idx_product_alerts_user ON product_alerts(user_id)",
+    "CREATE INDEX IF NOT EXISTS idx_product_alerts_canonical ON product_alerts(canonical_id, alert_type)",
+    `CREATE TABLE IF NOT EXISTS comparison_sessions (
+      id                    TEXT PRIMARY KEY,
+      user_id               TEXT NOT NULL REFERENCES users(id),
+      list_id               TEXT REFERENCES shopping_lists(id),
+      created_at            TEXT NOT NULL,
+      selected_store_id     TEXT REFERENCES stores(id),
+      order_intent_at       TEXT,
+      self_report_status    TEXT CHECK (self_report_status IN ('ordered','not_ordered','still_deciding')),
+      self_report_reason    TEXT,
+      items_all_available   INTEGER,
+      price_as_expected     INTEGER,
+      snapshot_json         TEXT NOT NULL
+    )`,
+    "CREATE INDEX IF NOT EXISTS idx_comp_sessions_user  ON comparison_sessions(user_id, created_at DESC)",
+    "CREATE INDEX IF NOT EXISTS idx_comp_sessions_list  ON comparison_sessions(list_id)",
+    "CREATE INDEX IF NOT EXISTS idx_comp_sessions_order ON comparison_sessions(user_id, order_intent_at DESC)",
+    `CREATE TABLE IF NOT EXISTS store_crawl_state (
+      store_id            TEXT PRIMARY KEY REFERENCES stores(id),
+      last_deal_crawl     TEXT,
+      last_catalog_crawl  TEXT,
+      catalog_cursor      TEXT,
+      crawl_status        TEXT CHECK (crawl_status IN ('idle','running','error')),
+      error_message       TEXT,
+      updated_at          TEXT NOT NULL
+    )`,
+    `CREATE TABLE IF NOT EXISTS pending_on_demand_crawls (
+      id            TEXT PRIMARY KEY,
+      canonical_id  TEXT NOT NULL,
+      user_id       TEXT NOT NULL,
+      queued_at     TEXT NOT NULL,
+      started_at    TEXT
+    )`,
+    "CREATE INDEX IF NOT EXISTS idx_on_demand_queued  ON pending_on_demand_crawls(queued_at)",
+    "CREATE INDEX IF NOT EXISTS idx_on_demand_started ON pending_on_demand_crawls(started_at)",
+    "ALTER TABLE shopping_lists ADD COLUMN status TEXT DEFAULT 'pending'",
+    "ALTER TABLE shopping_lists ADD COLUMN completed_store_id TEXT",
+    "ALTER TABLE shopping_lists ADD COLUMN completed_at DATETIME",
   ];
   for (const sql of alwaysMigrations) {
     try {
@@ -317,6 +366,26 @@ const ready = (async () => {
       UNIQUE(user_id, deal_id)
     )`,
     "CREATE INDEX IF NOT EXISTS idx_bookmarks_user ON bookmarks(user_id)",
+    // FTS5 virtual table — local SQLite only, not Turso
+    `CREATE VIRTUAL TABLE IF NOT EXISTS fts_canonicals USING fts5(
+      canonical_id,
+      canonical_name,
+      base_key,
+      aliases_text,
+      category,
+      brands_text
+    )`,
+    // store_products — crawl architecture columns
+    "ALTER TABLE store_products ADD COLUMN crawl_mode TEXT DEFAULT 'deal'",
+    "ALTER TABLE store_products ADD COLUMN is_on_deal INTEGER DEFAULT 1",
+    "ALTER TABLE store_products ADD COLUMN external_product_id TEXT",
+    "CREATE INDEX IF NOT EXISTS idx_sp_external_id ON store_products(store_id, external_product_id)",
+    "CREATE INDEX IF NOT EXISTS idx_sp_crawl_mode ON store_products(crawl_mode, is_active)",
+    // shopping_lists — order history tracking
+    "ALTER TABLE shopping_lists ADD COLUMN last_compared_at DATETIME",
+    "ALTER TABLE shopping_lists ADD COLUMN last_order_store_id TEXT REFERENCES stores(id)",
+    "ALTER TABLE shopping_lists ADD COLUMN last_order_total REAL",
+    "ALTER TABLE shopping_lists ADD COLUMN last_ordered_at DATETIME",
   ];
 
   for (const sql of migrations) {

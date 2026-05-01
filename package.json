@@ -7,6 +7,7 @@
     "start": "node server/index.js",
     "dev": "nodemon server/index.js",
     "crawl": "node crawler/index.js",
+    "crawl:mode2": "node scripts/mode2-crawl.js",
     "crawl:validate": "node scripts/crawl-validation.js",
     "fixture:er": "node scripts/generate-er-fixture.js",
     "build:client": "npm --prefix client run build",

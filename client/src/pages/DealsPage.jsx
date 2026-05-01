@@ -38,6 +38,8 @@ import {
 import { trackAnalyticsEvent } from "../utils/analytics";
 import { proxyDealImageUrl } from "../utils/images";
 import { buildDealPageUrl, buildWhatsAppDealShareUrl, buildWhatsAppShareUrl, buildWhatsAppSuspectDiscountShareText } from "../utils/share";
+import CartButton from "../components/CartButton";
+import { CartContext } from "../hooks/CartContext";
 
 const POST_AUTH_REDIRECT_STORAGE_KEY = "dd24_post_auth_redirect";
 const OAUTH_STATE_STORAGE_PREFIX = "dd24_oauth_state:";
@@ -1053,6 +1055,7 @@ function DealCard({
         })() : null}
 
         <div className="mt-auto flex items-center gap-2 pt-2">
+          <CartButton deal={deal} />
           <a
             href={resolveUrl(deal, deal.product_url)}
             target="_blank"
@@ -1833,6 +1836,7 @@ function Pagination({ page, totalPages, onChange }) {
 
 // ── Main page ─────────────────────────────────────────────────────────────────
 export default function DealsPage() {
+  const { count: cartCount } = React.useContext(CartContext);
   const navigate = useNavigate();
   const { dealId: routeDealId } = useParams();
   const [searchParams, setSearchParams] = useSearchParams();
@@ -2659,6 +2663,22 @@ export default function DealsPage() {
             </Link>
 
             <div className="flex items-center gap-2 sm:gap-3">
+              <button
+                type="button"
+                onClick={() => navigate("/list")}
+                className="relative inline-flex h-11 w-11 items-center justify-center rounded-full border border-slate-200 bg-white text-slate-600 shadow-sm transition-colors hover:bg-orange-50 hover:border-orange-300"
+                title="Shopping list"
+              >
+                <svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                  <circle cx="9" cy="21" r="1"/><circle cx="20" cy="21" r="1"/>
+                  <path d="M1 1h4l2.68 13.39a2 2 0 0 0 2 1.61h9.72a2 2 0 0 0 2-1.61L23 6H6"/>
+                </svg>
+                {cartCount > 0 && (
+                  <span className="absolute -top-1 -right-1 min-w-[18px] h-[18px] px-1 rounded-full bg-orange-500 text-white text-[10px] font-extrabold flex items-center justify-center leading-none">
+                    {cartCount}
+                  </span>
+                )}
+              </button>
               {isLoggedIn && (
                 <Link
                   to="/saved"

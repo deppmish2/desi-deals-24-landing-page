@@ -7,7 +7,7 @@ const path = require("path");
 const { execFileSync } = require("child_process");
 const { createClient } = require("@libsql/client");
 
-const LOCAL_DB_PATH = path.resolve(process.argv[2] || "./data/desiDeals24.db");
+const LOCAL_DB_PATH = path.resolve(process.argv[2] || "./data/prod_local.db");
 const READ_BATCH_SIZE = Math.max(
   1,
   parseInt(process.env.TURSO_IMPORT_READ_BATCH_SIZE || "500", 10),

@@ -1,122 +1,69 @@
 "use strict";
 
-const { sendAlertNotification } = require("./alert-notifier");
+const db = require("../db");
 
-const ALERT_TYPES = new Set(["price", "deal", "restock_any", "restock_store"]);
+async function evaluatePriceAlerts() {
+  const rows = await db.prepare(`
+    SELECT
+      pa.id          AS alert_id,
+      pa.user_id,
+      pa.canonical_id,
+      pa.price_threshold,
+      pa.store_id    AS alert_store_id,
+      cp.canonical_name,
+      sp.sale_price,
+      sp.store_id,
+      sp.product_url,
+      s.name         AS store_name,
+      s.url          AS store_url
+    FROM product_alerts pa
+    JOIN canonical_products cp ON cp.id = pa.canonical_id
+    JOIN store_products sp ON sp.canonical_id = pa.canonical_id AND sp.is_active = 1
+    JOIN stores s ON s.id = sp.store_id
+    WHERE pa.alert_type = 'price_below'
+      AND sp.sale_price < pa.price_threshold
+      AND (pa.store_id IS NULL OR pa.store_id = sp.store_id)
+  `).all();
 
-function buildPattern(alert) {
-  const base = String(alert.product_query || alert.canonical_id || "").trim();
-  if (!base) return null;
-  return `%${base.replace(/[-_]+/g, " ")}%`;
+  // Keep cheapest match per alert when store_id is unconstrained
+  const seen = new Map();
+  for (const row of rows) {
+    const key = row.alert_id;
+    if (!seen.has(key) || row.sale_price < seen.get(key).sale_price) {
+      seen.set(key, { ...row, alert_type: "price_below" });
+    }
+  }
+  return Array.from(seen.values());
 }
 
-function cooldownMs() {
-  const minutes = Math.max(
-    1,
-    parseInt(process.env.ALERT_COOLDOWN_MINUTES || "720", 10),
-  );
-  return minutes * 60 * 1000;
+async function evaluateBackInStockAlerts(newlyActiveDealIds) {
+  if (!newlyActiveDealIds || newlyActiveDealIds.length === 0) return [];
+
+  const placeholders = newlyActiveDealIds.map(() => "?").join(",");
+  const rows = await db.prepare(`
+    SELECT
+      pa.id          AS alert_id,
+      pa.user_id,
+      pa.canonical_id,
+      pa.store_id    AS alert_store_id,
+      cp.canonical_name,
+      sp.sale_price,
+      sp.store_id,
+      sp.product_url,
+      s.name         AS store_name,
+      s.url          AS store_url
+    FROM product_alerts pa
+    JOIN canonical_products cp ON cp.id = pa.canonical_id
+    JOIN store_products sp ON sp.canonical_id = pa.canonical_id AND sp.id IN (${placeholders})
+    JOIN stores s ON s.id = sp.store_id
+    WHERE pa.alert_type = 'back_in_stock'
+      AND (pa.store_id IS NULL OR pa.store_id = sp.store_id)
+  `).all(...newlyActiveDealIds);
+  return rows.map(r => ({ ...r, alert_type: "back_in_stock" }));
 }
 
-function shouldSkipDueCooldown(alert) {
-  if (!alert.last_triggered_at) return false;
-  const last = Date.parse(alert.last_triggered_at);
-  if (Number.isNaN(last)) return false;
-  return Date.now() - last < cooldownMs();
+async function consumeAlert(alertId) {
+  await db.prepare("DELETE FROM product_alerts WHERE id = ?").run(alertId);
 }
 
-async function queryMatchesForAlert(db, alert) {
-  let sql = `
-    SELECT d.*, s.name AS store_name
-    FROM store_products d
-    JOIN stores s ON s.id = d.store_id
-    WHERE d.is_active = 1
-      AND d.availability = 'in_stock'
-  `;
-  const params = [];
-
-  if (alert.canonical_id) {
-    sql += " AND d.canonical_id = ?";
-    params.push(alert.canonical_id);
-  } else {
-    const pattern = buildPattern(alert);
-    if (!pattern) return [];
-    sql += " AND d.product_name LIKE ?";
-    params.push(pattern);
-  }
-
-  if (alert.target_store_id) {
-    sql += " AND d.store_id = ?";
-    params.push(alert.target_store_id);
-  }
-
-  if (alert.alert_type === "price") {
-    sql += " AND d.sale_price <= ?";
-    params.push(Number(alert.target_price || 0));
-  }
-
-  if (alert.alert_type === "deal") {
-    sql += " AND COALESCE(d.discount_percent, 0) >= ?";
-    params.push(
-      Number(alert.min_discount_pct != null ? alert.min_discount_pct : 1),
-    );
-  }
-
-  sql += " ORDER BY d.sale_price ASC LIMIT 15";
-  return await db.prepare(sql).all(...params);
-}
-
-async function evaluateAlertsAfterCrawl(db, { runId }) {
-  const alerts = await db
-    .prepare(
-      `SELECT a.*, u.id AS user_id, u.email
-     FROM price_alerts a
-     JOIN users u ON u.id = a.user_id
-     WHERE a.is_active = 1`,
-    )
-    .all();
-
-  let triggeredCount = 0;
-
-  for (const alert of alerts) {
-    if (!ALERT_TYPES.has(alert.alert_type)) continue;
-    if (shouldSkipDueCooldown(alert)) continue;
-
-    if (alert.alert_type === "price" && alert.target_price == null) continue;
-    if (!alert.product_query && !alert.canonical_id) continue;
-    if (alert.alert_type === "restock_store" && !alert.target_store_id)
-      continue;
-
-    const matches = await queryMatchesForAlert(db, alert);
-    if (matches.length === 0) continue;
-
-    await sendAlertNotification(db, {
-      alert,
-      user: { id: alert.user_id, email: alert.email },
-      matches,
-      context: `crawl_run:${runId}`,
-    });
-
-    await db
-      .prepare(
-        `UPDATE price_alerts
-       SET triggered = 1, last_triggered_at = ?
-       WHERE id = ?`,
-      )
-      .run(new Date().toISOString(), alert.id);
-
-    triggeredCount += 1;
-  }
-
-  if (triggeredCount > 0) {
-    console.log(
-      `[alerts] Triggered ${triggeredCount} alerts after crawl ${runId}`,
-    );
-  }
-
-  return { triggered: triggeredCount };
-}
-
-module.exports = {
-  evaluateAlertsAfterCrawl,
-};
+module.exports = { evaluatePriceAlerts, evaluateBackInStockAlerts, consumeAlert };
