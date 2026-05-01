@@ -321,6 +321,10 @@ export function fetchBrands() {
   return authRequest("/admin-dashboard/brands");
 }
 
+export function fetchProductBrands(canonicalId) {
+  return request(`/catalog/${canonicalId}/brands`);
+}
+
 export function triggerBrandRemap(brands) {
   return authRequest("/admin-dashboard/brands/remap", {
     method: "POST",
@@ -397,6 +401,16 @@ export function fetchSameProductOtherStores(canonicalId, storeId) {
     canonical_id: canonicalId,
     store_id: storeId,
   });
+}
+
+// ── Catalog ───────────────────────────────────────────────────────────────────
+
+export function fetchCatalog(params = {}) {
+  return request("/catalog", params);
+}
+
+export function fetchCatalogProduct(canonicalId) {
+  return request(`/catalog/${canonicalId}`);
 }
 
 // ── Shopping lists ────────────────────────────────────────────────────────────
