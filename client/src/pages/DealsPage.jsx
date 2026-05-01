@@ -25,8 +25,6 @@ import {
   fetchDealStores,
   fetchDeals,
   fetchOAuthAuthUrl,
-  fetchReplacements,
-  fetchSameProductOtherStores,
   getAuthSession,
   logoutUser,
   removeBookmark,
@@ -436,34 +434,10 @@ function DealCard({
   const [tooltipPos, setTooltipPos] = useState({ top: 0, left: 0 });
   const [showImageDebug, setShowImageDebug] = useState(false);
   const [imageDebugPos, setImageDebugPos] = useState({ top: 0, left: 0 });
-  const [showReplacements, setShowReplacements] = useState(false);
-  const [replacementTiers, setReplacementTiers] = useState(null);
-  const [replacementsLoading, setReplacementsLoading] = useState(false);
-  const [otherStores, setOtherStores] = useState(null);
   const [loadingCanonical, setLoadingCanonical] = useState(false);
   const [canonicalData, setCanonicalData] = useState(null);
   const badgeRef = useRef(null);
 
-  async function handleOpenReplacements() {
-    setShowReplacements(true);
-    if (replacementTiers !== null) return;
-    setReplacementsLoading(true);
-    try {
-      const [repData, otherStoresData] = await Promise.all([
-        fetchReplacements(deal.canonical_id, deal.store?.id, deal.id),
-        deal.canonical_id && deal.store?.id
-          ? fetchSameProductOtherStores(deal.canonical_id, deal.store?.id).catch(() => ({ stores: [] }))
-          : Promise.resolve({ stores: [] }),
-      ]);
-      setReplacementTiers(repData.tiers || []);
-      setOtherStores(otherStoresData.stores || []);
-    } catch {
-      setReplacementTiers([]);
-      setOtherStores([]);
-    } finally {
-      setReplacementsLoading(false);
-    }
-  }
   const proxyImg = proxyDealImageUrl(deal);
   const discountPct = deal?.discount_percent ? Math.round(deal.discount_percent) : null;
   const realSavings = deal?.real_savings ?? null;
@@ -482,7 +456,6 @@ function DealCard({
 
   const permalink = dealPermalink(deal.id);
   return (
-    <>
     <div
       ref={highlightRef}
       className={`bg-white rounded-[20px] flex flex-col transition-shadow ${
@@ -898,31 +871,8 @@ function DealCard({
             </svg>
           </button>
         </div>
-        {deal.canonical_id && (
-          <button
-            type="button"
-            onClick={handleOpenReplacements}
-            className="w-full text-center text-[11px] text-slate-400 hover:text-[#16a34a] transition-colors pt-2 pb-1 flex items-center justify-center gap-1"
-          >
-            <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
-              <polyline points="17 1 21 5 17 9"/><path d="M3 11V9a4 4 0 0 1 4-4h14"/><polyline points="7 23 3 19 7 15"/><path d="M21 13v2a4 4 0 0 1-4 4H3"/>
-            </svg>
-            See alternatives
-          </button>
-        )}
       </div>
     </div>
-    {showReplacements && (
-      <ReplacementsModal
-        sourceDeal={deal}
-        tiers={replacementTiers}
-        loading={replacementsLoading}
-        otherStores={otherStores}
-        isAdmin={isAdmin}
-        onClose={() => { setShowReplacements(false); setReplacementTiers(null); setOtherStores(null); }}
-      />
-    )}
-    </>
   );
 }
 
