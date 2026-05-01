@@ -5,6 +5,7 @@ import {
   Route,
   Routes,
   useLocation,
+  useParams,
 } from "react-router-dom";
 import AdLandingPage from "./pages/AdLandingPage";
 import DealsPage from "./pages/DealsPage";
@@ -19,6 +20,13 @@ const AdminPage = lazy(() => import("./landing/AdminPage"));
 const FeedbackWidget = lazy(() => import("./components/FeedbackWidget"));
 const ListPage = lazy(() => import("./pages/ListPage"));
 const ComparePage = lazy(() => import("./pages/ComparePage"));
+const CartPage = lazy(() => import("./pages/CartPage"));
+const CatalogPage = lazy(() => import("./pages/CatalogPage"));
+
+function RedirectToCompare() {
+  const { id } = useParams();
+  return <Navigate to={`/compare/${id}`} replace />;
+}
 
 class ErrorBoundary extends React.Component {
   constructor(props) {
@@ -102,8 +110,11 @@ function AppShell() {
           <Route path="/deal/:dealId" element={<DealsPage />} />
           <Route path="/share/deal/:dealId" element={<DealSharePage />} />
           <Route path="/saved" element={<SavedDealsPage />} />
-          <Route path="/list" element={<ListPage />} />
-          <Route path="/list/:id/compare" element={<ComparePage />} />
+          <Route path="/cart" element={<CartPage />} />
+          <Route path="/compare/:id" element={<ComparePage />} />
+          <Route path="/products" element={<CatalogPage />} />
+          <Route path="/list" element={<Navigate to="/cart" replace />} />
+          <Route path="/list/:id/compare" element={<RedirectToCompare />} />
           <Route path="/admin" element={<AdminPage />} />
           <Route
             path="/oauth/:provider/callback"

@@ -38,6 +38,7 @@ import { proxyDealImageUrl } from "../utils/images";
 import { buildDealPageUrl, buildWhatsAppDealShareUrl, buildWhatsAppShareUrl, buildWhatsAppSuspectDiscountShareText } from "../utils/share";
 import CartButton from "../components/CartButton";
 import ReplacementsModal from "../components/ReplacementsModal";
+import NavTabs from "../components/NavTabs";
 import { CartContext } from "../hooks/CartContext";
 
 const POST_AUTH_REDIRECT_STORAGE_KEY = "dd24_post_auth_redirect";
@@ -2165,6 +2166,7 @@ export default function DealsPage() {
 
   return (
     <div className="min-h-screen bg-[radial-gradient(circle_at_top,_#ffffff_0%,_#f8fbff_32%,_#f3f6fb_100%)]">
+      <NavTabs />
       <div className="sticky top-0 z-50 sm:hidden">
         <div className="bg-white shadow-[0px_1px_2px_0px_rgba(0,0,0,0.05)]">
           <div className="flex min-h-[72px] items-center justify-between gap-3 px-4 py-3">
