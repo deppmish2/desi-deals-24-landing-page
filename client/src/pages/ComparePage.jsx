@@ -5,7 +5,7 @@ import StoreComparisonCard from "../components/comparison/StoreComparisonCard";
 
 const SORT_OPTIONS = [
   { key: "confirmed_total", label: "Best value" },
-  { key: "estimated_total", label: "Confirmed" },
+  { key: "estimated_total", label: "Estimated" },
   { key: "coverage_pct",    label: "Coverage" },
 ];
 
