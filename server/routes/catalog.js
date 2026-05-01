@@ -162,4 +162,19 @@ router.get("/suggest", async (req, res, next) => {
   }
 });
 
+router.get("/:id/brands", async (req, res, next) => {
+  try {
+    const { id } = req.params;
+    const row = await db.prepare(
+      "SELECT brand_slots FROM canonical_products WHERE id = ?"
+    ).get(id);
+    if (!row) return res.status(404).json({ error: "Not found" });
+    let brands = [];
+    try { brands = JSON.parse(row.brand_slots || "[]"); } catch { brands = []; }
+    res.json({ data: brands.filter(Boolean) });
+  } catch (err) {
+    next(err);
+  }
+});
+
 module.exports = router;
