@@ -11,7 +11,7 @@ function CoverageBar({ available, total }) {
   );
 }
 
-export default function StoreComparisonCard({ store, onShop, isWinner, priceDiff }) {
+export default function StoreComparisonCard({ store, onShop, isWinner, priceDiff, savingsVsMax }) {
   const [expanded, setExpanded] = useState(isWinner);
   const [replacingItem, setReplacingItem] = useState(null);
   const [repTiers, setRepTiers] = useState(null);
@@ -58,10 +58,18 @@ export default function StoreComparisonCard({ store, onShop, isWinner, priceDiff
       fontFamily: "'DM Sans', system-ui, sans-serif",
     }}>
       {isWinner && (
-        <div style={{ background: "#16a34a", padding: "5px 14px" }}>
+        <div style={{
+          background: "#16a34a", padding: "5px 14px",
+          display: "flex", justifyContent: "space-between", alignItems: "center",
+        }}>
           <span style={{ fontSize: 11, fontWeight: 800, color: "#fff", letterSpacing: "0.08em", textTransform: "uppercase" }}>
-            Best price
+            Best value
           </span>
+          {savingsVsMax > 0.01 && (
+            <span style={{ fontSize: 11, fontWeight: 600, color: "rgba(255,255,255,0.88)" }}>
+              Save €{savingsVsMax.toFixed(2)} vs most expensive
+            </span>
+          )}
         </div>
       )}
 
@@ -72,7 +80,7 @@ export default function StoreComparisonCard({ store, onShop, isWinner, priceDiff
             <p style={{ margin: 0, fontSize: 17, fontWeight: 700, color: "#1e293b" }}>{store_name}</p>
             <p style={{ margin: "4px 0 0", fontSize: 11, color: "#64748b" }}>
               {available}/{total} available
-              {replaced > 0 && <span style={{ color: "#f59e0b" }}> · {replaced} replaced</span>}
+              {replaced > 0 && <span style={{ color: "#f59e0b" }}> · ~{replaced} replaced</span>}
               {missing > 0  && <span style={{ color: "#94a3b8" }}> · {missing} missing</span>}
             </p>
           </div>
@@ -80,6 +88,7 @@ export default function StoreComparisonCard({ store, onShop, isWinner, priceDiff
             <p style={{ margin: 0, fontSize: 28, fontWeight: 800, color: "#1e293b", lineHeight: 1 }}>
               €{Number(confirmed_total || 0).toFixed(2)}
             </p>
+            <p style={{ margin: "2px 0 0", fontSize: 10, color: "#94a3b8" }}>you pay at store</p>
             {!isWinner && priceDiff != null && priceDiff > 0.01 && (
               <p style={{ margin: "3px 0 0", fontSize: 11, fontWeight: 600, color: "#ef4444" }}>
                 +€{priceDiff.toFixed(2)} more
@@ -93,15 +102,22 @@ export default function StoreComparisonCard({ store, onShop, isWinner, priceDiff
           <CoverageBar available={available + replaced} total={total} />
         </div>
 
-        {/* Missing banner */}
-        {missing > 0 && (
+        {/* Missing banner — list item names */}
+        {missingItems.length > 0 && (
           <div style={{
             background: "#fffbeb", border: "1px solid #fde68a", borderRadius: 10,
-            padding: "7px 12px", marginBottom: 12,
-            fontSize: 12, color: "#92400e", display: "flex", alignItems: "center", gap: 6,
+            padding: "8px 12px", marginBottom: 12,
+            fontSize: 12, color: "#92400e",
           }}>
-            <span>⚠</span>
-            <span>{missing} item{missing !== 1 ? "s" : ""} not available at this store</span>
+            <div style={{ display: "flex", alignItems: "center", gap: 6 }}>
+              <span>⚠</span>
+              <span style={{ fontWeight: 600 }}>Not stocked at this store:</span>
+            </div>
+            {missingItems.map((name, i) => (
+              <p key={i} style={{ margin: "3px 0 0", paddingLeft: 18, fontSize: 11, color: "#92400e" }}>
+                · {name}
+              </p>
+            ))}
           </div>
         )}
 
@@ -125,13 +141,30 @@ export default function StoreComparisonCard({ store, onShop, isWinner, priceDiff
         {expanded && (
           <div style={{ borderTop: "1px solid #f1f5f9", paddingTop: 10, marginBottom: 12 }}>
             {items.map((item, i) => {
-              const name = (item.packs_needed > 1)
-                ? `${item.packs_needed}× ${item.query || item.product_name}`
-                : (item.query || item.product_name);
-              const price = item.effective_price ?? item.sale_price;
-              const perUnit = (item.price_per_unit && item.unit_label)
+              const rawName = item.product_name || item.query;
+              const displayName = item.packs_needed > 1
+                ? `${item.packs_needed}× ${rawName}`
+                : rawName;
+              const price   = item.effective_price ?? item.sale_price;
+              const perKg   = (item.price_per_unit && item.unit_label)
                 ? `${Number(item.price_per_unit).toFixed(2)} ${item.unit_label}`
                 : null;
+              const perPack = (item.packs_needed > 1 && item.sale_price != null)
+                ? `${Number(item.sale_price).toFixed(2)} €/pack`
+                : null;
+              const weightBadge = (() => {
+                if (!item.weight_value || !item.weight_unit) return null;
+                const count = item.packs_needed > 1 ? item.packs_needed : 1;
+                const unit = String(item.weight_unit).toLowerCase();
+                const total = Number(item.weight_value) * count;
+                if (unit === "g") {
+                  return total >= 1000 ? `${total / 1000} kg` : `${total} g`;
+                }
+                if (unit === "ml") {
+                  return total >= 1000 ? `${total / 1000} l` : `${total} ml`;
+                }
+                return `${total} ${item.weight_unit}`;
+              })();
               return (
                 <div key={`m-${i}`} style={{
                   display: "flex", alignItems: "flex-start", justifyContent: "space-between",
@@ -139,18 +172,34 @@ export default function StoreComparisonCard({ store, onShop, isWinner, priceDiff
                 }}>
                   <div style={{ display: "flex", alignItems: "flex-start", gap: 7, flex: 1, minWidth: 0 }}>
                     <span style={{ color: "#16a34a", fontSize: 14, marginTop: 1, flexShrink: 0 }}>✓</span>
-                    <p style={{ margin: 0, fontSize: 13, color: "#1e293b", lineHeight: "1.3", wordBreak: "break-word" }}>
-                      {name}
-                    </p>
+                    <div style={{ minWidth: 0 }}>
+                      <div style={{ display: "flex", alignItems: "baseline", gap: 6, flexWrap: "wrap" }}>
+                        <p style={{ margin: 0, fontSize: 13, color: "#1e293b", lineHeight: "1.3", wordBreak: "break-word" }}>
+                          {displayName}
+                        </p>
+                        {weightBadge && (
+                          <span style={{
+                            fontSize: 11, fontWeight: 700, color: "#16a34a",
+                            background: "#f0fdf4", border: "1px solid #86efac",
+                            borderRadius: 6, padding: "1px 6px", flexShrink: 0, whiteSpace: "nowrap",
+                          }}>
+                            {weightBadge}
+                          </span>
+                        )}
+                      </div>
+                      {perKg && (
+                        <p style={{ margin: "2px 0 0", fontSize: 11, fontWeight: 600, color: "#64748b" }}>{perKg}</p>
+                      )}
+                      {perPack && (
+                        <p style={{ margin: "1px 0 0", fontSize: 10, color: "#94a3b8" }}>{perPack}</p>
+                      )}
+                    </div>
                   </div>
                   <div style={{ textAlign: "right", flexShrink: 0 }}>
                     {price != null && (
                       <p style={{ margin: 0, fontSize: 13, fontWeight: 700, color: "#1e293b" }}>
                         {Number(price).toFixed(2)} €
                       </p>
-                    )}
-                    {perUnit && (
-                      <p style={{ margin: "1px 0 0", fontSize: 10, color: "#94a3b8" }}>{perUnit}</p>
                     )}
                   </div>
                 </div>

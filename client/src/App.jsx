@@ -22,6 +22,7 @@ const ListPage = lazy(() => import("./pages/ListPage"));
 const ComparePage = lazy(() => import("./pages/ComparePage"));
 const CartPage = lazy(() => import("./pages/CartPage"));
 const CatalogPage = lazy(() => import("./pages/CatalogPage"));
+const OrdersPage = lazy(() => import("./pages/OrdersPage"));
 
 function RedirectToCompare() {
   const { id } = useParams();
@@ -113,6 +114,7 @@ function AppShell() {
           <Route path="/cart" element={<CartPage />} />
           <Route path="/compare/:id" element={<ComparePage />} />
           <Route path="/products" element={<CatalogPage />} />
+          <Route path="/orders" element={<OrdersPage />} />
           <Route path="/list" element={<Navigate to="/cart" replace />} />
           <Route path="/list/:id/compare" element={<RedirectToCompare />} />
           <Route path="/admin" element={<AdminPage />} />

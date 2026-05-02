@@ -448,7 +448,10 @@ export async function removeListItem(listId, itemId) {
 }
 
 export async function mergeCartIntoList(listId, cartItems) {
-  return Promise.all(cartItems.map(item => addListItem(listId, item)));
+  return Promise.all(cartItems.map(item => addListItem(listId, {
+    ...item,
+    brand_pref: item.anyBrand ? "*" : (item.brand || null),
+  })));
 }
 
 // ── Comparison ────────────────────────────────────────────────────────────────
@@ -466,5 +469,19 @@ export async function cartTransfer(listId, storeId, items) {
     method: "POST",
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify({ store_id: storeId, items }),
+  });
+}
+
+// ── Orders ────────────────────────────────────────────────────────────────────
+
+export function fetchOrders() {
+  return authRequest("/orders");
+}
+
+export function completeOrder(listId, storeId) {
+  return authRequest(`/orders/${listId}/complete`, {
+    method: "PATCH",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ store_id: storeId }),
   });
 }

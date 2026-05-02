@@ -13,6 +13,33 @@ import {
 
 const POST_AUTH_REDIRECT_KEY = "dd24_post_auth_redirect";
 
+const KNOWN_BRANDS = new Set([
+  "TRS","Heera","Schani","Haldiram","MDH","Everest","Shan","Patanjali",
+  "Aashirvaad","Tata","Catch","National","Swad","Eastern","Annam","Swagat",
+  "Laxmi","Deep","Priya","MTR","Kohinoor","Royal","Daawat","Badshah","Maggi",
+  "Knorr","Lijjat","Patak","Ashoka","Ahmed","Natco","East End","Rajah",
+  "Aachi","Bambino","Gits","Weikfield","Mapro","Keya",
+  "Bajaj","Dabur","Marico","Emami","Himalaya","Nivea","Dove","Head",
+  "Parachute","Vatika","Sunsilk","Pantene","Colgate","Pepsodent","Sensodyne",
+  "Dettol","Lifebuoy","Savlon","Lux","Pears","Santoor","Vicco","Zandu",
+  "Amul","Nandini","Mother","Nestle","Britannia","Parle","Sunfeast",
+  "Bikaji","Balaji","Jabsons","Kurkure","Lay","Pringles","Cheetos",
+  "Tasty","Sweets","Jabsons","Prataap","Yellow","Wai","Too","Ching",
+  "ITC","HUL","P&G","Ruchi","Fortune","Saffola","Sundrop","Dhara",
+  "Postman","Elephant","Double","Sunrise","Pushp","Goldiee","Ramdev",
+]);
+
+function extractBrandFromName(name) {
+  if (!name) return null;
+  const words = name.split(/\s+/);
+  for (let len = 2; len >= 1; len--) {
+    const candidate = words.slice(0, len).join(" ");
+    if (KNOWN_BRANDS.has(candidate)) return candidate;
+  }
+  if (words[0] && /^[A-Z]{2,}$/.test(words[0])) return words[0];
+  return null;
+}
+
 const CATEGORY_COLORS = {
   "Rice & Grains":    { bg: "#fef3c7", text: "#92400e", label: "RICE" },
   "Lentils & Pulses": { bg: "#fce7f3", text: "#9d174d", label: "DAL" },
@@ -146,8 +173,8 @@ function BrandPickerSheet({ canonicalId, canonicalName, currentBrand, anyBrand, 
 
 function CartItemCard({ item, index, onRemove, onDecrement, onIncrement, onBrandSelect }) {
   const [showBrandPicker, setShowBrandPicker] = useState(false);
-  const brand = item.brand ?? null;
-  const anyBrand = item.anyBrand !== false;
+  const brand = item.brand ?? extractBrandFromName(item.raw_item_text) ?? null;
+  const anyBrand = item.anyBrand === true;
   const qty = item.item_count || 1;
 
   return (
@@ -178,12 +205,19 @@ function CartItemCard({ item, index, onRemove, onDecrement, onIncrement, onBrand
                   {" "}
                 </>
               )}
-              {item.raw_item_text}
+              {(brand && item.raw_item_text.startsWith(brand))
+                ? item.raw_item_text.slice(brand.length).trimStart()
+                : item.raw_item_text}
             </p>
             {(item.weight_raw || item.quantity) && (
-              <p style={{ margin: "3px 0 0", fontSize: 11, color: "#94a3b8" }}>
+              <span style={{
+                display: "inline-block", marginTop: 5,
+                fontSize: 11, fontWeight: 700, color: "#16a34a",
+                background: "#f0fdf4", border: "1px solid #86efac",
+                borderRadius: 6, padding: "1px 7px",
+              }}>
                 {item.weight_raw || `${item.quantity}${item.quantity_unit || ""}`}
-              </p>
+              </span>
             )}
             {anyBrand && item.canonical_id && (
               <p style={{ margin: "3px 0 0", fontSize: 10, color: "#94a3b8" }}>Matches any available brand</p>
@@ -299,7 +333,6 @@ export default function CartPage() {
       const createData = await createList("My Shopping List");
       const list = createData.data || createData;
       await mergeCartIntoList(list.id, items);
-      clearCart();
       navigate(`/compare/${list.id}`);
     } catch (err) {
       setFindError("Something went wrong. Please try again.");
@@ -354,6 +387,14 @@ export default function CartPage() {
             >
               Browse products
             </button>
+            {getAuthSession() && (
+              <button
+                onClick={() => navigate("/orders")}
+                style={{ background: "none", border: "none", cursor: "pointer", marginTop: 12, fontSize: 13, color: "#64748b", textDecoration: "underline" }}
+              >
+                View recent orders
+              </button>
+            )}
           </div>
         ) : (
           <div style={{ display: "flex", flexDirection: "column", gap: 12 }}>

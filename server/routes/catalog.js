@@ -21,13 +21,17 @@ const CATALOG_SQL = `
       sp.price_per_kg,
       sp.best_before,
       sp.store_id,
-      sp.image_url    AS deal_image_url
+      sp.image_url    AS deal_image_url,
+      sp.weight_value,
+      sp.weight_unit,
+      sp.weight_raw
     FROM store_product_mappings spm
     JOIN store_products sp ON sp.id = spm.deal_id AND sp.is_active = 1
   ),
   cheapest AS (
     SELECT canonical_id, sale_price, original_price, discount_percent,
-           price_per_kg, best_before, store_id, deal_image_url
+           price_per_kg, best_before, store_id, deal_image_url,
+           weight_value, weight_unit, weight_raw
     FROM (
       SELECT r.*,
              ROW_NUMBER() OVER (
@@ -55,7 +59,11 @@ const CATALOG_SQL = `
     c.best_before,
     c.store_id      AS cheapest_store_id,
     s.name          AS cheapest_store_name,
-    ct.store_count
+    ct.store_count,
+    COALESCE(cp.weight_value, c.weight_value) AS weight_value,
+    COALESCE(cp.weight_unit,  c.weight_unit)  AS weight_unit,
+    c.weight_raw,
+    json_extract(cp.brand_slots, '$[0][0]')   AS primary_brand
   FROM canonical_products cp
   JOIN cheapest c  ON c.canonical_id = cp.id
   JOIN stores   s  ON s.id = c.store_id

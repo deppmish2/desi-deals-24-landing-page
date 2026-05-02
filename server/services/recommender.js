@@ -1187,6 +1187,14 @@ function dedupeExactReplacementCandidates(candidates) {
     const requestedA = a.requested_brand_matched ? 1 : 0;
     const requestedB = b.requested_brand_matched ? 1 : 0;
     if (requestedA !== requestedB) return requestedB - requestedA;
+    // Prefer fewer packs when price difference is within 5% — avoids picking
+    // 2×500g Thick over 1×1kg Medium when they cost nearly the same.
+    if (a.packs_needed !== b.packs_needed) {
+      const cheaper = Math.min(a.total_price, b.total_price);
+      if (Math.abs(a.total_price - b.total_price) <= cheaper * 0.05) {
+        return a.packs_needed - b.packs_needed;
+      }
+    }
     if (a.total_price !== b.total_price) return a.total_price - b.total_price;
     if (a.packs_needed !== b.packs_needed) return a.packs_needed - b.packs_needed;
     return (a.combination?.length || 0) - (b.combination?.length || 0);
@@ -1217,14 +1225,39 @@ function buildReplacementSearchResultKey(candidate) {
   return combinationKey || fallbackKey;
 }
 
+// Sub-variant phrases stripped from base_key by product-parser but meaningful
+// for product discrimination (e.g. "extra long" vs "everyday" within basmati).
+const SUB_VARIANT_KEYWORDS = [
+  "extra long", "long grain", "short grain", "everyday", "classic",
+  "premium", "organic", "aged", "traditional", "original",
+];
+
+function extractSubVariantKeywords(text) {
+  if (!text) return [];
+  const lower = String(text).toLowerCase();
+  return SUB_VARIANT_KEYWORDS.filter((kw) => lower.includes(kw));
+}
+
+function applySubVariantPreference(pool, rawItemText) {
+  const kws = extractSubVariantKeywords(rawItemText);
+  if (kws.length === 0) return pool;
+  const preferred = pool.filter((deal) => {
+    const name = String(deal.product_name || "").toLowerCase();
+    return kws.every((kw) => name.includes(kw));
+  });
+  return preferred.length > 0 ? preferred : pool;
+}
+
 function findStrictExactCandidatesAtStore({
   dealsAtStore,
   baseMeta,
   brandCandidates,
   targetBase,
   baseCache,
+  rawItemText,
 }) {
-  const basePool = buildBaseMatchedDealPool(dealsAtStore, baseMeta, baseCache);
+  const rawBasePool = buildBaseMatchedDealPool(dealsAtStore, baseMeta, baseCache);
+  const basePool = applySubVariantPreference(rawBasePool, rawItemText);
   if (basePool.length === 0) {
     return { stage: "none", candidates: [] };
   }
@@ -1344,14 +1377,14 @@ async function findBestDealForItemAtStore(db, storeId, item, intent, options = {
   if (item.canonical_id && !skipCanonical) {
     const canonicalMatches = await db
       .prepare(
-        `SELECT id, product_name, product_category, product_url, sale_price, currency,
-                weight_value, weight_unit, price_per_kg, image_url
-       FROM store_products
-       WHERE is_active = 1
-         AND availability = 'in_stock'
-         AND store_id = ?
-         AND canonical_id = ?
-       ORDER BY sale_price ASC
+        `SELECT sp.id, sp.product_name, sp.product_category, sp.product_url, sp.sale_price, sp.currency,
+                sp.weight_value, sp.weight_unit, sp.price_per_kg, sp.image_url
+       FROM store_products sp
+       JOIN store_product_mappings spm ON spm.deal_id = sp.id
+       WHERE sp.is_active = 1
+         AND sp.store_id = ?
+         AND spm.canonical_id = ?
+       ORDER BY sp.sale_price ASC
        LIMIT 80`,
       )
       .all(storeId, item.canonical_id);
@@ -1623,10 +1656,18 @@ async function recommendForList(
         baseResolutionCache,
         item.raw_item_text || item.canonical_name || "",
       );
-      const requestedBrandCandidates = parseBrandCandidates(
-        item.brand_pref || intent.brand,
-        intent.brandOptions,
-      );
+      const anyBrandMode = item.brand_pref === "*";
+      const requestedBrandCandidates = anyBrandMode
+        ? []
+        : parseBrandCandidates(item.brand_pref || intent.brand, intent.brandOptions);
+
+      // In any-brand mode strip the detected brand from the search text so the brand
+      // token doesn't inflate smart-ranker scores (brand_match + token_overlap + embedding
+      // all reward shared brand tokens, causing e.g. "MDH Amchur Powder" to match
+      // "MDH Karahi Gosht Masala" instead of being marked missing).
+      const itemForTextSearch = anyBrandMode && intent.brand
+        ? { ...item, raw_item_text: stripBrandCandidatesFromText(item.raw_item_text, [intent.brand]) }
+        : item;
 
       // matching_spec.md: for mass/volume requests, base product identity must
       // be resolved from the CSV source-of-truth before any matching.
@@ -1634,9 +1675,9 @@ async function recommendForList(
         const enforceRequestedBrand = options.enforceRequestedBrand !== false;
         const weightedDeal = resolveDealWeightFallback(dealCandidate);
         const candidateBrandInfo = resolveBrandInfo(
-          item.brand_pref || intent.brand,
+          anyBrandMode ? null : (item.brand_pref || intent.brand),
           weightedDeal.product_name,
-          intent.brandOptions,
+          anyBrandMode ? null : intent.brandOptions,
         );
         const candidateAnnotation = scoreAndAnnotateDeal(
           weightedDeal,
@@ -1714,16 +1755,21 @@ async function recommendForList(
           brandCandidates: requestedBrandCandidates,
           targetBase,
           baseCache: baseResolutionCache,
+          rawItemText: item.raw_item_text,
         });
         let selectedStrict = strictCandidates.candidates[0] || null;
         if (!selectedStrict) {
           // Snap to nearest available pack when exact combo fails (e.g. 252g → 250g).
-          const basePool = buildBaseMatchedDealPool(storeDeals, requestedBaseMeta, baseResolutionCache);
+          const rawSnapPool = buildBaseMatchedDealPool(storeDeals, requestedBaseMeta, baseResolutionCache);
+          const basePool = applySubVariantPreference(rawSnapPool, item.raw_item_text);
           const packOpts = buildPackOptions(basePool, targetBase.type);
           let nearestOpt = null;
           let nearestDist = Infinity;
           for (const opt of packOpts) {
             if (!Number.isFinite(opt.size) || opt.size <= 0) continue;
+            // Only snap to packs within 20% of the requested size.
+            // Larger packs (e.g. 1kg for a 400g request) are not a valid substitution.
+            if (opt.size > targetBase.qty * 1.2) continue;
             const dist = Math.abs(opt.size - targetBase.qty);
             if (dist < nearestDist) { nearestDist = dist; nearestOpt = opt; }
           }
@@ -1809,7 +1855,7 @@ async function recommendForList(
       const primaryDeal = await findBestDealForItemAtStore(
         db,
         store.id,
-        item,
+        itemForTextSearch,
         intent,
       );
       const primaryEvaluation = primaryDeal
@@ -1819,7 +1865,7 @@ async function recommendForList(
 
       if (!evaluation?.ok) {
         // Canonical mappings can be over-specific/noisy; retry with raw-text-only search.
-        const fallbackDeal = await findBestDealForItemAtStore(db, store.id, item, intent, {
+        const fallbackDeal = await findBestDealForItemAtStore(db, store.id, itemForTextSearch, intent, {
           skipCanonical: true,
           includeAliases: false,
         });
@@ -2278,6 +2324,7 @@ function searchStrictReplacementOptions(
     brandCandidates: mergedBrandCandidates,
     targetBase,
     baseCache: new Map(),
+    rawItemText: originalQueryText,
   });
 
   const requestedBrandInput =

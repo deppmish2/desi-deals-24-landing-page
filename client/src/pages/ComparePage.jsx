@@ -1,6 +1,7 @@
-import React, { useEffect, useState } from "react";
+import React, { useContext, useEffect, useState } from "react";
 import { useParams, useNavigate } from "react-router-dom";
-import { runComparison, cartTransfer } from "../utils/api";
+import { runComparison, cartTransfer, completeOrder } from "../utils/api";
+import { CartContext } from "../hooks/CartContext";
 import StoreComparisonCard from "../components/comparison/StoreComparisonCard";
 
 const SORT_OPTIONS = [
@@ -19,6 +20,7 @@ function sortStores(stores, key) {
 export default function ComparePage() {
   const { id } = useParams();
   const navigate = useNavigate();
+  const { clearCart } = useContext(CartContext);
   const [stores, setStores] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
@@ -57,17 +59,21 @@ export default function ComparePage() {
         if (raw[0]?.coverage?.total) setItemCount(raw[0].coverage.total);
         else if (raw[0]?.items?.length) setItemCount(raw[0].items.length);
       })
-      .catch(err => setError(err.message))
+      .catch(err => setError(err.message.includes("access token") || err.message.includes("401") ? "auth" : err.message))
       .finally(() => setLoading(false));
   }, [id]);
 
   const sorted = sortStores(stores, sort);
 
   const handleShop = async (store) => {
+    clearCart();
     try {
-      await cartTransfer(id, store.store_id, store.items || []);
+      await Promise.all([
+        cartTransfer(id, store.store_id, store.items || []),
+        completeOrder(id, store.store_id),
+      ]);
     } catch {
-      // best-effort; navigate regardless
+      // best-effort
     }
     if (store.store_url) window.open(store.store_url, "_blank", "noopener");
   };
@@ -133,14 +139,29 @@ export default function ComparePage() {
 
         {error && (
           <div style={{ textAlign: "center", padding: 48 }}>
-            <p style={{ fontSize: 14, color: "#ef4444", marginBottom: 16 }}>{error}</p>
-            <button
-              type="button"
-              onClick={() => window.location.reload()}
-              style={{ padding: "10px 24px", background: "#16a34a", color: "#fff", border: "none", borderRadius: 14, cursor: "pointer", fontSize: 14, fontWeight: 600 }}
-            >
-              Try again
-            </button>
+            {error === "auth" ? (
+              <>
+                <p style={{ fontSize: 14, color: "#64748b", marginBottom: 16 }}>Sign in to compare prices across stores.</p>
+                <button
+                  type="button"
+                  onClick={() => navigate("/cart")}
+                  style={{ padding: "10px 24px", background: "#16a34a", color: "#fff", border: "none", borderRadius: 14, cursor: "pointer", fontSize: 14, fontWeight: 600 }}
+                >
+                  Back to cart
+                </button>
+              </>
+            ) : (
+              <>
+                <p style={{ fontSize: 14, color: "#ef4444", marginBottom: 16 }}>{error}</p>
+                <button
+                  type="button"
+                  onClick={() => window.location.reload()}
+                  style={{ padding: "10px 24px", background: "#16a34a", color: "#fff", border: "none", borderRadius: 14, cursor: "pointer", fontSize: 14, fontWeight: 600 }}
+                >
+                  Try again
+                </button>
+              </>
+            )}
           </div>
         )}
 
@@ -157,6 +178,7 @@ export default function ComparePage() {
             onShop={handleShop}
             isWinner={i === 0}
             priceDiff={i > 0 ? (store.confirmed_total - sorted[0].confirmed_total) : 0}
+            savingsVsMax={i === 0 ? ((sorted[sorted.length - 1]?.confirmed_total ?? 0) - sorted[0].confirmed_total) : 0}
           />
         ))}
       </div>

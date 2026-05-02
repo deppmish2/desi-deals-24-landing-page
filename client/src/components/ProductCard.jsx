@@ -13,6 +13,36 @@ function proxyCatalogImageUrl(imageUrl) {
   return `/api/v1/admin/proxy/image?url=${encodeURIComponent(abs)}`;
 }
 
+const KNOWN_BRANDS = new Set([
+  "TRS","Heera","Schani","Haldiram","MDH","Everest","Shan","Patanjali",
+  "Aashirvaad","Tata","Catch","National","Swad","Eastern","Annam","Swagat",
+  "Laxmi","Deep","Priya","MTR","Kohinoor","Royal","Daawat","Badshah","Maggi",
+  "Knorr","Lijjat","Patak","Ashoka","Ahmed","Natco","East End","Rajah",
+  "Aachi","Bambino","Mothers","Nilon","Kitchens","Dookan","Shan","Keya",
+  "Preethi","Sujata","Usha","Prestige","Hawkins","Weikfield","Gits",
+  "Mapro","Rasna","Rooh","Maaza","Real","Tropicana",
+  "Bajaj","Dabur","Marico","Emami","Himalaya","Nivea","Dove","Head",
+  "Parachute","Vatika","Sunsilk","Pantene","Colgate","Pepsodent","Sensodyne",
+  "Dettol","Lifebuoy","Savlon","Lux","Pears","Santoor","Vicco","Zandu",
+  "Amul","Nandini","Nestle","Britannia","Parle","Sunfeast",
+  "Bikaji","Balaji","Jabsons","Tasty","Prataap",
+  "ITC","Fortune","Saffola","Sundrop","Dhara","Ruchi",
+  "Postman","Elephant","Double","Sunrise","Pushp","Goldiee","Ramdev",
+]);
+
+function extractBrandFromName(name) {
+  if (!name) return null;
+  const words = name.split(/\s+/);
+  // Check 1-word and 2-word prefixes
+  for (let len = 2; len >= 1; len--) {
+    const candidate = words.slice(0, len).join(" ");
+    if (KNOWN_BRANDS.has(candidate)) return candidate;
+  }
+  // Fallback: first word if it's all-caps (e.g., "TRS")
+  if (words[0] && /^[A-Z]{2,}$/.test(words[0])) return words[0];
+  return null;
+}
+
 export default function ProductCard({ product, context }) {
   const { addItem } = useContext(CartContext);
   const [imgError, setImgError] = useState(false);
@@ -21,6 +51,7 @@ export default function ProductCard({ product, context }) {
 
   const handleAddToCart = useCallback((e) => {
     e.stopPropagation();
+    const detectedBrand = product.primary_brand || extractBrandFromName(product.canonical_name);
     addItem({
       raw_item_text: product.canonical_name,
       canonical_id: product.canonical_id,
@@ -30,6 +61,8 @@ export default function ProductCard({ product, context }) {
       quantity: product.weight_value ?? null,
       quantity_unit: product.weight_unit ?? null,
       item_count: 1,
+      brand: detectedBrand || null,
+      anyBrand: !detectedBrand,
     });
     if (inCartTimerRef.current) clearTimeout(inCartTimerRef.current);
     setInCart(true);
