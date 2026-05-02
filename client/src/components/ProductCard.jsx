@@ -1,5 +1,17 @@
 import React, { useContext, useState, useCallback, useEffect, useRef } from "react";
 import { CartContext } from "../hooks/CartContext";
+import { formatPrice, formatPricePerKg } from "../utils/formatters";
+import { resolveAbsoluteImageUrl } from "../utils/images";
+
+function proxyCatalogImageUrl(imageUrl) {
+  const abs = resolveAbsoluteImageUrl(imageUrl, null);
+  if (!abs) return null;
+  if (/cdn\.shopify\.com/i.test(abs)) {
+    const sep = abs.includes("?") ? "&" : "?";
+    return `${abs}${sep}width=400`;
+  }
+  return `/api/v1/admin/proxy/image?url=${encodeURIComponent(abs)}`;
+}
 
 export default function ProductCard({ product, context }) {
   const { addItem } = useContext(CartContext);
@@ -28,57 +40,101 @@ export default function ProductCard({ product, context }) {
     return () => { if (inCartTimerRef.current) clearTimeout(inCartTimerRef.current); };
   }, []);
 
+  const discountPct = product.discount_pct ? Math.round(product.discount_pct) : null;
+  const priceText = product.cheapest_price != null ? formatPrice(product.cheapest_price) : null;
+  const originalPriceText = product.original_price ? formatPrice(product.original_price) : null;
+  const weightText = product.price_per_kg ? formatPricePerKg(product.price_per_kg) : null;
   const whatsappUrl = `https://wa.me/?text=${encodeURIComponent(`Check out ${product.canonical_name} on DesiDeals24!`)}`;
+  const proxiedImg = proxyCatalogImageUrl(product.image_url);
 
   return (
-    <div style={{
-      background: "#fff", border: "1px solid #f1f5f9",
-      borderRadius: 20, boxShadow: "0 2px 8px rgba(0,0,0,0.05)",
-      overflow: "hidden", fontFamily: "'DM Sans', system-ui, sans-serif",
-    }}>
+    <div
+      className="bg-white rounded-[20px] flex flex-col border border-[#f1f5f9]"
+      style={{ boxShadow: "0px 2px 12px rgba(0,0,0,0.06)" }}
+    >
       {/* Image */}
-      <div style={{ aspectRatio: "4/3", background: "#f8fafc", overflow: "hidden" }}>
-        {product.image_url && !imgError ? (
-          <img
-            src={product.image_url}
-            alt={product.canonical_name}
-            onError={() => setImgError(true)}
-            style={{ width: "100%", height: "100%", objectFit: "cover" }}
-          />
-        ) : (
-          <div style={{ width: "100%", height: "100%", display: "flex", alignItems: "center", justifyContent: "center" }}>
-            <span style={{ fontSize: 11, color: "#94a3b8", fontWeight: 600 }}>{product.category || "?"}</span>
+      <div className="relative w-full h-[200px] bg-white flex items-center justify-center p-5 overflow-hidden rounded-t-[20px]">
+        <img
+          src={
+            imgError || !proxiedImg
+              ? 'data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" width="112" height="112" viewBox="0 0 112 112"><rect fill="%23ffffff" width="112" height="112"/><text fill="%2394a3b8" font-size="28" text-anchor="middle" dominant-baseline="middle" x="56" y="58">%F0%9F%9B%92</text></svg>'
+              : proxiedImg
+          }
+          alt={product.canonical_name}
+          loading="lazy"
+          className="w-full h-full object-contain"
+          onError={() => setImgError(true)}
+        />
+        {discountPct > 0 && (
+          <div
+            className="absolute top-3 right-3 rounded-[8px] px-2.5 py-1"
+            style={{
+              backgroundColor:
+                discountPct > 50 ? "#ffe4e8" :
+                discountPct >= 30 ? "#fff3e0" :
+                discountPct >= 20 ? "#e8f0fe" : "#f1f5f9",
+            }}
+          >
+            <span
+              className="font-bold text-[13px] leading-none"
+              style={{
+                color:
+                  discountPct > 50 ? "#e53e3e" :
+                  discountPct >= 30 ? "#c05200" :
+                  discountPct >= 20 ? "#1a56db" : "#1e293b",
+              }}
+            >
+              -{discountPct}%
+            </span>
           </div>
         )}
       </div>
 
       {/* Content */}
-      <div style={{ padding: "12px 14px 14px" }}>
-        <p style={{ margin: "0 0 4px", fontSize: 13, color: "#94a3b8" }}>{product.category}</p>
-        <p style={{ margin: "0 0 10px", fontSize: 14, fontWeight: 700, color: "#1e293b", lineHeight: 1.3 }}>
-          {product.canonical_name}
-        </p>
-        {product.cheapest_store_name && (
-          <p style={{ margin: "0 0 12px", fontSize: 11, color: "#94a3b8" }}>
-            From {product.cheapest_store_name}
-            {product.store_count > 1 ? ` + ${product.store_count - 1} more` : ""}
+      <div className="flex flex-col flex-1 px-5 pt-4 pb-5 gap-3">
+        <div className="flex flex-col gap-1.5">
+          <p className="text-[#94a3b8] text-[10px] leading-[15px] tracking-[1.5px] uppercase font-extrabold">
+            {product.category}
           </p>
-        )}
+          <p className="text-[#1e293b] text-[15px] leading-[22px] font-bold line-clamp-2 min-h-[44px]">
+            {product.canonical_name}
+          </p>
+          {product.cheapest_store_name && (
+            <p className="text-[#94a3b8] text-[11px] leading-[15px]">
+              From {product.cheapest_store_name}
+              {product.store_count > 1 ? ` + ${product.store_count - 1} more` : ""}
+            </p>
+          )}
+          {priceText && (
+            <div className="flex items-baseline justify-between gap-2">
+              <div className="flex items-baseline gap-2">
+                <span className="text-[#1e293b] text-[22px] leading-[30px] font-extrabold">
+                  {priceText}
+                </span>
+                {originalPriceText && (
+                  <span className="text-[#94a3b8] text-[14px] leading-[20px] line-through">
+                    {originalPriceText}
+                  </span>
+                )}
+              </div>
+              {weightText && (
+                <span className="text-[#94a3b8] text-[11px] leading-[16px] font-medium text-right shrink-0">
+                  {weightText}
+                </span>
+              )}
+            </div>
+          )}
+        </div>
 
-        {/* Buttons */}
-        <div style={{ display: "flex", gap: 8 }}>
+        {/* Actions */}
+        <div className="flex gap-2 mt-auto">
           {context === "deals" && product.product_url && (
             <a
               href={product.product_url}
               target="_blank"
               rel="noopener noreferrer"
-              style={{
-                flex: 1, display: "flex", alignItems: "center", justifyContent: "center",
-                background: "#16a34a", color: "#fff",
-                borderRadius: 14, padding: "10px 0",
-                fontSize: 12, fontWeight: 800, letterSpacing: "0.04em", textTransform: "uppercase",
-                textDecoration: "none",
-              }}
+              className="flex-1 flex items-center justify-center rounded-[14px] py-2.5 text-white text-[12px] font-extrabold tracking-[0.04em] uppercase no-underline"
+              style={{ background: "#16a34a" }}
             >
               Snatch Deal
             </a>
@@ -88,37 +144,20 @@ export default function ProductCard({ product, context }) {
             type="button"
             onClick={handleAddToCart}
             aria-label="Add to cart"
+            className="flex-1 flex items-center justify-center gap-1.5 rounded-[14px] border text-[13px] font-semibold transition-colors"
             style={{
-              flex: context === "deals" ? 0 : 1,
-              width: context === "deals" ? 44 : undefined,
               height: 44,
-              display: "flex", alignItems: "center", justifyContent: "center",
               background: inCart ? "#16a34a" : "#fff",
-              border: `1px solid ${inCart ? "#16a34a" : "#e2e8f0"}`,
-              borderRadius: 14, cursor: "pointer",
+              borderColor: inCart ? "#16a34a" : "#e2e8f0",
               color: inCart ? "#fff" : "#1e293b",
-              fontSize: context === "deals" ? undefined : 13,
-              fontWeight: context === "deals" ? undefined : 600,
-              gap: 6,
             }}
-            title="Add to cart"
           >
-            {context === "deals" ? (
-              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                <path d="M6 2L3 6v14a2 2 0 002 2h14a2 2 0 002-2V6l-3-4z"/>
-                <line x1="3" y1="6" x2="21" y2="6"/>
-                <path d="M16 10a4 4 0 01-8 0"/>
-              </svg>
-            ) : (
-              <>
-                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                  <path d="M6 2L3 6v14a2 2 0 002 2h14a2 2 0 002-2V6l-3-4z"/>
-                  <line x1="3" y1="6" x2="21" y2="6"/>
-                  <path d="M16 10a4 4 0 01-8 0"/>
-                </svg>
-                {inCart ? "Added!" : "Add to cart"}
-              </>
-            )}
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+              <path d="M6 2L3 6v14a2 2 0 002 2h14a2 2 0 002-2V6l-3-4z"/>
+              <line x1="3" y1="6" x2="21" y2="6"/>
+              <path d="M16 10a4 4 0 01-8 0"/>
+            </svg>
+            {inCart ? "Added!" : "Add to cart"}
           </button>
 
           <a
@@ -126,11 +165,7 @@ export default function ProductCard({ product, context }) {
             target="_blank"
             rel="noopener noreferrer"
             aria-label="Share on WhatsApp"
-            style={{
-              width: 44, height: 44, display: "flex", alignItems: "center", justifyContent: "center",
-              border: "1px solid #e2e8f0", borderRadius: 14, flexShrink: 0,
-            }}
-            title="Share on WhatsApp"
+            className="w-11 h-11 flex items-center justify-center border border-[#e2e8f0] rounded-[14px] shrink-0"
           >
             <svg width="18" height="18" viewBox="0 0 32 32" fill="none">
               <path d="M16 3C9.373 3 4 8.373 4 15c0 2.385.67 4.61 1.832 6.5L4 29l7.697-1.803A12.94 12.94 0 0016 27c6.627 0 12-5.373 12-12S22.627 3 16 3z" fill="#25D366"/>

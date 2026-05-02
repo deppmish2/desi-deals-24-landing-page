@@ -8,7 +8,10 @@ import {
   fetchLists,
   mergeCartIntoList,
   fetchProductBrands,
+  fetchOAuthAuthUrl,
 } from "../utils/api";
+
+const POST_AUTH_REDIRECT_KEY = "dd24_post_auth_redirect";
 
 const CATEGORY_COLORS = {
   "Rice & Grains":    { bg: "#fef3c7", text: "#92400e", label: "RICE" },
@@ -253,8 +256,9 @@ export default function CartPage() {
   const { items, removeItem, updateItem, clearCart, setBrand } = useContext(CartContext);
   const [finding, setFinding] = useState(false);
   const [findError, setFindError] = useState(null);
+  const [needsLogin, setNeedsLogin] = useState(false);
+  const [authLoading, setAuthLoading] = useState(false);
   const navigate = useNavigate();
-  const session = getAuthSession();
 
   const handleDecrement = (index) => {
     const qty = items[index].item_count || 1;
@@ -266,21 +270,34 @@ export default function CartPage() {
     updateItem(index, { item_count: (items[index].item_count || 1) + 1 });
   };
 
+  const handleSignIn = async () => {
+    setAuthLoading(true);
+    try {
+      const state = crypto.randomUUID?.() || Math.random().toString(36).slice(2);
+      sessionStorage.setItem("dd24_oauth_state_google", state);
+      sessionStorage.setItem(POST_AUTH_REDIRECT_KEY, "/cart");
+      const payload = await fetchOAuthAuthUrl("google", state);
+      const authUrl = payload?.authUrl || payload?.url;
+      if (!authUrl) throw new Error("unavailable");
+      window.location.assign(authUrl);
+    } catch {
+      setAuthLoading(false);
+      setFindError("Google sign-in unavailable. Please try again.");
+    }
+  };
+
   const handleFindBestPrice = async () => {
     if (!items.length || finding) return;
-    if (!session) {
-      navigate("/?login=1");
+    if (!getAuthSession()) {
+      setNeedsLogin(true);
       return;
     }
+    setNeedsLogin(false);
     setFinding(true);
     setFindError(null);
     try {
-      const listsData = await fetchLists();
-      let list = listsData?.data?.[0];
-      if (!list) {
-        const createData = await createList("My Shopping List");
-        list = createData.data || createData;
-      }
+      const createData = await createList("My Shopping List");
+      const list = createData.data || createData;
       await mergeCartIntoList(list.id, items);
       clearCart();
       navigate(`/compare/${list.id}`);
@@ -371,6 +388,29 @@ export default function CartPage() {
           {findError && (
             <p style={{ margin: "0 0 8px", fontSize: 12, color: "#ef4444", textAlign: "center" }}>{findError}</p>
           )}
+          {needsLogin ? (
+            <div style={{ border: "1px solid #e2e8f0", borderRadius: 16, padding: "16px", background: "#f8fafc", display: "flex", flexDirection: "column", gap: 10, alignItems: "center" }}>
+              <p style={{ margin: 0, fontSize: 13, color: "#1e293b", fontWeight: 600, textAlign: "center" }}>Sign in to compare prices</p>
+              <p style={{ margin: 0, fontSize: 12, color: "#64748b", textAlign: "center" }}>We'll save your list and take you straight to the comparison.</p>
+              <button
+                type="button"
+                onClick={handleSignIn}
+                disabled={authLoading}
+                style={{
+                  width: "100%", height: 44, borderRadius: 12, border: "1px solid #e2e8f0",
+                  background: "#fff", cursor: "pointer", fontSize: 14, fontWeight: 600,
+                  color: "#1e293b", display: "flex", alignItems: "center", justifyContent: "center", gap: 8,
+                  opacity: authLoading ? 0.6 : 1,
+                }}
+              >
+                <svg width="18" height="18" viewBox="0 0 24 24"><path d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z" fill="#4285F4"/><path d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z" fill="#34A853"/><path d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l3.66-2.84z" fill="#FBBC05"/><path d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z" fill="#EA4335"/></svg>
+                {authLoading ? "Redirecting…" : "Continue with Google"}
+              </button>
+              <button type="button" onClick={() => setNeedsLogin(false)} style={{ background: "none", border: "none", cursor: "pointer", fontSize: 12, color: "#94a3b8" }}>
+                Cancel
+              </button>
+            </div>
+          ) : (
           <button
             onClick={handleFindBestPrice}
             disabled={!items.length || finding}
@@ -386,6 +426,7 @@ export default function CartPage() {
             <span>{finding ? "Saving list…" : "Find best price"}</span>
             {!finding && <span>→</span>}
           </button>
+          )}
         </div>
       </div>
 

@@ -155,7 +155,7 @@ function restoreListFromRequestPayload(listId, userId, body) {
   return true;
 }
 
-function getOwnedList(listId, userId) {
+async function getOwnedList(listId, userId) {
   return db
     .prepare(
       `SELECT *
@@ -187,9 +187,9 @@ function getOwnedListItem(listId, itemId) {
     .get(listId, itemId);
 }
 
-function activeDealsCount() {
-  return db.prepare("SELECT COUNT(*) AS n FROM store_products WHERE is_active = 1").get()
-    ?.n;
+async function activeDealsCount() {
+  const row = await db.prepare("SELECT COUNT(*) AS n FROM store_products WHERE is_active = 1").get();
+  return row?.n ?? 0;
 }
 
 function sleep(ms) {
@@ -207,36 +207,40 @@ function hostFromUrl(value) {
 }
 
 async function ensureDealsReadyForRecommend() {
-  if (activeDealsCount() > 0) {
+  if (await activeDealsCount() > 0) {
     return { ok: true, source: "sqlite" };
   }
 
-  const restored = await restoreFromSnapshot(db).catch(() => false);
-  if (restored && activeDealsCount() > 0) {
-    return { ok: true, source: "redis_snapshot" };
+  if (typeof restoreFromSnapshot === "function") {
+    const restored = await restoreFromSnapshot(db).catch(() => false);
+    if (restored && await activeDealsCount() > 0) {
+      return { ok: true, source: "redis_snapshot" };
+    }
   }
 
   const seeded = restoreDealsFromSeed(db);
-  if (seeded.ok && activeDealsCount() > 0) {
+  if (seeded.ok && await activeDealsCount() > 0) {
     return { ok: true, source: "seed_file" };
   }
 
   const deadline = Date.now() + RECOMMEND_COLD_START_TIMEOUT_MS;
   while (Date.now() < deadline) {
     await sleep(RECOMMEND_COLD_START_POLL_MS);
-    if (activeDealsCount() > 0) {
+    if (await activeDealsCount() > 0) {
       return { ok: true, source: "sqlite_wait" };
     }
-    const retried = await restoreFromSnapshot(db).catch(() => false);
-    if (retried && activeDealsCount() > 0) {
-      return { ok: true, source: "redis_snapshot_wait" };
+    if (typeof restoreFromSnapshot === "function") {
+      const retried = await restoreFromSnapshot(db).catch(() => false);
+      if (retried && await activeDealsCount() > 0) {
+        return { ok: true, source: "redis_snapshot_wait" };
+      }
     }
   }
 
   return { ok: false, source: "unavailable" };
 }
 
-function ensureLocalUserRowFromAuth(reqUser, body) {
+async function ensureLocalUserRowFromAuth(reqUser, body) {
   if (!reqUser?.id) return null;
   const now = new Date().toISOString();
   const email =
@@ -246,7 +250,7 @@ function ensureLocalUserRowFromAuth(reqUser, body) {
   const postcode = String(body?.postcode || "").trim();
 
   try {
-    db.prepare(
+    await db.prepare(
       `INSERT OR IGNORE INTO users
         (id, email, password_hash, google_id, postcode, city, dietary_prefs,
          preferred_stores, blocked_stores, preferred_brands,
@@ -426,15 +430,15 @@ router.post("/:id/recommend", requireUserAuth, async (req, res) => {
 
     // Ensure a local user row exists early so any fallback list restoration
     // (which writes shopping_lists.user_id FK) succeeds on cold instances.
-    ensureLocalUserRowFromAuth(req.user, req.body || {});
+    await ensureLocalUserRowFromAuth(req.user, req.body || {});
 
-    let list = getOwnedList(req.params.id, req.user.id);
+    let list = await getOwnedList(req.params.id, req.user.id);
     if (!list) {
       // Cold start: restore list + items from Redis into SQLite so recommender can read them
       const cached = await getCachedList(req.params.id).catch(() => null);
       if (cached?.list && cached.list.user_id === req.user.id) {
         try {
-          db.prepare(
+          await db.prepare(
             `INSERT OR IGNORE INTO shopping_lists
               (id, user_id, name, raw_input, input_method, created_at, last_used_at, reorder_reminder_days)
              VALUES (?, ?, ?, ?, ?, ?, ?, ?)`,
@@ -454,7 +458,7 @@ router.post("/:id/recommend", requireUserAuth, async (req, res) => {
              VALUES (?, ?, ?, ?, ?, ?, ?, ?)`,
           );
           for (const item of cached.items || []) {
-            insertItem.run(
+            await insertItem.run(
               item.list_id,
               item.canonical_id || null,
               item.raw_item_text,
@@ -465,7 +469,7 @@ router.post("/:id/recommend", requireUserAuth, async (req, res) => {
               item.unresolvable ? 1 : 0,
             );
           }
-          list = getOwnedList(req.params.id, req.user.id);
+          list = await getOwnedList(req.params.id, req.user.id);
         } catch (e) {
           console.warn(
             "[recommend] Failed to restore list from Redis:",
@@ -482,19 +486,19 @@ router.post("/:id/recommend", requireUserAuth, async (req, res) => {
         req.body || {},
       );
       if (restored) {
-        list = getOwnedList(req.params.id, req.user.id);
+        list = await getOwnedList(req.params.id, req.user.id);
       }
     }
     if (!list) return res.status(404).json({ error: "List not found" });
 
-    let user = db
+    let user = await db
       .prepare("SELECT * FROM users WHERE id = ? LIMIT 1")
       .get(req.user.id);
     if (!user) {
       user = await getCachedUser(req.user.id).catch(() => null);
     }
     if (!user) {
-      user = ensureLocalUserRowFromAuth(req.user, req.body || {});
+      user = await ensureLocalUserRowFromAuth(req.user, req.body || {});
     }
     if (!user) {
       user = {
@@ -506,11 +510,6 @@ router.post("/:id/recommend", requireUserAuth, async (req, res) => {
     }
 
     const postcode = String(req.body?.postcode || user.postcode || "").trim();
-    if (!postcode) {
-      return res
-        .status(400)
-        .json({ error: "postcode is required (body or user profile)" });
-    }
 
     const deliveryPreference = String(
       req.body?.delivery_preference || user.delivery_speed_pref || "cheapest",
@@ -522,7 +521,7 @@ router.post("/:id/recommend", requireUserAuth, async (req, res) => {
       });
     }
 
-    db.prepare("UPDATE shopping_lists SET last_used_at = ? WHERE id = ?").run(
+    await db.prepare("UPDATE shopping_lists SET last_used_at = ? WHERE id = ?").run(
       new Date().toISOString(),
       list.id,
     );
@@ -534,7 +533,7 @@ router.post("/:id/recommend", requireUserAuth, async (req, res) => {
       : [];
     console.log("[recommend] body.items:", JSON.stringify(bodyItems));
     if (bodyItems.length > 0) {
-      const dbItems = db
+      const dbItems = await db
         .prepare(
           "SELECT id, canonical_id, raw_item_text, quantity, quantity_unit, item_count FROM list_items WHERE list_id = ? ORDER BY id ASC",
         )
@@ -574,7 +573,7 @@ router.post("/:id/recommend", requireUserAuth, async (req, res) => {
         }
 
         const nextCanonicalId = merged.clearCanonical ? null : dbItem.canonical_id || null;
-        updateItemQty.run(
+        await updateItemQty.run(
           merged.quantity,
           merged.quantity_unit,
           merged.item_count,

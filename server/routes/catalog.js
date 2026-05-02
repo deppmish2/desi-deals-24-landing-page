@@ -1,7 +1,15 @@
 "use strict";
 const express = require("express");
 const db      = require("../db");
+const { expandQuery } = require("../services/search-expander");
 const router  = express.Router();
+
+function buildSearchCondition(q, column) {
+  const terms = expandQuery(q).slice(0, 8);
+  const clauses = terms.map(() => `lower(${column}) LIKE '%' || ? || '%'`);
+  const params  = terms.map(t => t.toLowerCase());
+  return { clause: `(${clauses.join(" OR ")})`, params };
+}
 
 const CATALOG_SQL = `
   WITH ranked AS (
@@ -12,13 +20,14 @@ const CATALOG_SQL = `
       sp.discount_percent,
       sp.price_per_kg,
       sp.best_before,
-      sp.store_id
+      sp.store_id,
+      sp.image_url    AS deal_image_url
     FROM store_product_mappings spm
     JOIN store_products sp ON sp.id = spm.deal_id AND sp.is_active = 1
   ),
   cheapest AS (
     SELECT canonical_id, sale_price, original_price, discount_percent,
-           price_per_kg, best_before, store_id
+           price_per_kg, best_before, store_id, deal_image_url
     FROM (
       SELECT r.*,
              ROW_NUMBER() OVER (
@@ -37,7 +46,7 @@ const CATALOG_SQL = `
   SELECT
     cp.id           AS canonical_id,
     cp.canonical_name,
-    cp.image_url,
+    COALESCE(cp.image_url, c.deal_image_url) AS image_url,
     cp.category,
     c.sale_price    AS cheapest_price,
     c.original_price,
@@ -69,8 +78,9 @@ router.get("/", async (req, res, next) => {
     const params     = [];
 
     if (q) {
-      conditions.push("cp.canonical_name LIKE '%' || ? || '%'");
-      params.push(q);
+      const { clause, params: qParams } = buildSearchCondition(q, "cp.canonical_name");
+      conditions.push(clause);
+      params.push(...qParams);
     }
     if (category) {
       conditions.push("cp.category = ?");
@@ -127,34 +137,36 @@ router.get("/suggest", async (req, res, next) => {
     const q = String(req.query.q || "").trim();
     if (!q) return res.status(400).json({ error: "q is required" });
 
-    const like = `%${q}%`;
+    const { clause: nameClause, params: nameParams } = buildSearchCondition(q, "cp.canonical_name");
 
     const products = await db.prepare(`
       SELECT cp.id AS canonical_id, cp.canonical_name
       FROM canonical_products cp
-      WHERE cp.canonical_name LIKE ?
+      WHERE ${nameClause}
         AND EXISTS (
           SELECT 1 FROM store_product_mappings spm
           JOIN store_products sp ON sp.id = spm.deal_id AND sp.is_active = 1
           WHERE spm.canonical_id = cp.id
         )
-      LIMIT 3
-    `).all(like);
+      LIMIT 5
+    `).all(...nameParams);
+
+    const simpleLike = `%${q}%`;
 
     const categories = await db.prepare(`
       SELECT DISTINCT cp.category AS name
       FROM canonical_products cp
-      WHERE cp.category LIKE ?
+      WHERE lower(cp.category) LIKE ?
         AND cp.category IS NOT NULL
       LIMIT 3
-    `).all(like);
+    `).all(simpleLike);
 
     const stores = await db.prepare(`
       SELECT id AS store_id, name
       FROM stores
-      WHERE name LIKE ?
+      WHERE lower(name) LIKE ?
       LIMIT 3
-    `).all(like);
+    `).all(simpleLike);
 
     res.json({ products, categories, stores });
   } catch (err) {

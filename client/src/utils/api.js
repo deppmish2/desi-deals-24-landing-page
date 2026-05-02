@@ -413,6 +413,10 @@ export function fetchCatalogProduct(canonicalId) {
   return request(`/catalog/${canonicalId}`);
 }
 
+export function fetchCatalogSuggest(q) {
+  return request("/catalog/suggest", { q });
+}
+
 // ── Shopping lists ────────────────────────────────────────────────────────────
 
 export function fetchLists() {

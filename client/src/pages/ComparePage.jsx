@@ -30,7 +30,29 @@ export default function ComparePage() {
     setLoading(true);
     runComparison(id)
       .then(data => {
-        const raw = data.stores || data.data || data || [];
+        const rawStores = data.stores || data.data || [];
+        // Normalise recommender shape → StoreComparisonCard shape
+        const raw = rawStores.map(s => {
+          const itemsMatched = s.items_matched ?? s.coverage?.available ?? 0;
+          const itemsMissing = (s.items_not_found?.length) ?? s.coverage?.missing ?? 0;
+          const itemsTotal   = s.items_total ?? s.coverage?.total ?? (itemsMatched + itemsMissing);
+          return {
+            ...s,
+            store_name:      s.store_name ?? s.store?.name,
+            store_id:        s.store_id   ?? s.store?.id,
+            store_url:       s.store_url  ?? s.store?.url,
+            confirmed_total: s.confirmed_total ?? s.subtotal ?? s.total ?? 0,
+            estimated_total: s.estimated_total ?? null,
+            coverage_pct:    s.coverage_pct ?? (itemsTotal > 0 ? itemsMatched / itemsTotal : 0),
+            coverage: s.coverage ?? {
+              available: itemsMatched,
+              replaced:  0,
+              missing:   itemsMissing,
+              total:     itemsTotal,
+            },
+            items: s.items ?? s.matched_items ?? [],
+          };
+        });
         setStores(raw);
         if (raw[0]?.coverage?.total) setItemCount(raw[0].coverage.total);
         else if (raw[0]?.items?.length) setItemCount(raw[0].items.length);
@@ -128,11 +150,13 @@ export default function ComparePage() {
           </p>
         )}
 
-        {!loading && !error && sorted.map(store => (
+        {!loading && !error && sorted.map((store, i) => (
           <StoreComparisonCard
             key={store.store_id}
             store={store}
             onShop={handleShop}
+            isWinner={i === 0}
+            priceDiff={i > 0 ? (store.confirmed_total - sorted[0].confirmed_total) : 0}
           />
         ))}
       </div>
