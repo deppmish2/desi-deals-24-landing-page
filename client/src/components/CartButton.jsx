@@ -1,7 +1,7 @@
 import React, { useContext } from "react";
 import { CartContext } from "../hooks/CartContext";
 
-export default function CartButton({ deal, className = "" }) {
+export default function CartButton({ deal, fullWidth = false, className = "" }) {
   const { addItem, items } = useContext(CartContext);
 
   const inCart = items.some(i =>
@@ -19,6 +19,30 @@ export default function CartButton({ deal, className = "" }) {
       quantity_unit: deal.weight_unit || null,
       item_count: 1,
     });
+  }
+
+  if (fullWidth) {
+    return (
+      <button
+        onClick={handleAdd}
+        type="button"
+        aria-label={inCart ? "In cart" : "Add to cart"}
+        className={`flex-1 flex items-center justify-center gap-1.5 rounded-[14px] border text-[13px] font-semibold transition-colors ${className}`}
+        style={{
+          height: 44,
+          background: inCart ? "#16a34a" : "#fff",
+          borderColor: inCart ? "#16a34a" : "#e2e8f0",
+          color: inCart ? "#fff" : "#1e293b",
+        }}
+      >
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+          <path d="M6 2L3 6v14a2 2 0 002 2h14a2 2 0 002-2V6l-3-4z"/>
+          <line x1="3" y1="6" x2="21" y2="6"/>
+          <path d="M16 10a4 4 0 01-8 0"/>
+        </svg>
+        {inCart ? "Added!" : "Add to cart"}
+      </button>
+    );
   }
 
   return (
