@@ -19,15 +19,12 @@ import {
   formatPricePerKg,
 } from "../utils/formatters";
 import {
-  addBookmark,
-  fetchBookmarks,
   fetchCanonicalPriceData,
   fetchDealStores,
   fetchDeals,
   fetchOAuthAuthUrl,
   getAuthSession,
   logoutUser,
-  removeBookmark,
 } from "../utils/api";
 import {
   buildDealsSearchParams,
@@ -1719,17 +1716,6 @@ export default function DealsPage() {
       setFilterDraft(nextDraft);
       setFiltersOpen(false);
       setLoginModal(null);
-
-      if (resumeState.bookmarkDealId) {
-        const bookmarkDealId = resumeState.bookmarkDealId;
-        setBookmarkedIds((prev) => new Set(prev).add(bookmarkDealId));
-        addBookmark(bookmarkDealId)
-          .catch(() => null)
-          .then(() => fetchBookmarks().catch(() => null))
-          .then((result) => {
-            if (result?.data) setBookmarkedIds(new Set(result.data));
-          });
-      }
     } catch {
       sessionStorage.removeItem(POST_LOGIN_RESUME_STATE_STORAGE_KEY);
     }
@@ -1790,55 +1776,6 @@ export default function DealsPage() {
       return next;
     });
   }, [deals]);
-
-  const syncBookmarks = useCallback(async () => {
-    if (!isLoggedIn) {
-      setBookmarkedIds(new Set());
-      return;
-    }
-    try {
-      const res = await fetchBookmarks();
-      setBookmarkedIds(new Set(res.data || []));
-    } catch {
-      setBookmarkedIds(new Set());
-    }
-  }, [isLoggedIn]);
-
-  // Load bookmarks
-  useEffect(() => {
-    if (!isLoggedIn) {
-      setBookmarkedIds(new Set());
-      return undefined;
-    }
-
-    let cancelled = false;
-    let idleId = null;
-    let timeoutId = null;
-
-    const runSync = () => {
-      if (!cancelled) syncBookmarks();
-    };
-
-    if (typeof window !== "undefined" && "requestIdleCallback" in window) {
-      idleId = window.requestIdleCallback(runSync, { timeout: 1500 });
-    } else {
-      timeoutId = window.setTimeout(runSync, 900);
-    }
-
-    return () => {
-      cancelled = true;
-      if (
-        idleId !== null &&
-        typeof window !== "undefined" &&
-        "cancelIdleCallback" in window
-      ) {
-        window.cancelIdleCallback(idleId);
-      }
-      if (timeoutId !== null) {
-        window.clearTimeout(timeoutId);
-      }
-    };
-  }, [isLoggedIn, syncBookmarks]);
 
   const [storeNames, setStoreNames] = useState([]);
   useEffect(() => {
@@ -2068,22 +2005,6 @@ export default function DealsPage() {
         wasBookmarked ? "Removed from basket" : "Saved to basket",
         wasBookmarked ? "removed" : "success",
       );
-      try {
-        if (wasBookmarked) {
-          await removeBookmark(dealId);
-        } else {
-          await addBookmark(dealId);
-        }
-      } catch {
-        setBookmarkedIds((prev) => {
-          const next = new Set(prev);
-          if (wasBookmarked) next.add(dealId);
-          else next.delete(dealId);
-          return next;
-        });
-      } finally {
-        syncBookmarks();
-      }
     },
     [
       bookmarkedDeals,
@@ -2092,7 +2013,6 @@ export default function DealsPage() {
       displayDeals,
       isLoggedIn,
       bookmarkedIds,
-      syncBookmarks,
     ],
   );
 

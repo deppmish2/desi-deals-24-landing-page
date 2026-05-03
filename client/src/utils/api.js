@@ -485,17 +485,3 @@ export function rateOrder(listId, rating) {
     body: JSON.stringify({ rating }),
   });
 }
-
-// ── Bookmarks (stub, removed in Task 5) ────────────────────────────────────
-
-export function addBookmark(dealId) {
-  return Promise.resolve();
-}
-
-export function fetchBookmarks() {
-  return Promise.resolve({ data: [] });
-}
-
-export function removeBookmark(dealId) {
-  return Promise.resolve();
-}
