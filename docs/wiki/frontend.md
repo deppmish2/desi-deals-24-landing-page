@@ -1,6 +1,6 @@
 ---
 title: Frontend
-last_updated: 2026-04-13
+last_updated: 2026-05-03
 source_count: 3
 ---
 
@@ -18,11 +18,17 @@ Defined in `client/src/App.jsx`:
 | `/deal/:dealId` | `DealsPage` | Deep-link to a deal (deal highlighted in list) |
 | `/share/deal/:dealId` | `DealSharePage` | Social share redirect page |
 | `/saved` | `SavedDealsPage` | Bookmarked deals (auth required) |
+| `/cart` | `CartPage` | Shopping cart — items, quantities, brand/weight badges. Persisted in localStorage. |
+| `/products` | `CatalogPage` | Browse all canonical products; search + category/store filters. |
+| `/compare/:id` | `ComparePage` | Cross-store price comparison for a saved list. Shows `StoreComparisonCard` per store. |
+| `/orders` | `OrdersPage` | Completed shopping order history (auth required) |
+| `/list` | Redirect → `/cart` | Legacy route alias |
+| `/list/:id/compare` | `RedirectToCompare` | Legacy redirect → `/compare/:id` |
 | `/admin` | `AdminPage` | Admin dashboard (auth required) |
 | `/oauth/:provider/callback` | `OAuthCallbackPage` | Google OAuth callback handler |
 | `*` | Redirect to `/` | SPA fallback |
 
-`OAuthCallbackPage`, `SavedDealsPage`, `DealSharePage`, `AdminPage`, and `FeedbackWidget` are lazy-loaded with `React.lazy()` to keep the initial bundle small.
+`OAuthCallbackPage`, `SavedDealsPage`, `DealSharePage`, `AdminPage`, `FeedbackWidget`, `ListPage`, `ComparePage`, `CartPage`, `CatalogPage`, and `OrdersPage` are lazy-loaded with `React.lazy()`.
 
 `FeedbackWidget` is deferred further: it mounts after idle callback (or 1.2s timeout) so it never blocks the critical render path.
 
@@ -37,6 +43,33 @@ Key behaviors:
 - **Race condition guard**: uses `requestIdRef` to discard stale responses when filters change quickly
 - Returns: `{ deals, pagination, meta, loading, error }`
 
+## Cart
+
+`client/src/hooks/useCart.js` — cart state management. Persisted to `localStorage` under key `dd24_cart_v1` (JSON array of items).
+
+`client/src/hooks/CartContext.js` — React context exporting `CartContext`. Provided at the app root in `App.jsx` via `useCart()`. All components read/write cart via `useContext(CartContext)`.
+
+Cart item shape:
+```js
+{
+  raw_item_text: "TRS Jeera 400g",
+  canonical_id: 123,           // null for free-text items
+  product_category: "Spices",
+  image_url: "...",
+  weight_raw: "400g",
+  quantity: 400,
+  quantity_unit: "g",
+  item_count: 1,
+  brand: "TRS",                // null when anyBrand=true
+  anyBrand: false,
+  brand_pref: "TRS",           // "*" for any-brand items
+}
+```
+
+Key operations: `addItem` (dedupes by `canonical_id` or text, increments `item_count`), `removeItem`, `updateItem`, `clearCart`, `setBrand`.
+
+Weight display: shown as a green badge (`#16a34a` background, `#f0fdf4` fill) — `weight_raw` preferred; falls back to `quantity + quantity_unit`. Prominent, not secondary text.
+
 ## API client
 
 `client/src/utils/api.js` — all API calls go through here. Uses ES module exports (frontend is ESM; only server/crawler are CommonJS).
@@ -44,12 +77,23 @@ Key behaviors:
 Key functions:
 - `fetchDeals(params)` — `GET /api/v1/deals` with query params
 - `fetchDealById(dealId)` — fetches a single deal by ID
-- `authRequest(path, options)` — authenticated request with JWT; auto-refreshes the access token on 401 using the stored refresh token
+- `authRequest(path, options)` — authenticated request with JWT; auto-refreshes on 401 using stored refresh token
+- `fetchCatalog(params)` — `GET /api/v1/catalog` with pagination/filter params
+- `fetchCatalogProduct(canonicalId)` — single canonical product
+- `fetchCatalogSuggest(q)` — `GET /api/v1/catalog/suggest?q=` (typeahead)
+- `fetchLists()` / `createList(name)` / `fetchList(listId)` — list CRUD
+- `addListItem(listId, item)` / `mergeCartIntoList(listId, cartItems)` — add items to list
+- `runComparison(listId)` — `POST /api/v1/lists/:id/recommend`; returns store comparison result
+- `fetchOrders()` — `GET /api/v1/orders`
+- `handoffOrder(listId, storeId, savingsEur, totalEur)` — `PATCH /orders/:id/handoff`; called from ComparePage when user taps "Shop here"; `savingsEur` clamped to `null` if not finite (single-store edge case)
+- `confirmOrder(listId)` — `PATCH /orders/:id/confirm`; advances pending→placed
+- `cancelOrder(listId)` — `DELETE /orders/:id`
+- `rateOrder(listId, rating)` — `PATCH /orders/:id/rating`; rating 1–5
 - `fetchBrands()` — `GET /admin-dashboard/brands`
 - `fetchCanonicalStats()` — `GET /admin-dashboard/canonical-stats`
-- `triggerBrandRemap(brands)` — `POST /admin-dashboard/brands/remap`; returns completed result directly (no polling needed)
+- `triggerBrandRemap(brands)` — `POST /admin-dashboard/brands/remap`; synchronous result (no polling)
 - Auth session stored in `localStorage` under key `dd24_auth_session` (JSON: `{ accessToken, refreshToken, user }`)
-- Client session ID (analytics) stored in `sessionStorage` under `dd24_client_session_id`; sent as `X-DD24-Session-Id` header on every request
+- Client session ID (analytics) stored in `sessionStorage` under `dd24_client_session_id`; sent as `X-DD24-Session-Id` header
 
 Auth endpoints: email magic link (`startEmailAuth`, `completeEmailAuth`), Google OAuth (`fetchOAuthAuthUrl`, `loginWithOAuthCode`), logout (`logoutUser`).
 
@@ -118,6 +162,54 @@ WA share in `DealCard` uses `deal.is_fake_deal` (from API) to branch:
 - Genuine: `buildWhatsAppDealShareUrl` — standard deal share copy
 
 `buildWhatsAppSuspectDiscountShareText` and `buildWhatsAppShareUrl` live in `client/src/utils/share.js`.
+
+## `StoreComparisonCard` (`/compare/:id`)
+
+`client/src/components/comparison/StoreComparisonCard.jsx` — one card per store in `ComparePage`.
+
+Key display rules:
+- **Weight badge:** total weight = `weight_value × packs_needed`, normalized (≥1000g → kg, ≥1000ml → l). Green pill badge.
+- **Per-kg line:** shown as sub-text (`price_per_unit + unit_label`), 11px semibold.
+- **Missing items banner** (`items_not_found`): amber warning strip listing unstocked products; each has a "Replace" button triggering `ReplacementsModal`.
+- `isWinner` card has green border + "Best value" banner; shows savings vs most-expensive store.
+- Coverage bar shows `(available + replaced) / total`.
+
+## `OrdersPage` (`/orders`)
+
+`client/src/pages/OrdersPage.jsx` — order history page. Auth required (redirects to login if no session). Responsive: `windowWidth < 768` renders `Dir2` (mobile), else `Dir4` (desktop).
+
+**Shared atoms** (all defined in same file):
+- `StoreLogo` — initials avatar, deterministic color from `storeId` hash, 6-color palette
+- `StatusPill` — coloured badge for 5 statuses: `pending` (gray), `placed` (amber), `shipped` (blue), `delivered` (green), `issue` (red)
+- `Stars` — 1–5 star display; `onRate` prop makes it interactive
+- `SavingsSparkline` — inline SVG area+line chart; renders monthly savings data
+- `fmt(n)` — European currency format (`1,23 €`); `fmtDate(iso)` — `3 May 2026`; `timeAgo(iso)` — `5 min ago`
+
+**Dir2 — mobile timeline:**
+- Vertical rail with connecting line segments; `StoreLogo` + status badge per order
+- `D2Order` card: store name, order ID, total, savings, first 3 items
+- `D2Footer`: pending → confirm/cancel buttons; delivered → rate + reorder; shipped → track
+- Recap strip: total saved, order count, avg savings %
+- Grouping pills: Recent / By month / By store; search via `window.prompt`
+
+**Dir4 — desktop two-pane:**
+- Left pane: sortable order list (`D4Row`) with 6-column grid; status filter pills; search input; CSV export
+- Right pane (420px): `D4Detail` — pending banner, status timeline (placed→shipped→delivered), items list, totals card, rating card, actions (track/rate/receipt/reorder)
+- Dashboard strip: total saved + sparkline, order count by status, top store logo, avg basket
+
+**Handlers** (optimistic UI, fire-and-forget API calls):
+- `handleConfirm` — optimistic `order_status: "placed"`, then `confirmOrder`
+- `handleCancel` — optimistic remove, then `cancelOrder`
+- `handleRate` — optimistic rating update, then `rateOrder`
+- `handleReorder` — `addItem` each item from order, then `navigate("/cart")`
+
+## `ProductCard` (`/products`)
+
+`client/src/components/ProductCard.jsx` — used in `CatalogPage`.
+
+- "Add to cart" calls `CartContext.addItem` with brand extracted via `extractBrandFromName` (checks `KNOWN_BRANDS` set) or `product.primary_brand`.
+- `anyBrand: !detectedBrand` — when no brand identified, the cart item gets any-brand mode.
+- Image proxied via `/api/v1/admin/proxy/image?url=` (non-Shopify) or Shopify CDN with `?width=400`.
 
 ## Related pages
 
