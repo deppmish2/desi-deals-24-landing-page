@@ -2,6 +2,7 @@ import React, { useContext, useState, useCallback, useEffect, useRef } from "rea
 import { CartContext } from "../hooks/CartContext";
 import { formatPrice, formatPricePerKg } from "../utils/formatters";
 import { resolveAbsoluteImageUrl } from "../utils/images";
+import { matchBrand } from "../utils/brands";
 
 function proxyCatalogImageUrl(imageUrl) {
   const abs = resolveAbsoluteImageUrl(imageUrl, null);
@@ -13,32 +14,15 @@ function proxyCatalogImageUrl(imageUrl) {
   return `/api/v1/admin/proxy/image?url=${encodeURIComponent(abs)}`;
 }
 
-const KNOWN_BRANDS = new Set([
-  "TRS","Heera","Schani","Haldiram","MDH","Everest","Shan","Patanjali",
-  "Aashirvaad","Tata","Catch","National","Swad","Eastern","Annam","Swagat",
-  "Laxmi","Deep","Priya","MTR","Kohinoor","Royal","Daawat","Badshah","Maggi",
-  "Knorr","Lijjat","Patak","Ashoka","Ahmed","Natco","East End","Rajah",
-  "Aachi","Bambino","Mothers","Nilon","Kitchens","Dookan","Shan","Keya",
-  "Preethi","Sujata","Usha","Prestige","Hawkins","Weikfield","Gits",
-  "Mapro","Rasna","Rooh","Maaza","Real","Tropicana",
-  "Bajaj","Dabur","Marico","Emami","Himalaya","Nivea","Dove","Head",
-  "Parachute","Vatika","Sunsilk","Pantene","Colgate","Pepsodent","Sensodyne",
-  "Dettol","Lifebuoy","Savlon","Lux","Pears","Santoor","Vicco","Zandu",
-  "Amul","Nandini","Nestle","Britannia","Parle","Sunfeast",
-  "Bikaji","Balaji","Jabsons","Tasty","Prataap",
-  "ITC","Fortune","Saffola","Sundrop","Dhara","Ruchi",
-  "Postman","Elephant","Double","Sunrise","Pushp","Goldiee","Ramdev",
-]);
-
 function extractBrandFromName(name) {
   if (!name) return null;
   const words = name.split(/\s+/);
-  // Check 1-word and 2-word prefixes
   for (let len = 2; len >= 1; len--) {
     const candidate = words.slice(0, len).join(" ");
-    if (KNOWN_BRANDS.has(candidate)) return candidate;
+    const brand = matchBrand(candidate);
+    if (brand) return brand;
   }
-  // Fallback: first word if it's all-caps (e.g., "TRS")
+  // Fallback: first word if all-caps (e.g., "TRS") — catches brands not yet in DB
   if (words[0] && /^[A-Z]{2,}$/.test(words[0])) return words[0];
   return null;
 }

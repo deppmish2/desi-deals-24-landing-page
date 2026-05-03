@@ -10,6 +10,7 @@ import {
 import AdLandingPage from "./pages/AdLandingPage";
 import DealsPage from "./pages/DealsPage";
 import { initGoogleAnalytics, trackPageView } from "./utils/analytics";
+import { loadBrands } from "./utils/brands";
 import { useCart } from "./hooks/useCart";
 import { CartContext } from "./hooks/CartContext";
 
@@ -55,6 +56,8 @@ class ErrorBoundary extends React.Component {
 
 function RouteAnalytics() {
   const location = useLocation();
+
+  useEffect(() => { loadBrands(); }, []);
 
   useEffect(() => {
     initGoogleAnalytics();

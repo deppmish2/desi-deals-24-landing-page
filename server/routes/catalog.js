@@ -182,6 +182,21 @@ router.get("/suggest", async (req, res, next) => {
   }
 });
 
+router.get("/known-brands", async (req, res, next) => {
+  try {
+    const rows = await db.prepare("SELECT name, aliases FROM known_brands ORDER BY name").all();
+    res.json({
+      data: rows.map((r) => {
+        let aliases = [];
+        try { aliases = JSON.parse(r.aliases || "[]"); } catch { aliases = []; }
+        return { name: r.name, aliases };
+      }),
+    });
+  } catch (err) {
+    next(err);
+  }
+});
+
 router.get("/:id/brands", async (req, res, next) => {
   try {
     const { id } = req.params;
