@@ -57,14 +57,13 @@ function rankMatch(
   const product = parseProductName(productName);
 
   // ── Feature 1: Embedding similarity ────────────────────────────────────────
-  // Compare weight-free normalized keys.
-  // "TRS 5kg basmati"  → key = "trs basmati"
-  // "TRS 1kg basmati"  → key = "trs basmati"  ← same key, high similarity ✓
-  // "TRS 5kg sona masoori" → key = "trs sona masoori" ← different key ✓
-  const embeddingSimilarity = textSimilarity(
-    query.normalized_key,
-    product.normalized_key,
-  );
+  // Use brand-free product_base so brand token doesn't double-count alongside
+  // Feature 2 (brand_match). Without this, "Heera Puffed Rice" scores too high
+  // against "Heera Citric Acid" because the shared "heera" token inflates all
+  // three text features (embedding, overlap, phonetic).
+  const queryBase   = query.product_base   || query.normalized_key;
+  const productBase = product.product_base || product.normalized_key;
+  const embeddingSimilarity = textSimilarity(queryBase, productBase);
 
   // ── Feature 2: Brand match ──────────────────────────────────────────────────
   // 1.0 = brands match exactly
@@ -95,16 +94,15 @@ function rankMatch(
   }
 
   // ── Feature 4: Token overlap ────────────────────────────────────────────────
-  // What fraction of query tokens appear in the product name?
-  // Operates on normalise() output, which strips units, packaging words, etc.
-  const overlap = tokenOverlap(normalise(queryText), normalise(productName));
+  // Use brand-free base for same reason as Feature 1.
+  const overlap = tokenOverlap(normalise(queryBase), normalise(productBase));
 
   // ── Feature 5: Phonetic similarity ─────────────────────────────────────────
   // Handles transliteration variants: "jirra"→"jeera", "haldee"→"haldi",
   // "baasmati"→"basmati", etc.
   const phoneticSim = textSimilarity(
-    phoneticNormalise(normalise(queryText)),
-    phoneticNormalise(normalise(productName)),
+    phoneticNormalise(normalise(queryBase)),
+    phoneticNormalise(normalise(productBase)),
   );
 
   // ── Weighted combination ────────────────────────────────────────────────────

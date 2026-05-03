@@ -113,11 +113,25 @@ export default function StoreComparisonCard({ store, onShop, isWinner, priceDiff
               <span>⚠</span>
               <span style={{ fontWeight: 600 }}>Not stocked at this store:</span>
             </div>
-            {missingItems.map((name, i) => (
-              <p key={i} style={{ margin: "3px 0 0", paddingLeft: 18, fontSize: 11, color: "#92400e" }}>
-                · {name}
-              </p>
-            ))}
+            {missingItems.map((entry, i) => {
+              const name = typeof entry === "string" ? entry : entry.text;
+              const weightBadge = (() => {
+                if (typeof entry === "string" || !entry.quantity || !entry.quantity_unit) return null;
+                const v = Number(entry.quantity);
+                const u = String(entry.quantity_unit).toLowerCase();
+                if (u === "g") return v >= 1000 ? `${v / 1000} kg` : `${v} g`;
+                if (u === "ml") return v >= 1000 ? `${v / 1000} l` : `${v} ml`;
+                return `${v} ${entry.quantity_unit}`;
+              })();
+              return (
+                <p key={i} style={{ margin: "3px 0 0", paddingLeft: 18, fontSize: 11, color: "#92400e", display: "flex", alignItems: "center", gap: 5 }}>
+                  <span>· {name}</span>
+                  {weightBadge && (
+                    <span style={{ fontWeight: 700, background: "#fef3c7", borderRadius: 4, padding: "0 4px" }}>{weightBadge}</span>
+                  )}
+                </p>
+              );
+            })}
           </div>
         )}
 
@@ -206,31 +220,53 @@ export default function StoreComparisonCard({ store, onShop, isWinner, priceDiff
               );
             })}
 
-            {missingItems.map((name, i) => (
-              <div key={`miss-${i}`} style={{
-                display: "flex", alignItems: "center", justifyContent: "space-between",
-                gap: 8, padding: "7px 0",
-                borderBottom: i < missingItems.length - 1 ? "1px solid #f8fafc" : "none",
-              }}>
-                <div style={{ display: "flex", alignItems: "center", gap: 7, flex: 1, minWidth: 0 }}>
-                  <span style={{ color: "#94a3b8", fontSize: 14, flexShrink: 0 }}>✗</span>
-                  <p style={{ margin: 0, fontSize: 13, color: "#94a3b8", textDecoration: "line-through", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
-                    {name}
-                  </p>
+            {missingItems.map((entry, i) => {
+              const name = typeof entry === "string" ? entry : entry.text;
+              const weightBadge = (() => {
+                if (typeof entry === "string" || !entry.quantity || !entry.quantity_unit) return null;
+                const v = Number(entry.quantity);
+                const u = String(entry.quantity_unit).toLowerCase();
+                if (u === "g") return v >= 1000 ? `${v / 1000} kg` : `${v} g`;
+                if (u === "ml") return v >= 1000 ? `${v / 1000} l` : `${v} ml`;
+                return `${v} ${entry.quantity_unit}`;
+              })();
+              return (
+                <div key={`miss-${i}`} style={{
+                  display: "flex", alignItems: "center", justifyContent: "space-between",
+                  gap: 8, padding: "7px 0",
+                  borderBottom: i < missingItems.length - 1 ? "1px solid #f8fafc" : "none",
+                }}>
+                  <div style={{ display: "flex", alignItems: "center", gap: 7, flex: 1, minWidth: 0 }}>
+                    <span style={{ color: "#94a3b8", fontSize: 14, flexShrink: 0 }}>✗</span>
+                    <div style={{ display: "flex", alignItems: "baseline", gap: 5, minWidth: 0 }}>
+                      <p style={{ margin: 0, fontSize: 13, color: "#94a3b8", textDecoration: "line-through", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
+                        {name}
+                      </p>
+                      {weightBadge && (
+                        <span style={{
+                          fontSize: 11, fontWeight: 700, color: "#64748b",
+                          background: "#f1f5f9", border: "1px solid #e2e8f0",
+                          borderRadius: 6, padding: "1px 5px", flexShrink: 0, whiteSpace: "nowrap",
+                        }}>
+                          {weightBadge}
+                        </span>
+                      )}
+                    </div>
+                  </div>
+                  <button
+                    type="button"
+                    onClick={() => setReplacingItem({ canonical_id: null, product_name: name })}
+                    style={{
+                      fontSize: 11, color: "#16a34a",
+                      background: "#f0fdf4", border: "1px solid #86efac",
+                      borderRadius: 8, padding: "3px 8px", cursor: "pointer", flexShrink: 0,
+                    }}
+                  >
+                    Replace
+                  </button>
                 </div>
-                <button
-                  type="button"
-                  onClick={() => setReplacingItem({ canonical_id: null, product_name: name })}
-                  style={{
-                    fontSize: 11, color: "#16a34a",
-                    background: "#f0fdf4", border: "1px solid #86efac",
-                    borderRadius: 8, padding: "3px 8px", cursor: "pointer", flexShrink: 0,
-                  }}
-                >
-                  Replace
-                </button>
-              </div>
-            ))}
+              );
+            })}
           </div>
         )}
       </div>

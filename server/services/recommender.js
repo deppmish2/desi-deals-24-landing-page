@@ -1745,7 +1745,7 @@ async function recommendForList(
       if (hasMassVolumePricingTarget && requestedBaseMeta) {
         const targetBase = toBaseQty(pricingSize.value, pricingSize.unit);
         if (!targetBase) {
-          missingItems.push(item.raw_item_text);
+          missingItems.push({ text: item.raw_item_text, quantity: item.quantity, quantity_unit: item.quantity_unit });
           continue;
         }
 
@@ -1788,7 +1788,7 @@ async function recommendForList(
           }
         }
         if (!selectedStrict) {
-          missingItems.push(item.raw_item_text);
+          missingItems.push({ text: item.raw_item_text, quantity: item.quantity, quantity_unit: item.quantity_unit });
           continue;
         }
 
@@ -1812,7 +1812,7 @@ async function recommendForList(
               : "changed";
 
         if (strictBrandStatus === "changed") {
-          missingItems.push(item.raw_item_text);
+          missingItems.push({ text: item.raw_item_text, quantity: item.quantity, quantity_unit: item.quantity_unit });
           continue;
         }
 
@@ -1928,7 +1928,7 @@ async function recommendForList(
       }
 
       if (!evaluation?.ok) {
-        missingItems.push(item.raw_item_text);
+        missingItems.push({ text: item.raw_item_text, quantity: item.quantity, quantity_unit: item.quantity_unit });
         continue;
       }
 
@@ -1948,7 +1948,7 @@ async function recommendForList(
       if (hasMassVolumePricingTarget) {
         const targetBase = toBaseQty(pricingSize.value, pricingSize.unit);
         if (!targetBase) {
-          missingItems.push(item.raw_item_text);
+          missingItems.push({ text: item.raw_item_text, quantity: item.quantity, quantity_unit: item.quantity_unit });
           continue;
         }
 
@@ -1956,7 +1956,7 @@ async function recommendForList(
         const packOptions = buildPackOptions(variants, targetBase.type);
         const combo = findCheapestExactCombination(packOptions, targetBase.qty);
         if (!combo) {
-          missingItems.push(item.raw_item_text);
+          missingItems.push({ text: item.raw_item_text, quantity: item.quantity, quantity_unit: item.quantity_unit });
           continue;
         }
 
@@ -2002,7 +2002,7 @@ async function recommendForList(
       }
 
       if (brandInfo?.brand_status === "changed") {
-        missingItems.push(item.raw_item_text);
+        missingItems.push({ text: item.raw_item_text, quantity: item.quantity, quantity_unit: item.quantity_unit });
         continue;
       }
 
