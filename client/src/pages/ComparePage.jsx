@@ -73,10 +73,12 @@ export default function ComparePage() {
         handoffOrder(
           id,
           store.store_id,
-          stores.filter(s => s.store_id !== store.store_id).reduce((min, s) => {
-            const t = s.confirmed_total ?? s.total ?? 0;
-            return t < min ? t : min;
-          }, Infinity) - (store.confirmed_total ?? store.total ?? 0),
+          (() => {
+            const minOther = stores.filter(s => s.store_id !== store.store_id)
+              .reduce((min, s) => { const t = s.confirmed_total ?? s.total ?? 0; return t < min ? t : min; }, Infinity);
+            const savings = minOther - (store.confirmed_total ?? store.total ?? 0);
+            return Number.isFinite(savings) ? savings : null;
+          })(),
           store.confirmed_total ?? store.total ?? null
         ),
       ]);

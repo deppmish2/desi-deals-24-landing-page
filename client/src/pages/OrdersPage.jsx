@@ -603,7 +603,7 @@ function D4Row({ order, selected, onSelect, onConfirm, onCancel }) {
   );
 }
 
-function D4Detail({ order, onConfirm, onCancel, onRate, onReorder }) {
+function D4Detail({ order, onConfirm, onCancel, onRate, onReorder, onTrack }) {
   if (!order) {
     return (
       <div style={{ display: "flex", alignItems: "center", justifyContent: "center", height: "100%", color: "#94a3b8", fontSize: 13 }}>
@@ -738,6 +738,14 @@ function D4Detail({ order, onConfirm, onCancel, onRate, onReorder }) {
         {/* Actions */}
         {order.order_status !== "pending" && (
           <div style={{ display: "flex", gap: 8 }}>
+            {order.order_status === "shipped" && order.tracking_url && (
+              <button
+                onClick={() => onTrack(order.tracking_url)}
+                style={{ background: "#eff6ff", color: "#3b82f6", border: "1px solid #bfdbfe", borderRadius: 10, padding: "10px 14px", fontSize: 13, fontWeight: 600, cursor: "pointer" }}
+              >
+                Track
+              </button>
+            )}
             {order.order_status === "delivered" && !order.rating && (
               <button
                 onClick={() => {
@@ -769,7 +777,7 @@ function D4Detail({ order, onConfirm, onCancel, onRate, onReorder }) {
 }
 
 function Dir4({ orders, handlers }) {
-  const { handleConfirm, handleCancel, handleRate, handleReorder } = handlers;
+  const { handleConfirm, handleCancel, handleRate, handleReorder, handleTrack } = handlers;
   const [selectedId, setSelectedId]     = useState(() => {
     const first = orders.find((o) => o.order_status === "delivered") || orders[0];
     return first?.id ?? null;
@@ -802,7 +810,7 @@ function Dir4({ orders, handlers }) {
     const counts = {};
     for (const o of orders) {
       const key = o.completed_store_id || "";
-      counts[key] = (counts[key] || { count: 0, name: o.completed_store_name || key, saved: 0 });
+      counts[key] = (counts[key] || { count: 0, name: o.completed_store_name || key, saved: 0, storeId: key });
       counts[key].count++;
       counts[key].saved += o.savings_eur || 0;
     }
@@ -903,7 +911,7 @@ function Dir4({ orders, handlers }) {
           {topStore && (
             <>
               <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
-                <StoreLogo storeId={Object.keys(orders.reduce((a, o) => ({ ...a, [o.completed_store_id]: 1 }), {}))[0] || ""} storeName={topStore.name} size={28} />
+                <StoreLogo storeId={topStore.storeId || ""} storeName={topStore.name} size={28} />
                 <div style={{ fontFamily: "'Plus Jakarta Sans', sans-serif", fontSize: 16, fontWeight: 800, color: "#0f172a" }}>{topStore.name}</div>
               </div>
               <div style={{ fontSize: 11, color: "#64748b", marginTop: 2 }}>{topStore.count} orders · {fmt(topStore.saved)} saved</div>
@@ -977,6 +985,7 @@ function Dir4({ orders, handlers }) {
             onCancel={handleCancel}
             onRate={handleRate}
             onReorder={handleReorder}
+            onTrack={handleTrack}
           />
         </div>
       </div>
