@@ -60,7 +60,12 @@ export default function ProductCard({ product, context }) {
   const discountPct = product.discount_pct ? Math.round(product.discount_pct) : null;
   const priceText = product.cheapest_price != null ? formatPrice(product.cheapest_price) : null;
   const originalPriceText = product.original_price ? formatPrice(product.original_price) : null;
-  const weightText = product.price_per_kg ? formatPricePerKg(product.price_per_kg) : null;
+  const weightText = [
+    product.weight_raw || null,
+    product.price_per_kg ? formatPricePerKg(product.price_per_kg, product.weight_unit) : null,
+  ]
+    .filter(Boolean)
+    .join(" | ");
   const whatsappUrl = `https://wa.me/?text=${encodeURIComponent(`Check out ${product.canonical_name} on DesiDeals24!`)}`;
   const proxiedImg = proxyCatalogImageUrl(product.image_url);
 

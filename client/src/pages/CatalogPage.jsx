@@ -1,155 +1,12 @@
 import React, { useState, useEffect, useCallback, useRef } from "react";
 import { useSearchParams } from "react-router-dom";
-import { fetchCatalog, fetchCatalogSuggest } from "../utils/api";
+import { fetchCatalog, fetchDealStores, getAuthSession } from "../utils/api";
 import ProductCard from "../components/ProductCard";
 import NavTabs from "../components/NavTabs";
-
-const CATEGORIES = [
-  "All", "Rice & Grains", "Flours & Baking", "Lentils & Pulses",
-  "Spices & Masalas", "Oils & Ghee", "Sauces & Pastes", "Snacks & Sweets",
-  "Beverages", "Dairy & Paneer", "Frozen Foods", "Fresh Produce",
-  "Noodles & Pasta", "Canned & Packaged", "Personal Care", "Household",
-];
-
-function highlight(text, query) {
-  if (!query || !text) return text;
-  const escaped = query.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
-  const parts = text.split(new RegExp(`(${escaped})`, "gi"));
-  return parts.map((part, i) =>
-    part.toLowerCase() === query.toLowerCase()
-      ? <mark key={i} style={{ background: "#fef08a", borderRadius: 2, padding: "0 1px" }}>{part}</mark>
-      : part
-  );
-}
-
-function SuggestDropdown({ query, onSelect, onSelectCategory, onSeeAll, activeIdx }) {
-  const [data, setData] = useState(null);
-  const fetchRef = useRef(null);
-
-  useEffect(() => {
-    if (!query || query.length < 2) { setData(null); return; }
-    let cancelled = false;
-    const timer = setTimeout(async () => {
-      try {
-        const res = await fetchCatalogSuggest(query);
-        if (!cancelled) setData(res);
-      } catch {
-        if (!cancelled) setData(null);
-      }
-    }, 120);
-    fetchRef.current = () => { cancelled = true; clearTimeout(timer); };
-    return () => { cancelled = true; clearTimeout(timer); };
-  }, [query]);
-
-  if (!data) return null;
-  const { products = [], categories = [], stores = [] } = data;
-  if (!products.length && !categories.length && !stores.length) return null;
-
-  const allItems = [
-    ...products.map(p => ({ kind: "product", ...p })),
-    ...categories.map(c => ({ kind: "category", name: c.name })),
-    ...stores.map(s => ({ kind: "store", name: s.name, store_id: s.store_id })),
-    { kind: "seeall" },
-  ];
-
-  return (
-    <div style={{
-      position: "absolute", top: "100%", left: 0, right: 0, zIndex: 200,
-      background: "#fff", border: "1px solid #e2e8f0", borderRadius: 16,
-      boxShadow: "0 8px 24px rgba(0,0,0,0.12)", marginTop: 4, overflow: "hidden",
-    }}>
-      {products.length > 0 && (
-        <div>
-          <p style={{ margin: 0, padding: "8px 14px 4px", fontSize: 10, fontWeight: 800, color: "#94a3b8", textTransform: "uppercase", letterSpacing: "1.2px" }}>
-            Products
-          </p>
-          {products.map((p, i) => (
-            <button
-              key={p.canonical_id}
-              type="button"
-              onClick={() => onSelect(p.canonical_name)}
-              style={{
-                width: "100%", textAlign: "left", border: "none", cursor: "pointer",
-                padding: "8px 14px", display: "flex", alignItems: "center", gap: 10,
-                background: activeIdx === i ? "#f0fdf4" : "transparent",
-                fontSize: 14, color: "#1e293b",
-              }}
-            >
-              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#94a3b8" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={{ flexShrink: 0 }}>
-                <circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/>
-              </svg>
-              <span>{highlight(p.canonical_name, query)}</span>
-            </button>
-          ))}
-        </div>
-      )}
-
-      {categories.length > 0 && (
-        <div style={{ borderTop: products.length ? "1px solid #f1f5f9" : "none" }}>
-          <p style={{ margin: 0, padding: "8px 14px 4px", fontSize: 10, fontWeight: 800, color: "#94a3b8", textTransform: "uppercase", letterSpacing: "1.2px" }}>
-            Categories
-          </p>
-          {categories.map((c, i) => (
-            <button
-              key={c.name}
-              type="button"
-              onClick={() => onSelectCategory(c.name)}
-              style={{
-                width: "100%", textAlign: "left", border: "none", cursor: "pointer",
-                padding: "8px 14px", display: "flex", alignItems: "center", gap: 10,
-                background: activeIdx === products.length + i ? "#f0fdf4" : "transparent",
-                fontSize: 14, color: "#1e293b",
-              }}
-            >
-              <span style={{ fontSize: 14 }}>🏷</span>
-              <span>{highlight(c.name, query)}</span>
-            </button>
-          ))}
-        </div>
-      )}
-
-      {stores.length > 0 && (
-        <div style={{ borderTop: (products.length || categories.length) ? "1px solid #f1f5f9" : "none" }}>
-          <p style={{ margin: 0, padding: "8px 14px 4px", fontSize: 10, fontWeight: 800, color: "#94a3b8", textTransform: "uppercase", letterSpacing: "1.2px" }}>
-            Stores
-          </p>
-          {stores.map((s, i) => (
-            <button
-              key={s.store_id}
-              type="button"
-              onClick={() => onSelect(s.name)}
-              style={{
-                width: "100%", textAlign: "left", border: "none", cursor: "pointer",
-                padding: "8px 14px", display: "flex", alignItems: "center", gap: 10,
-                background: activeIdx === products.length + categories.length + i ? "#f0fdf4" : "transparent",
-                fontSize: 14, color: "#1e293b",
-              }}
-            >
-              <span style={{ fontSize: 14 }}>🏪</span>
-              <span>{highlight(s.name, query)}</span>
-            </button>
-          ))}
-        </div>
-      )}
-
-      <button
-        type="button"
-        onClick={onSeeAll}
-        style={{
-          width: "100%", textAlign: "left", border: "none", borderTop: "1px solid #f1f5f9",
-          cursor: "pointer", padding: "10px 14px", display: "flex", alignItems: "center", gap: 8,
-          background: activeIdx === allItems.length - 1 ? "#f0fdf4" : "#fafafa",
-          fontSize: 13, fontWeight: 600, color: "#16a34a",
-        }}
-      >
-        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
-          <circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/>
-        </svg>
-        See all results for &ldquo;{query}&rdquo;
-      </button>
-    </div>
-  );
-}
+import SearchWithSuggest from "../components/SearchWithSuggest";
+import FiltersModal from "../components/FiltersModal";
+import SortDropdown from "../components/SortDropdown";
+import LoginModal from "../components/LoginModal";
 
 export default function CatalogPage() {
   const [searchParams, setSearchParams] = useSearchParams();
@@ -158,33 +15,48 @@ export default function CatalogPage() {
   const [page, setPage] = useState(1);
   const [hasMore, setHasMore] = useState(false);
   const [error, setError] = useState(null);
-  const [dropdownOpen, setDropdownOpen] = useState(false);
-  const [activeIdx, setActiveIdx] = useState(-1);
-  const inputRef = useRef(null);
-  const containerRef = useRef(null);
-  const debounceRef = useRef(null);
   const reqIdRef = useRef(0);
+  const debounceRef = useRef(null);
 
-  const q = searchParams.get("q") || "";
+  const q        = searchParams.get("q")        || "";
   const category = searchParams.get("category") || "";
-  const [searchInput, setSearchInput] = useState(q);
+  const store    = searchParams.get("store")    || "";
+  const sort     = searchParams.get("sort")     || "";
 
-  const commitSearch = useCallback((val) => {
-    setDropdownOpen(false);
-    setActiveIdx(-1);
-    setSearchParams(p => {
-      const next = new URLSearchParams(p);
-      if (val) next.set("q", val); else next.delete("q");
-      return next;
-    });
-  }, [setSearchParams]);
+  const [searchInput, setSearchInput] = useState(q);
+  const [filterDraft, setFilterDraft] = useState({
+    stores: store ? [store] : [],
+    category,
+    minDiscount: "",
+    priceMin: "",
+    priceMax: "",
+    hideExpired: false,
+  });
+  const [filtersOpen, setFiltersOpen] = useState(false);
+  const [storeNames, setStoreNames] = useState([]);
+  const [loginModal, setLoginModal] = useState(null);
+  const [session, setSession] = useState(() => getAuthSession());
+  const isLoggedIn = Boolean(session?.accessToken);
+
+  useEffect(() => {
+    function onAuthChange() { setSession(getAuthSession()); }
+    window.addEventListener("dd24-auth-changed", onAuthChange);
+    return () => window.removeEventListener("dd24-auth-changed", onAuthChange);
+  }, []);
 
   const load = useCallback(async (params, reset) => {
     setLoading(true);
     setError(null);
     const myId = ++reqIdRef.current;
     try {
-      const data = await fetchCatalog({ q: params.q, category: params.category, page: params.page, limit: 24 });
+      const data = await fetchCatalog({
+        q: params.q,
+        category: params.category,
+        store: params.store,
+        sort: params.sort,
+        page: params.page,
+        limit: 24,
+      });
       if (reqIdRef.current !== myId) return;
       const { data: rows = [], pagination } = data;
       setProducts(prev => reset ? rows : [...prev, ...rows]);
@@ -199,135 +71,151 @@ export default function CatalogPage() {
 
   useEffect(() => {
     setPage(1);
-    load({ q, category, page: 1 }, true);
-  }, [q, category, load]);
+    load({ q, category, store, sort, page: 1 }, true);
+  }, [q, category, store, sort, load]);
+
+  useEffect(() => { setSearchInput(q); }, [q]);
+
+  useEffect(() => () => clearTimeout(debounceRef.current), []);
 
   useEffect(() => {
-    setSearchInput(q);
-  }, [q]);
+    if (!filtersOpen || storeNames.length > 0) return;
+    let cancelled = false;
+    fetchDealStores({ limit: 200 })
+      .then(res => {
+        if (cancelled) return;
+        setStoreNames((res.data || []).map(s => s.name).sort());
+      })
+      .catch(() => {});
+    return () => { cancelled = true; };
+  }, [filtersOpen, storeNames.length]);
 
-  // Close dropdown on outside click
-  useEffect(() => {
-    function onClickOutside(e) {
-      if (containerRef.current && !containerRef.current.contains(e.target)) {
-        setDropdownOpen(false);
-        setActiveIdx(-1);
-      }
-    }
-    document.addEventListener("mousedown", onClickOutside);
-    return () => document.removeEventListener("mousedown", onClickOutside);
-  }, []);
-
-  const handleSearch = (e) => {
-    const val = e.target.value;
-    setSearchInput(val);
-    setActiveIdx(-1);
-    setDropdownOpen(val.length >= 2);
-    clearTimeout(debounceRef.current);
-    debounceRef.current = setTimeout(() => {
-      setSearchParams(p => {
-        const next = new URLSearchParams(p);
-        if (val) next.set("q", val); else next.delete("q");
-        return next;
-      });
-    }, 400);
-  };
-
-  const handleKeyDown = (e) => {
-    if (!dropdownOpen) return;
-    if (e.key === "Escape") { setDropdownOpen(false); setActiveIdx(-1); return; }
-    if (e.key === "ArrowDown") { e.preventDefault(); setActiveIdx(i => i + 1); return; }
-    if (e.key === "ArrowUp") { e.preventDefault(); setActiveIdx(i => Math.max(-1, i - 1)); return; }
-    if (e.key === "Enter") { e.preventDefault(); commitSearch(searchInput); }
-  };
-
-  const handleCategory = (cat) => {
-    setDropdownOpen(false);
+  const commitSearch = useCallback((val) => {
     setSearchParams(p => {
       const next = new URLSearchParams(p);
-      if (cat && cat !== "All") next.set("category", cat); else next.delete("category");
+      if (val) next.set("q", val); else next.delete("q");
+      next.delete("page");
       return next;
     });
-  };
+  }, [setSearchParams]);
 
-  const handleLoadMore = () => {
+  function openFilters() {
+    setFilterDraft({
+      stores: store ? [store] : [],
+      category,
+      minDiscount: "",
+      priceMin: "",
+      priceMax: "",
+      hideExpired: false,
+    });
+    setFiltersOpen(true);
+  }
+
+  function applyFilters() {
+    setFiltersOpen(false);
+    setSearchParams(p => {
+      const next = new URLSearchParams(p);
+      if (filterDraft.stores.length > 0) next.set("store", filterDraft.stores[0]);
+      else next.delete("store");
+      if (filterDraft.category) next.set("category", filterDraft.category);
+      else next.delete("category");
+      next.delete("page");
+      return next;
+    });
+  }
+
+  function clearFilters() {
+    setFilterDraft({ stores: [], category: "", minDiscount: "", priceMin: "", priceMax: "", hideExpired: false });
+  }
+
+  function handleFiltersSignIn() {
+    setFiltersOpen(false);
+    setLoginModal({ message: "Sign in to filter by store and category." });
+  }
+
+  function handleSortChange(val) {
+    setSearchParams(p => {
+      const next = new URLSearchParams(p);
+      if (val) next.set("sort", val); else next.delete("sort");
+      next.delete("page");
+      return next;
+    });
+  }
+
+  function handleLoadMore() {
     if (loading) return;
     const next = page + 1;
     setPage(next);
-    load({ q, category, page: next }, false);
-  };
+    load({ q, category, store, sort, page: next }, false);
+  }
+
+  const filterCount = Number(!!store) + Number(!!category);
 
   return (
     <div style={{ minHeight: "100vh", background: "#f8fafc", fontFamily: "'DM Sans', system-ui, sans-serif" }}>
       <NavTabs />
 
-      {/* Search + filters */}
+      {/* Search + filter/sort row */}
       <div style={{ background: "#fff", borderBottom: "1px solid #f1f5f9", padding: "12px 16px" }}>
         <div className="max-w-screen-xl mx-auto">
-          {/* Search with dropdown */}
-          <div ref={containerRef} style={{ position: "relative", marginBottom: 10 }}>
-            <div style={{ position: "relative" }}>
-              <svg
-                width="16" height="16" viewBox="0 0 24 24" fill="none"
-                stroke="#94a3b8" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"
-                style={{ position: "absolute", left: 12, top: "50%", transform: "translateY(-50%)", pointerEvents: "none" }}
-              >
-                <circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/>
+          <div className="flex gap-2 items-center">
+            <SearchWithSuggest
+              className="flex-1"
+              value={searchInput}
+              onChange={(val) => {
+                setSearchInput(val);
+                clearTimeout(debounceRef.current);
+                debounceRef.current = setTimeout(() => {
+                  setSearchParams(p => {
+                    const next = new URLSearchParams(p);
+                    if (val) next.set("q", val); else next.delete("q");
+                    next.delete("page");
+                    return next;
+                  });
+                }, 400);
+              }}
+              onCommit={(val) => {
+                setSearchInput(val);
+                clearTimeout(debounceRef.current);
+                commitSearch(val);
+              }}
+              onSelectCategory={(cat) => {
+                setSearchInput("");
+                clearTimeout(debounceRef.current);
+                setSearchParams(p => {
+                  const next = new URLSearchParams(p);
+                  if (cat) next.set("category", cat); else next.delete("category");
+                  next.delete("page");
+                  return next;
+                });
+              }}
+              onSelectStore={(name) => {
+                setSearchInput("");
+                clearTimeout(debounceRef.current);
+                setSearchParams(p => {
+                  const next = new URLSearchParams(p);
+                  next.set("store", name);
+                  next.delete("page");
+                  return next;
+                });
+              }}
+              placeholder="Search products…"
+            />
+            <button
+              type="button"
+              onClick={openFilters}
+              className="relative shrink-0 inline-flex h-[52px] w-[52px] items-center justify-center rounded-[14px] border border-slate-200 bg-white text-slate-600 shadow-sm transition-colors hover:bg-slate-50"
+            >
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round">
+                <line x1="4" y1="6" x2="20" y2="6"/><line x1="8" y1="12" x2="20" y2="12"/><line x1="12" y1="18" x2="20" y2="18"/>
               </svg>
-              <input
-                ref={inputRef}
-                type="search"
-                placeholder="Search products…"
-                value={searchInput}
-                onChange={handleSearch}
-                onFocus={() => { if (searchInput.length >= 2) setDropdownOpen(true); }}
-                onKeyDown={handleKeyDown}
-                style={{
-                  width: "100%", boxSizing: "border-box",
-                  padding: "10px 14px 10px 36px", borderRadius: 14,
-                  border: "1px solid #e2e8f0", fontSize: 14, color: "#1e293b",
-                  outline: "none", background: "#f8fafc",
-                }}
-              />
-            </div>
-
-            {dropdownOpen && (
-              <SuggestDropdown
-                query={searchInput}
-                activeIdx={activeIdx}
-                onSelect={(name) => {
-                  setSearchInput(name);
-                  commitSearch(name);
-                }}
-                onSelectCategory={(cat) => {
-                  setSearchInput("");
-                  handleCategory(cat);
-                }}
-                onSeeAll={() => commitSearch(searchInput)}
-              />
-            )}
-          </div>
-
-          {/* Category chips */}
-          <div style={{ display: "flex", gap: 6, overflowX: "auto", paddingBottom: 4 }}>
-            {CATEGORIES.map(cat => {
-              const active = cat === "All" ? !category : category === cat;
-              return (
-                <button
-                  key={cat}
-                  type="button"
-                  onClick={() => handleCategory(cat === "All" ? "" : cat)}
-                  style={{
-                    flexShrink: 0, padding: "6px 12px", borderRadius: 99, border: "none", cursor: "pointer",
-                    fontSize: 12, fontWeight: active ? 700 : 500,
-                    background: active ? "#16a34a" : "#f1f5f9",
-                    color: active ? "#fff" : "#64748b",
-                  }}
-                >
-                  {cat}
-                </button>
-              );
-            })}
+              {filterCount > 0 && (
+                <span className="absolute -top-1 -right-1 min-w-[18px] h-[18px] rounded-full bg-[#0f172a] text-white text-[10px] font-extrabold flex items-center justify-center leading-none">
+                  {filterCount}
+                </span>
+              )}
+            </button>
+            <SortDropdown value={sort} onChange={handleSortChange} />
           </div>
         </div>
       </div>
@@ -352,16 +240,42 @@ export default function CatalogPage() {
           <button
             type="button"
             onClick={handleLoadMore}
-            style={{
-              display: "block", margin: "16px auto 0", padding: "10px 28px",
-              background: "#fff", border: "1px solid #e2e8f0", borderRadius: 14,
-              fontSize: 14, fontWeight: 600, color: "#16a34a", cursor: "pointer",
-            }}
+            style={{ display: "block", margin: "16px auto 0", padding: "10px 28px", background: "#fff", border: "1px solid #e2e8f0", borderRadius: 14, fontSize: 14, fontWeight: 600, color: "#16a34a", cursor: "pointer" }}
           >
             Load more
           </button>
         )}
       </div>
+
+      {filtersOpen && (
+        <FiltersModal
+          storeNames={storeNames}
+          draft={filterDraft}
+          onChange={(newDraft) => {
+            if (newDraft.stores.length > 1) {
+              const added = newDraft.stores.find(s => !filterDraft.stores.includes(s));
+              setFilterDraft({ ...newDraft, stores: added ? [added] : newDraft.stores.slice(0, 1) });
+            } else {
+              setFilterDraft(newDraft);
+            }
+          }}
+          onClear={clearFilters}
+          onApply={applyFilters}
+          onClose={() => setFiltersOpen(false)}
+          isLoggedIn={isLoggedIn}
+          onSignIn={handleFiltersSignIn}
+          showExtendedFilters={false}
+        />
+      )}
+
+      {loginModal && (
+        <LoginModal
+          message={loginModal.message}
+          resumeState={null}
+          onClose={() => setLoginModal(null)}
+        />
+      )}
+
       <style>{`@keyframes spin { to { transform: rotate(360deg); } }`}</style>
     </div>
   );

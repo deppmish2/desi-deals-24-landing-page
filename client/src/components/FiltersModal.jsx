@@ -37,6 +37,7 @@ export default function FiltersModal({
   onClose,
   isLoggedIn,
   onSignIn,
+  showExtendedFilters = true,
 }) {
   const { stores = [], category } = draft;
 
@@ -138,6 +139,7 @@ export default function FiltersModal({
           </div>
 
           {/* Minimum Discount */}
+          {showExtendedFilters && (
           <div>
             <p className="text-[11px] font-extrabold tracking-[1.5px] uppercase text-slate-400 mb-3">Minimum Discount</p>
             <div className="grid grid-cols-4 gap-2">
@@ -158,8 +160,10 @@ export default function FiltersModal({
               })}
             </div>
           </div>
+          )}
 
           {/* Price Range */}
+          {showExtendedFilters && (
           <div>
             <p className="text-[11px] font-extrabold tracking-[1.5px] uppercase text-slate-400 mb-3">Price Range (€)</p>
             <div className="flex items-center gap-3 mb-4">
@@ -180,8 +184,10 @@ export default function FiltersModal({
               className="w-full accent-[#0f172a] h-1 cursor-pointer"
             />
           </div>
+          )}
 
           {/* Toggles */}
+          {showExtendedFilters && (
           <div className="flex flex-col gap-4">
             {[{ key: "hideExpired", label: "Hide expired products", sub: "Remove products past best before date" }].map(({ key, label, sub }) => (
               <div key={key} className="flex items-start justify-between gap-4">
@@ -199,6 +205,7 @@ export default function FiltersModal({
               </div>
             ))}
           </div>
+          )}
 
           {/* Lock card for non-logged-in */}
           {!isLoggedIn && (

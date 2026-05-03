@@ -78,6 +78,7 @@ router.get("/", async (req, res, next) => {
     const q        = String(req.query.q        || "").trim();
     const category = String(req.query.category || "").trim();
     const store    = String(req.query.store    || "").trim();
+    const sort     = String(req.query.sort     || "").trim();
     const isDiscounted = req.query.is_discounted === "1";
     const minDiscount  = parseFloat(req.query.min_discount || "0") || 0;
     const hideExpired  = req.query.hide_expired === "1";
@@ -98,7 +99,8 @@ router.get("/", async (req, res, next) => {
       conditions.push(`EXISTS (
         SELECT 1 FROM store_product_mappings spm2
         JOIN store_products sp2 ON sp2.id = spm2.deal_id AND sp2.is_active = 1
-        WHERE spm2.canonical_id = cp.id AND sp2.store_id = ?
+        JOIN stores s2 ON s2.id = sp2.store_id
+        WHERE spm2.canonical_id = cp.id AND lower(s2.name) = lower(?)
       )`);
       params.push(store);
     }
@@ -122,8 +124,18 @@ router.get("/", async (req, res, next) => {
     ).get(...params);
     const total = countRow?.n ?? 0;
 
+    const ORDER_BY_MAP = {
+      price:        "c.sale_price ASC, cp.id ASC",
+      price_per_kg: "c.price_per_kg ASC NULLS LAST, cp.id ASC",
+      discount:     "c.discount_percent DESC NULLS LAST, cp.id ASC",
+      real_savings: "(c.original_price - c.sale_price) DESC NULLS LAST, cp.id ASC",
+    };
+    const orderBy = Object.hasOwn(ORDER_BY_MAP, sort)
+      ? ORDER_BY_MAP[sort]
+      : "c.sale_price ASC, cp.id ASC";
+
     const rows = await db.prepare(
-      `${CATALOG_SQL} ${whereClause} ORDER BY c.sale_price ASC LIMIT ? OFFSET ?`
+      `${CATALOG_SQL} ${whereClause} ORDER BY ${orderBy} LIMIT ? OFFSET ?`
     ).all(...params, limit, offset);
 
     res.json({
