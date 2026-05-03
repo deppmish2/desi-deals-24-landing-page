@@ -525,8 +525,463 @@ function Dir2({ orders, handlers }) {
   );
 }
 
+function D4Row({ order, selected, onSelect, onConfirm, onCancel }) {
+  const isSelected = selected === order.id;
+  const isPending  = order.order_status === "pending";
+  return (
+    <div
+      onClick={() => onSelect(order.id)}
+      style={{
+        display: "grid",
+        gridTemplateColumns: "42px 1fr 110px 160px 100px 28px",
+        gap: 14,
+        padding: "14px 18px",
+        borderBottom: "1px solid #f1f5f9",
+        borderLeft: isSelected ? "3px solid #16a34a" : "3px solid transparent",
+        background: isSelected ? "#f8fafc" : isPending ? "#fafafa" : "#fff",
+        cursor: "pointer",
+        alignItems: "center",
+        transition: "background 0.12s",
+      }}
+    >
+      <StoreLogo storeId={order.completed_store_id || ""} storeName={order.completed_store_name || ""} size={36} />
+
+      <div style={{ minWidth: 0 }}>
+        <div style={{ fontFamily: "'Plus Jakarta Sans', sans-serif", fontSize: 14, fontWeight: 700, color: "#0f172a", whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>
+          {order.completed_store_name || order.completed_store_id}
+        </div>
+        <div style={{ fontSize: 11, color: "#94a3b8", marginBottom: 2 }}>#{order.id.slice(0, 8).toUpperCase()}</div>
+        {isPending ? (
+          <div style={{ fontSize: 12, color: "#94a3b8", fontStyle: "italic" }}>
+            handed off {timeAgo(order.completed_at)} — awaiting your confirmation
+          </div>
+        ) : (
+          <div style={{ fontSize: 12, color: "#64748b", whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>
+            {order.items?.length || 0} items —{" "}
+            {(order.items || []).slice(0, 3).map((i) => i.raw_item_text).join(", ")}
+            {(order.items?.length || 0) > 3 ? ", …" : ""}
+          </div>
+        )}
+      </div>
+
+      <div style={{ fontSize: 12, color: "#475569", fontVariantNumeric: "tabular-nums" }}>
+        {fmtDate(order.completed_at)}
+      </div>
+
+      <div>
+        {isPending ? (
+          <div style={{ display: "flex", gap: 6 }} onClick={(e) => e.stopPropagation()}>
+            <button onClick={() => onConfirm(order.id)} style={{ background: "#16a34a", color: "#fff", border: "none", borderRadius: 8, padding: "5px 10px", fontSize: 11, fontWeight: 700, cursor: "pointer", whiteSpace: "nowrap" }}>
+              I placed it
+            </button>
+            <button onClick={() => onCancel(order.id)} style={{ background: "#fff", color: "#64748b", border: "1px solid #e2e8f0", borderRadius: 8, padding: "5px 10px", fontSize: 11, cursor: "pointer", whiteSpace: "nowrap" }}>
+              Didn't
+            </button>
+          </div>
+        ) : (
+          <StatusPill status={order.order_status} />
+        )}
+      </div>
+
+      <div style={{ textAlign: "right" }}>
+        {order.total_eur != null ? (
+          <>
+            <div style={{ fontFamily: "'Plus Jakarta Sans', sans-serif", fontSize: 15, fontWeight: 800, color: isPending ? "#94a3b8" : "#0f172a", fontVariantNumeric: "tabular-nums" }}>
+              {fmt(order.total_eur)}
+            </div>
+            {!isPending && order.savings_eur > 0 && (
+              <div style={{ fontSize: 10, fontWeight: 700, color: "#16a34a" }}>−{fmt(order.savings_eur)}</div>
+            )}
+          </>
+        ) : (
+          <div style={{ fontSize: 12, color: "#94a3b8" }}>{order.items?.length || 0} items</div>
+        )}
+      </div>
+
+      <div style={{ fontSize: 14, color: "#cbd5e1", textAlign: "right" }}>›</div>
+    </div>
+  );
+}
+
+function D4Detail({ order, onConfirm, onCancel, onRate, onReorder }) {
+  if (!order) {
+    return (
+      <div style={{ display: "flex", alignItems: "center", justifyContent: "center", height: "100%", color: "#94a3b8", fontSize: 13 }}>
+        Select an order
+      </div>
+    );
+  }
+
+  const TIMELINE_STEPS = ["placed", "shipped", "delivered"];
+  const statusIdx = TIMELINE_STEPS.indexOf(order.order_status);
+
+  return (
+    <div style={{ padding: 20, overflowY: "auto", height: "100%" }}>
+      <div style={{ background: "#fff", borderRadius: 14, border: "1px solid #f1f5f9", padding: 20 }}>
+        {/* Header */}
+        <div style={{ display: "flex", alignItems: "center", gap: 12, marginBottom: 16 }}>
+          <StoreLogo storeId={order.completed_store_id || ""} storeName={order.completed_store_name || ""} size={48} />
+          <div style={{ flex: 1 }}>
+            <div style={{ fontFamily: "'Plus Jakarta Sans', sans-serif", fontSize: 18, fontWeight: 800, color: "#0f172a" }}>
+              {order.completed_store_name || order.completed_store_id}
+            </div>
+            <div style={{ fontSize: 12, color: "#64748b" }}>
+              #{order.id.slice(0, 8).toUpperCase()} · {fmtDate(order.completed_at)}
+            </div>
+          </div>
+          <StatusPill status={order.order_status} />
+        </div>
+
+        {/* Pending banner */}
+        {order.order_status === "pending" && (
+          <div style={{ background: "#f8fafc", border: "1px dashed #cbd5e1", borderRadius: 10, padding: "12px 14px", marginBottom: 16 }}>
+            <div style={{ fontSize: 13, fontWeight: 700, fontFamily: "'Plus Jakarta Sans', sans-serif", color: "#0f172a", marginBottom: 4 }}>
+              Did you complete checkout at {order.completed_store_name || order.completed_store_id}?
+            </div>
+            <div style={{ fontSize: 12, color: "#64748b", marginBottom: 10 }}>
+              We handed you off to the store {timeAgo(order.completed_at)}. Confirm so we can track delivery and savings.
+            </div>
+            <div style={{ display: "flex", gap: 8 }}>
+              <button onClick={() => onConfirm(order.id)} style={{ background: "#16a34a", color: "#fff", border: "none", borderRadius: 8, padding: "8px 14px", fontSize: 12, fontWeight: 700, cursor: "pointer" }}>
+                Yes, I placed it
+              </button>
+              <button onClick={() => onCancel(order.id)} style={{ background: "#fff", color: "#64748b", border: "1px solid #e2e8f0", borderRadius: 8, padding: "8px 14px", fontSize: 12, cursor: "pointer" }}>
+                I didn't order
+              </button>
+            </div>
+          </div>
+        )}
+
+        {/* Status timeline (hidden when pending) */}
+        {order.order_status !== "pending" && (
+          <div style={{ background: "#f8fafc", borderRadius: 10, padding: "10px 12px", marginBottom: 16, display: "flex", alignItems: "center", gap: 0 }}>
+            {TIMELINE_STEPS.map((step, i) => {
+              const reached = statusIdx >= i;
+              return (
+                <React.Fragment key={step}>
+                  <div style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: 3 }}>
+                    <div style={{ width: 14, height: 14, borderRadius: "50%", background: reached ? "#16a34a" : "#e2e8f0", display: "flex", alignItems: "center", justifyContent: "center" }}>
+                      <span style={{ fontSize: 7, fontWeight: 800, color: reached ? "#fff" : "#94a3b8" }}>
+                        {reached ? "✓" : i + 1}
+                      </span>
+                    </div>
+                    <span style={{ fontSize: 9, color: reached ? "#16a34a" : "#94a3b8", fontWeight: 600, textTransform: "capitalize" }}>{step}</span>
+                  </div>
+                  {i < TIMELINE_STEPS.length - 1 && (
+                    <div style={{ flex: 1, height: 2, background: statusIdx > i ? "#16a34a" : "#e2e8f0", margin: "0 4px", marginBottom: 14 }} />
+                  )}
+                </React.Fragment>
+              );
+            })}
+          </div>
+        )}
+
+        {/* Items */}
+        <div style={{ marginBottom: 14 }}>
+          <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", padding: "0 0 8px", borderBottom: "1px solid #f1f5f9", marginBottom: 4 }}>
+            <span style={{ fontSize: 11, fontWeight: 700, color: "#64748b", textTransform: "uppercase", letterSpacing: "0.5px" }}>
+              Items · {order.items?.length || 0}
+            </span>
+          </div>
+          {(order.items || []).map((item) => (
+            <div key={item.id} style={{ display: "flex", justifyContent: "space-between", alignItems: "center", padding: "10px 0", borderBottom: "1px solid #f1f5f9" }}>
+              <div>
+                <div style={{ fontSize: 12, color: "#334155" }}>{item.raw_item_text}</div>
+                {(item.quantity || item.item_count > 1) && (
+                  <div style={{ fontSize: 10, color: "#94a3b8" }}>
+                    {item.item_count > 1 ? `×${item.item_count}` : `${item.quantity}${item.quantity_unit ? " " + item.quantity_unit : ""}`}
+                  </div>
+                )}
+              </div>
+            </div>
+          ))}
+        </div>
+
+        {/* Totals card */}
+        {(order.total_eur != null || order.savings_eur != null) && (
+          <div style={{ background: "#f8fafc", borderRadius: 10, padding: "12px 14px", marginBottom: 14 }}>
+            {order.savings_eur > 0 && (
+              <div style={{ display: "flex", justifyContent: "space-between", fontSize: 12, color: "#16a34a", fontWeight: 600, marginBottom: 6 }}>
+                <span>You saved</span>
+                <span>−{fmt(order.savings_eur)}</span>
+              </div>
+            )}
+            <div style={{ height: 1, background: "#e2e8f0", margin: "8px 0" }} />
+            {order.total_eur != null && (
+              <div style={{ display: "flex", justifyContent: "space-between", alignItems: "baseline" }}>
+                <span style={{ fontSize: 13, fontWeight: 700, color: "#0f172a" }}>Total paid</span>
+                <span style={{ fontFamily: "'Plus Jakarta Sans', sans-serif", fontSize: 20, fontWeight: 800, color: "#0f172a", fontVariantNumeric: "tabular-nums" }}>
+                  {fmt(order.total_eur)}
+                </span>
+              </div>
+            )}
+          </div>
+        )}
+
+        {/* Rating card (delivered only) */}
+        {order.order_status === "delivered" && (
+          <div style={{ border: "1px solid #f1f5f9", borderRadius: 10, padding: "12px 14px", marginBottom: 14 }}>
+            <div style={{ fontSize: 12, fontWeight: 700, color: "#0f172a", marginBottom: 8 }}>
+              How was {order.completed_store_name || order.completed_store_id}?
+            </div>
+            {order.rating ? (
+              <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
+                <Stars rating={order.rating} size={16} />
+                <span style={{ fontSize: 11, color: "#64748b" }}>You rated this order</span>
+              </div>
+            ) : (
+              <Stars rating={0} size={22} onRate={(r) => onRate(order.id, r)} />
+            )}
+          </div>
+        )}
+
+        {/* Actions */}
+        {order.order_status !== "pending" && (
+          <div style={{ display: "flex", gap: 8 }}>
+            {order.order_status === "delivered" && !order.rating && (
+              <button
+                onClick={() => {
+                  const r = window.prompt("Rate 1-5");
+                  if (r && Number(r) >= 1 && Number(r) <= 5) onRate(order.id, Number(r));
+                }}
+                style={{ background: "#fff", color: "#475569", border: "1px solid #e2e8f0", borderRadius: 10, padding: "10px 14px", fontSize: 13, fontWeight: 600, cursor: "pointer" }}
+              >
+                ★ Rate
+              </button>
+            )}
+            <button
+              onClick={() => window.print()}
+              style={{ background: "#fff", color: "#475569", border: "1px solid #e2e8f0", borderRadius: 10, padding: "10px 14px", fontSize: 13, fontWeight: 600, cursor: "pointer" }}
+            >
+              Receipt
+            </button>
+            <button
+              onClick={() => onReorder(order)}
+              style={{ flex: 1, background: "#16a34a", color: "#fff", border: "none", borderRadius: 10, padding: "10px 0", fontSize: 13, fontWeight: 700, cursor: "pointer" }}
+            >
+              ↻ Reorder all {order.items?.length || 0} items
+            </button>
+          </div>
+        )}
+      </div>
+    </div>
+  );
+}
+
 function Dir4({ orders, handlers }) {
-  return <div style={{ padding: 24 }}>Desktop two-pane (Task 7)</div>;
+  const { handleConfirm, handleCancel, handleRate, handleReorder } = handlers;
+  const [selectedId, setSelectedId]     = useState(() => {
+    const first = orders.find((o) => o.order_status === "delivered") || orders[0];
+    return first?.id ?? null;
+  });
+  const [statusFilter, setStatusFilter] = useState("all");
+  const [search, setSearch]             = useState("");
+  const searchRef = useRef(null);
+
+  const filtered = useMemo(() => {
+    const q = search.toLowerCase();
+    return orders.filter((o) => {
+      if (statusFilter !== "all" && o.order_status !== statusFilter) return false;
+      if (!q) return true;
+      return (
+        (o.completed_store_name || "").toLowerCase().includes(q) ||
+        o.id.toLowerCase().includes(q) ||
+        (o.items || []).some((i) => i.raw_item_text.toLowerCase().includes(q))
+      );
+    });
+  }, [orders, statusFilter, search]);
+
+  const selectedOrder = orders.find((o) => o.id === selectedId) || null;
+
+  const totalSpent  = orders.reduce((s, o) => s + (o.total_eur || 0), 0);
+  const totalSaved  = orders.reduce((s, o) => s + (o.savings_eur || 0), 0);
+  const avgBasket   = orders.length ? totalSpent / orders.length : 0;
+  const avgItems    = orders.length ? orders.reduce((s, o) => s + (o.items?.length || 0), 0) / orders.length : 0;
+
+  const topStore = useMemo(() => {
+    const counts = {};
+    for (const o of orders) {
+      const key = o.completed_store_id || "";
+      counts[key] = (counts[key] || { count: 0, name: o.completed_store_name || key, saved: 0 });
+      counts[key].count++;
+      counts[key].saved += o.savings_eur || 0;
+    }
+    return Object.entries(counts).sort((a, b) => b[1].count - a[1].count)[0]?.[1] || null;
+  }, [orders]);
+
+  const sparkData = useMemo(() => {
+    const byMonth = {};
+    for (const o of orders) {
+      const k = new Date(o.completed_at).toISOString().slice(0, 7);
+      byMonth[k] = (byMonth[k] || 0) + (o.savings_eur || 0);
+    }
+    return Object.keys(byMonth).sort().map((k) => byMonth[k]);
+  }, [orders]);
+
+  const statusCounts = useMemo(() => {
+    const c = { delivered: 0, shipped: 0, placed: 0, pending: 0, issue: 0 };
+    for (const o of orders) c[o.order_status] = (c[o.order_status] || 0) + 1;
+    return c;
+  }, [orders]);
+
+  function exportCsv() {
+    const rows = [
+      ["ID", "Store", "Date", "Status", "Total", "Saved", "Items"],
+      ...filtered.map((o) => [
+        o.id,
+        o.completed_store_name || o.completed_store_id,
+        fmtDate(o.completed_at),
+        o.order_status,
+        o.total_eur ?? "",
+        o.savings_eur ?? "",
+        (o.items || []).map((i) => i.raw_item_text).join("; "),
+      ]),
+    ];
+    const csv = rows.map((r) => r.map((v) => `"${String(v).replace(/"/g, '""')}"`).join(",")).join("\n");
+    const a = document.createElement("a");
+    a.href = "data:text/csv;charset=utf-8," + encodeURIComponent(csv);
+    a.download = "desi-deals-orders.csv";
+    a.click();
+  }
+
+  const FILTER_PILLS = [
+    { key: "all",       label: "All" },
+    { key: "delivered", label: "Delivered" },
+    { key: "shipped",   label: "Shipped" },
+    { key: "placed",    label: "Placed" },
+    { key: "issue",     label: "Issues" },
+  ];
+
+  return (
+    <div style={{ display: "flex", flexDirection: "column", height: "100vh", fontFamily: "'DM Sans', system-ui, sans-serif", background: "#f8fafc" }}>
+      {/* Top bar */}
+      <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", padding: "14px 24px", borderBottom: "1px solid #f1f5f9", background: "#fff" }}>
+        <div style={{ display: "flex", alignItems: "baseline", gap: 10 }}>
+          <span style={{ fontFamily: "'Plus Jakarta Sans', sans-serif", fontSize: 20, fontWeight: 800, color: "#0f172a" }}>Orders</span>
+          <span style={{ fontSize: 13, color: "#94a3b8" }}>{orders.length} total · {fmt(totalSpent)} spent</span>
+        </div>
+        <div style={{ display: "flex", gap: 8 }}>
+          <input
+            ref={searchRef}
+            value={search}
+            onChange={(e) => setSearch(e.target.value)}
+            placeholder="Search by store, item, ID…"
+            style={{ width: 240, background: "#f8fafc", border: "1px solid #e2e8f0", borderRadius: 8, padding: "7px 12px", fontSize: 13, color: "#0f172a", outline: "none" }}
+          />
+          <button onClick={exportCsv} style={{ background: "#fff", border: "1px solid #e2e8f0", borderRadius: 8, padding: "7px 12px", fontSize: 12, fontWeight: 500, color: "#475569", cursor: "pointer" }}>
+            Export CSV
+          </button>
+        </div>
+      </div>
+
+      {/* Savings dashboard */}
+      <div style={{ display: "grid", gridTemplateColumns: "1.5fr 1fr 1fr 1fr", gap: 24, padding: "18px 24px", background: "#fff", borderBottom: "1px solid #f1f5f9" }}>
+        <div>
+          <div style={{ fontSize: 10, fontWeight: 700, color: "#94a3b8", textTransform: "uppercase", letterSpacing: "0.6px", marginBottom: 4 }}>Total saved · 2026</div>
+          <div style={{ display: "flex", alignItems: "flex-end", justifyContent: "space-between" }}>
+            <div>
+              <div style={{ fontFamily: "'Plus Jakarta Sans', sans-serif", fontSize: 30, fontWeight: 800, color: "#16a34a", fontVariantNumeric: "tabular-nums" }}>{fmt(totalSaved)}</div>
+              <div style={{ fontSize: 11, color: "#64748b", marginTop: 2 }}>
+                {orders.length ? Math.round(totalSaved / orders.reduce((s, o) => s + (o.total_eur || 0) + (o.savings_eur || 0), 0.01) * 100) : 0}% avg savings
+              </div>
+            </div>
+            <SavingsSparkline data={sparkData} width={140} height={42} />
+          </div>
+        </div>
+
+        <div>
+          <div style={{ fontSize: 10, fontWeight: 700, color: "#94a3b8", textTransform: "uppercase", letterSpacing: "0.6px", marginBottom: 4 }}>Orders</div>
+          <div style={{ fontFamily: "'Plus Jakarta Sans', sans-serif", fontSize: 24, fontWeight: 800, color: "#0f172a" }}>{orders.length}</div>
+          <div style={{ fontSize: 11, color: "#64748b", marginTop: 2 }}>
+            {statusCounts.delivered} delivered · {statusCounts.shipped} shipped · {statusCounts.placed} placed
+            {statusCounts.issue > 0 && ` · ${statusCounts.issue} issue`}
+          </div>
+        </div>
+
+        <div>
+          <div style={{ fontSize: 10, fontWeight: 700, color: "#94a3b8", textTransform: "uppercase", letterSpacing: "0.6px", marginBottom: 4 }}>Top store</div>
+          {topStore && (
+            <>
+              <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
+                <StoreLogo storeId={Object.keys(orders.reduce((a, o) => ({ ...a, [o.completed_store_id]: 1 }), {}))[0] || ""} storeName={topStore.name} size={28} />
+                <div style={{ fontFamily: "'Plus Jakarta Sans', sans-serif", fontSize: 16, fontWeight: 800, color: "#0f172a" }}>{topStore.name}</div>
+              </div>
+              <div style={{ fontSize: 11, color: "#64748b", marginTop: 2 }}>{topStore.count} orders · {fmt(topStore.saved)} saved</div>
+            </>
+          )}
+        </div>
+
+        <div>
+          <div style={{ fontSize: 10, fontWeight: 700, color: "#94a3b8", textTransform: "uppercase", letterSpacing: "0.6px", marginBottom: 4 }}>Avg basket</div>
+          <div style={{ fontFamily: "'Plus Jakarta Sans', sans-serif", fontSize: 24, fontWeight: 800, color: "#0f172a", fontVariantNumeric: "tabular-nums" }}>{fmt(avgBasket)}</div>
+          <div style={{ fontSize: 11, color: "#64748b", marginTop: 2 }}>~{Math.round(avgItems)} items per order</div>
+        </div>
+      </div>
+
+      {/* Filters row */}
+      <div style={{ display: "flex", alignItems: "center", gap: 8, padding: "10px 24px", background: "#fff", borderBottom: "1px solid #f1f5f9" }}>
+        {FILTER_PILLS.map(({ key, label }) => (
+          <button
+            key={key}
+            onClick={() => setStatusFilter(key)}
+            style={{
+              background: statusFilter === key ? "#0f172a" : "#fff",
+              color: statusFilter === key ? "#fff" : "#64748b",
+              border: statusFilter === key ? "none" : "1px solid #e2e8f0",
+              borderRadius: 999,
+              padding: "5px 14px",
+              fontSize: 12,
+              fontWeight: 600,
+              cursor: "pointer",
+            }}
+          >
+            {label}
+          </button>
+        ))}
+        <div style={{ width: 1, height: 18, background: "#e2e8f0", margin: "0 4px" }} />
+        <span style={{ marginLeft: "auto", fontSize: 11, color: "#64748b" }}>Showing {filtered.length}</span>
+      </div>
+
+      {/* Two-pane body */}
+      <div style={{ flex: 1, display: "grid", gridTemplateColumns: "1fr 420px", overflow: "hidden" }}>
+        {/* List pane */}
+        <div style={{ background: "#fff", overflowY: "auto", borderRight: "1px solid #f1f5f9" }}>
+          {/* Column headers */}
+          <div style={{ display: "grid", gridTemplateColumns: "42px 1fr 110px 160px 100px 28px", gap: 14, padding: "10px 18px", background: "#f8fafc", borderBottom: "1px solid #f1f5f9" }}>
+            {["", "Store · Items", "Date", "Status", "Total", ""].map((h, i) => (
+              <div key={i} style={{ fontSize: 9, fontWeight: 700, color: "#94a3b8", textTransform: "uppercase", letterSpacing: "0.7px" }}>
+                {h}
+              </div>
+            ))}
+          </div>
+          {filtered.length === 0 && (
+            <div style={{ padding: 24, color: "#94a3b8", fontSize: 13, textAlign: "center" }}>No orders match</div>
+          )}
+          {filtered.map((order) => (
+            <D4Row
+              key={order.id}
+              order={order}
+              selected={selectedId}
+              onSelect={setSelectedId}
+              onConfirm={handleConfirm}
+              onCancel={handleCancel}
+            />
+          ))}
+        </div>
+
+        {/* Detail pane */}
+        <div style={{ background: "#f8fafc", overflowY: "auto" }}>
+          <D4Detail
+            order={selectedOrder}
+            onConfirm={handleConfirm}
+            onCancel={handleCancel}
+            onRate={handleRate}
+            onReorder={handleReorder}
+          />
+        </div>
+      </div>
+    </div>
+  );
 }
 
 // ── Root ─────────────────────────────────────────────────────────────────────
