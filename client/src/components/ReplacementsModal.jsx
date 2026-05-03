@@ -80,9 +80,51 @@ function ReplacementDealRow({ deal, emphasisSize, sourceName, sourcePricePerKg }
   );
 }
 
-export function ReplacementsModal({ sourceDeal, tiers, loading, otherStores, isAdmin, onClose }) {
+function deriveDealRow(r) {
+  const weight_raw = r.weight_value != null && r.weight_unit
+    ? `${r.weight_value}${r.weight_unit}`
+    : null;
+  const ppkg = (() => {
+    if (r.sale_price == null || !r.weight_value || !r.weight_unit) return null;
+    const u = String(r.weight_unit).toLowerCase();
+    if (u === "kg") return r.sale_price / r.weight_value;
+    if (u === "g")  return r.weight_value > 0 ? r.sale_price / (r.weight_value / 1000) : null;
+    if (u === "l")  return r.sale_price / r.weight_value;
+    if (u === "ml") return r.weight_value > 0 ? r.sale_price / (r.weight_value / 1000) : null;
+    return null;
+  })();
+  return {
+    id: r.id ?? r.deal_id,
+    product_name: r.product_name,
+    sale_price: r.sale_price,
+    currency: r.currency,
+    weight_value: r.weight_value,
+    weight_unit: r.weight_unit,
+    weight_raw,
+    price_per_kg: ppkg,
+    product_url: r.product_url,
+    image_url: r.image_url,
+  };
+}
+
+function strictEmptyMessage(reason) {
+  switch (reason) {
+    case "empty_query": return "This item has no name to search.";
+    case "quantity_required": return "Add a quantity (e.g. 500 g) to this list item to find alternatives.";
+    case "invalid_quantity": return "The quantity on this item couldn't be parsed.";
+    case "base_product_not_resolved": return "We couldn't recognise this product to find alternatives at this store.";
+    case "request_failed": return "Couldn't load replacements right now. Try again.";
+    default: return "No alternatives found at this store.";
+  }
+}
+
+export function ReplacementsModal({ sourceDeal, tiers, strict, loading, otherStores, isAdmin, onClose }) {
   const [categoryExpanded, setCategoryExpanded] = React.useState(false);
   const hasOtherStores = isAdmin && otherStores?.length > 0;
+  const useStrict = !!strict;
+  const strictResults = strict?.results || [];
+  const otherBrandResults = strictResults.filter((r) => r.brand_status === "changed");
+  const exactBrandResults = strictResults.filter((r) => r.brand_status !== "changed");
   return createPortal(
     <div
       className="fixed inset-0 z-50 flex items-end sm:items-center justify-center bg-black/40 backdrop-blur-sm"
@@ -124,6 +166,51 @@ export function ReplacementsModal({ sourceDeal, tiers, loading, otherStores, isA
             <div className="flex justify-center py-10">
               <div className="w-6 h-6 border-2 border-[#16a34a] border-t-transparent rounded-full animate-spin" />
             </div>
+          ) : useStrict ? (
+            <>
+              {strictResults.length === 0 ? (
+                <p className="text-center text-slate-400 text-[13px] py-6">{strictEmptyMessage(strict?.reason)}</p>
+              ) : (
+                <>
+                  {otherBrandResults.length > 0 && (
+                    <div className="mb-5">
+                      <p className="text-[10px] font-extrabold uppercase tracking-[1.5px] text-slate-400 mb-2">
+                        Other brands at this store
+                      </p>
+                      <div className="flex flex-col gap-2">
+                        {otherBrandResults.map((r) => (
+                          <ReplacementDealRow
+                            key={r.id ?? r.deal_id}
+                            deal={deriveDealRow(r)}
+                            sourceName={sourceDeal.product_name}
+                            sourcePricePerKg={null}
+                            emphasisSize={false}
+                          />
+                        ))}
+                      </div>
+                    </div>
+                  )}
+                  {exactBrandResults.length > 0 && (
+                    <div className="mb-5 last:mb-0">
+                      <p className="text-[10px] font-extrabold uppercase tracking-[1.5px] text-slate-400 mb-2">
+                        {strict?.requested_brand ? "Matching brand" : "Other options at this store"}
+                      </p>
+                      <div className="flex flex-col gap-2">
+                        {exactBrandResults.map((r) => (
+                          <ReplacementDealRow
+                            key={r.id ?? r.deal_id}
+                            deal={deriveDealRow(r)}
+                            sourceName={sourceDeal.product_name}
+                            sourcePricePerKg={null}
+                            emphasisSize={false}
+                          />
+                        ))}
+                      </div>
+                    </div>
+                  )}
+                </>
+              )}
+            </>
           ) : (
             <>
               {!tiers?.length ? (

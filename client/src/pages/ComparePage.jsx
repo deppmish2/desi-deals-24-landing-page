@@ -184,6 +184,7 @@ export default function ComparePage() {
         {!loading && !error && sorted.map((store, i) => (
           <StoreComparisonCard
             key={store.store_id}
+            listId={id}
             store={store}
             onShop={handleShop}
             isWinner={i === 0}

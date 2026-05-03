@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from "react";
 import ReplacementsModal from "../ReplacementsModal";
-import { fetchReplacements, fetchSameProductOtherStores } from "../../utils/api";
+import { fetchReplacements, fetchSameProductOtherStores, searchListReplacements } from "../../utils/api";
 
 function CoverageBar({ available, total }) {
   const pct = total > 0 ? Math.min(100, Math.round((available / total) * 100)) : 0;
@@ -11,10 +11,11 @@ function CoverageBar({ available, total }) {
   );
 }
 
-export default function StoreComparisonCard({ store, onShop, isWinner, priceDiff, savingsVsMax }) {
+export default function StoreComparisonCard({ store, onShop, isWinner, priceDiff, savingsVsMax, listId }) {
   const [expanded, setExpanded] = useState(isWinner);
   const [replacingItem, setReplacingItem] = useState(null);
   const [repTiers, setRepTiers] = useState(null);
+  const [repStrict, setRepStrict] = useState(null);
   const [repLoading, setRepLoading] = useState(false);
   const [repOtherStores, setRepOtherStores] = useState(null);
 
@@ -28,15 +29,48 @@ export default function StoreComparisonCard({ store, onShop, isWinner, priceDiff
   const allCount  = items.length + missingItems.length;
 
   useEffect(() => {
-    if (!replacingItem) { setRepTiers(null); setRepOtherStores(null); return; }
+    if (!replacingItem) {
+      setRepTiers(null);
+      setRepStrict(null);
+      setRepOtherStores(null);
+      return;
+    }
     let cancelled = false;
     setRepLoading(true);
+
+    // Missing-item path: use the strict /lists/:id/replacement-search endpoint so
+    // the matcher can return brand-aware candidates at this store (other-brand
+    // alternatives surface as brand_status: "changed").
+    if (replacingItem.list_item_id && listId) {
+      searchListReplacements({
+        listId,
+        listItemId: replacingItem.list_item_id,
+        storeId: store_id,
+      })
+        .then((res) => {
+          if (cancelled) return;
+          setRepStrict(res?.data || null);
+          setRepTiers(null);
+          setRepOtherStores(null);
+          setRepLoading(false);
+        })
+        .catch(() => {
+          if (cancelled) return;
+          setRepStrict({ results: [], reason: "request_failed" });
+          setRepLoading(false);
+        });
+      return () => { cancelled = true; };
+    }
+
+    // Existing path: in-cart "Replace" with a known canonical_id — keep the
+    // tiered replacements view + cross-store comparison.
     Promise.all([
       fetchReplacements(replacingItem.canonical_id, store_id, null),
       fetchSameProductOtherStores(replacingItem.canonical_id, store_id),
     ]).then(([repData, otherData]) => {
       if (cancelled) return;
       setRepTiers(repData?.tiers || []);
+      setRepStrict(null);
       setRepOtherStores(otherData?.stores || []);
       setRepLoading(false);
     }).catch(() => {
@@ -46,7 +80,7 @@ export default function StoreComparisonCard({ store, onShop, isWinner, priceDiff
       setRepLoading(false);
     });
     return () => { cancelled = true; };
-  }, [replacingItem, store_id]);
+  }, [replacingItem, store_id, listId]);
 
   return (
     <div style={{
@@ -253,17 +287,23 @@ export default function StoreComparisonCard({ store, onShop, isWinner, priceDiff
                       )}
                     </div>
                   </div>
-                  <button
-                    type="button"
-                    onClick={() => setReplacingItem({ canonical_id: null, product_name: name })}
-                    style={{
-                      fontSize: 11, color: "#16a34a",
-                      background: "#f0fdf4", border: "1px solid #86efac",
-                      borderRadius: 8, padding: "3px 8px", cursor: "pointer", flexShrink: 0,
-                    }}
-                  >
-                    Replace
-                  </button>
+                  {(typeof entry === "object" && entry?.has_replacements) && (
+                    <button
+                      type="button"
+                      onClick={() => setReplacingItem({
+                        list_item_id: entry.list_item_id ?? null,
+                        canonical_id: entry.canonical_id ?? null,
+                        product_name: name,
+                      })}
+                      style={{
+                        fontSize: 11, color: "#16a34a",
+                        background: "#f0fdf4", border: "1px solid #86efac",
+                        borderRadius: 8, padding: "3px 8px", cursor: "pointer", flexShrink: 0,
+                      }}
+                    >
+                      Replace
+                    </button>
+                  )}
                 </div>
               );
             })}
@@ -292,6 +332,7 @@ export default function StoreComparisonCard({ store, onShop, isWinner, priceDiff
         <ReplacementsModal
           sourceDeal={{ id: null, canonical_id: replacingItem.canonical_id, product_name: replacingItem.product_name, store: { id: store_id, name: store_name } }}
           tiers={repTiers}
+          strict={repStrict}
           loading={repLoading}
           otherStores={repOtherStores}
           isAdmin={false}

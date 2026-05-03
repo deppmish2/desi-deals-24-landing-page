@@ -456,6 +456,17 @@ export async function cartTransfer(listId, storeId, items) {
   });
 }
 
+export async function searchListReplacements({ listId, listItemId, storeId, query, limit }) {
+  const body = { store_id: storeId, list_item_id: listItemId };
+  if (query) body.query = query;
+  if (limit) body.limit = limit;
+  return authRequest(`/lists/${listId}/replacement-search`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(body),
+  });
+}
+
 // ── Orders ────────────────────────────────────────────────────────────────────
 
 export function fetchOrders() {

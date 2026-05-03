@@ -1085,6 +1085,21 @@ function buildBaseMatchedDealPool(dealsAtStore, baseMeta, baseCache) {
   });
 }
 
+// Cheap check used when populating items_not_found: does this store carry at
+// least one same-base-product deal (any brand) that the strict matcher could
+// surface as a replacement? Mirrors the strict matcher's preconditions
+// (mass/volume quantity + resolved base product) so the "Replace" button only
+// appears when there is plausibly something to replace with.
+function hasOtherBrandReplacementAtStore(storeDeals, item, baseMeta, baseCache) {
+  if (!baseMeta) return false;
+  const unit = String(item?.quantity_unit || "").trim().toLowerCase();
+  if (!MASS_VOLUME_UNITS.has(unit)) return false;
+  const qty = Number(item?.quantity);
+  if (!Number.isFinite(qty) || qty <= 0) return false;
+  const pool = buildBaseMatchedDealPool(storeDeals, baseMeta, baseCache);
+  return pool.length > 0;
+}
+
 function computeExactComboCandidateForDeals(
   deals,
   targetBase,
@@ -1745,7 +1760,7 @@ async function recommendForList(
       if (hasMassVolumePricingTarget && requestedBaseMeta) {
         const targetBase = toBaseQty(pricingSize.value, pricingSize.unit);
         if (!targetBase) {
-          missingItems.push({ text: item.raw_item_text, quantity: item.quantity, quantity_unit: item.quantity_unit });
+          missingItems.push({ list_item_id: item.id, canonical_id: item.canonical_id ?? null, text: item.raw_item_text, quantity: item.quantity, quantity_unit: item.quantity_unit, has_replacements: hasOtherBrandReplacementAtStore(storeDeals, item, requestedBaseMeta, baseResolutionCache) });
           continue;
         }
 
@@ -1788,7 +1803,7 @@ async function recommendForList(
           }
         }
         if (!selectedStrict) {
-          missingItems.push({ text: item.raw_item_text, quantity: item.quantity, quantity_unit: item.quantity_unit });
+          missingItems.push({ list_item_id: item.id, canonical_id: item.canonical_id ?? null, text: item.raw_item_text, quantity: item.quantity, quantity_unit: item.quantity_unit, has_replacements: hasOtherBrandReplacementAtStore(storeDeals, item, requestedBaseMeta, baseResolutionCache) });
           continue;
         }
 
@@ -1812,7 +1827,7 @@ async function recommendForList(
               : "changed";
 
         if (strictBrandStatus === "changed") {
-          missingItems.push({ text: item.raw_item_text, quantity: item.quantity, quantity_unit: item.quantity_unit });
+          missingItems.push({ list_item_id: item.id, canonical_id: item.canonical_id ?? null, text: item.raw_item_text, quantity: item.quantity, quantity_unit: item.quantity_unit, has_replacements: hasOtherBrandReplacementAtStore(storeDeals, item, requestedBaseMeta, baseResolutionCache) });
           continue;
         }
 
@@ -1928,7 +1943,7 @@ async function recommendForList(
       }
 
       if (!evaluation?.ok) {
-        missingItems.push({ text: item.raw_item_text, quantity: item.quantity, quantity_unit: item.quantity_unit });
+        missingItems.push({ list_item_id: item.id, canonical_id: item.canonical_id ?? null, text: item.raw_item_text, quantity: item.quantity, quantity_unit: item.quantity_unit, has_replacements: hasOtherBrandReplacementAtStore(storeDeals, item, requestedBaseMeta, baseResolutionCache) });
         continue;
       }
 
@@ -1948,7 +1963,7 @@ async function recommendForList(
       if (hasMassVolumePricingTarget) {
         const targetBase = toBaseQty(pricingSize.value, pricingSize.unit);
         if (!targetBase) {
-          missingItems.push({ text: item.raw_item_text, quantity: item.quantity, quantity_unit: item.quantity_unit });
+          missingItems.push({ list_item_id: item.id, canonical_id: item.canonical_id ?? null, text: item.raw_item_text, quantity: item.quantity, quantity_unit: item.quantity_unit, has_replacements: hasOtherBrandReplacementAtStore(storeDeals, item, requestedBaseMeta, baseResolutionCache) });
           continue;
         }
 
@@ -1956,7 +1971,7 @@ async function recommendForList(
         const packOptions = buildPackOptions(variants, targetBase.type);
         const combo = findCheapestExactCombination(packOptions, targetBase.qty);
         if (!combo) {
-          missingItems.push({ text: item.raw_item_text, quantity: item.quantity, quantity_unit: item.quantity_unit });
+          missingItems.push({ list_item_id: item.id, canonical_id: item.canonical_id ?? null, text: item.raw_item_text, quantity: item.quantity, quantity_unit: item.quantity_unit, has_replacements: hasOtherBrandReplacementAtStore(storeDeals, item, requestedBaseMeta, baseResolutionCache) });
           continue;
         }
 
@@ -2002,7 +2017,7 @@ async function recommendForList(
       }
 
       if (brandInfo?.brand_status === "changed") {
-        missingItems.push({ text: item.raw_item_text, quantity: item.quantity, quantity_unit: item.quantity_unit });
+        missingItems.push({ list_item_id: item.id, canonical_id: item.canonical_id ?? null, text: item.raw_item_text, quantity: item.quantity, quantity_unit: item.quantity_unit, has_replacements: hasOtherBrandReplacementAtStore(storeDeals, item, requestedBaseMeta, baseResolutionCache) });
         continue;
       }
 
@@ -2185,7 +2200,7 @@ async function recommendForList(
   };
 }
 
-function searchStrictReplacementOptions(
+async function searchStrictReplacementOptions(
   db,
   { storeId, listItem, queryOverride, maxResults = 20 },
 ) {
@@ -2304,7 +2319,7 @@ function searchStrictReplacementOptions(
     };
   }
 
-  const storeDeals = db
+  const storeDeals = (await db
     .prepare(
       `SELECT id, product_name, product_category, product_url, sale_price, currency,
               weight_value, weight_unit, price_per_kg, image_url, canonical_id
@@ -2315,7 +2330,7 @@ function searchStrictReplacementOptions(
        ORDER BY sale_price ASC
        LIMIT 1500`,
     )
-    .all(storeId)
+    .all(storeId))
     .map((deal) => resolveDealWeightFallback(deal));
 
   const strict = findStrictExactCandidatesAtStore({

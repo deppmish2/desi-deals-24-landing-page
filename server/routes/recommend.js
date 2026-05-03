@@ -368,7 +368,7 @@ router.post("/:id/cart-transfer", requireUserAuth, async (req, res) => {
 
 router.post("/:id/replacement-search", requireUserAuth, async (req, res) => {
   try {
-    const list = getOwnedList(req.params.id, req.user.id);
+    const list = await getOwnedList(req.params.id, req.user.id);
     if (!list) return res.status(404).json({ error: "List not found" });
 
     const storeId = String(req.body?.store_id || "").trim();
@@ -382,14 +382,14 @@ router.post("/:id/replacement-search", requireUserAuth, async (req, res) => {
       return res.status(400).json({ error: "list_item_id is required" });
     }
 
-    const store = db
+    const store = await db
       .prepare(
         "SELECT id, name FROM stores WHERE id = ? AND crawl_status != 'maintenance' LIMIT 1",
       )
       .get(storeId);
     if (!store) return res.status(404).json({ error: "Store not found" });
 
-    const listItem = getOwnedListItem(list.id, listItemId);
+    const listItem = await getOwnedListItem(list.id, listItemId);
     if (!listItem) return res.status(404).json({ error: "List item not found" });
 
     const queryOverride = String(req.body?.query || "").trim() || null;
@@ -397,7 +397,7 @@ router.post("/:id/replacement-search", requireUserAuth, async (req, res) => {
       30,
       Math.max(1, parseInt(req.body?.limit || "12", 10) || 12),
     );
-    const strict = searchStrictReplacementOptions(db, {
+    const strict = await searchStrictReplacementOptions(db, {
       storeId: store.id,
       listItem,
       queryOverride,
