@@ -263,8 +263,266 @@ function EmptyState({ onStartList }) {
   );
 }
 
+function D2Footer({ order, onConfirm, onCancel, onRate, onReorder, onTrack }) {
+  if (order.order_status === "pending") {
+    return (
+      <div style={{ background: "#f8fafc", border: "1px dashed #cbd5e1", borderRadius: 10, padding: "9px 11px", marginTop: 2 }}>
+        <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 6 }}>
+          <StatusPill status="pending" size="sm" />
+          <span style={{ fontSize: 10, color: "#64748b" }}>handed off {timeAgo(order.completed_at)}</span>
+        </div>
+        <p style={{ fontSize: 11, color: "#475569", lineHeight: 1.45, margin: "0 0 8px" }}>
+          Did you complete checkout at {order.completed_store_name || order.completed_store_id}?
+        </p>
+        <div style={{ display: "flex", gap: 6 }}>
+          <button onClick={() => onConfirm(order.id)} style={{ flex: 1, background: "#16a34a", color: "#fff", border: "none", borderRadius: 8, padding: "7px 0", fontSize: 11, fontWeight: 700, cursor: "pointer" }}>
+            Yes, I placed it
+          </button>
+          <button onClick={() => onCancel(order.id)} style={{ background: "#fff", color: "#64748b", border: "1px solid #e2e8f0", borderRadius: 8, padding: "7px 11px", fontSize: 11, fontWeight: 600, cursor: "pointer" }}>
+            Didn't order
+          </button>
+        </div>
+      </div>
+    );
+  }
+  return (
+    <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", flexWrap: "wrap", gap: 6 }}>
+      <StatusPill status={order.order_status} size="sm" />
+      <div style={{ display: "flex", gap: 6, alignItems: "center" }}>
+        {order.order_status === "delivered" && !order.rating && (
+          <button onClick={() => onRate(order.id)} style={{ background: "#fff", color: "#475569", border: "1px solid #e2e8f0", borderRadius: 8, padding: "5px 11px", fontSize: 11, fontWeight: 600, cursor: "pointer" }}>
+            Rate
+          </button>
+        )}
+        {order.order_status === "delivered" && order.rating && (
+          <Stars rating={order.rating} size={11} />
+        )}
+        {order.order_status === "shipped" && (
+          <button
+            onClick={() => order.tracking_url && onTrack(order.tracking_url)}
+            style={{ background: "#eff6ff", color: "#3b82f6", border: "1px solid #bfdbfe", borderRadius: 8, padding: "5px 11px", fontSize: 11, fontWeight: 600, cursor: "pointer" }}
+          >
+            Track
+          </button>
+        )}
+        {order.order_status === "placed" && (
+          <span style={{ fontSize: 10, fontWeight: 600, color: "#f59e0b" }}>awaiting shipment</span>
+        )}
+        {order.order_status === "issue" && (
+          <span style={{ fontSize: 10, fontWeight: 600, color: "#dc2626" }}>{order.issue_text || "Issue with order"}</span>
+        )}
+        {order.order_status === "delivered" && (
+          <button onClick={() => onReorder(order)} style={{ background: "#16a34a", color: "#fff", border: "none", borderRadius: 8, padding: "5px 11px", fontSize: 11, fontWeight: 700, cursor: "pointer" }}>
+            ↻ Reorder
+          </button>
+        )}
+      </div>
+    </div>
+  );
+}
+
+function D2Order({ order, isFirst, isLast, onConfirm, onCancel, onRate, onReorder, onTrack }) {
+  const { color: badgeColor } = {
+    pending:   { color: "#64748b" },
+    placed:    { color: "#f59e0b" },
+    shipped:   { color: "#3b82f6" },
+    delivered: { color: "#16a34a" },
+    issue:     { color: "#dc2626" },
+  }[order.order_status] || { color: "#94a3b8" };
+
+  const badgeGlyph = { pending: "?", placed: "•", shipped: "→", delivered: "✓", issue: "!" }[order.order_status] || "?";
+
+  const visibleItems = order.items?.slice(0, 3) || [];
+  const extraCount  = (order.items?.length || 0) - 3;
+  const itemsSummary = visibleItems.map((i) => i.raw_item_text).join(", ") + (extraCount > 0 ? `, +${extraCount}` : "");
+
+  return (
+    <div style={{ display: "flex", gap: 12, paddingBottom: 14 }}>
+      {/* Rail */}
+      <div style={{ width: 36, position: "relative", display: "flex", flexDirection: "column", alignItems: "center" }}>
+        {!isFirst && (
+          <div style={{ position: "absolute", top: 0, bottom: "50%", left: "50%", transform: "translateX(-50%)", width: 2, background: "#e2e8f0" }} />
+        )}
+        {!isLast && (
+          <div style={{ position: "absolute", top: "50%", bottom: 0, left: "50%", transform: "translateX(-50%)", width: 2, background: "#e2e8f0" }} />
+        )}
+        <div style={{ position: "relative", zIndex: 1, marginTop: 8 }}>
+          <StoreLogo storeId={order.completed_store_id || ""} storeName={order.completed_store_name || ""} size={36} />
+          <div style={{ position: "absolute", bottom: -2, right: -2, width: 14, height: 14, borderRadius: "50%", background: badgeColor, border: "2.5px solid #fff", display: "flex", alignItems: "center", justifyContent: "center" }}>
+            <span style={{ fontSize: 7, fontWeight: 800, color: "#fff", lineHeight: 1 }}>{badgeGlyph}</span>
+          </div>
+        </div>
+      </div>
+
+      {/* Card */}
+      <div style={{ flex: 1 }}>
+        <div style={{ fontSize: 10, fontWeight: 600, color: "#94a3b8", textTransform: "uppercase", margin: "6px 0 4px" }}>
+          {fmtDate(order.completed_at)}
+        </div>
+        <div style={{ background: "#fff", borderRadius: 14, border: "1px solid #f1f5f9", padding: "12px 13px", boxShadow: "0 1px 2px rgba(0,0,0,0.03)" }}>
+          <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", gap: 8, marginBottom: 6 }}>
+            <div>
+              <div style={{ fontFamily: "'Plus Jakarta Sans', sans-serif", fontSize: 13, fontWeight: 700, color: "#0f172a" }}>
+                {order.completed_store_name || order.completed_store_id}
+              </div>
+              <div style={{ fontSize: 10, color: "#94a3b8" }}>#{order.id.slice(0, 8).toUpperCase()}</div>
+            </div>
+            <div style={{ textAlign: "right", flexShrink: 0 }}>
+              {order.total_eur != null ? (
+                <div style={{ fontFamily: "'Plus Jakarta Sans', sans-serif", fontSize: 15, fontWeight: 800, color: "#0f172a", fontVariantNumeric: "tabular-nums" }}>
+                  {fmt(order.total_eur)}
+                </div>
+              ) : (
+                <div style={{ fontSize: 12, color: "#94a3b8" }}>{order.items?.length || 0} items</div>
+              )}
+              {order.savings_eur > 0 && (
+                <div style={{ fontSize: 10, fontWeight: 700, color: "#16a34a" }}>saved {fmt(order.savings_eur)}</div>
+              )}
+            </div>
+          </div>
+
+          <div style={{ fontSize: 11, color: "#64748b", lineHeight: 1.5, marginBottom: 8 }}>
+            {order.items?.length || 0} items{itemsSummary ? ` · ${itemsSummary}` : ""}
+          </div>
+
+          <D2Footer
+            order={order}
+            onConfirm={onConfirm}
+            onCancel={onCancel}
+            onRate={onRate}
+            onReorder={onReorder}
+            onTrack={onTrack}
+          />
+        </div>
+      </div>
+    </div>
+  );
+}
+
 function Dir2({ orders, handlers }) {
-  return <div style={{ padding: 16 }}>Mobile timeline (Task 6)</div>;
+  const { handleConfirm, handleCancel, handleRate, handleReorder, handleTrack } = handlers;
+  const [grouping, setGrouping] = useState(0); // 0=Recent 1=Month 2=Store
+  const [search, setSearch]     = useState("");
+
+  const filtered = useMemo(() => {
+    const q = search.toLowerCase();
+    return orders.filter((o) =>
+      !q ||
+      (o.completed_store_name || "").toLowerCase().includes(q) ||
+      o.id.toLowerCase().includes(q) ||
+      (o.items || []).some((i) => i.raw_item_text.toLowerCase().includes(q))
+    );
+  }, [orders, search]);
+
+  const totalSaved  = orders.reduce((s, o) => s + (o.savings_eur || 0), 0);
+  const avgSavedPct = orders.length
+    ? Math.round(orders.filter(o => o.savings_eur > 0).length / orders.length * 100)
+    : 0;
+
+  const grouped = useMemo(() => {
+    if (grouping === 0) return [{ key: "Recent", items: filtered }];
+    if (grouping === 1) {
+      const map = new Map();
+      for (const o of filtered) {
+        const key = new Date(o.completed_at).toLocaleDateString("en-GB", { month: "long", year: "numeric" });
+        if (!map.has(key)) map.set(key, []);
+        map.get(key).push(o);
+      }
+      return [...map.entries()].map(([key, items]) => ({ key, items }));
+    }
+    const map = new Map();
+    for (const o of filtered) {
+      const key = o.completed_store_name || o.completed_store_id || "Unknown";
+      if (!map.has(key)) map.set(key, []);
+      map.get(key).push(o);
+    }
+    return [...map.entries()].map(([key, items]) => ({ key, items }));
+  }, [filtered, grouping]);
+
+  return (
+    <div style={{ background: "#f8fafc", minHeight: "100vh", fontFamily: "'DM Sans', system-ui, sans-serif" }}>
+      {/* Header */}
+      <div style={{ background: "#fff", borderBottom: "1px solid #f1f5f9", padding: "14px 16px" }}>
+        <div style={{ fontFamily: "'Plus Jakarta Sans', sans-serif", fontSize: 16, fontWeight: 700, color: "#0f172a" }}>Orders</div>
+        <div style={{ fontSize: 12, color: "#94a3b8", marginTop: 2 }}>Timeline · {orders.length} orders</div>
+      </div>
+
+      {/* Recap strip */}
+      <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr 1fr", gap: 1, background: "#f1f5f9" }}>
+        {[
+          { label: "Saved this year", value: fmt(totalSaved), color: "#16a34a" },
+          { label: "Orders",          value: orders.length,   color: "#0f172a" },
+          { label: "Avg savings",     value: `${avgSavedPct}%`, color: "#f97316" },
+        ].map(({ label, value, color }) => (
+          <div key={label} style={{ background: "#fff", padding: "12px 8px", textAlign: "center" }}>
+            <div style={{ fontSize: 9, fontWeight: 700, color: "#94a3b8", textTransform: "uppercase", letterSpacing: "0.6px", marginBottom: 4 }}>{label}</div>
+            <div style={{ fontFamily: "'Plus Jakarta Sans', sans-serif", fontSize: 18, fontWeight: 800, color }}>{value}</div>
+          </div>
+        ))}
+      </div>
+
+      {/* Grouping pills */}
+      <div style={{ display: "flex", gap: 8, padding: "12px 16px", overflowX: "auto", background: "#fff", borderBottom: "1px solid #f1f5f9" }}>
+        {["Recent", "By month", "By store"].map((label, i) => (
+          <button
+            key={label}
+            onClick={() => setGrouping(i)}
+            style={{
+              background: grouping === i ? "#16a34a" : "transparent",
+              color: grouping === i ? "#fff" : "#64748b",
+              border: grouping === i ? "none" : "1px solid #e2e8f0",
+              borderRadius: 999,
+              padding: "6px 14px",
+              fontSize: 12,
+              fontWeight: 600,
+              cursor: "pointer",
+              whiteSpace: "nowrap",
+            }}
+          >
+            {label}
+          </button>
+        ))}
+        <button
+          onClick={() => {
+            const q = window.prompt("Search orders…", search);
+            if (q !== null) setSearch(q);
+          }}
+          style={{ marginLeft: "auto", display: "flex", alignItems: "center", gap: 4, background: "#f8fafc", border: "1px solid #e2e8f0", borderRadius: 999, padding: "6px 12px", fontSize: 11, color: "#64748b", cursor: "pointer", whiteSpace: "nowrap", flexShrink: 0 }}
+        >
+          🔍 Search
+        </button>
+      </div>
+
+      {/* Timeline */}
+      <div style={{ padding: "4px 16px 24px" }}>
+        {grouped.map(({ key, items }) => (
+          <div key={key}>
+            {grouping !== 0 && (
+              <div style={{ fontSize: 11, fontWeight: 700, color: "#94a3b8", textTransform: "uppercase", letterSpacing: "0.5px", padding: "12px 0 4px" }}>
+                {key}
+              </div>
+            )}
+            {items.map((order, idx) => (
+              <D2Order
+                key={order.id}
+                order={order}
+                isFirst={idx === 0 && key === grouped[0]?.key}
+                isLast={idx === items.length - 1 && key === grouped[grouped.length - 1]?.key}
+                onConfirm={handleConfirm}
+                onCancel={handleCancel}
+                onRate={(id) => {
+                  const r = window.prompt("Rate 1-5");
+                  if (r && Number(r) >= 1 && Number(r) <= 5) handleRate(id, Number(r));
+                }}
+                onReorder={handleReorder}
+                onTrack={handleTrack}
+              />
+            ))}
+          </div>
+        ))}
+      </div>
+    </div>
+  );
 }
 
 function Dir4({ orders, handlers }) {
