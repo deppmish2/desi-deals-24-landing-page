@@ -193,9 +193,72 @@ function SavingsSparkline({ data = [], width = 140, height = 42, color = "#16a34
 
 function EmptyState({ onStartList }) {
   return (
-    <div style={{ padding: 32, textAlign: "center", color: "#64748b" }}>
-      <p>No orders yet.</p>
-      <button onClick={onStartList}>Start a shopping list</button>
+    <div
+      style={{
+        display: "flex",
+        flexDirection: "column",
+        alignItems: "center",
+        padding: "32px 24px",
+        textAlign: "center",
+        minHeight: "100vh",
+        background: "#f8fafc",
+        fontFamily: "'DM Sans', system-ui, sans-serif",
+      }}
+    >
+      {/* Receipt illustration */}
+      <div style={{ position: "relative", width: 140, height: 140, marginBottom: 24 }}>
+        <div style={{ position: "absolute", left: 14, top: 30, width: 90, height: 100, borderRadius: 8, background: "#fff", border: "1.5px dashed #e2e8f0", transform: "rotate(-7deg)" }} />
+        <div style={{ position: "absolute", right: 14, top: 18, width: 90, height: 100, borderRadius: 8, background: "#fff", border: "1.5px dashed #e2e8f0", transform: "rotate(8deg)" }} />
+        <div style={{ position: "absolute", left: 25, top: 8, width: 90, height: 104, borderRadius: 8, background: "#fff", border: "1.5px solid #bbf7d0", boxShadow: "0 8px 24px rgba(22,163,74,0.18)", padding: "12px 10px", display: "flex", flexDirection: "column", gap: 6 }}>
+          <div style={{ height: 6, width: "70%", background: "#16a34a", borderRadius: 3 }} />
+          <div style={{ height: 4, width: "100%", background: "#f1f5f9", borderRadius: 2 }} />
+          <div style={{ height: 4, width: "85%", background: "#f1f5f9", borderRadius: 2 }} />
+          <div style={{ height: 4, width: "60%", background: "#f1f5f9", borderRadius: 2 }} />
+          <div style={{ marginTop: "auto", display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+            <div style={{ height: 4, width: 24, background: "#e2e8f0", borderRadius: 2 }} />
+            <span style={{ fontFamily: "'Plus Jakarta Sans', sans-serif", fontSize: 11, fontWeight: 800, color: "#16a34a" }}>−€</span>
+          </div>
+        </div>
+      </div>
+
+      <h2 style={{ fontFamily: "'Plus Jakarta Sans', sans-serif", fontSize: 22, fontWeight: 800, color: "#0f172a", letterSpacing: "-0.3px", margin: "0 0 12px" }}>
+        No orders yet
+      </h2>
+      <p style={{ fontSize: 13, color: "#64748b", lineHeight: 1.5, maxWidth: 280, margin: "0 0 24px" }}>
+        When you order from a store via DesiDeals24, it'll show up here with your savings. We'll also remind you to confirm and rate.
+      </p>
+
+      <button
+        onClick={onStartList}
+        style={{ background: "#16a34a", color: "#fff", border: "none", borderRadius: 12, padding: "12px 22px", fontSize: 14, fontWeight: 700, cursor: "pointer" }}
+      >
+        Start a shopping list
+      </button>
+
+      <p style={{ marginTop: 18, fontSize: 12, color: "#64748b" }}>
+        Already shopped?{" "}
+        <span style={{ color: "#16a34a", fontWeight: 600, cursor: "pointer" }}>
+          Log a past order →
+        </span>
+      </p>
+
+      <div style={{ marginTop: 36, maxWidth: 320, width: "100%", textAlign: "left" }}>
+        <p style={{ fontSize: 10, fontWeight: 700, color: "#94a3b8", textTransform: "uppercase", letterSpacing: "0.6px", margin: "0 0 10px" }}>
+          What you'll see here
+        </p>
+        {[
+          { icon: "✓", color: "#16a34a", text: "Status of every order — placed, shipped, delivered" },
+          { icon: "%", color: "#f97316", text: "Savings vs other stores at the time you bought" },
+          { icon: "↻", color: "#3b82f6", text: "One-tap re-order of any past basket" },
+        ].map(({ icon, color, text }) => (
+          <div key={icon} style={{ display: "flex", gap: 10, padding: "9px 0", alignItems: "flex-start" }}>
+            <div style={{ width: 24, height: 24, borderRadius: 6, background: `${color}15`, display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0 }}>
+              <span style={{ fontSize: 12, fontWeight: 800, color }}>{icon}</span>
+            </div>
+            <span style={{ fontSize: 12, color: "#475569", lineHeight: 1.5 }}>{text}</span>
+          </div>
+        ))}
+      </div>
     </div>
   );
 }
