@@ -1,6 +1,6 @@
 import React, { useContext, useEffect, useState } from "react";
 import { useParams, useNavigate } from "react-router-dom";
-import { runComparison, cartTransfer, completeOrder } from "../utils/api";
+import { runComparison, cartTransfer, handoffOrder } from "../utils/api";
 import { CartContext } from "../hooks/CartContext";
 import StoreComparisonCard from "../components/comparison/StoreComparisonCard";
 
@@ -70,7 +70,15 @@ export default function ComparePage() {
     try {
       await Promise.all([
         cartTransfer(id, store.store_id, store.items || []),
-        completeOrder(id, store.store_id),
+        handoffOrder(
+          id,
+          store.store_id,
+          stores.filter(s => s.store_id !== store.store_id).reduce((min, s) => {
+            const t = s.confirmed_total ?? s.total ?? 0;
+            return t < min ? t : min;
+          }, Infinity) - (store.confirmed_total ?? store.total ?? 0),
+          store.confirmed_total ?? store.total ?? null
+        ),
       ]);
     } catch {
       // best-effort

@@ -478,10 +478,26 @@ export function fetchOrders() {
   return authRequest("/orders");
 }
 
-export function completeOrder(listId, storeId) {
-  return authRequest(`/orders/${listId}/complete`, {
+export function handoffOrder(listId, storeId, savingsEur, totalEur) {
+  return authRequest(`/orders/${listId}/handoff`, {
     method: "PATCH",
     headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({ store_id: storeId }),
+    body: JSON.stringify({ store_id: storeId, savings_eur: savingsEur ?? null, total_eur: totalEur ?? null }),
+  });
+}
+
+export function confirmOrder(listId) {
+  return authRequest(`/orders/${listId}/confirm`, { method: "PATCH" });
+}
+
+export function cancelOrder(listId) {
+  return authRequest(`/orders/${listId}`, { method: "DELETE" });
+}
+
+export function rateOrder(listId, rating) {
+  return authRequest(`/orders/${listId}/rating`, {
+    method: "PATCH",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ rating }),
   });
 }
