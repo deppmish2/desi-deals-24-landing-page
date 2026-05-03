@@ -162,7 +162,9 @@ function CartItemCard({ item, index, onRemove, onDecrement, onIncrement, onBrand
   useEffect(() => {
     if (!isBrandsLoaded()) loadBrands().then(() => forceUpdate((n) => n + 1));
   }, []);
-  const brand = item.brand ?? extractBrandFromName(item.raw_item_text) ?? null;
+  const brand = (item.brand != null && matchBrand(item.brand) != null)
+    ? item.brand
+    : extractBrandFromName(item.raw_item_text) ?? null;
   const anyBrand = item.anyBrand === true;
   const qty = item.item_count || 1;
 
