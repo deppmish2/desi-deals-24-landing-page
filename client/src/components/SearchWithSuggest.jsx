@@ -12,7 +12,7 @@ function highlight(text, query) {
   );
 }
 
-function SuggestDropdown({ query, onSelect, onSelectCategory, onSelectStore, onSeeAll, activeIdx }) {
+function SuggestDropdown({ query, onSelect, onSelectCategory, onSelectStore, onSeeAll, activeIdx, controlRef }) {
   const [data, setData] = useState(null);
 
   useEffect(() => {
@@ -39,6 +39,18 @@ function SuggestDropdown({ query, onSelect, onSelectCategory, onSelectStore, onS
     ...stores.map(s => ({ kind: "store", ...s })),
     { kind: "seeall" },
   ];
+
+  if (controlRef) {
+    controlRef.current.itemCount = allItems.length;
+    controlRef.current.selectAtIdx = (idx) => {
+      const item = allItems[idx];
+      if (!item) return;
+      if (item.kind === "product") onSelect(item.canonical_name);
+      else if (item.kind === "category") onSelectCategory(item.name);
+      else if (item.kind === "store") onSelectStore(item.name, item.store_id);
+      else onSeeAll();
+    };
+  }
 
   return (
     <div style={{
@@ -114,6 +126,7 @@ export default function SearchWithSuggest({
   const [dropdownOpen, setDropdownOpen] = useState(false);
   const [activeIdx, setActiveIdx] = useState(-1);
   const containerRef = useRef(null);
+  const suggestRef = useRef({ itemCount: 0, selectAtIdx: null });
 
   useEffect(() => {
     function onClickOutside(e) {
@@ -135,9 +148,20 @@ export default function SearchWithSuggest({
 
   function handleKeyDown(e) {
     if (e.key === "Escape") { setDropdownOpen(false); setActiveIdx(-1); return; }
-    if (e.key === "ArrowDown") { e.preventDefault(); setActiveIdx(i => i + 1); return; }
+    if (e.key === "ArrowDown") {
+      e.preventDefault();
+      setActiveIdx(i => Math.min(i + 1, (suggestRef.current.itemCount || 0) - 1));
+      return;
+    }
     if (e.key === "ArrowUp") { e.preventDefault(); setActiveIdx(i => Math.max(-1, i - 1)); return; }
-    if (e.key === "Enter") { e.preventDefault(); commit(value); }
+    if (e.key === "Enter") {
+      e.preventDefault();
+      if (activeIdx >= 0 && suggestRef.current.selectAtIdx) {
+        suggestRef.current.selectAtIdx(activeIdx);
+      } else {
+        commit(value);
+      }
+    }
   }
 
   function commit(val) {
@@ -178,6 +202,7 @@ export default function SearchWithSuggest({
         <SuggestDropdown
           query={value}
           activeIdx={activeIdx}
+          controlRef={suggestRef}
           onSelect={(name) => { onChange(name); commit(name); }}
           onSelectCategory={handleSelectCategory}
           onSelectStore={handleSelectStore}
