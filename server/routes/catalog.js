@@ -200,14 +200,40 @@ router.get("/known-brands", async (req, res, next) => {
 router.get("/:id/brands", async (req, res, next) => {
   try {
     const { id } = req.params;
-    const row = await db.prepare(
-      "SELECT brand_slots FROM canonical_products WHERE id = ?"
-    ).get(id);
+    const [row, knownRows] = await Promise.all([
+      db.prepare("SELECT brand_slots FROM canonical_products WHERE id = ?").get(id),
+      db.prepare("SELECT name, aliases FROM known_brands").all(),
+    ]);
     if (!row) return res.status(404).json({ error: "Not found" });
-    let brands = [];
-    try { brands = JSON.parse(row.brand_slots || "[]"); } catch { brands = []; }
-    if (!Array.isArray(brands)) brands = [];
-    res.json({ data: brands.flat().filter(Boolean) });
+
+    let slots = [];
+    try { slots = JSON.parse(row.brand_slots || "[]"); } catch { slots = []; }
+    if (!Array.isArray(slots)) slots = [];
+    const flat = slots.flat().filter(Boolean);
+
+    // Build known-brand lookup (name + aliases → canonical name)
+    const knownMap = new Map();
+    for (const { name, aliases } of knownRows) {
+      knownMap.set(name.toLowerCase(), name);
+      let al = [];
+      try { al = JSON.parse(aliases || "[]"); } catch { al = []; }
+      for (const a of al) { if (a) knownMap.set(a.toLowerCase(), name); }
+    }
+
+    // Greedily merge consecutive tokens into known multi-word brands
+    const merged = [];
+    let i = 0;
+    while (i < flat.length) {
+      let matched = false;
+      for (let len = Math.min(3, flat.length - i); len >= 2; len--) {
+        const candidate = flat.slice(i, i + len).join(" ");
+        const canonical = knownMap.get(candidate.toLowerCase());
+        if (canonical) { merged.push(canonical); i += len; matched = true; break; }
+      }
+      if (!matched) { merged.push(flat[i]); i++; }
+    }
+
+    res.json({ data: merged });
   } catch (err) {
     next(err);
   }
