@@ -118,15 +118,16 @@ function toGrams(value, unit) {
   return Number(value); // g, ml
 }
 
-// Returns false (exact), "factor" (clean multiple, amber), or "mismatch" (red).
+// Returns false (exact single pack), "factor" (clean multiple), or "mismatch" (red).
+// Uses raw pack size only — independent of packs_needed so all same-size packs
+// get consistent badge colour regardless of which result path they came from.
 function weightEmphasis(srcValue, srcUnit, r) {
   if (!srcValue || !srcUnit || !r.weight_value || !r.weight_unit) return false;
   const srcG = toGrams(srcValue, srcUnit);
   const repG = toGrams(r.weight_value, r.weight_unit);
-  const totalRepG = repG * (r.packs_needed || 1);
-  if (Math.abs(totalRepG - srcG) < 0.01) return false;
-  if (srcG % repG < 0.01 || repG % srcG < 0.01) return "factor";
-  return "mismatch";
+  if (Math.abs(repG - srcG) < 0.01) return false;
+  if (repG < srcG && srcG % repG < 0.01) return "factor"; // buy N packs to reach source exactly
+  return "mismatch"; // rep > src (can't split) or non-divisor
 }
 
 function strictEmptyMessage(reason) {
@@ -253,8 +254,17 @@ export function ReplacementsModal({ sourceDeal, tiers, strict, loading, otherSto
                   )}
                   {selectedResult && onConfirm && (() => {
                     const sel = deriveDealRow(selectedResult);
-                    const packs = sel.packs_needed;
-                    const totalPrice = sel.effective_price;
+                    // extraResults have packs_needed=1; derive actual count from source weight
+                    const srcG = sourceDeal.weight_value && sourceDeal.weight_unit
+                      ? toGrams(sourceDeal.weight_value, sourceDeal.weight_unit) : null;
+                    const repG = sel.weight_value && sel.weight_unit
+                      ? toGrams(sel.weight_value, sel.weight_unit) : null;
+                    const computedPacks = (srcG && repG && repG > 0)
+                      ? Math.ceil(srcG / repG) : sel.packs_needed;
+                    const packs = computedPacks || 1;
+                    const totalPrice = packs !== sel.packs_needed
+                      ? Number((packs * (selectedResult.sale_price || 0)).toFixed(2))
+                      : sel.effective_price;
                     const totalWeightRaw = packs > 1 && sel.weight_value && sel.weight_unit
                       ? `${packs}×${sel.weight_raw}`
                       : sel.weight_raw;
@@ -262,7 +272,7 @@ export function ReplacementsModal({ sourceDeal, tiers, strict, loading, otherSto
                       <div className="sticky bottom-0 bg-white pt-3 pb-1 mt-2" style={{ borderTop: "2px solid #e0f2fe" }}>
                         <button
                           type="button"
-                          onClick={() => { onConfirm(selectedResult); onClose(); }}
+                          onClick={() => { onConfirm({ ...selectedResult, packs_needed: packs, effective_price: totalPrice }); onClose(); }}
                           className="w-full rounded-xl text-white transition-colors flex flex-col items-center justify-center"
                           style={{ background: "#3b82f6", minHeight: packs > 1 ? 52 : 44, padding: "8px 16px" }}
                         >
