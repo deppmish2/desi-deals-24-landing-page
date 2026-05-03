@@ -291,22 +291,6 @@ export function updateAuthSessionUser(user) {
   writeAuthSession({ ...session, user: { ...(session.user || {}), ...user } });
 }
 
-export function fetchBookmarks() {
-  return authRequest("/bookmarks", { cache: "no-store" });
-}
-
-export function addBookmark(dealId) {
-  return authRequest(`/bookmarks/${encodeURIComponent(dealId)}`, {
-    method: "POST",
-  });
-}
-
-export function removeBookmark(dealId) {
-  return authRequest(`/bookmarks/${encodeURIComponent(dealId)}`, {
-    method: "DELETE",
-  });
-}
-
 export async function startEmailAuth({ email, referral_code } = {}) {
   const res = await fetch(buildUrl("/auth/email-link/start"), {
     method: "POST",
