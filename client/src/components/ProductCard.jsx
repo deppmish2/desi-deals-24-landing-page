@@ -145,18 +145,6 @@ export default function ProductCard({ product, context }) {
 
         {/* Actions */}
         <div className="flex gap-2 mt-auto">
-          {context === "deals" && product.product_url && (
-            <a
-              href={product.product_url}
-              target="_blank"
-              rel="noopener noreferrer"
-              className="flex-1 flex items-center justify-center rounded-[14px] py-2.5 text-white text-[12px] font-extrabold tracking-[0.04em] uppercase no-underline"
-              style={{ background: "#16a34a" }}
-            >
-              Snatch Deal
-            </a>
-          )}
-
           <button
             type="button"
             onClick={handleAddToCart}
