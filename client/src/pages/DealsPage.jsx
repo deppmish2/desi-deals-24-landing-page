@@ -176,24 +176,6 @@ function UserCircleIcon({ size = 22, color = "currentColor" }) {
   );
 }
 
-function BookmarkIcon({ size = 18, color = "currentColor" }) {
-  return (
-    <svg
-      width={size}
-      height={size}
-      viewBox="0 0 24 24"
-      fill="none"
-      stroke={color}
-      strokeWidth="2"
-      strokeLinecap="round"
-      strokeLinejoin="round"
-      aria-hidden="true"
-    >
-      <path d="M19 21l-7-5-7 5V5a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2z" />
-    </svg>
-  );
-}
-
 function CartIcon({ size = 18, color = "currentColor" }) {
   return (
     <svg
@@ -419,8 +401,6 @@ function dealPermalink(dealId) {
 
 function DealCard({
   deal,
-  isBookmarked,
-  onBookmark,
   highlighted,
   highlightRef,
   priority,
@@ -782,24 +762,7 @@ function DealCard({
         })() : null}
 
         <div className="mt-auto flex items-center gap-2 pt-2">
-          <CartButton deal={deal} />
-          <a
-            href={resolveUrl(deal, deal.product_url)}
-            target="_blank"
-            rel="noopener noreferrer"
-            onClick={() =>
-              trackAnalyticsEvent(
-                "snatch_deal_click",
-                buildDealAnalyticsPayload(deal, analyticsContext),
-              )
-            }
-            className="flex-1 justify-center bg-[#16a34a] hover:bg-[#15803d] transition-colors rounded-[14px] py-3 inline-flex items-center gap-2 text-white no-underline hover:no-underline"
-            style={{ textDecoration: "none" }}
-          >
-            <span className="text-[13px] leading-[16px] font-extrabold tracking-wide uppercase">
-              Snatch Deal
-            </span>
-          </a>
+          <CartButton deal={deal} fullWidth />
           {/* WhatsApp share — shares DesiDeals24 permalink, WA shows branded OG preview */}
           <a
             href={(() => {
@@ -1326,109 +1289,6 @@ function SortDropdown({ value, onChange, toolbar = false }) {
   );
 }
 
-// ── Bookmarks panel ───────────────────────────────────────────────────────────
-function BookmarksPanel({ bookmarkedDeals, bookmarkedIds, onRemove, onClose }) {
-  const ref = useRef(null);
-
-  useEffect(() => {
-    function handleClickOutside(e) {
-      if (ref.current && !ref.current.contains(e.target)) onClose();
-    }
-    document.addEventListener("mousedown", handleClickOutside);
-    return () => document.removeEventListener("mousedown", handleClickOutside);
-  }, [onClose]);
-
-  const saved = Array.from(bookmarkedIds)
-    .map((id) => bookmarkedDeals[id])
-    .filter(Boolean);
-
-  return (
-    <div
-      ref={ref}
-      className="absolute right-0 top-full mt-2 w-80 bg-white rounded-2xl shadow-2xl border border-slate-100 overflow-hidden z-40"
-    >
-      <div className="px-4 py-3 border-b border-slate-100 flex items-center justify-between">
-        <span className="text-[13px] font-extrabold text-[#0f172a] tracking-wide uppercase">
-          Saved Deals
-        </span>
-        <span className="text-[12px] text-slate-400">
-          {saved.length} item{saved.length !== 1 ? "s" : ""}
-        </span>
-      </div>
-      {saved.length === 0 ? (
-        <div className="px-4 py-8 text-center">
-          <svg
-            className="mx-auto mb-2 text-slate-300"
-            width="28"
-            height="28"
-            viewBox="0 0 24 24"
-            fill="none"
-            stroke="currentColor"
-            strokeWidth="1.5"
-          >
-            <path d="M19 21l-7-5-7 5V5a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2z" />
-          </svg>
-          <p className="text-[13px] text-slate-400">No saved deals yet.</p>
-          <p className="text-[12px] text-slate-300 mt-0.5">
-            Tap the bookmark on any deal.
-          </p>
-        </div>
-      ) : (
-        <div className="max-h-[360px] overflow-y-auto divide-y divide-slate-50">
-          {saved.map((deal) => (
-            <div
-              key={deal.id}
-              className="flex items-center gap-3 px-4 py-3 hover:bg-slate-50 transition-colors"
-            >
-              <div className="w-10 h-10 rounded-lg bg-slate-100 flex items-center justify-center overflow-hidden shrink-0">
-                {deal.image_url ? (
-                  <img
-                    src={proxyDealImageUrl(deal)}
-                    alt=""
-                    className="w-full h-full object-contain"
-                    onError={(e) => {
-                      e.target.style.display = "none";
-                    }}
-                  />
-                ) : (
-                  <span className="text-[16px]">🛒</span>
-                )}
-              </div>
-              <div className="flex-1 min-w-0">
-                <p className="text-[12px] font-bold text-[#0f172a] leading-snug line-clamp-1">
-                  {deal.product_name}
-                </p>
-                <p className="text-[11px] text-slate-400 mt-0.5">
-                  {deal.store?.name} ·{" "}
-                  {formatPrice(deal.sale_price, deal.currency)}
-                </p>
-              </div>
-              <button
-                type="button"
-                onClick={() => onRemove(deal.id)}
-                className="shrink-0 text-slate-300 hover:text-red-400 transition-colors p-1"
-                title="Remove bookmark"
-              >
-                <svg
-                  width="16"
-                  height="16"
-                  viewBox="0 0 24 24"
-                  fill="none"
-                  stroke="currentColor"
-                  strokeWidth="2.5"
-                  strokeLinecap="round"
-                >
-                  <path d="M18 6 6 18M6 6l12 12" />
-                </svg>
-              </button>
-            </div>
-          ))}
-        </div>
-      )}
-    </div>
-  );
-}
-
 // ── Pagination ────────────────────────────────────────────────────────────────
 function Pagination({ page, totalPages, onChange }) {
   if (totalPages <= 1) return null;
@@ -1539,9 +1399,6 @@ export default function DealsPage() {
     hideExpired: false,
   });
   const [loginModal, setLoginModal] = useState(null);
-  const [bookmarkedIds, setBookmarkedIds] = useState(new Set());
-  const [bookmarkedDeals, setBookmarkedDeals] = useState({});
-  const [bookmarksPanelOpen, setBookmarksPanelOpen] = useState(false);
   const [toast, setToast] = useState(null);
   const toastTimer = useRef(null);
   const nextSearchShouldTrackRef = useRef(false);
@@ -1765,18 +1622,6 @@ export default function DealsPage() {
     );
   }, [highlightDealId, displayDeals]);
 
-  // Keep bookmarkedDeals map populated from deal pages
-  useEffect(() => {
-    if (!Array.isArray(deals) || deals.length === 0) return;
-    setBookmarkedDeals((prev) => {
-      const next = { ...prev };
-      deals.forEach((d) => {
-        if (d?.id) next[d.id] = d;
-      });
-      return next;
-    });
-  }, [deals]);
-
   const [storeNames, setStoreNames] = useState([]);
   useEffect(() => {
     if (!filtersOpen || storeNames.length > 0) return;
@@ -1973,49 +1818,6 @@ export default function DealsPage() {
     toastTimer.current = setTimeout(() => setToast(null), 3000);
   }
 
-  const handleBookmark = useCallback(
-    async (dealId) => {
-      const deal =
-        bookmarkedDeals[dealId] ||
-        displayDeals.find((entry) => entry?.id === dealId) ||
-        null;
-      if (!isLoggedIn) {
-        trackAnalyticsEvent(
-          "bookmark_login_required",
-          buildDealAnalyticsPayload(deal, buildAnalyticsContext()),
-        );
-        setLoginModal({
-          message: "Bookmarks are for registered members only.",
-          resumeState: createResumeState({ bookmarkDealId: dealId }),
-        });
-        return;
-      }
-      const wasBookmarked = bookmarkedIds.has(dealId);
-      trackAnalyticsEvent(
-        wasBookmarked ? "bookmark_remove_click" : "bookmark_add_click",
-        buildDealAnalyticsPayload(deal, buildAnalyticsContext()),
-      );
-      setBookmarkedIds((prev) => {
-        const next = new Set(prev);
-        if (wasBookmarked) next.delete(dealId);
-        else next.add(dealId);
-        return next;
-      });
-      showToast(
-        wasBookmarked ? "Removed from basket" : "Saved to basket",
-        wasBookmarked ? "removed" : "success",
-      );
-    },
-    [
-      bookmarkedDeals,
-      buildAnalyticsContext,
-      createResumeState,
-      displayDeals,
-      isLoggedIn,
-      bookmarkedIds,
-    ],
-  );
-
   async function handleLogout() {
     trackAnalyticsEvent("logout_click", buildAnalyticsContext());
     await logoutUser();
@@ -2083,25 +1885,6 @@ export default function DealsPage() {
             <div className="flex items-center gap-2">
               {isLoggedIn ? (
                 <>
-                  <Link
-                    to="/saved"
-                    onClick={() =>
-                      trackAnalyticsEvent(
-                        "saved_deals_open",
-                        buildAnalyticsContext(),
-                      )
-                    }
-                    className="relative inline-flex h-10 w-10 items-center justify-center rounded-full border border-slate-200 bg-white text-slate-600 transition-colors hover:bg-slate-50"
-                    style={{ textDecoration: "none" }}
-                    title="Saved deals"
-                  >
-                    <CartIcon size={18} color="currentColor" />
-                    {bookmarkedIds.size > 0 && (
-                      <span className="absolute -top-1 -right-1 min-w-[18px] h-[18px] px-1 rounded-full bg-[#9a6500] text-white text-[10px] font-extrabold flex items-center justify-center leading-none">
-                        {bookmarkedIds.size}
-                      </span>
-                    )}
-                  </Link>
                   <div className="relative">
                     <button
                       type="button"
@@ -2117,16 +1900,6 @@ export default function DealsPage() {
                           onClick={() => setMobileMenuOpen(false)}
                         />
                         <div className="absolute right-0 top-[calc(100%+8px)] z-50 w-44 overflow-hidden rounded-[16px] border border-slate-100 bg-white shadow-xl">
-                          <Link
-                            to="/saved"
-                            onClick={() => setMobileMenuOpen(false)}
-                            className="flex items-center gap-3 px-4 py-3 text-[14px] font-semibold text-slate-700 hover:bg-slate-50 transition-colors no-underline"
-                            style={{ textDecoration: "none" }}
-                          >
-                            <CartIcon size={16} color="currentColor" />
-                            Saved deals
-                          </Link>
-                          <div className="h-px bg-slate-100 mx-3" />
                           <button
                             type="button"
                             onClick={() => {
@@ -2283,28 +2056,6 @@ export default function DealsPage() {
                   </span>
                 )}
               </button>
-              {isLoggedIn && (
-                <Link
-                  to="/saved"
-                  onClick={() =>
-                    trackAnalyticsEvent(
-                      "saved_deals_open",
-                      buildAnalyticsContext(),
-                    )
-                  }
-                  className="relative inline-flex h-11 w-11 items-center justify-center rounded-full border border-slate-200 bg-white text-slate-600 shadow-sm transition-colors hover:bg-slate-50"
-                  style={{ textDecoration: "none" }}
-                  title="Saved deals"
-                >
-                  <CartIcon size={19} color="currentColor" />
-                  {bookmarkedIds.size > 0 && (
-                    <span className="absolute -top-1 -right-1 min-w-[20px] h-[20px] px-1 rounded-full bg-[#9a6500] text-white text-[11px] font-extrabold flex items-center justify-center leading-none">
-                      {bookmarkedIds.size}
-                    </span>
-                  )}
-                </Link>
-              )}
-
               {isLoggedIn ? (
                 <>
                   <button
@@ -2558,8 +2309,6 @@ export default function DealsPage() {
               <DealCard
                 key={deal.id}
                 deal={deal}
-                isBookmarked={bookmarkedIds.has(deal.id)}
-                onBookmark={handleBookmark}
                 highlighted={highlightDealId === deal.id}
                 highlightRef={highlightDealId === deal.id ? highlightRef : null}
                 priority={index < 4}
