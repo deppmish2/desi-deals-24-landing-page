@@ -156,7 +156,7 @@ export default function SearchWithSuggest({
     if (e.key === "Escape") { setDropdownOpen(false); setActiveIdx(-1); return; }
     if (e.key === "ArrowDown") {
       e.preventDefault();
-      if (suggestRef.current.itemCount > 0) {
+      if (dropdownOpen && suggestRef.current.itemCount > 0) {
         setActiveIdx(i => Math.min(i + 1, suggestRef.current.itemCount - 1));
       }
       return;
@@ -164,7 +164,7 @@ export default function SearchWithSuggest({
     if (e.key === "ArrowUp") { e.preventDefault(); setActiveIdx(i => Math.max(-1, i - 1)); return; }
     if (e.key === "Enter") {
       e.preventDefault();
-      if (activeIdx >= 0 && suggestRef.current.selectAtIdx) {
+      if (dropdownOpen && activeIdx >= 0 && suggestRef.current.selectAtIdx) {
         suggestRef.current.selectAtIdx(activeIdx);
       } else {
         commit(value);
