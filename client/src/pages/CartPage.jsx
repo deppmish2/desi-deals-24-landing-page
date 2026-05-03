@@ -194,9 +194,16 @@ function CartItemCard({ item, index, onRemove, onDecrement, onIncrement, onBrand
                   {" "}
                 </>
               )}
-              {(brand && item.raw_item_text.startsWith(brand))
-                ? item.raw_item_text.slice(brand.length).trimStart()
-                : item.raw_item_text}
+              {(() => {
+                if (!brand) return item.raw_item_text;
+                const words = item.raw_item_text.split(/\s+/);
+                for (let len = 2; len >= 1; len--) {
+                  if (matchBrand(words.slice(0, len).join(" "))) {
+                    return item.raw_item_text.split(/\s+/).slice(len).join(" ") || item.raw_item_text;
+                  }
+                }
+                return item.raw_item_text;
+              })()}
             </p>
             {(item.weight_raw || item.quantity) && (
               <span style={{
