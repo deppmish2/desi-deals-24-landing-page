@@ -2411,7 +2411,14 @@ async function searchStrictReplacementOptions(
       .map((row) => buildReplacementSearchResultKey(row))
       .filter(Boolean),
   );
+  // Also exclude by deal id — exactResults may use a different pack count (x5)
+  // than checkedCandidates (x1) for the same deal, causing the same product to
+  // appear twice with different packs_needed values.
+  const exactDealIds = new Set(
+    exactResults.map((row) => row.id ?? row.deal_id).filter(Boolean),
+  );
   const extraResults = checkedCandidates.filter((row) => {
+    if (exactDealIds.has(row.id ?? row.deal_id)) return false;
     const key = buildReplacementSearchResultKey(row);
     if (!key) return true;
     return !exactKeys.has(key);

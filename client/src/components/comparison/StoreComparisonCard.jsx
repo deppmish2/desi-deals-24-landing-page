@@ -18,14 +18,19 @@ export default function StoreComparisonCard({ store, onShop, isWinner, priceDiff
   const [repStrict, setRepStrict] = useState(null);
   const [repLoading, setRepLoading] = useState(false);
   const [repOtherStores, setRepOtherStores] = useState(null);
+  // { [list_item_id]: { product_name, price } } — local replacements confirmed this session
+  const [replacedItems, setReplacedItems] = useState({});
 
   const { store_name, store_id, confirmed_total, coverage, items = [] } = store;
 
   const missingItems = store.items_not_found || [];
+  const localReplacedCount = Object.keys(replacedItems).length;
   const available = coverage?.available ?? 0;
-  const replaced  = coverage?.replaced ?? 0;
-  const missing   = coverage?.missing ?? missingItems.length ?? 0;
-  const total     = coverage?.total ?? (items.length + missing || 1);
+  const replaced  = (coverage?.replaced ?? 0) + localReplacedCount;
+  const missing   = Math.max(0, (coverage?.missing ?? missingItems.length ?? 0) - localReplacedCount);
+  const total     = coverage?.total ?? (items.length + (coverage?.missing ?? missingItems.length) || 1);
+  const localReplacedTotal = Object.values(replacedItems).reduce((sum, r) => sum + (Number(r.price) || 0), 0);
+  const displayTotal = Number(confirmed_total || 0) + localReplacedTotal;
   const allCount  = items.length + missingItems.length;
 
   useEffect(() => {
@@ -120,7 +125,7 @@ export default function StoreComparisonCard({ store, onShop, isWinner, priceDiff
           </div>
           <div style={{ textAlign: "right", flexShrink: 0, marginLeft: 12 }}>
             <p style={{ margin: 0, fontSize: 28, fontWeight: 800, color: "#1e293b", lineHeight: 1 }}>
-              €{Number(confirmed_total || 0).toFixed(2)}
+              €{displayTotal.toFixed(2)}
             </p>
             <p style={{ margin: "2px 0 0", fontSize: 10, color: "#94a3b8" }}>you pay at store</p>
             {!isWinner && priceDiff != null && priceDiff > 0.01 && (
@@ -136,8 +141,8 @@ export default function StoreComparisonCard({ store, onShop, isWinner, priceDiff
           <CoverageBar available={available + replaced} total={total} />
         </div>
 
-        {/* Missing banner — list item names */}
-        {missingItems.length > 0 && (
+        {/* Missing banner — list item names (hide items already replaced this session) */}
+        {missingItems.filter(e => typeof e === "string" || !replacedItems[e.list_item_id]).length > 0 && (
           <div style={{
             background: "#fffbeb", border: "1px solid #fde68a", borderRadius: 10,
             padding: "8px 12px", marginBottom: 12,
@@ -147,7 +152,7 @@ export default function StoreComparisonCard({ store, onShop, isWinner, priceDiff
               <span>⚠</span>
               <span style={{ fontWeight: 600 }}>Not stocked at this store:</span>
             </div>
-            {missingItems.map((entry, i) => {
+            {missingItems.filter(e => typeof e === "string" || !replacedItems[e.list_item_id]).map((entry, i) => {
               const name = typeof entry === "string" ? entry : entry.text;
               const weightBadge = (() => {
                 if (typeof entry === "string" || !entry.quantity || !entry.quantity_unit) return null;
@@ -256,6 +261,8 @@ export default function StoreComparisonCard({ store, onShop, isWinner, priceDiff
 
             {missingItems.map((entry, i) => {
               const name = typeof entry === "string" ? entry : entry.text;
+              const lid = typeof entry === "object" ? entry.list_item_id : null;
+              const rep = lid ? replacedItems[lid] : null;
               const weightBadge = (() => {
                 if (typeof entry === "string" || !entry.quantity || !entry.quantity_unit) return null;
                 const v = Number(entry.quantity);
@@ -264,11 +271,71 @@ export default function StoreComparisonCard({ store, onShop, isWinner, priceDiff
                 if (u === "ml") return v >= 1000 ? `${v / 1000} l` : `${v} ml`;
                 return `${v} ${entry.quantity_unit}`;
               })();
+              const isLast = i === missingItems.length - 1;
+
+              if (rep) {
+                return (
+                  <div key={`miss-${i}`} style={{
+                    display: "flex", alignItems: "center", justifyContent: "space-between",
+                    gap: 8, padding: "7px 8px",
+                    marginLeft: -8, marginRight: -4,
+                    borderBottom: isLast ? "none" : "1px solid #f8fafc",
+                    background: "#eff6ff",
+                    borderLeft: "2px solid #60a5fa",
+                  }}>
+                    <div style={{ display: "flex", alignItems: "center", gap: 7, flex: 1, minWidth: 0 }}>
+                      <span style={{ color: "#3b82f6", fontSize: 14, flexShrink: 0 }}>↔</span>
+                      <p style={{ margin: 0, fontSize: 13, color: "#1e293b", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
+                        {rep.product_name}
+                      </p>
+                      {rep.weight_raw && (
+                        <span style={{
+                          fontSize: 11, fontWeight: 700, color: "#1e293b",
+                          background: "#e0f2fe", border: "1px solid #7dd3fc",
+                          borderRadius: 6, padding: "1px 5px", flexShrink: 0, whiteSpace: "nowrap",
+                        }}>
+                          {rep.weight_raw}
+                        </span>
+                      )}
+                      <span style={{
+                        fontSize: 10, fontWeight: 700, color: "#3b82f6",
+                        background: "#dbeafe", borderRadius: 4, padding: "1px 5px", flexShrink: 0, whiteSpace: "nowrap",
+                      }}>
+                        Replaced
+                      </span>
+                    </div>
+                    <div style={{ display: "flex", alignItems: "center", gap: 6, flexShrink: 0 }}>
+                      {rep.price != null && (
+                        <p style={{ margin: 0, fontSize: 13, fontWeight: 700, color: "#1e293b" }}>
+                          {Number(rep.price).toFixed(2)} €
+                        </p>
+                      )}
+                      <button
+                        type="button"
+                        title="Undo replacement"
+                        onClick={() => setReplacedItems((prev) => {
+                          const next = { ...prev };
+                          delete next[lid];
+                          return next;
+                        })}
+                        style={{
+                          fontSize: 11, color: "#64748b",
+                          background: "none", border: "1px solid #cbd5e1",
+                          borderRadius: 6, padding: "2px 6px", cursor: "pointer",
+                        }}
+                      >
+                        Undo
+                      </button>
+                    </div>
+                  </div>
+                );
+              }
+
               return (
                 <div key={`miss-${i}`} style={{
                   display: "flex", alignItems: "center", justifyContent: "space-between",
                   gap: 8, padding: "7px 0",
-                  borderBottom: i < missingItems.length - 1 ? "1px solid #f8fafc" : "none",
+                  borderBottom: isLast ? "none" : "1px solid #f8fafc",
                 }}>
                   <div style={{ display: "flex", alignItems: "center", gap: 7, flex: 1, minWidth: 0 }}>
                     <span style={{ color: "#94a3b8", fontSize: 14, flexShrink: 0 }}>✗</span>
@@ -294,6 +361,8 @@ export default function StoreComparisonCard({ store, onShop, isWinner, priceDiff
                         list_item_id: entry.list_item_id ?? null,
                         canonical_id: entry.canonical_id ?? null,
                         product_name: name,
+                        quantity: entry.quantity ?? null,
+                        quantity_unit: entry.quantity_unit ?? null,
                       })}
                       style={{
                         fontSize: 11, color: "#16a34a",
@@ -330,13 +399,40 @@ export default function StoreComparisonCard({ store, onShop, isWinner, priceDiff
 
       {replacingItem && (
         <ReplacementsModal
-          sourceDeal={{ id: null, canonical_id: replacingItem.canonical_id, product_name: replacingItem.product_name, store: { id: store_id, name: store_name } }}
+          sourceDeal={{
+            id: null,
+            canonical_id: replacingItem.canonical_id,
+            product_name: replacingItem.product_name,
+            store: { id: store_id, name: store_name },
+            weight_value: replacingItem.quantity ?? null,
+            weight_unit: replacingItem.quantity_unit ?? null,
+            weight_raw: (replacingItem.quantity && replacingItem.quantity_unit)
+              ? `${replacingItem.quantity}${replacingItem.quantity_unit}`
+              : null,
+          }}
           tiers={repTiers}
           strict={repStrict}
           loading={repLoading}
           otherStores={repOtherStores}
           isAdmin={false}
           onClose={() => setReplacingItem(null)}
+          onConfirm={(rawResult) => {
+            if (!replacingItem.list_item_id) return;
+            const packs = rawResult.packs_needed || 1;
+            const weightRaw = rawResult.weight_value && rawResult.weight_unit
+              ? packs > 1
+                ? `${packs}×${rawResult.weight_value}${rawResult.weight_unit}`
+                : `${rawResult.weight_value}${rawResult.weight_unit}`
+              : null;
+            setReplacedItems((prev) => ({
+              ...prev,
+              [replacingItem.list_item_id]: {
+                product_name: rawResult.product_name,
+                price: rawResult.effective_price ?? rawResult.sale_price ?? null,
+                weight_raw: weightRaw,
+              },
+            }));
+          }}
         />
       )}
     </div>

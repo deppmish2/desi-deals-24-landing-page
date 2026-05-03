@@ -20,7 +20,7 @@ function highlightDiffName(sourceName, targetName) {
   });
 }
 
-function ReplacementDealRow({ deal, emphasisSize, sourceName, sourcePricePerKg }) {
+function ReplacementDealRow({ deal, emphasisSize, sourceName, sourcePricePerKg, onSelect }) {
   const [imgErr, setImgErr] = React.useState(false);
   const kgSavingPct = sourcePricePerKg && deal.price_per_kg != null
     ? Math.round((sourcePricePerKg - deal.price_per_kg) / sourcePricePerKg * 100)
@@ -30,6 +30,7 @@ function ReplacementDealRow({ deal, emphasisSize, sourceName, sourcePricePerKg }
       href={deal.product_url}
       target="_blank"
       rel="noopener noreferrer"
+      onClick={onSelect ? (e) => { e.preventDefault(); onSelect(); } : undefined}
       className="flex items-center gap-3 p-3 rounded-xl border border-slate-100 hover:border-[#16a34a] hover:bg-[#f0fdf4] transition-colors no-underline"
       style={{ textDecoration: "none" }}
     >
@@ -52,9 +53,11 @@ function ReplacementDealRow({ deal, emphasisSize, sourceName, sourcePricePerKg }
             {deal.weight_raw && (
               <span
                 className={`px-1.5 py-0.5 rounded text-[10px] font-bold ${
-                  emphasisSize
-                    ? "bg-amber-100 text-amber-700 border border-amber-300"
-                    : "bg-slate-100 text-slate-500"
+                  emphasisSize === "mismatch"
+                    ? "bg-red-100 text-red-700 border border-red-300"
+                    : emphasisSize
+                      ? "bg-amber-100 text-amber-700 border border-amber-300"
+                      : "bg-slate-100 text-slate-500"
                 }`}
               >
                 {deal.weight_raw}
@@ -97,6 +100,8 @@ function deriveDealRow(r) {
     id: r.id ?? r.deal_id,
     product_name: r.product_name,
     sale_price: r.sale_price,
+    effective_price: r.effective_price ?? r.sale_price,
+    packs_needed: r.packs_needed || 1,
     currency: r.currency,
     weight_value: r.weight_value,
     weight_unit: r.weight_unit,
@@ -105,6 +110,23 @@ function deriveDealRow(r) {
     product_url: r.product_url,
     image_url: r.image_url,
   };
+}
+
+function toGrams(value, unit) {
+  const u = String(unit || "").toLowerCase();
+  if (u === "kg" || u === "l") return Number(value) * 1000;
+  return Number(value); // g, ml
+}
+
+// Returns false (exact), "factor" (clean multiple, amber), or "mismatch" (red).
+function weightEmphasis(srcValue, srcUnit, r) {
+  if (!srcValue || !srcUnit || !r.weight_value || !r.weight_unit) return false;
+  const srcG = toGrams(srcValue, srcUnit);
+  const repG = toGrams(r.weight_value, r.weight_unit);
+  const totalRepG = repG * (r.packs_needed || 1);
+  if (Math.abs(totalRepG - srcG) < 0.01) return false;
+  if (srcG % repG < 0.01 || repG % srcG < 0.01) return "factor";
+  return "mismatch";
 }
 
 function strictEmptyMessage(reason) {
@@ -118,8 +140,9 @@ function strictEmptyMessage(reason) {
   }
 }
 
-export function ReplacementsModal({ sourceDeal, tiers, strict, loading, otherStores, isAdmin, onClose }) {
+export function ReplacementsModal({ sourceDeal, tiers, strict, loading, otherStores, isAdmin, onClose, onConfirm }) {
   const [categoryExpanded, setCategoryExpanded] = React.useState(false);
+  const [selectedResult, setSelectedResult] = React.useState(null);
   const hasOtherStores = isAdmin && otherStores?.length > 0;
   const useStrict = !!strict;
   const strictResults = strict?.results || [];
@@ -179,13 +202,23 @@ export function ReplacementsModal({ sourceDeal, tiers, strict, loading, otherSto
                       </p>
                       <div className="flex flex-col gap-2">
                         {otherBrandResults.map((r) => (
-                          <ReplacementDealRow
+                          <div
                             key={r.id ?? r.deal_id}
-                            deal={deriveDealRow(r)}
-                            sourceName={sourceDeal.product_name}
-                            sourcePricePerKg={null}
-                            emphasisSize={false}
-                          />
+                            className="rounded-xl transition-all"
+                            style={{
+                              border: selectedResult === r ? "2px solid #3b82f6" : "2px solid transparent",
+                              background: selectedResult === r ? "#eff6ff" : "transparent",
+                              padding: "2px",
+                            }}
+                          >
+                            <ReplacementDealRow
+                              deal={deriveDealRow(r)}
+                              sourceName={sourceDeal.product_name}
+                              sourcePricePerKg={null}
+                              emphasisSize={weightEmphasis(sourceDeal.weight_value, sourceDeal.weight_unit, r)}
+                              onSelect={() => setSelectedResult(r)}
+                            />
+                          </div>
                         ))}
                       </div>
                     </div>
@@ -197,17 +230,52 @@ export function ReplacementsModal({ sourceDeal, tiers, strict, loading, otherSto
                       </p>
                       <div className="flex flex-col gap-2">
                         {exactBrandResults.map((r) => (
-                          <ReplacementDealRow
+                          <div
                             key={r.id ?? r.deal_id}
-                            deal={deriveDealRow(r)}
-                            sourceName={sourceDeal.product_name}
-                            sourcePricePerKg={null}
-                            emphasisSize={false}
-                          />
+                            className="rounded-xl transition-all"
+                            style={{
+                              border: selectedResult === r ? "2px solid #3b82f6" : "2px solid transparent",
+                              background: selectedResult === r ? "#eff6ff" : "transparent",
+                              padding: "2px",
+                            }}
+                          >
+                            <ReplacementDealRow
+                              deal={deriveDealRow(r)}
+                              sourceName={sourceDeal.product_name}
+                              sourcePricePerKg={null}
+                              emphasisSize={weightEmphasis(sourceDeal.weight_value, sourceDeal.weight_unit, r)}
+                              onSelect={() => setSelectedResult(r)}
+                            />
+                          </div>
                         ))}
                       </div>
                     </div>
                   )}
+                  {selectedResult && onConfirm && (() => {
+                    const sel = deriveDealRow(selectedResult);
+                    const packs = sel.packs_needed;
+                    const totalPrice = sel.effective_price;
+                    const totalWeightRaw = packs > 1 && sel.weight_value && sel.weight_unit
+                      ? `${packs}×${sel.weight_raw}`
+                      : sel.weight_raw;
+                    return (
+                      <div className="sticky bottom-0 bg-white pt-3 pb-1 mt-2" style={{ borderTop: "2px solid #e0f2fe" }}>
+                        <button
+                          type="button"
+                          onClick={() => { onConfirm(selectedResult); onClose(); }}
+                          className="w-full rounded-xl text-white transition-colors flex flex-col items-center justify-center"
+                          style={{ background: "#3b82f6", minHeight: packs > 1 ? 52 : 44, padding: "8px 16px" }}
+                        >
+                          <span className="text-[14px] font-bold leading-tight">Confirm replacement</span>
+                          {packs > 1 && (
+                            <span className="text-[11px] font-medium mt-0.5" style={{ opacity: 0.88 }}>
+                              {packs}× {sel.product_name} · €{Number(totalPrice).toFixed(2)} total
+                            </span>
+                          )}
+                        </button>
+                      </div>
+                    );
+                  })()}
                 </>
               )}
             </>
