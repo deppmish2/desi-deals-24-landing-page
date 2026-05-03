@@ -44,6 +44,14 @@ Surgical removals across multiple sections:
 - Remove bookmark icon button on deal cards
 - Remove `/saved` nav link with bookmark count badge (~line 2167)
 
+### `client/src/pages/DealsPage.jsx` (additional)
+- Remove "Snatch Deal" `<a>` link to store (currently `flex-1` green button)
+- Replace small icon-only `<CartButton>` with full-width "Add to cart" text button matching `ProductCard` style (height 44, white/green toggle, cart icon + label)
+
+### `client/src/components/ProductCard.jsx`
+- Remove the `context === "deals"` conditional that renders "Snatch Deal" `<a>` link
+- The full-width "Add to cart" button remains as the sole primary action
+
 ## Explicitly Out of Scope
 
 - `bookmarks` DB table — keep as-is, no migration
@@ -57,3 +65,5 @@ After removal:
 - `/deals` page has no bookmark icon or panel
 - No console errors referencing bookmarks
 - `DealSharePage` (`/share/deal/:id`) still works
+- Deal cards show full-width "Add to cart" / "Added!" button, no "Snatch Deal" link
+- `ProductCard` in deals context shows no "Snatch Deal" link
