@@ -28,7 +28,7 @@ const healthRouter = require("./routes/health");
 const bookmarksRouter = require("./routes/bookmarks");
 const catalogRouter = require("./routes/catalog");
 const compareRouter = require("./routes/compare");
-const ordersRouter  = require("./routes/orders");
+const ordersRouter  = require("./routes/orders")(db);
 const {
   productionLikeRuntime,
   smtpConfigured,
