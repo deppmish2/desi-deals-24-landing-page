@@ -10,31 +10,16 @@ import {
   fetchProductBrands,
   fetchOAuthAuthUrl,
 } from "../utils/api";
+import { matchBrand, loadBrands, isBrandsLoaded } from "../utils/brands";
 
 const POST_AUTH_REDIRECT_KEY = "dd24_post_auth_redirect";
-
-const KNOWN_BRANDS = new Set([
-  "TRS","Heera","Schani","Haldiram","MDH","Everest","Shan","Patanjali",
-  "Aashirvaad","Tata","Catch","National","Swad","Eastern","Annam","Swagat",
-  "Laxmi","Deep","Priya","MTR","Kohinoor","Royal","Daawat","Badshah","Maggi",
-  "Knorr","Lijjat","Patak","Ashoka","Ahmed","Natco","East End","Rajah",
-  "Aachi","Bambino","Gits","Weikfield","Mapro","Keya",
-  "Bajaj","Dabur","Marico","Emami","Himalaya","Nivea","Dove","Head",
-  "Parachute","Vatika","Sunsilk","Pantene","Colgate","Pepsodent","Sensodyne",
-  "Dettol","Lifebuoy","Savlon","Lux","Pears","Santoor","Vicco","Zandu",
-  "Amul","Nandini","Mother","Nestle","Britannia","Parle","Sunfeast",
-  "Bikaji","Balaji","Jabsons","Kurkure","Lay","Pringles","Cheetos",
-  "Tasty","Sweets","Jabsons","Prataap","Yellow","Wai","Too","Ching",
-  "ITC","HUL","P&G","Ruchi","Fortune","Saffola","Sundrop","Dhara",
-  "Postman","Elephant","Double","Sunrise","Pushp","Goldiee","Ramdev",
-]);
 
 function extractBrandFromName(name) {
   if (!name) return null;
   const words = name.split(/\s+/);
   for (let len = 2; len >= 1; len--) {
-    const candidate = words.slice(0, len).join(" ");
-    if (KNOWN_BRANDS.has(candidate)) return candidate;
+    const brand = matchBrand(words.slice(0, len).join(" "));
+    if (brand) return brand;
   }
   if (words[0] && /^[A-Z]{2,}$/.test(words[0])) return words[0];
   return null;
@@ -173,6 +158,10 @@ function BrandPickerSheet({ canonicalId, canonicalName, currentBrand, anyBrand, 
 
 function CartItemCard({ item, index, onRemove, onDecrement, onIncrement, onBrandSelect }) {
   const [showBrandPicker, setShowBrandPicker] = useState(false);
+  const [, forceUpdate] = useState(0);
+  useEffect(() => {
+    if (!isBrandsLoaded()) loadBrands().then(() => forceUpdate((n) => n + 1));
+  }, []);
   const brand = item.brand ?? extractBrandFromName(item.raw_item_text) ?? null;
   const anyBrand = item.anyBrand === true;
   const qty = item.item_count || 1;
