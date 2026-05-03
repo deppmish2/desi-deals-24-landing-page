@@ -15,7 +15,6 @@ import { useCart } from "./hooks/useCart";
 import { CartContext } from "./hooks/CartContext";
 
 const OAuthCallbackPage = lazy(() => import("./pages/OAuthCallbackPage"));
-const SavedDealsPage = lazy(() => import("./pages/SavedDealsPage"));
 const DealSharePage = lazy(() => import("./pages/DealSharePage"));
 const AdminPage = lazy(() => import("./landing/AdminPage"));
 const FeedbackWidget = lazy(() => import("./components/FeedbackWidget"));
@@ -113,7 +112,6 @@ function AppShell() {
           <Route path="/insta" element={<AdLandingPage />} />
           <Route path="/deal/:dealId" element={<DealsPage />} />
           <Route path="/share/deal/:dealId" element={<DealSharePage />} />
-          <Route path="/saved" element={<SavedDealsPage />} />
           <Route path="/cart" element={<CartPage />} />
           <Route path="/compare/:id" element={<ComparePage />} />
           <Route path="/products" element={<CatalogPage />} />
