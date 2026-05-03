@@ -152,3 +152,16 @@ Sources: server/routes/orders.js, server/middleware/user-auth.js, server/utils/j
 
 - `backend.md`: Expanded orders routes — added 5 missing endpoints (PATCH /handoff, PATCH /confirm, DELETE /:id, PATCH /rating, PATCH /status). Expanded `shopping_lists` description with 7 lifecycle columns added via `alwaysMigrations` (order_status, savings_eur, total_eur, rating, eta_date, issue_text, tracking_url). Clarified Auth section: split `auth.js` (admin ADMIN_SECRET) from `user-auth.js` (user JWT, HS256, `type:"access"` required); documented `server/utils/jwt.js` signJwt/verifyJwt.
 - `frontend.md`: Added 4 order API functions (handoffOrder, confirmOrder, cancelOrder, rateOrder) with notes on Infinity-clamp gotcha. Added full `OrdersPage` section: shared atoms (StoreLogo, StatusPill, Stars, SavingsSparkline, formatters), Dir2 mobile timeline components (D2Order, D2Footer, recap strip, grouping), Dir4 desktop two-pane components (D4Row, D4Detail, dashboard, CSV export), optimistic handler pattern.
+
+---
+
+## [2026-05-04] auto-update | Search/Filters/Sort parity, ProductCard weight badge, catalog sort param
+
+Pages touched: frontend.md, backend.md
+Sources: client/src/components/SortDropdown.jsx, client/src/components/FiltersModal.jsx, client/src/components/SearchWithSuggest.jsx, client/src/components/ProductCard.jsx, client/src/pages/CatalogPage.jsx, client/src/pages/DealsPage.jsx, server/routes/catalog.js, docs/superpowers/plans/2026-05-03-search-filters-sort-parity.md
+
+**Changes recorded:**
+
+- `frontend.md`: Removed `/saved` route + `SavedDealsPage` (commit 81b0b57). Added "Shared search / filters / sort (search-parity)" section documenting `SortDropdown` (default + `SORT_OPTIONS`), `FiltersModal` (default + `CATEGORIES`, auth-gated apply with sessionStorage draft preservation across OAuth), `SearchWithSuggest` (debounced typeahead, keyboard nav, `controlRef` guards from commits 407d7af / cb882c0 / 6c29aaa). Noted `DealsPage` mounts `SearchWithSuggest` twice (mobile + desktop toolbar zones). Updated `ProductCard` section: weight/pack-size badge now `[weight_raw, formatPricePerKg(price_per_kg, weight_unit)].filter(Boolean).join(" | ")`, mirrors `DealsPage` deal-card pattern (e.g. `62g | 0.32 €/kg`).
+- `backend.md`: `/api/v1/catalog` row updated — added `sort` param (`price` default, `price_per_kg`, `discount`, `real_savings`); `store` filter now case-insensitive via `JOIN stores ... ON lower(s.name) = lower(?)`.
+- **Bug fixes documented:** ProductCard previously rendered only `formatPricePerKg(price_per_kg)` — `weight_raw` was dropped, so cards in the "All Products" view showed `€/kg` only or nothing when `price_per_kg` was null. Fixed by mirroring the DealsPage composition; `weight_raw` like `"62g"` now always shown alongside per-kg/L price when both available.

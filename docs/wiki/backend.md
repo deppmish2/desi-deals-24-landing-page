@@ -1,7 +1,7 @@
 ---
 title: Backend
-last_updated: 2026-05-03
-source_count: 3
+last_updated: 2026-05-04
+source_count: 4
 ---
 
 The backend is an Express app (`server/index.js`) using CommonJS modules throughout. It serves the REST API, handles auth, and in non-serverless mode starts the cron scheduler. In production (Vercel), the scheduler is skipped — crawls are triggered by GitHub Actions instead.
@@ -39,7 +39,7 @@ Static assets: `client/dist/assets/` served with `Cache-Control: max-age=1y, imm
 | `GET /api/v1/admin-dashboard/brands` | `server/routes/admin-dashboard.js` | Returns all `known_brands` rows |
 | `POST /api/v1/admin-dashboard/brands/remap` | `server/routes/admin-dashboard.js` | Replaces brand list, re-decomposes all canonicals, maps unmapped deals. Runs **synchronously** — returns result in response body. |
 | `GET /api/v1/admin-dashboard/brands/remap-status/:jobId` | `server/routes/admin-dashboard.js` | Reads `brand_remap_jobs` row by id (retained for legacy polling clients) |
-| `GET /api/v1/catalog` | `server/routes/catalog.js` | Paginated canonical product catalog. Params: `q`, `category`, `store`, `is_discounted`, `min_discount`, `hide_expired`, `page`, `limit`. Returns `{data, pagination}`. |
+| `GET /api/v1/catalog` | `server/routes/catalog.js` | Paginated canonical product catalog. Params: `q`, `category`, `store`, `sort`, `is_discounted`, `min_discount`, `hide_expired`, `page`, `limit`. `sort` ∈ `{price, price_per_kg, discount, real_savings}` (default `price ASC`); `store` is case-insensitive (`lower(s.name) = lower(?)` join). Returns `{data, pagination}`. |
 | `GET /api/v1/catalog/suggest` | `server/routes/catalog.js` | Typeahead: returns `{products, categories, stores}` matching `?q=`. |
 | `GET /api/v1/catalog/:id/brands` | `server/routes/catalog.js` | Returns flat brand list from `brand_slots` for a canonical product. |
 | `GET /api/v1/lists` | `server/routes/lists.js` | Returns user's shopping lists (auth required) |

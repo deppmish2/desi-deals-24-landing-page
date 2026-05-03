@@ -1,7 +1,7 @@
 ---
 title: Frontend
-last_updated: 2026-05-03
-source_count: 3
+last_updated: 2026-05-04
+source_count: 4
 ---
 
 The frontend is a React 18 SPA built with Vite and Tailwind CSS. It uses React Router v6 for client-side routing and a single `useDeals` hook as the primary data layer. The dev server proxies `/api` to port 3000 (the Express backend). In production, the built `client/dist/` is served directly by the Express server.
@@ -17,7 +17,6 @@ Defined in `client/src/App.jsx`:
 | `/insta` | `AdLandingPage` | Instagram ad landing page (hardcoded deal cards) |
 | `/deal/:dealId` | `DealsPage` | Deep-link to a deal (deal highlighted in list) |
 | `/share/deal/:dealId` | `DealSharePage` | Social share redirect page |
-| `/saved` | `SavedDealsPage` | Bookmarked deals (auth required) |
 | `/cart` | `CartPage` | Shopping cart — items, quantities, brand/weight badges. Persisted in localStorage. |
 | `/products` | `CatalogPage` | Browse all canonical products; search + category/store filters. |
 | `/compare/:id` | `ComparePage` | Cross-store price comparison for a saved list. Shows `StoreComparisonCard` per store. |
@@ -28,7 +27,7 @@ Defined in `client/src/App.jsx`:
 | `/oauth/:provider/callback` | `OAuthCallbackPage` | Google OAuth callback handler |
 | `*` | Redirect to `/` | SPA fallback |
 
-`OAuthCallbackPage`, `SavedDealsPage`, `DealSharePage`, `AdminPage`, `FeedbackWidget`, `ListPage`, `ComparePage`, `CartPage`, `CatalogPage`, and `OrdersPage` are lazy-loaded with `React.lazy()`.
+`OAuthCallbackPage`, `DealSharePage`, `AdminPage`, `FeedbackWidget`, `ListPage`, `ComparePage`, `CartPage`, `CatalogPage`, and `OrdersPage` are lazy-loaded with `React.lazy()`. `SavedDealsPage` and the `/saved` route were removed (commit 81b0b57).
 
 `FeedbackWidget` is deferred further: it mounts after idle callback (or 1.2s timeout) so it never blocks the critical render path.
 
@@ -210,6 +209,17 @@ Key display rules:
 - "Add to cart" calls `CartContext.addItem` with brand extracted via `extractBrandFromName` (checks `KNOWN_BRANDS` set) or `product.primary_brand`.
 - `anyBrand: !detectedBrand` — when no brand identified, the cart item gets any-brand mode.
 - Image proxied via `/api/v1/admin/proxy/image?url=` (non-Shopify) or Shopify CDN with `?width=400`.
+- **Weight/pack size badge**: composed as `[weight_raw, formatPricePerKg(price_per_kg, weight_unit)].filter(Boolean).join(" | ")` — e.g. `62g | 0.32 €/kg`. Mirrors `DealsPage` deal-card pattern. Catalog API returns `weight_raw`, `weight_value`, `weight_unit` from `COALESCE(canonical_products, canonicals)`.
+
+## Shared search / filters / sort (search-parity)
+
+Three components factored out so `DealsPage` and `CatalogPage` share the same UX. Plan: `docs/superpowers/plans/2026-05-03-search-filters-sort-parity.md`.
+
+- `client/src/components/SortDropdown.jsx` — exports default component plus `SORT_OPTIONS`. `<SortDropdown value={sort} onChange={fn} toolbar={false} />`. `toolbar` switches the trigger styling (pill vs flat). `ChevronDownIcon` only rendered in pill variant.
+- `client/src/components/FiltersModal.jsx` — exports default component plus `CATEGORIES`. Shared filters dialog used by both pages. Auth-gated apply: anonymous users get redirected through OAuth and the draft filter set is preserved in `sessionStorage` until the OAuth callback resumes the apply.
+- `client/src/components/SearchWithSuggest.jsx` — input + `SuggestDropdown`. Debounced typeahead, keyboard navigation (ArrowUp/Down/Enter/Esc). Ships internal guards: `controlRef` cleared on empty/null suggestion data; ArrowDown gated on `dropdownOpen` so stale `controlRef` callbacks can't fire after the dropdown closes (commits 407d7af, cb882c0, 6c29aaa).
+
+`DealsPage` mounts `SearchWithSuggest` twice (mobile vs desktop toolbar zones — see lines ~1344 and ~1513). `CatalogPage` mounts each component once. Both pages share `useSearchParams` URL-sync for `q`, `sort`, `category`, `store`, `is_discounted`, `min_discount`, `hide_expired`.
 
 ## Related pages
 
