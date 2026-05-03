@@ -176,26 +176,6 @@ function UserCircleIcon({ size = 22, color = "currentColor" }) {
   );
 }
 
-function CartIcon({ size = 18, color = "currentColor" }) {
-  return (
-    <svg
-      width={size}
-      height={size}
-      viewBox="0 0 24 24"
-      fill="none"
-      stroke={color}
-      strokeWidth="2"
-      strokeLinecap="round"
-      strokeLinejoin="round"
-      aria-hidden="true"
-    >
-      <circle cx="9" cy="20" r="1.75" />
-      <circle cx="18" cy="20" r="1.75" />
-      <path d="M3 4h2.5l2.1 10.1a1.2 1.2 0 0 0 1.18.95h8.72a1.2 1.2 0 0 0 1.18-.94L20.6 8H7.1" />
-    </svg>
-  );
-}
-
 function CloseIcon({ size = 10, color = "currentColor" }) {
   return (
     <svg
@@ -1399,8 +1379,6 @@ export default function DealsPage() {
     hideExpired: false,
   });
   const [loginModal, setLoginModal] = useState(null);
-  const [toast, setToast] = useState(null);
-  const toastTimer = useRef(null);
   const nextSearchShouldTrackRef = useRef(false);
   const [totalCount, setTotalCount] = useState(null);
   const {
@@ -1810,12 +1788,6 @@ export default function DealsPage() {
     if (type === "priceRange") {
       updateAppliedState({ filterPriceMin: "", filterPriceMax: "", page: 1 });
     }
-  }
-
-  function showToast(message, tone = "success") {
-    setToast({ message, tone });
-    clearTimeout(toastTimer.current);
-    toastTimer.current = setTimeout(() => setToast(null), 3000);
   }
 
   async function handleLogout() {
@@ -2402,34 +2374,6 @@ export default function DealsPage() {
         </div>
       )}
 
-      {/* Toast */}
-      {toast && (
-        <div className="fixed bottom-6 left-1/2 -translate-x-1/2 z-50 pointer-events-none">
-          <div
-            className={`flex items-center gap-2.5 text-[14px] font-semibold px-5 py-3.5 rounded-2xl shadow-xl ${
-              toast.tone === "removed"
-                ? "bg-[#7c2d12] text-[#fff7ed]"
-                : "bg-[#166534] text-white"
-            }`}
-          >
-            <svg
-              width="16"
-              height="16"
-              viewBox="0 0 24 24"
-              fill="none"
-              stroke="currentColor"
-              strokeWidth="2.5"
-              strokeLinecap="round"
-              strokeLinejoin="round"
-            >
-              <circle cx="9" cy="21" r="1" />
-              <circle cx="20" cy="21" r="1" />
-              <path d="M1 1h4l2.68 13.39a2 2 0 0 0 2 1.61h9.72a2 2 0 0 0 2-1.61L23 6H6" />
-            </svg>
-            {toast.message}
-          </div>
-        </div>
-      )}
     </div>
   );
 }
