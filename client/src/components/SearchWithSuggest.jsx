@@ -29,9 +29,15 @@ function SuggestDropdown({ query, onSelect, onSelectCategory, onSelectStore, onS
     return () => { cancelled = true; clearTimeout(timer); };
   }, [query]);
 
-  if (!data) return null;
+  if (!data) {
+    if (controlRef) { controlRef.current.itemCount = 0; controlRef.current.selectAtIdx = null; }
+    return null;
+  }
   const { products = [], categories = [], stores = [] } = data;
-  if (!products.length && !categories.length && !stores.length) return null;
+  if (!products.length && !categories.length && !stores.length) {
+    if (controlRef) { controlRef.current.itemCount = 0; controlRef.current.selectAtIdx = null; }
+    return null;
+  }
 
   const allItems = [
     ...products.map(p => ({ kind: "product", ...p })),
@@ -150,7 +156,9 @@ export default function SearchWithSuggest({
     if (e.key === "Escape") { setDropdownOpen(false); setActiveIdx(-1); return; }
     if (e.key === "ArrowDown") {
       e.preventDefault();
-      setActiveIdx(i => Math.min(i + 1, (suggestRef.current.itemCount || 0) - 1));
+      if (suggestRef.current.itemCount > 0) {
+        setActiveIdx(i => Math.min(i + 1, suggestRef.current.itemCount - 1));
+      }
       return;
     }
     if (e.key === "ArrowUp") { e.preventDefault(); setActiveIdx(i => Math.max(-1, i - 1)); return; }
