@@ -806,7 +806,8 @@ async function loadListItems(db, listId) {
             li.item_count,
             li.brand_pref,
             cp.canonical_name,
-            cp.common_aliases
+            cp.common_aliases,
+            cp.category AS canonical_category
      FROM list_items li
      LEFT JOIN canonical_products cp ON cp.id = li.canonical_id
      WHERE li.list_id = ?
@@ -1086,17 +1087,22 @@ function buildBaseMatchedDealPool(dealsAtStore, baseMeta, baseCache) {
 }
 
 // Cheap check used when populating items_not_found: does this store carry at
-// least one same-base-product deal (any brand) that the strict matcher could
-// surface as a replacement? Mirrors the strict matcher's preconditions
-// (mass/volume quantity + resolved base product) so the "Replace" button only
-// appears when there is plausibly something to replace with.
+// least one same-base-product, same-category deal (any brand) that the strict
+// matcher could surface as a replacement? Mirrors the strict matcher's
+// preconditions (mass/volume quantity + resolved base product + category
+// guard) so the "Replace" button only appears when there is plausibly
+// something to replace with.
 function hasOtherBrandReplacementAtStore(storeDeals, item, baseMeta, baseCache) {
   if (!baseMeta) return false;
   const unit = String(item?.quantity_unit || "").trim().toLowerCase();
   if (!MASS_VOLUME_UNITS.has(unit)) return false;
   const qty = Number(item?.quantity);
   if (!Number.isFinite(qty) || qty <= 0) return false;
-  const pool = buildBaseMatchedDealPool(storeDeals, baseMeta, baseCache);
+  const sourceCategory = String(item?.canonical_category || baseMeta.category || "").trim();
+  const filteredDeals = sourceCategory
+    ? storeDeals.filter((d) => String(d?.product_category || "").trim() === sourceCategory)
+    : storeDeals;
+  const pool = buildBaseMatchedDealPool(filteredDeals, baseMeta, baseCache);
   return pool.length > 0;
 }
 
@@ -2319,7 +2325,7 @@ async function searchStrictReplacementOptions(
     };
   }
 
-  const storeDeals = (await db
+  const allStoreDeals = (await db
     .prepare(
       `SELECT id, product_name, product_category, product_url, sale_price, currency,
               weight_value, weight_unit, price_per_kg, image_url, canonical_id
@@ -2332,6 +2338,16 @@ async function searchStrictReplacementOptions(
     )
     .all(storeId))
     .map((deal) => resolveDealWeightFallback(deal));
+
+  // Constrain replacements to the source item's category. Without this guard a
+  // shared base_key (e.g. "poha") matches deals across Rice & Grains AND Snacks
+  // (ready-to-eat poha cups), so a "Poha Thick" replacement search at Rice &
+  // Grains can surface ready-to-eat snacks. Prefer the user-cart canonical's
+  // category, fall back to the CSV catalog's category for the base product.
+  const sourceCategory = String(item.canonical_category || baseMeta.category || "").trim();
+  const storeDeals = sourceCategory
+    ? allStoreDeals.filter((d) => String(d.product_category || "").trim() === sourceCategory)
+    : allStoreDeals;
 
   const strict = findStrictExactCandidatesAtStore({
     dealsAtStore: storeDeals,

@@ -177,7 +177,8 @@ function getOwnedListItem(listId, itemId) {
               li.quantity_unit,
               li.item_count,
               li.brand_pref,
-              cp.canonical_name
+              cp.canonical_name,
+              cp.category AS canonical_category
        FROM list_items li
        LEFT JOIN canonical_products cp ON cp.id = li.canonical_id
        WHERE li.list_id = ?
