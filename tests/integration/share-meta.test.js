@@ -64,7 +64,6 @@ function buildServerApp(dbMock) {
     "../../server/routes/contact",
     "../../server/routes/waitlist",
     "../../server/routes/health",
-    "../../server/routes/bookmarks",
     "../../server/services/member-count",
   ];
 

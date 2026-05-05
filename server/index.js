@@ -25,10 +25,9 @@ const adminReviewQueueRouter = require("./routes/admin-review-queue");
 const contactRouter = require("./routes/contact");
 const waitlistRouter = require("./routes/waitlist");
 const healthRouter = require("./routes/health");
-const bookmarksRouter = require("./routes/bookmarks");
 const catalogRouter = require("./routes/catalog");
 const compareRouter = require("./routes/compare");
-const ordersRouter  = require("./routes/orders");
+const ordersRouter  = require("./routes/orders")(db);
 const {
   productionLikeRuntime,
   smtpConfigured,
@@ -78,7 +77,6 @@ app.use("/api/v1/admin-dashboard", adminReviewQueueRouter);
 app.use("/api/v1/contact", contactRouter);
 app.use("/api/v1/waitlist", waitlistRouter);
 app.use("/api/v1/health", healthRouter);
-app.use("/api/v1/bookmarks", bookmarksRouter);
 app.use("/api/v1/catalog", catalogRouter);
 app.use("/api/v1/compare", compareRouter);
 app.use("/api/v1/orders", ordersRouter);

@@ -417,20 +417,26 @@
     </button>
 
     <div class="group-label">Core Deals</div>
-    <button class="table-btn" data-table="deals" onclick="show('deals',this)">
-      <span class="dot" style="background:#16a34a"></span>deals
+    <button class="table-btn" data-table="store_products" onclick="show('store_products',this)">
+      <span class="dot" style="background:#16a34a"></span>store_products
     </button>
     <button class="table-btn" data-table="stores" onclick="show('stores',this)">
       <span class="dot" style="background:#16a34a"></span>stores
     </button>
-    <button class="table-btn" data-table="deal_price_history" onclick="show('deal_price_history',this)">
-      <span class="dot" style="background:#16a34a"></span>deal_price_history
+    <button class="table-btn" data-table="price_history" onclick="show('price_history',this)">
+      <span class="dot" style="background:#16a34a"></span>price_history
     </button>
     <button class="table-btn" onclick="show('bookmarks',this)" data-table="bookmarks">
       <span class="dot" style="background:#16a34a"></span>bookmarks
     </button>
     <button class="table-btn" onclick="show('shopping_lists',this)" data-table="shopping_lists">
       <span class="dot" style="background:#16a34a"></span>shopping_lists
+    </button>
+    <button class="table-btn" onclick="show('comparison_sessions',this)" data-table="comparison_sessions">
+      <span class="dot" style="background:#16a34a"></span>comparison_sessions
+    </button>
+    <button class="table-btn" onclick="show('product_alerts',this)" data-table="product_alerts">
+      <span class="dot" style="background:#16a34a"></span>product_alerts
     </button>
     <button class="table-btn" onclick="show('price_alerts',this)" data-table="price_alerts">
       <span class="dot" style="background:#16a34a"></span>price_alerts
@@ -446,8 +452,8 @@
     <button class="table-btn" data-table="canonical_products" onclick="show('canonical_products',this)">
       <span class="dot" style="background:#f59e0b"></span>canonical_products
     </button>
-    <button class="table-btn" data-table="deal_mappings" onclick="show('deal_mappings',this)">
-      <span class="dot" style="background:#f59e0b"></span>deal_mappings
+    <button class="table-btn" data-table="store_product_mappings" onclick="show('store_product_mappings',this)">
+      <span class="dot" style="background:#f59e0b"></span>store_product_mappings
     </button>
     <button class="table-btn" onclick="show('entity_resolution_queue',this)" data-table="entity_resolution_queue">
       <span class="dot" style="background:#f59e0b"></span>entity_resolution_queue
@@ -483,6 +489,15 @@
     </button>
     <button class="table-btn" onclick="show('job_runs',this)" data-table="job_runs">
       <span class="dot" style="background:#3b82f6"></span>job_runs
+    </button>
+    <button class="table-btn" onclick="show('store_crawl_state',this)" data-table="store_crawl_state">
+      <span class="dot" style="background:#3b82f6"></span>store_crawl_state
+    </button>
+    <button class="table-btn" onclick="show('pending_on_demand_crawls',this)" data-table="pending_on_demand_crawls">
+      <span class="dot" style="background:#3b82f6"></span>pending_on_demand_crawls
+    </button>
+    <button class="table-btn" onclick="show('fts_canonicals',this)" data-table="fts_canonicals">
+      <span class="dot" style="background:#d97706"></span>fts_canonicals
     </button>
 
     <div class="group-label">Users & Auth</div>
@@ -556,11 +571,11 @@
     </div>
 
     <!-- ── DEALS ── -->
-    <div id="view-deals" class="table-view">
+    <div id="view-store_products" class="table-view">
       <div class="tv-header">
         <div class="tv-breadcrumb">core deals</div>
-        <div class="tv-name">deals</div>
-        <div class="tv-sub">Core product listings scraped from stores. One row per store SKU per crawl. The biggest table in the system — everything else joins to it or derives from it.</div>
+        <div class="tv-name">store_products</div>
+        <div class="tv-sub">Core product listings scraped from stores. One row per store SKU per crawl. The biggest table in the system — everything else joins to it or derives from it. Renamed from <code>deals</code> in the store-products rename refactor.</div>
         <div class="badge-row">
           <span class="badge badge-green">PK: id (TEXT)</span>
           <span class="badge badge-amber">North Star: deal click-throughs/session</span>
@@ -575,9 +590,9 @@
           <tbody>
             <tr><td class="col-name">id</td><td class="col-type">TEXT PK</td><td class="col-note">UUID</td></tr>
             <tr><td class="col-name">store_id</td><td class="col-type">TEXT FK</td><td class="col-note">→ stores(id). No cascade.</td></tr>
-            <tr><td class="col-name">canonical_id</td><td class="col-type">TEXT FK</td><td class="col-note">→ canonical_products(id). NULL until entity resolution runs. Denormalised copy of deal_mappings.</td></tr>
-            <tr><td class="col-name">crawl_run_id</td><td class="col-type">TEXT FK</td><td class="col-note">→ crawl_runs(id). Ties deal to the crawl that created it.</td></tr>
-            <tr><td class="col-name">product_url</td><td class="col-type">TEXT</td><td class="col-note">Dedup key within a crawl run. Also the join key to deal_price_history.</td></tr>
+            <tr><td class="col-name">canonical_id</td><td class="col-type">TEXT FK</td><td class="col-note">→ canonical_products(id). NULL until entity resolution runs. Denormalised copy of store_product_mappings.</td></tr>
+            <tr><td class="col-name">crawl_run_id</td><td class="col-type">TEXT FK</td><td class="col-note">→ crawl_runs(id). Ties product to the crawl that created it.</td></tr>
+            <tr><td class="col-name">product_url</td><td class="col-type">TEXT</td><td class="col-note">Dedup key within a crawl run. Also the join key to price_history.</td></tr>
             <tr><td class="col-name">sale_price</td><td class="col-type">REAL NOT NULL</td><td class="col-note">⚠ Rename to current_price for Phase 2 — Phase 2 schema change.</td></tr>
             <tr><td class="col-name">original_price</td><td class="col-type">REAL</td><td class="col-note">Crossed-out price from store. NULL if no promotion shown.</td></tr>
             <tr><td class="col-name">discount_percent</td><td class="col-type">REAL</td><td class="col-note">Derived at crawl time from sale/original. Not recomputed on reads.</td></tr>
@@ -605,7 +620,7 @@
         <table class="fk-table">
           <thead><tr><th>Child Table</th><th>FK Column</th><th>On Delete</th></tr></thead>
           <tbody>
-            <tr><td class="fk-child">deal_mappings</td><td class="fk-col">deal_id</td><td class="fk-cascade cascade-yes">CASCADE</td></tr>
+            <tr><td class="fk-child">store_product_mappings</td><td class="fk-col">deal_id</td><td class="fk-cascade cascade-yes">CASCADE</td></tr>
             <tr><td class="fk-child">entity_resolution_queue</td><td class="fk-col">deal_id</td><td class="fk-cascade cascade-yes">CASCADE</td></tr>
             <tr><td class="fk-child">bookmarks</td><td class="fk-col">deal_id</td><td class="fk-cascade cascade-yes">CASCADE</td></tr>
           </tbody>
@@ -620,7 +635,7 @@
         </div>
         <div class="callout callout-red">
           <strong>⚠ canonical_id Sync Risk</strong>
-          deals.canonical_id is a denormalised copy of deal_mappings. If a mapping is written without updating this field, or a canonical is renamed without cascading here, you get silent orphans — deals that appear unmapped but have a mapping row.
+          store_products.canonical_id is a denormalised copy of store_product_mappings. If a mapping is written without updating this field, or a canonical is renamed without cascading here, you get silent orphans — products that appear unmapped but have a mapping row.
         </div>
         <div class="callout callout-blue">
           <strong>ℹ Soft Delete Pattern</strong>
@@ -634,10 +649,10 @@
       <div class="tv-header">
         <div class="tv-breadcrumb">core deals</div>
         <div class="tv-name">stores</div>
-        <div class="tv-sub">Registry of the 27+ Indian grocery stores being crawled. Root anchor of the system — everything hangs off store_id. One row per store, slug-keyed.</div>
+        <div class="tv-sub">Registry of the 32 Indian grocery stores being crawled. Root anchor of the system — everything hangs off store_id. One row per store, slug-keyed.</div>
         <div class="badge-row">
           <span class="badge badge-green">PK: id (TEXT slug)</span>
-          <span class="badge badge-amber">27+ stores</span>
+          <span class="badge badge-amber">32 stores</span>
           <span class="badge badge-blue">No FK cascades on delete</span>
         </div>
       </div>
@@ -663,9 +678,9 @@
         <table class="fk-table">
           <thead><tr><th>Child Table</th><th>FK Column</th><th>On Delete</th></tr></thead>
           <tbody>
-            <tr><td class="fk-child">deals</td><td class="fk-col">store_id</td><td class="fk-cascade cascade-no">none</td></tr>
+            <tr><td class="fk-child">store_products</td><td class="fk-col">store_id</td><td class="fk-cascade cascade-no">none</td></tr>
             <tr><td class="fk-child">crawl_store_results</td><td class="fk-col">store_id</td><td class="fk-cascade cascade-no">none</td></tr>
-            <tr><td class="fk-child">deal_price_history</td><td class="fk-col">store_id</td><td class="fk-cascade cascade-no">none</td></tr>
+            <tr><td class="fk-child">price_history</td><td class="fk-col">store_id</td><td class="fk-cascade cascade-no">none</td></tr>
             <tr><td class="fk-child">shipping_tiers</td><td class="fk-col">store_id</td><td class="fk-cascade cascade-no">none</td></tr>
             <tr><td class="fk-child">delivery_options</td><td class="fk-col">store_id</td><td class="fk-cascade cascade-no">none</td></tr>
             <tr><td class="fk-child">price_alerts</td><td class="fk-col">target_store_id</td><td class="fk-cascade cascade-no">none</td></tr>
@@ -678,7 +693,7 @@
         <div class="section-title">Risks & Notes</div>
         <div class="callout callout-red">
           <strong>⚠ No Cascade on Deactivation</strong>
-          None of the 6 FK children cascade on delete. Removing or deactivating a store requires manual cleanup across deals, crawl_store_results, deal_price_history, shipping_tiers, delivery_options, and price_alerts. No migration script for this scenario exists yet.
+          None of the 6 FK children cascade on delete. Removing or deactivating a store requires manual cleanup across store_products, crawl_store_results, price_history, shipping_tiers, delivery_options, and price_alerts. No migration script for this scenario exists yet.
         </div>
         <div class="callout callout-amber">
           <strong>⚠ fresh_arrived Alert Dependency</strong>
@@ -688,15 +703,15 @@
     </div>
 
     <!-- ── DEAL_PRICE_HISTORY ── -->
-    <div id="view-deal_price_history" class="table-view">
+    <div id="view-price_history" class="table-view">
       <div class="tv-header">
         <div class="tv-breadcrumb">core deals</div>
-        <div class="tv-name">deal_price_history</div>
+        <div class="tv-name">price_history</div>
         <div class="tv-sub">Immutable, append-only daily price snapshots. The foundation of Phase 2's Real Savings rating system. One row per (crawl_date, store_id, product_url) — the UNIQUE constraint guarantees no double-counting.</div>
         <div class="badge-row">
           <span class="badge badge-green">Append-only — never deleted</span>
           <span class="badge badge-amber">Powers Phase 2 baseline</span>
-          <span class="badge badge-red">No FK to deals</span>
+          <span class="badge badge-red">No FK to store_products</span>
         </div>
       </div>
 
@@ -707,7 +722,7 @@
           <tbody>
             <tr><td class="col-name">crawl_date</td><td class="col-type">TEXT</td><td class="col-note">e.g. "2026-04-15". Part of UNIQUE(crawl_date, store_id, product_url).</td></tr>
             <tr><td class="col-name">store_id</td><td class="col-type">TEXT FK</td><td class="col-note">→ stores(id). No cascade. Denormalised — store identity at snapshot time.</td></tr>
-            <tr><td class="col-name">product_url</td><td class="col-type">TEXT</td><td class="col-note">Stable per-product identifier. Also the join key back to deals — no FK, just a string match.</td></tr>
+            <tr><td class="col-name">product_url</td><td class="col-type">TEXT</td><td class="col-note">Stable per-product identifier. Also the join key back to store_products — no FK, just a string match.</td></tr>
             <tr><td class="col-name">sale_price</td><td class="col-type">REAL</td><td class="col-note">Price on this day.</td></tr>
             <tr><td class="col-name">price_per_kg</td><td class="col-type">REAL</td><td class="col-note">Normalised at write time for cross-weight comparison.</td></tr>
             <tr><td class="col-name">is_deal</td><td class="col-type">INTEGER</td><td class="col-note">⚠ Critical for Phase 2. 1 = product was on promotion that day. Added via always-run migration. Baseline must exclude is_deal=1 rows.</td></tr>
@@ -721,7 +736,7 @@
         <div class="code-block"><span class="cm">-- 90-day non-deal baseline per product</span>
 <span class="kw">SELECT</span> product_url,
        <span class="fn">median</span>(sale_price) <span class="kw">AS</span> normal_price_baseline
-<span class="kw">FROM</span>   deal_price_history
+<span class="kw">FROM</span>   price_history
 <span class="kw">WHERE</span>  is_deal = <span class="str">0</span>
   <span class="kw">AND</span>  crawl_date >= <span class="fn">date</span>(<span class="str">'now'</span>, <span class="str">'-90 days'</span>)
 <span class="kw">GROUP BY</span> product_url
@@ -734,15 +749,15 @@
         <div class="section-title">Risks & Notes</div>
         <div class="callout callout-red">
           <strong>⚠ is_deal Classification Quality</strong>
-          If is_deal was defaulted to 0 on rows that were actually promotional prices (e.g. during backfill), your Phase 2 baselines are contaminated. Run: SELECT is_deal, COUNT(*) FROM deal_price_history GROUP BY is_deal — before Phase 2 ships.
+          If is_deal was defaulted to 0 on rows that were actually promotional prices (e.g. during backfill), your Phase 2 baselines are contaminated. Run: SELECT is_deal, COUNT(*) FROM price_history GROUP BY is_deal — before Phase 2 ships.
         </div>
         <div class="callout callout-red">
-          <strong>⚠ No FK to deals</strong>
-          The join to deals is on product_url — a string match, not a relational guarantee. If a store changes a product URL, history for that product becomes unreachable — orphaned rows with no reconnection path.
+          <strong>⚠ No FK to store_products</strong>
+          The join to store_products is on product_url — a string match, not a relational guarantee. If a store changes a product URL, history for that product becomes unreachable — orphaned rows with no reconnection path.
         </div>
         <div class="callout callout-amber">
           <strong>⚠ Growth & Query Performance</strong>
-          27 stores × ~500 products × 365 days ≈ 5M rows/year. The Phase 2 baseline query (median over 90 days, grouped by product_url) will get expensive. Add a composite index on (product_url, crawl_date, is_deal) before Phase 2 ships.
+          32 stores × ~500 products × 365 days ≈ 5.8M rows/year. The Phase 2 baseline query (median over 90 days, grouped by product_url) will get expensive. Add a composite index on (product_url, crawl_date, is_deal) before Phase 2 ships.
         </div>
         <div class="callout callout-amber">
           <strong>⚠ 90-Day Minimum Data Required</strong>
@@ -808,8 +823,8 @@
         <table class="fk-table">
           <thead><tr><th>Child Table</th><th>FK Column</th><th>On Delete</th></tr></thead>
           <tbody>
-            <tr><td class="fk-child">deals</td><td class="fk-col">canonical_id</td><td class="fk-cascade cascade-no">none</td></tr>
-            <tr><td class="fk-child">deal_mappings</td><td class="fk-col">canonical_id</td><td class="fk-cascade cascade-yes">CASCADE</td></tr>
+            <tr><td class="fk-child">store_products</td><td class="fk-col">canonical_id</td><td class="fk-cascade cascade-no">none</td></tr>
+            <tr><td class="fk-child">store_product_mappings</td><td class="fk-col">canonical_id</td><td class="fk-cascade cascade-yes">CASCADE</td></tr>
             <tr><td class="fk-child">entity_resolution_queue</td><td class="fk-col">suggested_canonical_id</td><td class="fk-cascade cascade-set">SET NULL</td></tr>
             <tr><td class="fk-child">list_items</td><td class="fk-col">canonical_id</td><td class="fk-cascade cascade-no">none</td></tr>
             <tr><td class="fk-child">price_alerts</td><td class="fk-col">canonical_id</td><td class="fk-cascade cascade-no">none</td></tr>
@@ -821,7 +836,7 @@
         <div class="section-title">Risks & Notes</div>
         <div class="callout callout-red">
           <strong>⚠ TEXT Slug PK — Rename is Dangerous</strong>
-          No ON UPDATE CASCADE. A canonical_id rename requires manually updating deals, deal_mappings, list_items, price_alerts, entity_resolution_queue. Miss one table and you get silent orphans. No migration script exists for this yet.
+          No ON UPDATE CASCADE. A canonical_id rename requires manually updating store_products, store_product_mappings, list_items, price_alerts, entity_resolution_queue. Miss one table and you get silent orphans. No migration script exists for this yet.
         </div>
         <div class="callout callout-amber">
           <strong>⚠ Phase 2 Minimum Deal Count Threshold</strong>
@@ -839,11 +854,11 @@
     </div>
 
     <!-- ── DEAL_MAPPINGS ── -->
-    <div id="view-deal_mappings" class="table-view">
+    <div id="view-store_product_mappings" class="table-view">
       <div class="tv-header">
         <div class="tv-breadcrumb">entity resolution</div>
-        <div class="tv-name">deal_mappings</div>
-        <div class="tv-sub">The bridge that makes cross-store price comparison possible. Maps every raw scraped deal to its canonical product identity. Without clean data here, every deal is an island — batchGetRealSavings() produces garbage.</div>
+        <div class="tv-name">store_product_mappings</div>
+        <div class="tv-sub">The bridge that makes cross-store price comparison possible. Maps every raw scraped store product to its canonical product identity. Without clean data here, every product is an island — batchGetRealSavings() produces garbage. Renamed from <code>deal_mappings</code>.</div>
         <div class="badge-row">
           <span class="badge badge-green">PK: (deal_id, canonical_id)</span>
           <span class="badge badge-amber">Powers batchGetRealSavings()</span>
@@ -856,7 +871,7 @@
         <table class="col-table">
           <thead><tr><th>Column</th><th>Type</th><th>Notes</th></tr></thead>
           <tbody>
-            <tr><td class="col-name">deal_id</td><td class="col-type">TEXT FK</td><td class="col-note">→ deals(id) CASCADE. If a deal is hard-deleted, this row disappears silently.</td></tr>
+            <tr><td class="col-name">deal_id</td><td class="col-type">TEXT FK</td><td class="col-note">→ store_products(id) CASCADE. If a product is hard-deleted, this row disappears silently.</td></tr>
             <tr><td class="col-name">canonical_id</td><td class="col-type">TEXT FK</td><td class="col-note">→ canonical_products(id) CASCADE. Indexed — this is the join key for batchGetRealSavings().</td></tr>
             <tr><td class="col-name">match_method</td><td class="col-type">TEXT</td><td class="col-note">exact | fuzzy | manual | slot. Tells you how much to trust the mapping.</td></tr>
             <tr><td class="col-name">match_confidence</td><td class="col-type">REAL (0–1)</td><td class="col-note">Score from matching pipeline. 1.0 for exact/manual. 0.82–0.89 band is fuzzy-mapped but arguably not trustworthy.</td></tr>
@@ -888,11 +903,11 @@
         </div>
         <div class="callout callout-red">
           <strong>⚠ Missing Index on deal_id</strong>
-          The only index is on canonical_id. Queries looking up "what canonical does this deal map to?" — which happen during crawl updates — do a full table scan. Add idx_deal_mappings_deal_id.
+          The only index is on canonical_id. Queries looking up "what canonical does this product map to?" — which happen during crawl updates — do a full table scan. Add idx_store_product_mappings_deal_id.
         </div>
         <div class="callout callout-blue">
-          <strong>ℹ deals.canonical_id Sync</strong>
-          Writing a mapping row here must also update deals.canonical_id. These two must stay in sync — a mapping without the corresponding deals update is a silent bug that breaks deal card display.
+          <strong>ℹ store_products.canonical_id Sync</strong>
+          Writing a mapping row here must also update store_products.canonical_id. These two must stay in sync — a mapping without the corresponding store_products update is a silent bug that breaks product card display.
         </div>
       </div>
     </div>
@@ -920,7 +935,7 @@
             <tr><td class="col-name">confidence</td><td class="col-type">REAL</td><td class="col-note">Score of the suggestion. Rows with confidence 0.60–0.89 come from fuzzy miss; lower = likely new product.</td></tr>
             <tr><td class="col-name">raw_name</td><td class="col-type">TEXT NOT NULL</td><td class="col-note">Original deal name from store. What the admin sees.</td></tr>
             <tr><td class="col-name">normalised_name</td><td class="col-type">TEXT</td><td class="col-note">Stored at enqueue time. Re-derived live on GET for display.</td></tr>
-            <tr><td class="col-name">status</td><td class="col-type">TEXT</td><td class="col-note">'pending' default. confirmed = write to deal_mappings. dismissed = skip.</td></tr>
+            <tr><td class="col-name">status</td><td class="col-type">TEXT</td><td class="col-note">'pending' default. confirmed = write to store_product_mappings. dismissed = skip.</td></tr>
             <tr><td class="col-name">store_id</td><td class="col-type">TEXT FK</td><td class="col-note">→ stores(id) SET NULL. Added via always-run migration. Context for the admin reviewer.</td></tr>
             <tr><td class="col-name">category</td><td class="col-type">TEXT</td><td class="col-note">Added via always-run migration. Used for queue filtering in admin UI.</td></tr>
           </tbody>
@@ -999,9 +1014,9 @@ Priya, Shan, Swad</div>
         <table class="fk-table">
           <thead><tr><th>Child Table</th><th>FK Column</th><th>On Delete</th></tr></thead>
           <tbody>
-            <tr><td class="fk-child">deals</td><td class="fk-col">crawl_run_id</td><td class="fk-cascade cascade-no">none</td></tr>
+            <tr><td class="fk-child">store_products</td><td class="fk-col">crawl_run_id</td><td class="fk-cascade cascade-no">none</td></tr>
             <tr><td class="fk-child">crawl_store_results</td><td class="fk-col">crawl_run_id</td><td class="fk-cascade cascade-yes">CASCADE</td></tr>
-            <tr><td class="fk-child">deal_price_history</td><td class="fk-col">crawl_run_id</td><td class="fk-cascade cascade-no">none</td></tr>
+            <tr><td class="fk-child">price_history</td><td class="fk-col">crawl_run_id</td><td class="fk-cascade cascade-no">none</td></tr>
           </tbody>
         </table>
       </div>
@@ -1028,7 +1043,7 @@ Priya, Shan, Swad</div>
             <tr><td class="col-name">status</td><td class="col-type">TEXT</td><td class="col-note">success | failure | timeout.</td></tr>
             <tr><td class="col-name">deals_scraped / inserted / updated / unchanged / removed</td><td class="col-type">INTEGER</td><td class="col-note">Full delta breakdown per store per run. Primary data source for the admin crawl dashboard.</td></tr>
             <tr><td class="col-name">category_counts_json</td><td class="col-type">TEXT (JSON)</td><td class="col-note">{category: count}. Snapshot of what was found by category.</td></tr>
-            <tr><td class="col-name">history_rows_written</td><td class="col-type">INTEGER</td><td class="col-note">How many rows were appended to deal_price_history this run for this store.</td></tr>
+            <tr><td class="col-name">history_rows_written</td><td class="col-type">INTEGER</td><td class="col-note">How many rows were appended to price_history this run for this store.</td></tr>
             <tr><td class="col-name">store_name / store_url</td><td class="col-type">TEXT</td><td class="col-note">Snapshot at crawl time — denormalised so historical records stay accurate even if store details change.</td></tr>
           </tbody>
         </table>
@@ -1305,6 +1320,7 @@ Priya, Shan, Swad</div>
           <span class="badge badge-green">PK: id (TEXT)</span>
           <span class="badge badge-amber">CASCADE from users</span>
           <span class="badge badge-blue">input_method tracks UX path</span>
+          <span class="badge badge-blue">status: pending | completed</span>
         </div>
       </div>
       <div class="section">
@@ -1319,6 +1335,9 @@ Priya, Shan, Swad</div>
             <tr><td class="col-name">input_method</td><td class="col-type">TEXT</td><td class="col-note">How the list was created — text | voice | scan etc. Analytics signal.</td></tr>
             <tr><td class="col-name">last_used_at</td><td class="col-type">DATETIME</td><td class="col-note">For surfacing recently-used lists in UI.</td></tr>
             <tr><td class="col-name">reorder_reminder_days</td><td class="col-type">INTEGER</td><td class="col-note">If set, trigger a re-order reminder after N days since last_used_at.</td></tr>
+            <tr><td class="col-name">status</td><td class="col-type">TEXT</td><td class="col-note">DEFAULT 'pending'. Set to 'completed' via PATCH /api/v1/orders/:id/complete.</td></tr>
+            <tr><td class="col-name">completed_store_id</td><td class="col-type">TEXT FK</td><td class="col-note">→ stores(id). Set when user marks list as completed at a store. Re-completing overwrites this.</td></tr>
+            <tr><td class="col-name">completed_at</td><td class="col-type">DATETIME</td><td class="col-note">ISO timestamp of when the list was marked complete.</td></tr>
           </tbody>
         </table>
       </div>
@@ -1371,6 +1390,57 @@ Priya, Shan, Swad</div>
         <div class="callout callout-blue">
           <strong>ℹ Checkout Snapshot Pattern</strong>
           locked_* columns capture the deal state at the moment the user "locks" an item for cart transfer. This ensures the cart export remains consistent even if the live deal is updated or deactivated before checkout.
+        </div>
+      </div>
+    </div>
+
+    <!-- ── PRODUCT_ALERTS ── -->
+    <div id="view-product_alerts" class="table-view">
+      <div class="tv-header">
+        <div class="tv-breadcrumb">core deals</div>
+        <div class="tv-name">product_alerts</div>
+        <div class="tv-sub">Simplified 2-type one-shot alert model, intended to replace the older price_alerts table. One row = one user watching one canonical product. Fires once (notified_at set), then goes dormant.</div>
+        <div class="badge-row">
+          <span class="badge badge-green">PK: id (TEXT)</span>
+          <span class="badge badge-amber">alert_type: price_below | back_in_stock</span>
+          <span class="badge badge-blue">CASCADE from users</span>
+        </div>
+      </div>
+      <div class="section">
+        <div class="section-title">Key Columns</div>
+        <table class="col-table">
+          <thead><tr><th>Column</th><th>Type</th><th>Notes</th></tr></thead>
+          <tbody>
+            <tr><td class="col-name">id</td><td class="col-type">TEXT PK</td><td class="col-note">UUID.</td></tr>
+            <tr><td class="col-name">user_id</td><td class="col-type">TEXT FK</td><td class="col-note">→ users(id) ON DELETE CASCADE.</td></tr>
+            <tr><td class="col-name">canonical_id</td><td class="col-type">TEXT FK</td><td class="col-note">→ canonical_products(id). The product being watched. Hard FK — referential integrity enforced.</td></tr>
+            <tr><td class="col-name">store_id</td><td class="col-type">TEXT FK</td><td class="col-note">→ stores(id). Optional — NULL means alert fires at any store. Set to scope alert to one store.</td></tr>
+            <tr><td class="col-name">alert_type</td><td class="col-type">TEXT NOT NULL</td><td class="col-note">CHECK: price_below | back_in_stock.</td></tr>
+            <tr><td class="col-name">price_threshold</td><td class="col-type">REAL</td><td class="col-note">Fires when sale_price ≤ this value. Only relevant for price_below alerts.</td></tr>
+            <tr><td class="col-name">created_at</td><td class="col-type">TEXT NOT NULL</td><td class="col-note">ISO timestamp.</td></tr>
+            <tr><td class="col-name">notified_at</td><td class="col-type">TEXT</td><td class="col-note">NULL = not yet fired. Set when alert triggers. One-shot — alert won't fire again once set.</td></tr>
+          </tbody>
+        </table>
+      </div>
+      <div class="section">
+        <div class="section-title">Indexes</div>
+        <table class="col-table">
+          <thead><tr><th>Index</th><th>Columns</th></tr></thead>
+          <tbody>
+            <tr><td class="col-name">idx_product_alerts_user</td><td class="col-note">(user_id) — list user's alerts</td></tr>
+            <tr><td class="col-name">idx_product_alerts_canonical</td><td class="col-note">(canonical_id, alert_type) — evaluation sweep per canonical</td></tr>
+          </tbody>
+        </table>
+      </div>
+      <div class="section">
+        <div class="section-title">Risks & Notes</div>
+        <div class="callout callout-amber">
+          <strong>⚠ Relationship to price_alerts unclear</strong>
+          Both tables model user alerts. product_alerts is described in schema as the replacement, but both exist simultaneously. Verify which one the alert evaluator actually queries before assuming price_alerts is retired.
+        </div>
+        <div class="callout callout-blue">
+          <strong>ℹ One-shot semantics</strong>
+          notified_at being set means the alert is spent. No re-arm mechanism exists in the schema. Users must create a new alert to watch the same product again.
         </div>
       </div>
     </div>
@@ -1725,6 +1795,148 @@ Priya, Shan, Swad</div>
       </div>
     </div>
 
+    <!-- ── COMPARISON_SESSIONS ── -->
+    <div id="view-comparison_sessions" class="table-view">
+      <div class="tv-header">
+        <div class="tv-breadcrumb">core deals</div>
+        <div class="tv-name">comparison_sessions</div>
+        <div class="tv-sub">Records each time a user runs a cart comparison (POST /api/v1/compare/cart). Stores the full result snapshot and any post-purchase self-report. One session per comparison run; may link to the shopping list that seeded the cart.</div>
+        <div class="badge-row">
+          <span class="badge badge-green">PK: id (TEXT)</span>
+          <span class="badge badge-amber">CASCADE from users</span>
+          <span class="badge badge-blue">snapshot_json = full compareCart() result</span>
+        </div>
+      </div>
+      <div class="section">
+        <div class="section-title">Key Columns</div>
+        <table class="col-table">
+          <thead><tr><th>Column</th><th>Type</th><th>Notes</th></tr></thead>
+          <tbody>
+            <tr><td class="col-name">id</td><td class="col-type">TEXT PK</td><td class="col-note">UUID.</td></tr>
+            <tr><td class="col-name">user_id</td><td class="col-type">TEXT FK</td><td class="col-note">→ users(id). Cascade-delete when user deleted.</td></tr>
+            <tr><td class="col-name">list_id</td><td class="col-type">TEXT FK</td><td class="col-note">→ shopping_lists(id). Optional — NULL if comparison was ad-hoc (not from a saved list).</td></tr>
+            <tr><td class="col-name">selected_store_id</td><td class="col-type">TEXT FK</td><td class="col-note">→ stores(id). Set when user picks a winner store from the comparison result.</td></tr>
+            <tr><td class="col-name">order_intent_at</td><td class="col-type">TEXT</td><td class="col-note">ISO timestamp when user signals intent to order. Used for funnel analytics.</td></tr>
+            <tr><td class="col-name">self_report_status</td><td class="col-type">TEXT</td><td class="col-note">CHECK: ordered | not_ordered | still_deciding. User's post-purchase self-report.</td></tr>
+            <tr><td class="col-name">self_report_reason</td><td class="col-type">TEXT</td><td class="col-note">Free-text reason if not_ordered (e.g. "out of stock", "too expensive").</td></tr>
+            <tr><td class="col-name">items_all_available</td><td class="col-type">INTEGER</td><td class="col-note">1 if all cart items had confirmed listings at winning store. Analytics signal.</td></tr>
+            <tr><td class="col-name">price_as_expected</td><td class="col-type">INTEGER</td><td class="col-note">User-reported whether final price matched expectation.</td></tr>
+            <tr><td class="col-name">snapshot_json</td><td class="col-type">TEXT NOT NULL</td><td class="col-note">Full JSON result from compareCart() — ranked store list with per-item status. Preserved immutably for auditability.</td></tr>
+          </tbody>
+        </table>
+      </div>
+      <div class="section">
+        <div class="section-title">Indexes</div>
+        <table class="col-table">
+          <thead><tr><th>Index</th><th>Columns</th></tr></thead>
+          <tbody>
+            <tr><td class="col-name">idx_comp_sessions_user</td><td class="col-note">(user_id, created_at DESC) — user history feed</td></tr>
+            <tr><td class="col-name">idx_comp_sessions_list</td><td class="col-note">(list_id) — link from shopping list view</td></tr>
+            <tr><td class="col-name">idx_comp_sessions_order</td><td class="col-note">(user_id, order_intent_at DESC) — funnel analysis</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+    <!-- ── STORE_CRAWL_STATE ── -->
+    <div id="view-store_crawl_state" class="table-view">
+      <div class="tv-header">
+        <div class="tv-breadcrumb">crawl engine</div>
+        <div class="tv-name">store_crawl_state</div>
+        <div class="tv-sub">Per-store crawl progress tracker. Used by Mode 2 (weekly full catalog) and Mode 3 (on-demand) crawls for resumable pagination via catalog_cursor. One row per store.</div>
+        <div class="badge-row">
+          <span class="badge badge-green">PK: store_id (TEXT)</span>
+          <span class="badge badge-blue">catalog_cursor = resumable pagination state</span>
+        </div>
+      </div>
+      <div class="section">
+        <div class="section-title">Key Columns</div>
+        <table class="col-table">
+          <thead><tr><th>Column</th><th>Type</th><th>Notes</th></tr></thead>
+          <tbody>
+            <tr><td class="col-name">store_id</td><td class="col-type">TEXT PK</td><td class="col-note">→ stores(id).</td></tr>
+            <tr><td class="col-name">last_deal_crawl</td><td class="col-type">TEXT</td><td class="col-note">ISO timestamp of last successful Mode 1 (deals) crawl for this store.</td></tr>
+            <tr><td class="col-name">last_catalog_crawl</td><td class="col-type">TEXT</td><td class="col-note">ISO timestamp of last successful Mode 2 (full catalog) crawl.</td></tr>
+            <tr><td class="col-name">catalog_cursor</td><td class="col-type">TEXT</td><td class="col-note">Opaque pagination cursor for Shopify/WooCommerce. Mode 2 reads this on resume; cleared on completion.</td></tr>
+            <tr><td class="col-name">crawl_status</td><td class="col-type">TEXT</td><td class="col-note">CHECK: idle | running | error. Guards against concurrent crawls per store.</td></tr>
+            <tr><td class="col-name">error_message</td><td class="col-type">TEXT</td><td class="col-note">Last error from a failed crawl run. Cleared on next success.</td></tr>
+            <tr><td class="col-name">updated_at</td><td class="col-type">TEXT NOT NULL</td><td class="col-note">ISO timestamp of last state write.</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+    <!-- ── PENDING_ON_DEMAND_CRAWLS ── -->
+    <div id="view-pending_on_demand_crawls" class="table-view">
+      <div class="tv-header">
+        <div class="tv-breadcrumb">crawl engine</div>
+        <div class="tv-name">pending_on_demand_crawls</div>
+        <div class="tv-sub">DB-backed queue for Mode 3 on-demand crawls. A row is inserted when a user requests a product be searched immediately. drainPendingCrawls() processes this queue on server startup. Rows are deleted after processing.</div>
+        <div class="badge-row">
+          <span class="badge badge-green">PK: id (TEXT)</span>
+          <span class="badge badge-amber">drained at server startup</span>
+        </div>
+      </div>
+      <div class="section">
+        <div class="section-title">Key Columns</div>
+        <table class="col-table">
+          <thead><tr><th>Column</th><th>Type</th><th>Notes</th></tr></thead>
+          <tbody>
+            <tr><td class="col-name">id</td><td class="col-type">TEXT PK</td><td class="col-note">UUID.</td></tr>
+            <tr><td class="col-name">canonical_id</td><td class="col-type">TEXT NOT NULL</td><td class="col-note">Soft FK → canonical_products(id). The product to search for across stores.</td></tr>
+            <tr><td class="col-name">user_id</td><td class="col-type">TEXT NOT NULL</td><td class="col-note">Soft FK → users(id). Who requested the crawl.</td></tr>
+            <tr><td class="col-name">queued_at</td><td class="col-type">TEXT NOT NULL</td><td class="col-note">ISO timestamp of enqueue. Indexed for FIFO processing.</td></tr>
+            <tr><td class="col-name">started_at</td><td class="col-type">TEXT</td><td class="col-note">Set when drainPendingCrawls() picks up this row. NULL = not yet started.</td></tr>
+          </tbody>
+        </table>
+      </div>
+      <div class="section">
+        <div class="section-title">Risks & Notes</div>
+        <div class="callout callout-amber">
+          <strong>⚠ No completed_at column</strong>
+          Rows are deleted after processing — no audit trail of completed on-demand crawls. started_at being set but row still present means the crawl is in-flight or crashed mid-process.
+        </div>
+      </div>
+    </div>
+
+    <!-- ── FTS_CANONICALS ── -->
+    <div id="view-fts_canonicals" class="table-view">
+      <div class="tv-header">
+        <div class="tv-breadcrumb">entity resolution</div>
+        <div class="tv-name">fts_canonicals</div>
+        <div class="tv-sub">FTS5 virtual table for full-text search over canonical products. Rebuilt from scratch after every Mode 1 and Mode 2 crawl by fts-rebuild.js. Not a real table — cannot be queried with standard JOINs.</div>
+        <div class="badge-row">
+          <span class="badge badge-amber">FTS5 virtual table</span>
+          <span class="badge badge-blue">rebuilt after each crawl run</span>
+        </div>
+      </div>
+      <div class="section">
+        <div class="section-title">Indexed Columns</div>
+        <table class="col-table">
+          <thead><tr><th>Column</th><th>Notes</th></tr></thead>
+          <tbody>
+            <tr><td class="col-name">canonical_id</td><td class="col-note">canonical_products.id — used to JOIN back to full row after FTS match</td></tr>
+            <tr><td class="col-name">canonical_name</td><td class="col-note">Primary search target</td></tr>
+            <tr><td class="col-name">base_key</td><td class="col-note">Normalised product key (e.g. "moong dal yellow")</td></tr>
+            <tr><td class="col-name">aliases_text</td><td class="col-note">Space-joined alternative names for the product</td></tr>
+            <tr><td class="col-name">category</td><td class="col-note">One of 16 categories — allows category-scoped FTS</td></tr>
+            <tr><td class="col-name">brands_text</td><td class="col-note">Space-joined brand names extracted from brand_slots</td></tr>
+          </tbody>
+        </table>
+      </div>
+      <div class="section">
+        <div class="section-title">Risks & Notes</div>
+        <div class="callout callout-blue">
+          <strong>ℹ Rebuild pattern</strong>
+          fts-rebuild.js runs DELETE FROM fts_canonicals then re-inserts from canonical_products JOIN. Not incremental. Safe because FTS5 tables are not FK targets. Rebuild takes &lt;1s for typical catalog sizes.
+        </div>
+        <div class="callout callout-amber">
+          <strong>⚠ Stale between crawls</strong>
+          Any canonical product created manually (admin review queue, brand remap) after the last crawl won't appear in FTS results until next rebuild. Trigger rebuild manually via fts-rebuild.js if needed.
+        </div>
+      </div>
+    </div>
+
   </main>
 </div>
 
@@ -1744,9 +1956,9 @@ Priya, Shan, Swad</div>
   // ── Architecture diagram ────────────────────────────────────
   const TABLES = [
     // Core deals
-    { id:'deals',                  x:20,  y:30,  w:155, h:52, group:'core',       label:'deals',                  sub:'Core listings' },
-    { id:'stores',                 x:20,  y:120, w:155, h:52, group:'core',       label:'stores',                 sub:'27+ stores' },
-    { id:'deal_price_history',     x:20,  y:210, w:155, h:52, group:'core',       label:'deal_price_history',     sub:'Price audit log' },
+    { id:'store_products',         x:20,  y:30,  w:155, h:52, group:'core',       label:'store_products',         sub:'Core listings' },
+    { id:'stores',                 x:20,  y:120, w:155, h:52, group:'core',       label:'stores',                 sub:'32 stores' },
+    { id:'price_history',          x:20,  y:210, w:155, h:52, group:'core',       label:'price_history',          sub:'Price audit log' },
     { id:'bookmarks',              x:20,  y:300, w:155, h:52, group:'core',       label:'bookmarks',              sub:'Saved deals' },
     { id:'shopping_lists',         x:20,  y:390, w:155, h:52, group:'core',       label:'shopping_lists',         sub:'User lists' },
     { id:'price_alerts',           x:20,  y:480, w:155, h:52, group:'core',       label:'price_alerts',           sub:'Alert defs' },
@@ -1757,7 +1969,7 @@ Priya, Shan, Swad</div>
     { id:'job_runs',               x:205, y:300, w:155, h:52, group:'crawl',      label:'job_runs',               sub:'Job ledger' },
     // Entity resolution
     { id:'canonical_products',     x:390, y:30,  w:165, h:52, group:'resolution', label:'canonical_products',     sub:'Product identities' },
-    { id:'deal_mappings',          x:390, y:120, w:165, h:52, group:'resolution', label:'deal_mappings',          sub:'Deal→canonical' },
+    { id:'store_product_mappings', x:390, y:120, w:165, h:52, group:'resolution', label:'store_product_mappings', sub:'Product→canonical' },
     { id:'entity_resolution_queue',x:390, y:210, w:165, h:52, group:'resolution', label:'entity_res_queue',       sub:'Admin review' },
     { id:'known_brands',           x:390, y:300, w:165, h:52, group:'resolution', label:'known_brands',           sub:'Brand registry' },
     { id:'brand_remap_jobs',       x:390, y:390, w:165, h:52, group:'resolution', label:'brand_remap_jobs',       sub:'Async remap' },
@@ -1782,21 +1994,21 @@ Priya, Shan, Swad</div>
   ];
 
   const EDGES = [
-    { from:'deals',                  to:'stores',              cascade:false },
-    { from:'deals',                  to:'crawl_runs',          cascade:false },
-    { from:'deals',                  to:'canonical_products',  cascade:false },
-    { from:'deal_price_history',     to:'stores',              cascade:false },
-    { from:'deal_price_history',     to:'crawl_runs',          cascade:false },
+    { from:'store_products',         to:'stores',              cascade:false },
+    { from:'store_products',         to:'crawl_runs',          cascade:false },
+    { from:'store_products',         to:'canonical_products',  cascade:false },
+    { from:'price_history',          to:'stores',              cascade:false },
+    { from:'price_history',          to:'crawl_runs',          cascade:false },
     { from:'crawl_store_results',    to:'crawl_runs',          cascade:true  },
     { from:'crawl_store_results',    to:'stores',              cascade:false },
-    { from:'deal_mappings',          to:'deals',               cascade:true  },
-    { from:'deal_mappings',          to:'canonical_products',  cascade:true  },
-    { from:'entity_resolution_queue',to:'deals',               cascade:true  },
+    { from:'store_product_mappings', to:'store_products',       cascade:true  },
+    { from:'store_product_mappings', to:'canonical_products',  cascade:true  },
+    { from:'entity_resolution_queue',to:'store_products',      cascade:true  },
     { from:'entity_resolution_queue',to:'canonical_products',  cascade:false },
     { from:'refresh_tokens',         to:'users',               cascade:true  },
     { from:'shopping_lists',         to:'users',               cascade:true  },
     { from:'bookmarks',              to:'users',               cascade:true  },
-    { from:'bookmarks',              to:'deals',               cascade:true  },
+    { from:'bookmarks',              to:'store_products',       cascade:true  },
     { from:'price_alerts',           to:'users',               cascade:true  },
     { from:'price_alerts',           to:'stores',              cascade:false },
     { from:'shipping_tiers',         to:'stores',              cascade:false },
@@ -1822,9 +2034,9 @@ Priya, Shan, Swad</div>
   };
 
   const GROUPS_MAP = {
-    core:['deals','stores','deal_price_history','bookmarks','shopping_lists','price_alerts','list_items','alert_notifications'],
-    crawl:['crawl_runs','crawl_store_results','crawl_locks','job_runs'],
-    resolution:['canonical_products','deal_mappings','entity_resolution_queue','known_brands','brand_remap_jobs','product_groups','bootstrap_product_queue','canonical_bootstrap_staging','canonical_bootstrap_source_products'],
+    core:['store_products','stores','price_history','bookmarks','shopping_lists','comparison_sessions','product_alerts','price_alerts','list_items','alert_notifications'],
+    crawl:['crawl_runs','crawl_store_results','crawl_locks','job_runs','store_crawl_state','pending_on_demand_crawls'],
+    resolution:['canonical_products','store_product_mappings','entity_resolution_queue','fts_canonicals','known_brands','brand_remap_jobs','product_groups','bootstrap_product_queue','canonical_bootstrap_staging','canonical_bootstrap_source_products'],
     users:['users','email_auth_tokens','refresh_tokens','waitlist_referrals','shipping_tiers','delivery_options'],
     analytics:['events','search_queries','app_settings'],
   };

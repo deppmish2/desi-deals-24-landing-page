@@ -5,20 +5,29 @@ import {
   Route,
   Routes,
   useLocation,
+  useParams,
 } from "react-router-dom";
 import AdLandingPage from "./pages/AdLandingPage";
 import DealsPage from "./pages/DealsPage";
 import { initGoogleAnalytics, trackPageView } from "./utils/analytics";
+import { loadBrands } from "./utils/brands";
 import { useCart } from "./hooks/useCart";
 import { CartContext } from "./hooks/CartContext";
 
 const OAuthCallbackPage = lazy(() => import("./pages/OAuthCallbackPage"));
-const SavedDealsPage = lazy(() => import("./pages/SavedDealsPage"));
 const DealSharePage = lazy(() => import("./pages/DealSharePage"));
 const AdminPage = lazy(() => import("./landing/AdminPage"));
 const FeedbackWidget = lazy(() => import("./components/FeedbackWidget"));
 const ListPage = lazy(() => import("./pages/ListPage"));
 const ComparePage = lazy(() => import("./pages/ComparePage"));
+const CartPage = lazy(() => import("./pages/CartPage"));
+const CatalogPage = lazy(() => import("./pages/CatalogPage"));
+const OrdersPage = lazy(() => import("./pages/OrdersPage"));
+
+function RedirectToCompare() {
+  const { id } = useParams();
+  return <Navigate to={`/compare/${id}`} replace />;
+}
 
 class ErrorBoundary extends React.Component {
   constructor(props) {
@@ -46,6 +55,8 @@ class ErrorBoundary extends React.Component {
 
 function RouteAnalytics() {
   const location = useLocation();
+
+  useEffect(() => { loadBrands(); }, []);
 
   useEffect(() => {
     initGoogleAnalytics();
@@ -101,9 +112,12 @@ function AppShell() {
           <Route path="/insta" element={<AdLandingPage />} />
           <Route path="/deal/:dealId" element={<DealsPage />} />
           <Route path="/share/deal/:dealId" element={<DealSharePage />} />
-          <Route path="/saved" element={<SavedDealsPage />} />
-          <Route path="/list" element={<ListPage />} />
-          <Route path="/list/:id/compare" element={<ComparePage />} />
+          <Route path="/cart" element={<CartPage />} />
+          <Route path="/compare/:id" element={<ComparePage />} />
+          <Route path="/products" element={<CatalogPage />} />
+          <Route path="/orders" element={<OrdersPage />} />
+          <Route path="/list" element={<Navigate to="/cart" replace />} />
+          <Route path="/list/:id/compare" element={<RedirectToCompare />} />
           <Route path="/admin" element={<AdminPage />} />
           <Route
             path="/oauth/:provider/callback"

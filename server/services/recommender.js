@@ -806,7 +806,8 @@ async function loadListItems(db, listId) {
             li.item_count,
             li.brand_pref,
             cp.canonical_name,
-            cp.common_aliases
+            cp.common_aliases,
+            cp.category AS canonical_category
      FROM list_items li
      LEFT JOIN canonical_products cp ON cp.id = li.canonical_id
      WHERE li.list_id = ?
@@ -1085,6 +1086,26 @@ function buildBaseMatchedDealPool(dealsAtStore, baseMeta, baseCache) {
   });
 }
 
+// Cheap check used when populating items_not_found: does this store carry at
+// least one same-base-product, same-category deal (any brand) that the strict
+// matcher could surface as a replacement? Mirrors the strict matcher's
+// preconditions (mass/volume quantity + resolved base product + category
+// guard) so the "Replace" button only appears when there is plausibly
+// something to replace with.
+function hasOtherBrandReplacementAtStore(storeDeals, item, baseMeta, baseCache) {
+  if (!baseMeta) return false;
+  const unit = String(item?.quantity_unit || "").trim().toLowerCase();
+  if (!MASS_VOLUME_UNITS.has(unit)) return false;
+  const qty = Number(item?.quantity);
+  if (!Number.isFinite(qty) || qty <= 0) return false;
+  const sourceCategory = String(item?.canonical_category || baseMeta.category || "").trim();
+  const filteredDeals = sourceCategory
+    ? storeDeals.filter((d) => String(d?.product_category || "").trim() === sourceCategory)
+    : storeDeals;
+  const pool = buildBaseMatchedDealPool(filteredDeals, baseMeta, baseCache);
+  return pool.length > 0;
+}
+
 function computeExactComboCandidateForDeals(
   deals,
   targetBase,
@@ -1187,6 +1208,14 @@ function dedupeExactReplacementCandidates(candidates) {
     const requestedA = a.requested_brand_matched ? 1 : 0;
     const requestedB = b.requested_brand_matched ? 1 : 0;
     if (requestedA !== requestedB) return requestedB - requestedA;
+    // Prefer fewer packs when price difference is within 5% — avoids picking
+    // 2×500g Thick over 1×1kg Medium when they cost nearly the same.
+    if (a.packs_needed !== b.packs_needed) {
+      const cheaper = Math.min(a.total_price, b.total_price);
+      if (Math.abs(a.total_price - b.total_price) <= cheaper * 0.05) {
+        return a.packs_needed - b.packs_needed;
+      }
+    }
     if (a.total_price !== b.total_price) return a.total_price - b.total_price;
     if (a.packs_needed !== b.packs_needed) return a.packs_needed - b.packs_needed;
     return (a.combination?.length || 0) - (b.combination?.length || 0);
@@ -1217,14 +1246,39 @@ function buildReplacementSearchResultKey(candidate) {
   return combinationKey || fallbackKey;
 }
 
+// Sub-variant phrases stripped from base_key by product-parser but meaningful
+// for product discrimination (e.g. "extra long" vs "everyday" within basmati).
+const SUB_VARIANT_KEYWORDS = [
+  "extra long", "long grain", "short grain", "everyday", "classic",
+  "premium", "organic", "aged", "traditional", "original",
+];
+
+function extractSubVariantKeywords(text) {
+  if (!text) return [];
+  const lower = String(text).toLowerCase();
+  return SUB_VARIANT_KEYWORDS.filter((kw) => lower.includes(kw));
+}
+
+function applySubVariantPreference(pool, rawItemText) {
+  const kws = extractSubVariantKeywords(rawItemText);
+  if (kws.length === 0) return pool;
+  const preferred = pool.filter((deal) => {
+    const name = String(deal.product_name || "").toLowerCase();
+    return kws.every((kw) => name.includes(kw));
+  });
+  return preferred.length > 0 ? preferred : pool;
+}
+
 function findStrictExactCandidatesAtStore({
   dealsAtStore,
   baseMeta,
   brandCandidates,
   targetBase,
   baseCache,
+  rawItemText,
 }) {
-  const basePool = buildBaseMatchedDealPool(dealsAtStore, baseMeta, baseCache);
+  const rawBasePool = buildBaseMatchedDealPool(dealsAtStore, baseMeta, baseCache);
+  const basePool = applySubVariantPreference(rawBasePool, rawItemText);
   if (basePool.length === 0) {
     return { stage: "none", candidates: [] };
   }
@@ -1344,14 +1398,14 @@ async function findBestDealForItemAtStore(db, storeId, item, intent, options = {
   if (item.canonical_id && !skipCanonical) {
     const canonicalMatches = await db
       .prepare(
-        `SELECT id, product_name, product_category, product_url, sale_price, currency,
-                weight_value, weight_unit, price_per_kg, image_url
-       FROM store_products
-       WHERE is_active = 1
-         AND availability = 'in_stock'
-         AND store_id = ?
-         AND canonical_id = ?
-       ORDER BY sale_price ASC
+        `SELECT sp.id, sp.product_name, sp.product_category, sp.product_url, sp.sale_price, sp.currency,
+                sp.weight_value, sp.weight_unit, sp.price_per_kg, sp.image_url
+       FROM store_products sp
+       JOIN store_product_mappings spm ON spm.deal_id = sp.id
+       WHERE sp.is_active = 1
+         AND sp.store_id = ?
+         AND spm.canonical_id = ?
+       ORDER BY sp.sale_price ASC
        LIMIT 80`,
       )
       .all(storeId, item.canonical_id);
@@ -1623,10 +1677,18 @@ async function recommendForList(
         baseResolutionCache,
         item.raw_item_text || item.canonical_name || "",
       );
-      const requestedBrandCandidates = parseBrandCandidates(
-        item.brand_pref || intent.brand,
-        intent.brandOptions,
-      );
+      const anyBrandMode = item.brand_pref === "*";
+      const requestedBrandCandidates = anyBrandMode
+        ? []
+        : parseBrandCandidates(item.brand_pref || intent.brand, intent.brandOptions);
+
+      // In any-brand mode strip the detected brand from the search text so the brand
+      // token doesn't inflate smart-ranker scores (brand_match + token_overlap + embedding
+      // all reward shared brand tokens, causing e.g. "MDH Amchur Powder" to match
+      // "MDH Karahi Gosht Masala" instead of being marked missing).
+      const itemForTextSearch = anyBrandMode && intent.brand
+        ? { ...item, raw_item_text: stripBrandCandidatesFromText(item.raw_item_text, [intent.brand]) }
+        : item;
 
       // matching_spec.md: for mass/volume requests, base product identity must
       // be resolved from the CSV source-of-truth before any matching.
@@ -1634,9 +1696,9 @@ async function recommendForList(
         const enforceRequestedBrand = options.enforceRequestedBrand !== false;
         const weightedDeal = resolveDealWeightFallback(dealCandidate);
         const candidateBrandInfo = resolveBrandInfo(
-          item.brand_pref || intent.brand,
+          anyBrandMode ? null : (item.brand_pref || intent.brand),
           weightedDeal.product_name,
-          intent.brandOptions,
+          anyBrandMode ? null : intent.brandOptions,
         );
         const candidateAnnotation = scoreAndAnnotateDeal(
           weightedDeal,
@@ -1704,7 +1766,7 @@ async function recommendForList(
       if (hasMassVolumePricingTarget && requestedBaseMeta) {
         const targetBase = toBaseQty(pricingSize.value, pricingSize.unit);
         if (!targetBase) {
-          missingItems.push(item.raw_item_text);
+          missingItems.push({ list_item_id: item.id, canonical_id: item.canonical_id ?? null, text: item.raw_item_text, quantity: item.quantity, quantity_unit: item.quantity_unit, has_replacements: hasOtherBrandReplacementAtStore(storeDeals, item, requestedBaseMeta, baseResolutionCache) });
           continue;
         }
 
@@ -1714,16 +1776,21 @@ async function recommendForList(
           brandCandidates: requestedBrandCandidates,
           targetBase,
           baseCache: baseResolutionCache,
+          rawItemText: item.raw_item_text,
         });
         let selectedStrict = strictCandidates.candidates[0] || null;
         if (!selectedStrict) {
           // Snap to nearest available pack when exact combo fails (e.g. 252g → 250g).
-          const basePool = buildBaseMatchedDealPool(storeDeals, requestedBaseMeta, baseResolutionCache);
+          const rawSnapPool = buildBaseMatchedDealPool(storeDeals, requestedBaseMeta, baseResolutionCache);
+          const basePool = applySubVariantPreference(rawSnapPool, item.raw_item_text);
           const packOpts = buildPackOptions(basePool, targetBase.type);
           let nearestOpt = null;
           let nearestDist = Infinity;
           for (const opt of packOpts) {
             if (!Number.isFinite(opt.size) || opt.size <= 0) continue;
+            // Only snap to packs within 20% of the requested size.
+            // Larger packs (e.g. 1kg for a 400g request) are not a valid substitution.
+            if (opt.size > targetBase.qty * 1.2) continue;
             const dist = Math.abs(opt.size - targetBase.qty);
             if (dist < nearestDist) { nearestDist = dist; nearestOpt = opt; }
           }
@@ -1742,7 +1809,7 @@ async function recommendForList(
           }
         }
         if (!selectedStrict) {
-          missingItems.push(item.raw_item_text);
+          missingItems.push({ list_item_id: item.id, canonical_id: item.canonical_id ?? null, text: item.raw_item_text, quantity: item.quantity, quantity_unit: item.quantity_unit, has_replacements: hasOtherBrandReplacementAtStore(storeDeals, item, requestedBaseMeta, baseResolutionCache) });
           continue;
         }
 
@@ -1766,7 +1833,7 @@ async function recommendForList(
               : "changed";
 
         if (strictBrandStatus === "changed") {
-          missingItems.push(item.raw_item_text);
+          missingItems.push({ list_item_id: item.id, canonical_id: item.canonical_id ?? null, text: item.raw_item_text, quantity: item.quantity, quantity_unit: item.quantity_unit, has_replacements: hasOtherBrandReplacementAtStore(storeDeals, item, requestedBaseMeta, baseResolutionCache) });
           continue;
         }
 
@@ -1809,7 +1876,7 @@ async function recommendForList(
       const primaryDeal = await findBestDealForItemAtStore(
         db,
         store.id,
-        item,
+        itemForTextSearch,
         intent,
       );
       const primaryEvaluation = primaryDeal
@@ -1819,7 +1886,7 @@ async function recommendForList(
 
       if (!evaluation?.ok) {
         // Canonical mappings can be over-specific/noisy; retry with raw-text-only search.
-        const fallbackDeal = await findBestDealForItemAtStore(db, store.id, item, intent, {
+        const fallbackDeal = await findBestDealForItemAtStore(db, store.id, itemForTextSearch, intent, {
           skipCanonical: true,
           includeAliases: false,
         });
@@ -1882,7 +1949,7 @@ async function recommendForList(
       }
 
       if (!evaluation?.ok) {
-        missingItems.push(item.raw_item_text);
+        missingItems.push({ list_item_id: item.id, canonical_id: item.canonical_id ?? null, text: item.raw_item_text, quantity: item.quantity, quantity_unit: item.quantity_unit, has_replacements: hasOtherBrandReplacementAtStore(storeDeals, item, requestedBaseMeta, baseResolutionCache) });
         continue;
       }
 
@@ -1902,7 +1969,7 @@ async function recommendForList(
       if (hasMassVolumePricingTarget) {
         const targetBase = toBaseQty(pricingSize.value, pricingSize.unit);
         if (!targetBase) {
-          missingItems.push(item.raw_item_text);
+          missingItems.push({ list_item_id: item.id, canonical_id: item.canonical_id ?? null, text: item.raw_item_text, quantity: item.quantity, quantity_unit: item.quantity_unit, has_replacements: hasOtherBrandReplacementAtStore(storeDeals, item, requestedBaseMeta, baseResolutionCache) });
           continue;
         }
 
@@ -1910,7 +1977,7 @@ async function recommendForList(
         const packOptions = buildPackOptions(variants, targetBase.type);
         const combo = findCheapestExactCombination(packOptions, targetBase.qty);
         if (!combo) {
-          missingItems.push(item.raw_item_text);
+          missingItems.push({ list_item_id: item.id, canonical_id: item.canonical_id ?? null, text: item.raw_item_text, quantity: item.quantity, quantity_unit: item.quantity_unit, has_replacements: hasOtherBrandReplacementAtStore(storeDeals, item, requestedBaseMeta, baseResolutionCache) });
           continue;
         }
 
@@ -1956,7 +2023,7 @@ async function recommendForList(
       }
 
       if (brandInfo?.brand_status === "changed") {
-        missingItems.push(item.raw_item_text);
+        missingItems.push({ list_item_id: item.id, canonical_id: item.canonical_id ?? null, text: item.raw_item_text, quantity: item.quantity, quantity_unit: item.quantity_unit, has_replacements: hasOtherBrandReplacementAtStore(storeDeals, item, requestedBaseMeta, baseResolutionCache) });
         continue;
       }
 
@@ -2139,7 +2206,7 @@ async function recommendForList(
   };
 }
 
-function searchStrictReplacementOptions(
+async function searchStrictReplacementOptions(
   db,
   { storeId, listItem, queryOverride, maxResults = 20 },
 ) {
@@ -2258,7 +2325,7 @@ function searchStrictReplacementOptions(
     };
   }
 
-  const storeDeals = db
+  const allStoreDeals = (await db
     .prepare(
       `SELECT id, product_name, product_category, product_url, sale_price, currency,
               weight_value, weight_unit, price_per_kg, image_url, canonical_id
@@ -2269,8 +2336,18 @@ function searchStrictReplacementOptions(
        ORDER BY sale_price ASC
        LIMIT 1500`,
     )
-    .all(storeId)
+    .all(storeId))
     .map((deal) => resolveDealWeightFallback(deal));
+
+  // Constrain replacements to the source item's category. Without this guard a
+  // shared base_key (e.g. "poha") matches deals across Rice & Grains AND Snacks
+  // (ready-to-eat poha cups), so a "Poha Thick" replacement search at Rice &
+  // Grains can surface ready-to-eat snacks. Prefer the user-cart canonical's
+  // category, fall back to the CSV catalog's category for the base product.
+  const sourceCategory = String(item.canonical_category || baseMeta.category || "").trim();
+  const storeDeals = sourceCategory
+    ? allStoreDeals.filter((d) => String(d.product_category || "").trim() === sourceCategory)
+    : allStoreDeals;
 
   const strict = findStrictExactCandidatesAtStore({
     dealsAtStore: storeDeals,
@@ -2278,6 +2355,7 @@ function searchStrictReplacementOptions(
     brandCandidates: mergedBrandCandidates,
     targetBase,
     baseCache: new Map(),
+    rawItemText: originalQueryText,
   });
 
   const requestedBrandInput =
@@ -2333,7 +2411,14 @@ function searchStrictReplacementOptions(
       .map((row) => buildReplacementSearchResultKey(row))
       .filter(Boolean),
   );
+  // Also exclude by deal id — exactResults may use a different pack count (x5)
+  // than checkedCandidates (x1) for the same deal, causing the same product to
+  // appear twice with different packs_needed values.
+  const exactDealIds = new Set(
+    exactResults.map((row) => row.id ?? row.deal_id).filter(Boolean),
+  );
   const extraResults = checkedCandidates.filter((row) => {
+    if (exactDealIds.has(row.id ?? row.deal_id)) return false;
     const key = buildReplacementSearchResultKey(row);
     if (!key) return true;
     return !exactKeys.has(key);

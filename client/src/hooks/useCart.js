@@ -54,5 +54,17 @@ export function useCart() {
     setItems([]);
   }, []);
 
-  return { items, addItem, removeItem, updateItem, clearCart, count: items.length };
+  const setBrand = useCallback((canonicalId, brand, anyBrand) => {
+    setItems(prev => {
+      const next = prev.map(item =>
+        item.canonical_id === canonicalId
+          ? { ...item, brand: brand ?? null, anyBrand: anyBrand ?? false }
+          : item
+      );
+      writeCart(next);
+      return next;
+    });
+  }, []);
+
+  return { items, addItem, removeItem, updateItem, clearCart, setBrand, count: items.length };
 }

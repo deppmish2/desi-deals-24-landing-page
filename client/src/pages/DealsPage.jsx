@@ -19,17 +19,11 @@ import {
   formatPricePerKg,
 } from "../utils/formatters";
 import {
-  addBookmark,
-  fetchBookmarks,
   fetchCanonicalPriceData,
   fetchDealStores,
   fetchDeals,
-  fetchOAuthAuthUrl,
-  fetchReplacements,
-  fetchSameProductOtherStores,
   getAuthSession,
   logoutUser,
-  removeBookmark,
 } from "../utils/api";
 import {
   buildDealsSearchParams,
@@ -39,43 +33,15 @@ import { trackAnalyticsEvent } from "../utils/analytics";
 import { proxyDealImageUrl } from "../utils/images";
 import { buildDealPageUrl, buildWhatsAppDealShareUrl, buildWhatsAppShareUrl, buildWhatsAppSuspectDiscountShareText } from "../utils/share";
 import CartButton from "../components/CartButton";
+import ReplacementsModal from "../components/ReplacementsModal";
+import NavTabs from "../components/NavTabs";
+import SortDropdown, { SORT_OPTIONS } from "../components/SortDropdown";
+import FiltersModal, { CATEGORIES } from "../components/FiltersModal";
+import SearchWithSuggest from "../components/SearchWithSuggest";
 import { CartContext } from "../hooks/CartContext";
+import LoginModal, { POST_LOGIN_RESUME_STATE_STORAGE_KEY, GoogleIcon } from "../components/LoginModal";
 
-const POST_AUTH_REDIRECT_STORAGE_KEY = "dd24_post_auth_redirect";
-const OAUTH_STATE_STORAGE_PREFIX = "dd24_oauth_state:";
-const POST_LOGIN_RESUME_STATE_STORAGE_KEY = "dd24_post_login_resume_state";
 const HEADER_HEADLINE = "Best Desi grocery deals in Germany.";
-
-function createOAuthState() {
-  if (typeof window !== "undefined" && window.crypto?.randomUUID)
-    return window.crypto.randomUUID();
-  return `dd24-${Math.random().toString(36).slice(2)}${Date.now().toString(36)}`;
-}
-
-// ── Google SVG ────────────────────────────────────────────────────────────────
-function GoogleIcon({ size = 20 }) {
-  return (
-    <svg width={size} height={size} viewBox="0 0 48 48">
-      <path
-        fill="#EA4335"
-        d="M24 9.5c3.54 0 6.71 1.22 9.21 3.6l6.85-6.85C35.9 2.38 30.47 0 24 0 14.62 0 6.51 5.38 2.56 13.22l7.98 6.19C12.43 13.72 17.74 9.5 24 9.5z"
-      />
-      <path
-        fill="#4285F4"
-        d="M46.98 24.55c0-1.57-.15-3.09-.38-4.55H24v9.02h12.94c-.58 2.96-2.26 5.48-4.78 7.18l7.73 6c4.51-4.18 7.09-10.36 7.09-17.65z"
-      />
-      <path
-        fill="#FBBC05"
-        d="M10.53 28.59c-.48-1.45-.76-2.99-.76-4.59s.27-3.14.76-4.59l-7.98-6.19C.92 16.46 0 20.12 0 24c0 3.88.92 7.54 2.56 10.78l7.97-6.19z"
-      />
-      <path
-        fill="#34A853"
-        d="M24 48c6.48 0 11.93-2.13 15.89-5.81l-7.73-6c-2.18 1.48-4.97 2.31-8.16 2.31-6.26 0-11.57-4.22-13.47-9.91l-7.98 6.19C6.51 42.62 14.62 48 24 48z"
-      />
-      <path fill="none" d="M0 0h48v48H0z" />
-    </svg>
-  );
-}
 
 // ── Lock icon ─────────────────────────────────────────────────────────────────
 function LockIcon({ size = 16, color = "white" }) {
@@ -179,44 +145,6 @@ function UserCircleIcon({ size = 22, color = "currentColor" }) {
   );
 }
 
-function BookmarkIcon({ size = 18, color = "currentColor" }) {
-  return (
-    <svg
-      width={size}
-      height={size}
-      viewBox="0 0 24 24"
-      fill="none"
-      stroke={color}
-      strokeWidth="2"
-      strokeLinecap="round"
-      strokeLinejoin="round"
-      aria-hidden="true"
-    >
-      <path d="M19 21l-7-5-7 5V5a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2z" />
-    </svg>
-  );
-}
-
-function CartIcon({ size = 18, color = "currentColor" }) {
-  return (
-    <svg
-      width={size}
-      height={size}
-      viewBox="0 0 24 24"
-      fill="none"
-      stroke={color}
-      strokeWidth="2"
-      strokeLinecap="round"
-      strokeLinejoin="round"
-      aria-hidden="true"
-    >
-      <circle cx="9" cy="20" r="1.75" />
-      <circle cx="18" cy="20" r="1.75" />
-      <path d="M3 4h2.5l2.1 10.1a1.2 1.2 0 0 0 1.18.95h8.72a1.2 1.2 0 0 0 1.18-.94L20.6 8H7.1" />
-    </svg>
-  );
-}
-
 function CloseIcon({ size = 10, color = "currentColor" }) {
   return (
     <svg
@@ -230,24 +158,6 @@ function CloseIcon({ size = 10, color = "currentColor" }) {
       aria-hidden="true"
     >
       <path d="M1 1l10 10M11 1L1 11" />
-    </svg>
-  );
-}
-
-function ChevronDownIcon({ size = 16, color = "currentColor" }) {
-  return (
-    <svg
-      width={size}
-      height={size}
-      viewBox="0 0 24 24"
-      fill="none"
-      stroke={color}
-      strokeWidth="2.5"
-      strokeLinecap="round"
-      strokeLinejoin="round"
-      aria-hidden="true"
-    >
-      <path d="m6 9 6 6 6-6" />
     </svg>
   );
 }
@@ -291,81 +201,6 @@ function UnlockCard({ title, description, onSignIn }) {
             Continue with Google
           </button>
         )}
-      </div>
-    </div>
-  );
-}
-
-// ── Login modal ───────────────────────────────────────────────────────────────
-function LoginModal({ message, resumeState, onClose }) {
-  const [loading, setLoading] = useState(false);
-  const [authError, setAuthError] = useState("");
-
-  async function handleGoogle() {
-    setAuthError("");
-    setLoading(true);
-    trackAnalyticsEvent("login_google_click", {
-      source: "login_modal",
-    });
-    try {
-      const state = createOAuthState();
-      const redirectTo =
-        `${window.location.pathname}${window.location.search}${window.location.hash}` ||
-        "/";
-      sessionStorage.setItem(`${OAUTH_STATE_STORAGE_PREFIX}google`, state);
-      sessionStorage.setItem(POST_AUTH_REDIRECT_STORAGE_KEY, redirectTo);
-      if (resumeState) {
-        sessionStorage.setItem(
-          POST_LOGIN_RESUME_STATE_STORAGE_KEY,
-          JSON.stringify(resumeState),
-        );
-      } else {
-        sessionStorage.removeItem(POST_LOGIN_RESUME_STATE_STORAGE_KEY);
-      }
-      const payload = await fetchOAuthAuthUrl("google", state);
-      const authUrl = payload?.authUrl || payload?.url;
-      if (!authUrl) throw new Error("Google sign-in unavailable right now.");
-      window.location.assign(authUrl);
-    } catch (err) {
-      setLoading(false);
-      setAuthError(err?.message || "Unable to start Google sign-in.");
-    }
-  }
-
-  return (
-    <div
-      className="fixed inset-0 z-50 flex items-center justify-center px-4"
-      style={{ background: "rgba(15,23,42,0.5)", backdropFilter: "blur(4px)" }}
-      onClick={onClose}
-    >
-      <div
-        className="bg-white rounded-2xl p-7 max-w-sm w-full shadow-2xl flex flex-col gap-4"
-        onClick={(e) => e.stopPropagation()}
-      >
-        {message && (
-          <UnlockCard title="Unlock this feature" description={message} />
-        )}
-        {authError && (
-          <p className="text-[13px] text-red-600 bg-red-50 rounded-lg px-3 py-2">
-            {authError}
-          </p>
-        )}
-        <button
-          type="button"
-          onClick={handleGoogle}
-          disabled={loading}
-          className="w-full flex items-center justify-center gap-3 border border-slate-200 bg-white hover:bg-slate-50 rounded-xl py-3.5 px-4 text-[15px] font-semibold text-[#1e293b] transition-colors shadow-sm disabled:opacity-60"
-        >
-          <GoogleIcon size={20} />
-          {loading ? "Redirecting…" : "Continue with Google"}
-        </button>
-        <button
-          type="button"
-          onClick={onClose}
-          className="text-center text-[13px] text-slate-400 hover:text-slate-600 transition-colors"
-        >
-          Maybe later
-        </button>
       </div>
     </div>
   );
@@ -419,256 +254,9 @@ function dealPermalink(dealId) {
   return buildDealPageUrl(dealId);
 }
 
-const TIER_LABELS = {
-  same_pack: "Same product, different size",
-  same_spec: "Same product, other brands",
-  same_base_product: "Same product, other brands",
-  same_brand: "Same brand, other products",
-  same_category: "More from this category",
-};
-
-function highlightDiffName(sourceName, targetName) {
-  const sourceTokens = new Set((sourceName || "").toLowerCase().split(/\s+/));
-  return targetName.split(/(\s+)/).map((part, i) => {
-    if (/^\s+$/.test(part)) return part;
-    return !sourceTokens.has(part.toLowerCase())
-      ? <strong key={i} className="font-bold text-slate-900">{part}</strong>
-      : <span key={i}>{part}</span>;
-  });
-}
-
-function ReplacementDealRow({ deal, emphasisSize, sourceName, sourcePricePerKg }) {
-  const [imgErr, setImgErr] = React.useState(false);
-  const kgSavingPct = sourcePricePerKg && deal.price_per_kg != null
-    ? Math.round((sourcePricePerKg - deal.price_per_kg) / sourcePricePerKg * 100)
-    : null;
-  return (
-    <a
-      href={deal.product_url}
-      target="_blank"
-      rel="noopener noreferrer"
-      className="flex items-center gap-3 p-3 rounded-xl border border-slate-100 hover:border-[#16a34a] hover:bg-[#f0fdf4] transition-colors no-underline"
-      style={{ textDecoration: "none" }}
-    >
-      {!imgErr && deal.image_url ? (
-        <img
-          src={deal.image_url}
-          alt={deal.product_name}
-          className="w-12 h-12 object-contain rounded-lg bg-slate-50 shrink-0"
-          onError={() => setImgErr(true)}
-        />
-      ) : (
-        <div className="w-12 h-12 rounded-lg bg-slate-50 shrink-0 flex items-center justify-center text-xl">🛒</div>
-      )}
-      <div className="flex-1 min-w-0">
-        <p className="text-[12px] font-normal text-slate-800 line-clamp-2 leading-tight">
-          {sourceName ? highlightDiffName(sourceName, deal.product_name) : deal.product_name}
-        </p>
-        {(deal.weight_raw || deal.price_per_kg != null) && (
-          <div className="flex items-center gap-1.5 mt-1 flex-wrap">
-            {deal.weight_raw && (
-              <span
-                className={`px-1.5 py-0.5 rounded text-[10px] font-bold ${
-                  emphasisSize
-                    ? "bg-amber-100 text-amber-700 border border-amber-300"
-                    : "bg-slate-100 text-slate-500"
-                }`}
-              >
-                {deal.weight_raw}
-              </span>
-            )}
-            {deal.price_per_kg != null && (
-              <span className="text-[10px] text-slate-400">{formatPricePerKg(deal.price_per_kg, deal.weight_unit)}</span>
-            )}
-          </div>
-        )}
-      </div>
-      <div className="text-right shrink-0">
-        <p className="text-[14px] font-extrabold text-slate-800">
-          {deal.currency === "EUR" ? "€" : deal.currency}{Number(deal.sale_price).toFixed(2)}
-        </p>
-        {kgSavingPct !== null && kgSavingPct !== 0 && (
-          <p className={`text-[10px] font-bold ${kgSavingPct > 0 ? "text-[#16a34a]" : "text-red-400"}`}>
-            {kgSavingPct > 0 ? `-${kgSavingPct}%` : `+${Math.abs(kgSavingPct)}%`}
-          </p>
-        )}
-      </div>
-    </a>
-  );
-}
-
-function ReplacementsModal({ sourceDeal, tiers, loading, otherStores, isAdmin, onClose }) {
-  const [categoryExpanded, setCategoryExpanded] = React.useState(false);
-  const hasOtherStores = isAdmin && otherStores?.length > 0;
-  return createPortal(
-    <div
-      className="fixed inset-0 z-50 flex items-end sm:items-center justify-center bg-black/40 backdrop-blur-sm"
-      onClick={onClose}
-    >
-      <div
-        className="bg-white rounded-t-2xl sm:rounded-2xl w-full sm:max-w-lg max-h-[80vh] flex flex-col"
-        onClick={(e) => e.stopPropagation()}
-      >
-        <div className="flex items-center justify-between px-5 py-4 border-b border-slate-100 shrink-0">
-          <div>
-            <p className="text-[10px] font-extrabold uppercase tracking-[1.5px] text-slate-400">Other options at this store</p>
-            <p className="text-[13px] font-bold text-slate-800 mt-0.5 line-clamp-1">{sourceDeal.product_name}</p>
-            {(sourceDeal.weight_raw || sourceDeal.price_per_kg != null) && (
-              <div className="flex items-center gap-1.5 mt-1 flex-wrap">
-                {sourceDeal.weight_raw && (
-                  <span className="px-1.5 py-0.5 rounded text-[10px] font-bold bg-slate-100 text-slate-500">
-                    {sourceDeal.weight_raw}
-                  </span>
-                )}
-                {sourceDeal.price_per_kg != null && (
-                  <span className="text-[10px] text-slate-400">{formatPricePerKg(sourceDeal.price_per_kg, sourceDeal.weight_unit)}</span>
-                )}
-              </div>
-            )}
-          </div>
-          <button
-            type="button"
-            onClick={onClose}
-            className="shrink-0 w-8 h-8 flex items-center justify-center rounded-full hover:bg-slate-100 text-slate-400 hover:text-slate-600 transition-colors ml-3"
-          >
-            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round">
-              <line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/>
-            </svg>
-          </button>
-        </div>
-        <div className="overflow-y-auto p-4">
-          {loading ? (
-            <div className="flex justify-center py-10">
-              <div className="w-6 h-6 border-2 border-[#16a34a] border-t-transparent rounded-full animate-spin" />
-            </div>
-          ) : (
-            <>
-              {!tiers?.length ? (
-                <p className="text-center text-slate-400 text-[13px] py-6">No alternatives found at this store.</p>
-              ) : (
-                tiers.filter((t) => t.type !== "same_category").map((tier) => (
-                  <div key={tier.type} className="mb-5 last:mb-0">
-                    <button
-                      type="button"
-                      className="flex items-center gap-1 mb-2 w-full text-left cursor-default"
-                    >
-                      <p className="text-[10px] font-extrabold uppercase tracking-[1.5px] text-slate-400">
-                        {TIER_LABELS[tier.type] ?? tier.type}
-                      </p>
-                    </button>
-                    <div className="flex flex-col gap-2">
-                      {tier.deals.map((d) => (
-                        <ReplacementDealRow
-                          key={d.id}
-                          deal={d}
-                          sourceName={sourceDeal.product_name}
-                          sourcePricePerKg={sourceDeal.price_per_kg}
-                          emphasisSize={
-                            d.weight_value != null && sourceDeal.weight_value != null
-                              ? d.weight_value !== sourceDeal.weight_value
-                              : d.weight_raw !== sourceDeal.weight_raw
-                          }
-                        />
-                      ))}
-                    </div>
-                  </div>
-                ))
-              )}
-
-              {/* Admin-only: same product at other stores */}
-              {hasOtherStores && (
-                <div className="mt-4 pt-4 border-t border-slate-100">
-                  <p className="text-[10px] font-extrabold uppercase tracking-[1.5px] text-slate-400 mb-3">
-                    Same Product, Other Stores
-                  </p>
-                  <div className="flex flex-col gap-4">
-                    {otherStores.map((store) => (
-                      <div key={store.store_id}>
-                        <p className="text-[11px] font-bold text-slate-500 uppercase tracking-wide mb-1.5">{store.store_name}</p>
-                        <div className="flex flex-col gap-2">
-                          {store.deals.map((d) => (
-                            <ReplacementDealRow
-                              key={d.id}
-                              deal={{ ...d, store: { name: store.store_name, url: store.store_url } }}
-                              sourceName={sourceDeal.product_name}
-                              sourcePricePerKg={sourceDeal.price_per_kg}
-                              emphasisSize={
-                                d.weight_value != null && sourceDeal.weight_value != null
-                                  ? d.weight_value !== sourceDeal.weight_value
-                                  : d.weight_raw !== sourceDeal.weight_raw
-                              }
-                            />
-                          ))}
-                        </div>
-                      </div>
-                    ))}
-                  </div>
-                </div>
-              )}
-              {tiers?.find((t) => t.type === "same_category") && (() => {
-                const tier = tiers.find((t) => t.type === "same_category");
-                return (
-                  <div className="mt-4 pt-4 border-t border-slate-100">
-                    {!categoryExpanded ? (
-                      <button
-                        type="button"
-                        onClick={() => setCategoryExpanded(true)}
-                        className="w-full flex items-center justify-between px-3 py-2.5 rounded-xl border border-dashed border-slate-200 bg-slate-50 hover:bg-slate-100 hover:border-slate-300 transition-colors group"
-                      >
-                        <span className="text-[12px] font-semibold text-slate-400 group-hover:text-slate-500">
-                          {tier.deals.length} more from this category
-                        </span>
-                        <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" className="text-slate-300 group-hover:text-slate-400 transition-colors">
-                          <polyline points="6 9 12 15 18 9"/>
-                        </svg>
-                      </button>
-                    ) : (
-                      <>
-                        <button
-                          type="button"
-                          onClick={() => setCategoryExpanded(false)}
-                          className="flex items-center gap-1 mb-2 w-full text-left cursor-pointer"
-                        >
-                          <p className="text-[10px] font-extrabold uppercase tracking-[1.5px] text-slate-400">
-                            {TIER_LABELS[tier.type] ?? tier.type}
-                          </p>
-                          <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" className="text-slate-400 rotate-180">
-                            <polyline points="6 9 12 15 18 9"/>
-                          </svg>
-                        </button>
-                        <div className="flex flex-col gap-2">
-                          {tier.deals.map((d) => (
-                            <ReplacementDealRow
-                              key={d.id}
-                              deal={d}
-                              sourceName={sourceDeal.product_name}
-                              sourcePricePerKg={null}
-                              emphasisSize={
-                                d.weight_value != null && sourceDeal.weight_value != null
-                                  ? d.weight_value !== sourceDeal.weight_value
-                                  : d.weight_raw !== sourceDeal.weight_raw
-                              }
-                            />
-                          ))}
-                        </div>
-                      </>
-                    )}
-                  </div>
-                );
-              })()}
-            </>
-          )}
-        </div>
-      </div>
-    </div>,
-    document.body,
-  );
-}
 
 function DealCard({
   deal,
-  isBookmarked,
-  onBookmark,
   highlighted,
   highlightRef,
   priority,
@@ -680,34 +268,10 @@ function DealCard({
   const [tooltipPos, setTooltipPos] = useState({ top: 0, left: 0 });
   const [showImageDebug, setShowImageDebug] = useState(false);
   const [imageDebugPos, setImageDebugPos] = useState({ top: 0, left: 0 });
-  const [showReplacements, setShowReplacements] = useState(false);
-  const [replacementTiers, setReplacementTiers] = useState(null);
-  const [replacementsLoading, setReplacementsLoading] = useState(false);
-  const [otherStores, setOtherStores] = useState(null);
   const [loadingCanonical, setLoadingCanonical] = useState(false);
   const [canonicalData, setCanonicalData] = useState(null);
   const badgeRef = useRef(null);
 
-  async function handleOpenReplacements() {
-    setShowReplacements(true);
-    if (replacementTiers !== null) return;
-    setReplacementsLoading(true);
-    try {
-      const [repData, otherStoresData] = await Promise.all([
-        fetchReplacements(deal.canonical_id, deal.store?.id, deal.id),
-        deal.canonical_id && deal.store?.id
-          ? fetchSameProductOtherStores(deal.canonical_id, deal.store?.id).catch(() => ({ stores: [] }))
-          : Promise.resolve({ stores: [] }),
-      ]);
-      setReplacementTiers(repData.tiers || []);
-      setOtherStores(otherStoresData.stores || []);
-    } catch {
-      setReplacementTiers([]);
-      setOtherStores([]);
-    } finally {
-      setReplacementsLoading(false);
-    }
-  }
   const proxyImg = proxyDealImageUrl(deal);
   const discountPct = deal?.discount_percent ? Math.round(deal.discount_percent) : null;
   const realSavings = deal?.real_savings ?? null;
@@ -726,7 +290,6 @@ function DealCard({
 
   const permalink = dealPermalink(deal.id);
   return (
-    <>
     <div
       ref={highlightRef}
       className={`bg-white rounded-[20px] flex flex-col transition-shadow ${
@@ -1055,24 +618,7 @@ function DealCard({
         })() : null}
 
         <div className="mt-auto flex items-center gap-2 pt-2">
-          <CartButton deal={deal} />
-          <a
-            href={resolveUrl(deal, deal.product_url)}
-            target="_blank"
-            rel="noopener noreferrer"
-            onClick={() =>
-              trackAnalyticsEvent(
-                "snatch_deal_click",
-                buildDealAnalyticsPayload(deal, analyticsContext),
-              )
-            }
-            className="flex-1 justify-center bg-[#16a34a] hover:bg-[#15803d] transition-colors rounded-[14px] py-3 inline-flex items-center gap-2 text-white no-underline hover:no-underline"
-            style={{ textDecoration: "none" }}
-          >
-            <span className="text-[13px] leading-[16px] font-extrabold tracking-wide uppercase">
-              Snatch Deal
-            </span>
-          </a>
+          <CartButton deal={deal} fullWidth />
           {/* WhatsApp share — shares DesiDeals24 permalink, WA shows branded OG preview */}
           <a
             href={(() => {
@@ -1117,634 +663,8 @@ function DealCard({
               />
             </svg>
           </a>
-          {/* Bookmark */}
-          <button
-            type="button"
-            onClick={() => onBookmark(deal.id)}
-            className={`shrink-0 inline-flex items-center justify-center w-[46px] h-[46px] rounded-[14px] border transition-colors ${
-              isBookmarked
-                ? "bg-[#16a34a] border-[#16a34a] text-white"
-                : "border-slate-200 bg-white hover:bg-slate-50 text-slate-500"
-            }`}
-            title={isBookmarked ? "Remove bookmark" : "Bookmark it"}
-          >
-            <svg
-              width="17"
-              height="17"
-              viewBox="0 0 24 24"
-              fill={isBookmarked ? "currentColor" : "none"}
-              stroke="currentColor"
-              strokeWidth="2"
-              strokeLinecap="round"
-              strokeLinejoin="round"
-            >
-              <path d="M19 21l-7-5-7 5V5a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2z" />
-            </svg>
-          </button>
-        </div>
-        {deal.canonical_id && (
-          <button
-            type="button"
-            onClick={handleOpenReplacements}
-            className="w-full text-center text-[11px] text-slate-400 hover:text-[#16a34a] transition-colors pt-2 pb-1 flex items-center justify-center gap-1"
-          >
-            <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
-              <polyline points="17 1 21 5 17 9"/><path d="M3 11V9a4 4 0 0 1 4-4h14"/><polyline points="7 23 3 19 7 15"/><path d="M21 13v2a4 4 0 0 1-4 4H3"/>
-            </svg>
-            See alternatives
-          </button>
-        )}
-      </div>
-    </div>
-    {showReplacements && (
-      <ReplacementsModal
-        sourceDeal={deal}
-        tiers={replacementTiers}
-        loading={replacementsLoading}
-        otherStores={otherStores}
-        isAdmin={isAdmin}
-        onClose={() => { setShowReplacements(false); setReplacementTiers(null); setOtherStores(null); }}
-      />
-    )}
-    </>
-  );
-}
-
-const CATEGORIES = [
-  "Spices & Masalas",
-  "Rice & Grains",
-  "Sauces & Pastes",
-  "Lentils & Pulses",
-  "Beverages",
-  "Flours & Baking",
-  "Snacks & Sweets",
-  "Frozen Foods",
-  "Noodles & Pasta",
-  "Oils & Ghee",
-  "Fresh Produce",
-  "Dairy & Paneer",
-  "Household",
-  "Canned & Packaged",
-  "Personal Care",
-  "Other",
-];
-
-const SORT_OPTIONS = [
-  { value: "", label: "Random order", compactLabel: "Random order" },
-  { value: "real_savings", label: "Sort: Real Savings", compactLabel: "Real Savings" },
-  { value: "discount", label: "Sort: Max Discount", compactLabel: "Max Discount" },
-  { value: "price_per_kg", label: "Sort: Lowest /Kg Price", compactLabel: "Lowest Price / Kg" },
-  { value: "price", label: "Sort: Lowest Price", compactLabel: "Lowest Price" },
-];
-
-// ── Filters modal ─────────────────────────────────────────────────────────────
-function FiltersModal({
-  storeNames,
-  draft,
-  onChange,
-  onClear,
-  onApply,
-  onClose,
-  isLoggedIn,
-  onSignIn,
-}) {
-  const { stores = [], category } = draft;
-
-  function handleApply() {
-    if (!isLoggedIn) {
-      onSignIn();
-      return;
-    }
-    onApply();
-  }
-
-  return (
-    <div
-      className="fixed inset-0 z-50 flex items-end sm:items-center justify-center"
-      style={{ background: "rgba(15,23,42,0.45)", backdropFilter: "blur(4px)" }}
-      onClick={onClose}
-    >
-      <div
-        className="bg-white rounded-t-2xl sm:rounded-2xl w-full sm:max-w-lg max-h-[90vh] flex flex-col shadow-2xl"
-        onClick={(e) => e.stopPropagation()}
-      >
-        {/* Header */}
-        <div className="flex items-center justify-between px-6 py-5 border-b border-slate-100">
-          <div className="flex items-center gap-2">
-            <svg
-              width="18"
-              height="18"
-              viewBox="0 0 24 24"
-              fill="none"
-              stroke="currentColor"
-              strokeWidth="2.5"
-              strokeLinecap="round"
-            >
-              <line x1="4" y1="6" x2="20" y2="6" />
-              <line x1="8" y1="12" x2="20" y2="12" />
-              <line x1="12" y1="18" x2="20" y2="18" />
-            </svg>
-            <span className="text-[18px] font-extrabold text-[#0f172a]">
-              Filters
-            </span>
-          </div>
-          <button
-            onClick={onClose}
-            className="text-slate-400 hover:text-slate-700 transition-colors"
-          >
-            <svg
-              width="20"
-              height="20"
-              viewBox="0 0 24 24"
-              fill="none"
-              stroke="currentColor"
-              strokeWidth="2.5"
-              strokeLinecap="round"
-            >
-              <path d="M18 6 6 18M6 6l12 12" />
-            </svg>
-          </button>
-        </div>
-
-        {/* Body — scrollable, fully explorable by all users */}
-        <div className="overflow-y-auto flex-1 px-6 py-5 flex flex-col gap-6">
-          {/* Store */}
-          <div>
-            <p className="text-[11px] font-extrabold tracking-[1.5px] uppercase text-slate-400 mb-3">
-              Store
-            </p>
-            <div className="flex flex-wrap gap-2">
-              {["All stores", ...storeNames].map((name) => {
-                const val = name === "All stores" ? "" : name;
-                const active =
-                  val === "" ? stores.length === 0 : stores.includes(val);
-                return (
-                  <button
-                    key={name}
-                    type="button"
-                    onClick={() => {
-                      if (val === "") {
-                        onChange({ ...draft, stores: [] });
-                        return;
-                      }
-
-                      const nextStores = stores.includes(val)
-                        ? stores.filter((entry) => entry !== val)
-                        : [...stores, val];
-                      onChange({ ...draft, stores: nextStores });
-                    }}
-                    className={`px-4 py-2 rounded-full border text-[14px] font-medium transition-colors ${
-                      active
-                        ? "bg-[#0f172a] border-[#0f172a] text-white"
-                        : "bg-white border-slate-200 text-[#0f172a] hover:border-slate-400"
-                    }`}
-                  >
-                    {name}
-                  </button>
-                );
-              })}
-            </div>
-          </div>
-
-          {/* Category */}
-          <div>
-            <p className="text-[11px] font-extrabold tracking-[1.5px] uppercase text-slate-400 mb-3">
-              Category
-            </p>
-            <div className="grid grid-cols-2 gap-x-6 gap-y-3">
-              <label
-                className="flex items-center gap-3 cursor-pointer col-span-2"
-                onClick={() => onChange({ ...draft, category: "" })}
-              >
-                <span
-                  className={`w-5 h-5 rounded flex items-center justify-center border-2 transition-colors ${
-                    category === ""
-                      ? "bg-[#0f172a] border-[#0f172a]"
-                      : "border-slate-300 bg-white"
-                  }`}
-                >
-                  {category === "" && (
-                    <svg
-                      width="12"
-                      height="12"
-                      viewBox="0 0 24 24"
-                      fill="none"
-                      stroke="white"
-                      strokeWidth="3"
-                      strokeLinecap="round"
-                      strokeLinejoin="round"
-                    >
-                      <polyline points="20 6 9 17 4 12" />
-                    </svg>
-                  )}
-                </span>
-                <span className="text-[14px] text-[#0f172a] font-medium">
-                  All categories
-                </span>
-              </label>
-              {CATEGORIES.map((cat) => (
-                <label
-                  key={cat}
-                  className="flex items-center gap-3 cursor-pointer"
-                  onClick={() =>
-                    onChange({
-                      ...draft,
-                      category: category === cat ? "" : cat,
-                    })
-                  }
-                >
-                  <span
-                    className={`w-5 h-5 rounded flex items-center justify-center border-2 transition-colors shrink-0 ${
-                      category === cat
-                        ? "bg-[#0f172a] border-[#0f172a]"
-                        : "border-slate-300 bg-white"
-                    }`}
-                  >
-                    {category === cat && (
-                      <svg
-                        width="12"
-                        height="12"
-                        viewBox="0 0 24 24"
-                        fill="none"
-                        stroke="white"
-                        strokeWidth="3"
-                        strokeLinecap="round"
-                        strokeLinejoin="round"
-                      >
-                        <polyline points="20 6 9 17 4 12" />
-                      </svg>
-                    )}
-                  </span>
-                  <span className="text-[14px] text-[#0f172a]">{cat}</span>
-                </label>
-              ))}
-            </div>
-          </div>
-
-          {/* Minimum Discount */}
-          <div>
-            <p className="text-[11px] font-extrabold tracking-[1.5px] uppercase text-slate-400 mb-3">
-              Minimum Discount
-            </p>
-            <div className="grid grid-cols-4 gap-2">
-              {["10", "25", "50", "75"].map((pct) => {
-                const active = draft.minDiscount === pct;
-                return (
-                  <button
-                    key={pct}
-                    type="button"
-                    onClick={() =>
-                      onChange({ ...draft, minDiscount: active ? "" : pct })
-                    }
-                    className={`py-3 rounded-xl border-2 text-[14px] font-semibold transition-colors ${
-                      active
-                        ? "bg-[#0f172a] border-[#0f172a] text-white"
-                        : "bg-white border-slate-200 text-[#0f172a] hover:border-slate-400"
-                    }`}
-                  >
-                    {pct}%+
-                  </button>
-                );
-              })}
-            </div>
-          </div>
-
-          {/* Price Range */}
-          <div>
-            <p className="text-[11px] font-extrabold tracking-[1.5px] uppercase text-slate-400 mb-3">
-              Price Range (€)
-            </p>
-            <div className="flex items-center gap-3 mb-4">
-              <div className="flex-1 flex items-center gap-2 border-2 border-slate-200 rounded-xl px-3 py-2.5 focus-within:border-[#0f172a] transition-colors">
-                <span className="text-slate-400 text-[14px]">€</span>
-                <input
-                  type="number"
-                  min="0"
-                  placeholder="Min"
-                  value={draft.priceMin}
-                  onChange={(e) =>
-                    onChange({ ...draft, priceMin: e.target.value })
-                  }
-                  className="flex-1 outline-none text-[14px] text-[#0f172a] bg-transparent w-0"
-                />
-              </div>
-              <span className="text-slate-300 text-[18px]">—</span>
-              <div className="flex-1 flex items-center gap-2 border-2 border-slate-200 rounded-xl px-3 py-2.5 focus-within:border-[#0f172a] transition-colors">
-                <span className="text-slate-400 text-[14px]">€</span>
-                <input
-                  type="number"
-                  min="0"
-                  placeholder="Max"
-                  value={draft.priceMax}
-                  onChange={(e) =>
-                    onChange({ ...draft, priceMax: e.target.value })
-                  }
-                  className="flex-1 outline-none text-[14px] text-[#0f172a] bg-transparent w-0"
-                />
-              </div>
-            </div>
-            <input
-              type="range"
-              min="0"
-              max="200"
-              value={draft.priceMax || 200}
-              onChange={(e) =>
-                onChange({
-                  ...draft,
-                  priceMax: e.target.value === "200" ? "" : e.target.value,
-                })
-              }
-              className="w-full accent-[#0f172a] h-1 cursor-pointer"
-            />
-          </div>
-
-          {/* Toggles */}
-          <div className="flex flex-col gap-4">
-            {[
-              {
-                key: "hideExpired",
-                label: "Hide expired products",
-                sub: "Remove products past best before date",
-              },
-            ].map(({ key, label, sub }) => (
-              <div key={key} className="flex items-start justify-between gap-4">
-                <div>
-                  <p className="text-[14px] font-bold text-[#0f172a]">
-                    {label}
-                  </p>
-                  <p className="text-[12px] text-slate-400 mt-0.5">{sub}</p>
-                </div>
-                <button
-                  type="button"
-                  onClick={() => onChange({ ...draft, [key]: !draft[key] })}
-                  className={`relative shrink-0 w-12 h-6 rounded-full transition-colors ${draft[key] ? "bg-[#16a34a]" : "bg-slate-200"}`}
-                >
-                  <span
-                    className={`absolute top-0.5 left-0.5 w-5 h-5 bg-white rounded-full shadow transition-transform ${draft[key] ? "translate-x-6" : "translate-x-0"}`}
-                  />
-                </button>
-              </div>
-            ))}
-          </div>
-
-          {/* Lock card — shown inline in body for non-logged-in users */}
-          {!isLoggedIn && (
-            <div
-              className="rounded-xl overflow-hidden"
-              style={{ background: "#16a34a" }}
-            >
-              <div className="px-5 py-4 flex items-center gap-4">
-                <div
-                  className="w-11 h-11 rounded-full flex items-center justify-center shrink-0"
-                  style={{ background: "rgba(255,255,255,0.2)" }}
-                >
-                  <LockIcon size={20} />
-                </div>
-                <div>
-                  <p className="text-[15px] font-extrabold text-white">
-                    Filter by store and category
-                  </p>
-                  <p
-                    className="text-[13px] mt-0.5"
-                    style={{ color: "rgba(255,255,255,0.85)" }}
-                  >
-                    Sign in to narrow down deals exactly how you want.
-                  </p>
-                </div>
-              </div>
-            </div>
-          )}
-        </div>
-
-        {/* Footer */}
-        <div className="flex gap-3 px-6 py-4 border-t border-slate-100">
-          <button
-            type="button"
-            onClick={onClear}
-            className="flex-1 py-3 rounded-xl border-2 border-slate-200 text-[14px] font-bold text-[#0f172a] hover:bg-slate-50 transition-colors"
-          >
-            Clear All
-          </button>
-          <button
-            type="button"
-            onClick={handleApply}
-            className={`flex-[2] py-3 rounded-xl text-white text-[14px] font-bold transition-colors flex items-center justify-center gap-2 ${
-              isLoggedIn
-                ? "bg-[#16a34a] hover:bg-[#15803d]"
-                : "bg-[#16a34a] hover:bg-[#15803d]"
-            }`}
-          >
-            {!isLoggedIn && <LockIcon size={15} />}
-            Apply Filters
-          </button>
         </div>
       </div>
-    </div>
-  );
-}
-
-// ── Sort dropdown ─────────────────────────────────────────────────────────────
-function SortDropdown({ value, onChange, toolbar = false }) {
-  const [open, setOpen] = useState(false);
-  const ref = useRef(null);
-  const current = SORT_OPTIONS.find((o) => o.value === value);
-  const isActive = Boolean(value);
-
-  useEffect(() => {
-    function handleClickOutside(e) {
-      if (ref.current && !ref.current.contains(e.target)) setOpen(false);
-    }
-    if (open) document.addEventListener("mousedown", handleClickOutside);
-    return () => document.removeEventListener("mousedown", handleClickOutside);
-  }, [open]);
-
-  function handleOpen() {
-    setOpen((v) => !v);
-  }
-
-  function handleSelect(nextValue) {
-    onChange(nextValue);
-    setOpen(false);
-  }
-
-  return (
-    <div className="relative w-auto max-w-full" ref={ref}>
-      {toolbar ? (
-        <button
-          type="button"
-          onClick={handleOpen}
-          className={`relative inline-flex min-h-[58px] items-center justify-center gap-2 rounded-[22px] border border-white/80 bg-white px-4 py-3.5 text-[14px] font-bold shadow-sm transition-colors hover:bg-slate-50 focus:outline-none ${
-            isActive ? "text-[#17874a]" : "text-slate-600"
-          }`}
-        >
-          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round">
-            <line x1="3" y1="6" x2="21" y2="6"/><line x1="7" y1="12" x2="17" y2="12"/><line x1="11" y1="18" x2="13" y2="18"/>
-          </svg>
-          <span>{isActive ? current?.compactLabel : "Sort By"}</span>
-          {isActive && (
-            <span className="absolute -top-1 -right-1 min-w-[8px] h-[8px] rounded-full bg-[#17874a]" />
-          )}
-        </button>
-      ) : (
-        <button
-          type="button"
-          onClick={handleOpen}
-          className={`inline-flex max-w-full items-center justify-between gap-3 rounded-[24px] border px-4 py-3.5 text-left shadow-sm transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-[#17874a]/25 focus-visible:ring-offset-2 focus-visible:ring-offset-[#edf3ff] ${
-            isActive
-              ? "border-[#17874a] bg-[#eff8f1] hover:bg-[#e6f4eb]"
-              : "border-[#dfe7f5] bg-white hover:border-[#b6c7e2] hover:bg-white"
-          }`}
-        >
-          <span className="flex min-w-0 items-center gap-2.5">
-            <span className={`text-[11px] font-extrabold uppercase tracking-[1.6px] sm:text-[12px] ${isActive ? "text-[#17874a]" : "text-slate-400"}`}>
-              {isActive ? "Sort By:" : "Sort By"}
-            </span>
-            {isActive && (
-              <span className="text-[14px] font-extrabold text-[#17874a]">{current?.compactLabel}</span>
-            )}
-          </span>
-          <ChevronDownIcon size={16} color={isActive ? "#17874a" : "#94a3b8"} />
-        </button>
-      )}
-      {open && (
-        <div className="absolute right-0 top-full z-20 mt-3 overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-xl min-w-[180px] w-max">
-          {SORT_OPTIONS.map((opt) => {
-            const isSelected = opt.value === value;
-            return (
-              <button
-                key={opt.value || "random"}
-                type="button"
-                onClick={() => handleSelect(opt.value)}
-                className={`flex w-full items-center gap-3 px-4 py-3 text-left text-[13px] font-medium transition-colors ${
-                  isSelected
-                    ? "bg-[#edf7ef] text-[#0f172a]"
-                    : "text-slate-600 hover:bg-slate-50"
-                }`}
-              >
-                {isSelected ? (
-                  <svg
-                    width="14"
-                    height="14"
-                    viewBox="0 0 24 24"
-                    fill="none"
-                    stroke="#17874a"
-                    strokeWidth="2.5"
-                    strokeLinecap="round"
-                  >
-                    <polyline points="20 6 9 17 4 12" />
-                  </svg>
-                ) : (
-                  <span className="w-[14px]" />
-                )}
-                <span>{opt.compactLabel}</span>
-              </button>
-            );
-          })}
-        </div>
-      )}
-    </div>
-  );
-}
-
-// ── Bookmarks panel ───────────────────────────────────────────────────────────
-function BookmarksPanel({ bookmarkedDeals, bookmarkedIds, onRemove, onClose }) {
-  const ref = useRef(null);
-
-  useEffect(() => {
-    function handleClickOutside(e) {
-      if (ref.current && !ref.current.contains(e.target)) onClose();
-    }
-    document.addEventListener("mousedown", handleClickOutside);
-    return () => document.removeEventListener("mousedown", handleClickOutside);
-  }, [onClose]);
-
-  const saved = Array.from(bookmarkedIds)
-    .map((id) => bookmarkedDeals[id])
-    .filter(Boolean);
-
-  return (
-    <div
-      ref={ref}
-      className="absolute right-0 top-full mt-2 w-80 bg-white rounded-2xl shadow-2xl border border-slate-100 overflow-hidden z-40"
-    >
-      <div className="px-4 py-3 border-b border-slate-100 flex items-center justify-between">
-        <span className="text-[13px] font-extrabold text-[#0f172a] tracking-wide uppercase">
-          Saved Deals
-        </span>
-        <span className="text-[12px] text-slate-400">
-          {saved.length} item{saved.length !== 1 ? "s" : ""}
-        </span>
-      </div>
-      {saved.length === 0 ? (
-        <div className="px-4 py-8 text-center">
-          <svg
-            className="mx-auto mb-2 text-slate-300"
-            width="28"
-            height="28"
-            viewBox="0 0 24 24"
-            fill="none"
-            stroke="currentColor"
-            strokeWidth="1.5"
-          >
-            <path d="M19 21l-7-5-7 5V5a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2z" />
-          </svg>
-          <p className="text-[13px] text-slate-400">No saved deals yet.</p>
-          <p className="text-[12px] text-slate-300 mt-0.5">
-            Tap the bookmark on any deal.
-          </p>
-        </div>
-      ) : (
-        <div className="max-h-[360px] overflow-y-auto divide-y divide-slate-50">
-          {saved.map((deal) => (
-            <div
-              key={deal.id}
-              className="flex items-center gap-3 px-4 py-3 hover:bg-slate-50 transition-colors"
-            >
-              <div className="w-10 h-10 rounded-lg bg-slate-100 flex items-center justify-center overflow-hidden shrink-0">
-                {deal.image_url ? (
-                  <img
-                    src={proxyDealImageUrl(deal)}
-                    alt=""
-                    className="w-full h-full object-contain"
-                    onError={(e) => {
-                      e.target.style.display = "none";
-                    }}
-                  />
-                ) : (
-                  <span className="text-[16px]">🛒</span>
-                )}
-              </div>
-              <div className="flex-1 min-w-0">
-                <p className="text-[12px] font-bold text-[#0f172a] leading-snug line-clamp-1">
-                  {deal.product_name}
-                </p>
-                <p className="text-[11px] text-slate-400 mt-0.5">
-                  {deal.store?.name} ·{" "}
-                  {formatPrice(deal.sale_price, deal.currency)}
-                </p>
-              </div>
-              <button
-                type="button"
-                onClick={() => onRemove(deal.id)}
-                className="shrink-0 text-slate-300 hover:text-red-400 transition-colors p-1"
-                title="Remove bookmark"
-              >
-                <svg
-                  width="16"
-                  height="16"
-                  viewBox="0 0 24 24"
-                  fill="none"
-                  stroke="currentColor"
-                  strokeWidth="2.5"
-                  strokeLinecap="round"
-                >
-                  <path d="M18 6 6 18M6 6l12 12" />
-                </svg>
-              </button>
-            </div>
-          ))}
-        </div>
-      )}
     </div>
   );
 }
@@ -1859,11 +779,6 @@ export default function DealsPage() {
     hideExpired: false,
   });
   const [loginModal, setLoginModal] = useState(null);
-  const [bookmarkedIds, setBookmarkedIds] = useState(new Set());
-  const [bookmarkedDeals, setBookmarkedDeals] = useState({});
-  const [bookmarksPanelOpen, setBookmarksPanelOpen] = useState(false);
-  const [toast, setToast] = useState(null);
-  const toastTimer = useRef(null);
   const nextSearchShouldTrackRef = useRef(false);
   const [totalCount, setTotalCount] = useState(null);
   const {
@@ -2036,17 +951,6 @@ export default function DealsPage() {
       setFilterDraft(nextDraft);
       setFiltersOpen(false);
       setLoginModal(null);
-
-      if (resumeState.bookmarkDealId) {
-        const bookmarkDealId = resumeState.bookmarkDealId;
-        setBookmarkedIds((prev) => new Set(prev).add(bookmarkDealId));
-        addBookmark(bookmarkDealId)
-          .catch(() => null)
-          .then(() => fetchBookmarks().catch(() => null))
-          .then((result) => {
-            if (result?.data) setBookmarkedIds(new Set(result.data));
-          });
-      }
     } catch {
       sessionStorage.removeItem(POST_LOGIN_RESUME_STATE_STORAGE_KEY);
     }
@@ -2095,67 +999,6 @@ export default function DealsPage() {
       300,
     );
   }, [highlightDealId, displayDeals]);
-
-  // Keep bookmarkedDeals map populated from deal pages
-  useEffect(() => {
-    if (!Array.isArray(deals) || deals.length === 0) return;
-    setBookmarkedDeals((prev) => {
-      const next = { ...prev };
-      deals.forEach((d) => {
-        if (d?.id) next[d.id] = d;
-      });
-      return next;
-    });
-  }, [deals]);
-
-  const syncBookmarks = useCallback(async () => {
-    if (!isLoggedIn) {
-      setBookmarkedIds(new Set());
-      return;
-    }
-    try {
-      const res = await fetchBookmarks();
-      setBookmarkedIds(new Set(res.data || []));
-    } catch {
-      setBookmarkedIds(new Set());
-    }
-  }, [isLoggedIn]);
-
-  // Load bookmarks
-  useEffect(() => {
-    if (!isLoggedIn) {
-      setBookmarkedIds(new Set());
-      return undefined;
-    }
-
-    let cancelled = false;
-    let idleId = null;
-    let timeoutId = null;
-
-    const runSync = () => {
-      if (!cancelled) syncBookmarks();
-    };
-
-    if (typeof window !== "undefined" && "requestIdleCallback" in window) {
-      idleId = window.requestIdleCallback(runSync, { timeout: 1500 });
-    } else {
-      timeoutId = window.setTimeout(runSync, 900);
-    }
-
-    return () => {
-      cancelled = true;
-      if (
-        idleId !== null &&
-        typeof window !== "undefined" &&
-        "cancelIdleCallback" in window
-      ) {
-        window.cancelIdleCallback(idleId);
-      }
-      if (timeoutId !== null) {
-        window.clearTimeout(timeoutId);
-      }
-    };
-  }, [isLoggedIn, syncBookmarks]);
 
   const [storeNames, setStoreNames] = useState([]);
   useEffect(() => {
@@ -2313,16 +1156,27 @@ export default function DealsPage() {
     updateAppliedState({ sortValue: val, page: 1 });
   }
 
-  function handleSearch() {
-    const nextQuery = searchInput.trim();
+  function handleSearch(val) {
+    const q = (val !== undefined ? String(val) : searchInput).trim();
     trackAnalyticsEvent(
       "search_submit",
       buildAnalyticsContext({
-        query_length: nextQuery.length,
+        query_length: q.length,
       }),
     );
-    nextSearchShouldTrackRef.current = Boolean(nextQuery);
-    updateAppliedState({ searchQuery: nextQuery, page: 1 });
+    nextSearchShouldTrackRef.current = Boolean(q);
+    updateAppliedState({ searchQuery: q, page: 1 });
+  }
+
+  // storeId ignored — filterStores is name-keyed throughout DealsPage
+  function handleSuggestStore(name) {
+    setSearchInput("");
+    updateAppliedState({ filterStores: [name], page: 1 });
+  }
+
+  function handleSuggestCategory(cat) {
+    setSearchInput("");
+    updateAppliedState({ filterCategory: cat, page: 1 });
   }
 
   function removeFilterChip(type, label) {
@@ -2346,72 +1200,6 @@ export default function DealsPage() {
       updateAppliedState({ filterPriceMin: "", filterPriceMax: "", page: 1 });
     }
   }
-
-  function showToast(message, tone = "success") {
-    setToast({ message, tone });
-    clearTimeout(toastTimer.current);
-    toastTimer.current = setTimeout(() => setToast(null), 3000);
-  }
-
-  const handleBookmark = useCallback(
-    async (dealId) => {
-      const deal =
-        bookmarkedDeals[dealId] ||
-        displayDeals.find((entry) => entry?.id === dealId) ||
-        null;
-      if (!isLoggedIn) {
-        trackAnalyticsEvent(
-          "bookmark_login_required",
-          buildDealAnalyticsPayload(deal, buildAnalyticsContext()),
-        );
-        setLoginModal({
-          message: "Bookmarks are for registered members only.",
-          resumeState: createResumeState({ bookmarkDealId: dealId }),
-        });
-        return;
-      }
-      const wasBookmarked = bookmarkedIds.has(dealId);
-      trackAnalyticsEvent(
-        wasBookmarked ? "bookmark_remove_click" : "bookmark_add_click",
-        buildDealAnalyticsPayload(deal, buildAnalyticsContext()),
-      );
-      setBookmarkedIds((prev) => {
-        const next = new Set(prev);
-        if (wasBookmarked) next.delete(dealId);
-        else next.add(dealId);
-        return next;
-      });
-      showToast(
-        wasBookmarked ? "Removed from basket" : "Saved to basket",
-        wasBookmarked ? "removed" : "success",
-      );
-      try {
-        if (wasBookmarked) {
-          await removeBookmark(dealId);
-        } else {
-          await addBookmark(dealId);
-        }
-      } catch {
-        setBookmarkedIds((prev) => {
-          const next = new Set(prev);
-          if (wasBookmarked) next.add(dealId);
-          else next.delete(dealId);
-          return next;
-        });
-      } finally {
-        syncBookmarks();
-      }
-    },
-    [
-      bookmarkedDeals,
-      buildAnalyticsContext,
-      createResumeState,
-      displayDeals,
-      isLoggedIn,
-      bookmarkedIds,
-      syncBookmarks,
-    ],
-  );
 
   async function handleLogout() {
     trackAnalyticsEvent("logout_click", buildAnalyticsContext());
@@ -2459,6 +1247,7 @@ export default function DealsPage() {
 
   return (
     <div className="min-h-screen bg-[radial-gradient(circle_at_top,_#ffffff_0%,_#f8fbff_32%,_#f3f6fb_100%)]">
+      <NavTabs />
       <div className="sticky top-0 z-50 sm:hidden">
         <div className="bg-white shadow-[0px_1px_2px_0px_rgba(0,0,0,0.05)]">
           <div className="flex min-h-[72px] items-center justify-between gap-3 px-4 py-3">
@@ -2479,25 +1268,6 @@ export default function DealsPage() {
             <div className="flex items-center gap-2">
               {isLoggedIn ? (
                 <>
-                  <Link
-                    to="/saved"
-                    onClick={() =>
-                      trackAnalyticsEvent(
-                        "saved_deals_open",
-                        buildAnalyticsContext(),
-                      )
-                    }
-                    className="relative inline-flex h-10 w-10 items-center justify-center rounded-full border border-slate-200 bg-white text-slate-600 transition-colors hover:bg-slate-50"
-                    style={{ textDecoration: "none" }}
-                    title="Saved deals"
-                  >
-                    <CartIcon size={18} color="currentColor" />
-                    {bookmarkedIds.size > 0 && (
-                      <span className="absolute -top-1 -right-1 min-w-[18px] h-[18px] px-1 rounded-full bg-[#9a6500] text-white text-[10px] font-extrabold flex items-center justify-center leading-none">
-                        {bookmarkedIds.size}
-                      </span>
-                    )}
-                  </Link>
                   <div className="relative">
                     <button
                       type="button"
@@ -2513,16 +1283,6 @@ export default function DealsPage() {
                           onClick={() => setMobileMenuOpen(false)}
                         />
                         <div className="absolute right-0 top-[calc(100%+8px)] z-50 w-44 overflow-hidden rounded-[16px] border border-slate-100 bg-white shadow-xl">
-                          <Link
-                            to="/saved"
-                            onClick={() => setMobileMenuOpen(false)}
-                            className="flex items-center gap-3 px-4 py-3 text-[14px] font-semibold text-slate-700 hover:bg-slate-50 transition-colors no-underline"
-                            style={{ textDecoration: "none" }}
-                          >
-                            <CartIcon size={16} color="currentColor" />
-                            Saved deals
-                          </Link>
-                          <div className="h-px bg-slate-100 mx-3" />
                           <button
                             type="button"
                             onClick={() => {
@@ -2581,16 +1341,15 @@ export default function DealsPage() {
               className="flex flex-col gap-3"
             >
               <div className="flex gap-3 items-center">
-                <div className="flex-1 flex items-center gap-3 rounded-[24px] border border-white/80 bg-white px-4 py-3.5 shadow-sm">
-                  <SearchIcon size={18} color="#94a3b8" />
-                  <input
-                    type="search"
-                    value={searchInput}
-                    onChange={(e) => setSearchInput(e.target.value)}
-                    placeholder="Search for ghee, rice, spices..."
-                    className="min-w-0 flex-1 bg-transparent text-[16px] font-medium text-slate-700 placeholder:text-[#94a3b8] outline-none"
-                  />
-                </div>
+                <SearchWithSuggest
+                  className="flex-1"
+                  value={searchInput}
+                  onChange={(val) => setSearchInput(val)}
+                  onCommit={handleSearch}
+                  onSelectCategory={handleSuggestCategory}
+                  onSelectStore={handleSuggestStore}
+                  placeholder="Search for ghee, rice, spices..."
+                />
 
                 {!hasActiveState && (
                   <button
@@ -2679,28 +1438,6 @@ export default function DealsPage() {
                   </span>
                 )}
               </button>
-              {isLoggedIn && (
-                <Link
-                  to="/saved"
-                  onClick={() =>
-                    trackAnalyticsEvent(
-                      "saved_deals_open",
-                      buildAnalyticsContext(),
-                    )
-                  }
-                  className="relative inline-flex h-11 w-11 items-center justify-center rounded-full border border-slate-200 bg-white text-slate-600 shadow-sm transition-colors hover:bg-slate-50"
-                  style={{ textDecoration: "none" }}
-                  title="Saved deals"
-                >
-                  <CartIcon size={19} color="currentColor" />
-                  {bookmarkedIds.size > 0 && (
-                    <span className="absolute -top-1 -right-1 min-w-[20px] h-[20px] px-1 rounded-full bg-[#9a6500] text-white text-[11px] font-extrabold flex items-center justify-center leading-none">
-                      {bookmarkedIds.size}
-                    </span>
-                  )}
-                </Link>
-              )}
-
               {isLoggedIn ? (
                 <>
                   <button
@@ -2773,22 +1510,15 @@ export default function DealsPage() {
             >
               <div className="hidden sm:block">
                 <div className="flex gap-3 items-center">
-                  <div className="flex-1 flex items-center gap-3 rounded-[24px] border border-white/80 bg-white px-4 sm:px-5 py-3.5 shadow-sm">
-                    <SearchIcon size={18} color="#94a3b8" />
-                    <input
-                      type="search"
-                      value={searchInput}
-                      onChange={(e) => setSearchInput(e.target.value)}
-                      placeholder="Search for ghee, rice, spices..."
-                      className="min-w-0 flex-1 bg-transparent text-[16px] sm:text-[18px] font-medium text-slate-700 placeholder:text-[#94a3b8] outline-none"
-                    />
-                    <button
-                      type="submit"
-                      className="hidden sm:inline-flex items-center justify-center rounded-full bg-[#17874a] px-5 py-2.5 text-[14px] font-bold text-white transition-colors hover:bg-[#136f3c]"
-                    >
-                      Search
-                    </button>
-                  </div>
+                  <SearchWithSuggest
+                    className="flex-1"
+                    value={searchInput}
+                    onChange={(val) => setSearchInput(val)}
+                    onCommit={handleSearch}
+                    onSelectCategory={handleSuggestCategory}
+                    onSelectStore={handleSuggestStore}
+                    placeholder="Search for ghee, rice, spices..."
+                  />
 
                   <button
                     type="button"
@@ -2954,8 +1684,6 @@ export default function DealsPage() {
               <DealCard
                 key={deal.id}
                 deal={deal}
-                isBookmarked={bookmarkedIds.has(deal.id)}
-                onBookmark={handleBookmark}
                 highlighted={highlightDealId === deal.id}
                 highlightRef={highlightDealId === deal.id ? highlightRef : null}
                 priority={index < 4}
@@ -3049,34 +1777,6 @@ export default function DealsPage() {
         </div>
       )}
 
-      {/* Toast */}
-      {toast && (
-        <div className="fixed bottom-6 left-1/2 -translate-x-1/2 z-50 pointer-events-none">
-          <div
-            className={`flex items-center gap-2.5 text-[14px] font-semibold px-5 py-3.5 rounded-2xl shadow-xl ${
-              toast.tone === "removed"
-                ? "bg-[#7c2d12] text-[#fff7ed]"
-                : "bg-[#166534] text-white"
-            }`}
-          >
-            <svg
-              width="16"
-              height="16"
-              viewBox="0 0 24 24"
-              fill="none"
-              stroke="currentColor"
-              strokeWidth="2.5"
-              strokeLinecap="round"
-              strokeLinejoin="round"
-            >
-              <circle cx="9" cy="21" r="1" />
-              <circle cx="20" cy="21" r="1" />
-              <path d="M1 1h4l2.68 13.39a2 2 0 0 0 2 1.61h9.72a2 2 0 0 0 2-1.61L23 6H6" />
-            </svg>
-            {toast.message}
-          </div>
-        </div>
-      )}
     </div>
   );
 }

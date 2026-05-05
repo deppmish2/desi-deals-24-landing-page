@@ -127,3 +127,41 @@ Sources: server/services/product-replacements.js, server/routes/deals.js, server
 ## [2026-04-11] bootstrap | Initial wiki created from codebase sources
 Pages touched: WIKI.md, index.md, overview.md, backend.md, frontend.md, crawler.md, decisions.md, stores/jamoona.md, stores/dookan.md, stores/grocera.md, stores/little-india.md, stores/namma-markt.md
 Sources: CLAUDE.md, docs/crisp-architecture.md, server/index.js, server/db/schema.sql, crawler/index.js, crawler/utils/category-mapper.js, client/src/App.jsx, client/src/hooks/useDeals.js, client/src/utils/api.js, crawler/stores/*.js (5 stores)
+
+---
+
+## [2026-05-03] update | Platform v1 wiki — routes, recommender, sub-variant filter, brand-stripping fix, weight badge
+
+Pages touched: backend.md, frontend.md
+Sources: server/index.js, server/routes/catalog.js, server/routes/lists.js, server/routes/recommend.js, server/routes/compare.js, server/routes/orders.js, server/services/recommender.js, server/services/smart-ranker.js, client/src/App.jsx, client/src/hooks/useCart.js, client/src/hooks/CartContext.js, client/src/utils/api.js, client/src/components/comparison/StoreComparisonCard.jsx, client/src/components/ProductCard.jsx
+
+**Changes recorded:**
+
+- `backend.md`: Added Platform v1 API routes — `/api/v1/catalog` (paginated canonical product catalog + suggest + brands), `/api/v1/lists` (CRUD + items), `/api/v1/lists/:id/recommend` (recommender), `/api/v1/lists/:id/cart-transfer`, `/api/v1/lists/:id/replacement-search`, `/api/v1/compare/cart`, `/api/v1/orders`. Fixed stale table names: `deals` → `store_products`, `deal_mappings` → `store_product_mappings`, `deal_price_history` → `price_history`. Expanded `canonical_products` description. Added full Recommender service section: two-path matching (Path 1 brand-stripping for any-brand items, Path 2 brand-aware), combination engine with `applySubVariantPreference`, `SUB_VARIANT_KEYWORDS`, smart-ranker weights, response shape.
+- `frontend.md`: Updated routing table with `/cart` (CartPage), `/products` (CatalogPage), `/compare/:id` (ComparePage), `/orders` (OrdersPage), `/list` redirect, `/list/:id/compare` redirect. Added Cart section: `useCart` hook, `CartContext`, cart item shape, weight display rule. Updated API client section with Platform v1 functions: `fetchCatalog`, `fetchCatalogSuggest`, `fetchLists`, `createList`, `fetchList`, `addListItem`, `mergeCartIntoList`, `runComparison`, `fetchOrders`. Added `StoreComparisonCard` section (weight badge, coverage bar, missing banner). Added `ProductCard` section (brand extraction, any-brand mode, image proxy).
+- **Bug fixes documented:** (1) Brand-stripping fix: any-brand items strip brand token from `raw_item_text` before text search — prevents brand triple-counting in smart-ranker (MDH Amchur Powder was scoring MDH Karahi Gosht Masala at 0.571; drops to 0.075 after fix). (2) Sub-variant filtering: `applySubVariantPreference` post-filters base pool by keywords extracted from cart item text — "Extra Long Basmati Rice" no longer matches "Everyday" variant. (3) Weight badge: shows total weight (value × packs), normalized g→kg / ml→l.
+
+---
+
+## [2026-05-03] update | Orders History — full lifecycle backend + frontend
+
+Pages touched: backend.md, frontend.md
+Sources: server/routes/orders.js, server/middleware/user-auth.js, server/utils/jwt.js, server/db/schema.sql (alwaysMigrations), client/src/pages/OrdersPage.jsx, client/src/utils/api.js, tests/integration/orders.test.js
+
+**Changes recorded:**
+
+- `backend.md`: Expanded orders routes — added 5 missing endpoints (PATCH /handoff, PATCH /confirm, DELETE /:id, PATCH /rating, PATCH /status). Expanded `shopping_lists` description with 7 lifecycle columns added via `alwaysMigrations` (order_status, savings_eur, total_eur, rating, eta_date, issue_text, tracking_url). Clarified Auth section: split `auth.js` (admin ADMIN_SECRET) from `user-auth.js` (user JWT, HS256, `type:"access"` required); documented `server/utils/jwt.js` signJwt/verifyJwt.
+- `frontend.md`: Added 4 order API functions (handoffOrder, confirmOrder, cancelOrder, rateOrder) with notes on Infinity-clamp gotcha. Added full `OrdersPage` section: shared atoms (StoreLogo, StatusPill, Stars, SavingsSparkline, formatters), Dir2 mobile timeline components (D2Order, D2Footer, recap strip, grouping), Dir4 desktop two-pane components (D4Row, D4Detail, dashboard, CSV export), optimistic handler pattern.
+
+---
+
+## [2026-05-04] auto-update | Search/Filters/Sort parity, ProductCard weight badge, catalog sort param
+
+Pages touched: frontend.md, backend.md
+Sources: client/src/components/SortDropdown.jsx, client/src/components/FiltersModal.jsx, client/src/components/SearchWithSuggest.jsx, client/src/components/ProductCard.jsx, client/src/pages/CatalogPage.jsx, client/src/pages/DealsPage.jsx, server/routes/catalog.js, docs/superpowers/plans/2026-05-03-search-filters-sort-parity.md
+
+**Changes recorded:**
+
+- `frontend.md`: Removed `/saved` route + `SavedDealsPage` (commit 81b0b57). Added "Shared search / filters / sort (search-parity)" section documenting `SortDropdown` (default + `SORT_OPTIONS`), `FiltersModal` (default + `CATEGORIES`, auth-gated apply with sessionStorage draft preservation across OAuth), `SearchWithSuggest` (debounced typeahead, keyboard nav, `controlRef` guards from commits 407d7af / cb882c0 / 6c29aaa). Noted `DealsPage` mounts `SearchWithSuggest` twice (mobile + desktop toolbar zones). Updated `ProductCard` section: weight/pack-size badge now `[weight_raw, formatPricePerKg(price_per_kg, weight_unit)].filter(Boolean).join(" | ")`, mirrors `DealsPage` deal-card pattern (e.g. `62g | 0.32 €/kg`).
+- `backend.md`: `/api/v1/catalog` row updated — added `sort` param (`price` default, `price_per_kg`, `discount`, `real_savings`); `store` filter now case-insensitive via `JOIN stores ... ON lower(s.name) = lower(?)`.
+- **Bug fixes documented:** ProductCard previously rendered only `formatPricePerKg(price_per_kg)` — `weight_raw` was dropped, so cards in the "All Products" view showed `€/kg` only or nothing when `price_per_kg` was null. Fixed by mirroring the DealsPage composition; `weight_raw` like `"62g"` now always shown alongside per-kg/L price when both available.

@@ -1,7 +1,7 @@
 ---
 title: Backend
-last_updated: 2026-04-21
-source_count: 3
+last_updated: 2026-05-04
+source_count: 4
 ---
 
 The backend is an Express app (`server/index.js`) using CommonJS modules throughout. It serves the REST API, handles auth, and in non-serverless mode starts the cron scheduler. In production (Vercel), the scheduler is skipped — crawls are triggered by GitHub Actions instead.
@@ -39,6 +39,27 @@ Static assets: `client/dist/assets/` served with `Cache-Control: max-age=1y, imm
 | `GET /api/v1/admin-dashboard/brands` | `server/routes/admin-dashboard.js` | Returns all `known_brands` rows |
 | `POST /api/v1/admin-dashboard/brands/remap` | `server/routes/admin-dashboard.js` | Replaces brand list, re-decomposes all canonicals, maps unmapped deals. Runs **synchronously** — returns result in response body. |
 | `GET /api/v1/admin-dashboard/brands/remap-status/:jobId` | `server/routes/admin-dashboard.js` | Reads `brand_remap_jobs` row by id (retained for legacy polling clients) |
+| `GET /api/v1/catalog` | `server/routes/catalog.js` | Paginated canonical product catalog. Params: `q`, `category`, `store`, `sort`, `is_discounted`, `min_discount`, `hide_expired`, `page`, `limit`. `sort` ∈ `{price, price_per_kg, discount, real_savings}` (default `price ASC`); `store` is case-insensitive (`lower(s.name) = lower(?)` join). Returns `{data, pagination}`. |
+| `GET /api/v1/catalog/suggest` | `server/routes/catalog.js` | Typeahead: returns `{products, categories, stores}` matching `?q=`. |
+| `GET /api/v1/catalog/:id/brands` | `server/routes/catalog.js` | Returns flat brand list from `brand_slots` for a canonical product. |
+| `GET /api/v1/lists` | `server/routes/lists.js` | Returns user's shopping lists (auth required) |
+| `POST /api/v1/lists` | `server/routes/lists.js` | Create a new list |
+| `GET /api/v1/lists/:id` | `server/routes/lists.js` | Get list with items |
+| `PUT /api/v1/lists/:id` | `server/routes/lists.js` | Update list metadata |
+| `DELETE /api/v1/lists/:id` | `server/routes/lists.js` | Delete list |
+| `POST /api/v1/lists/:id/items` | `server/routes/lists.js` | Add item to list |
+| `PUT /api/v1/lists/:id/items/:itemId` | `server/routes/lists.js` | Update list item |
+| `DELETE /api/v1/lists/:id/items/:itemId` | `server/routes/lists.js` | Remove list item |
+| `POST /api/v1/lists/:id/recommend` | `server/routes/recommend.js` | Run recommender: cross-store price comparison for list items. Returns `{stores: [{store_name, confirmed_total, coverage, items, items_not_found}]}`. |
+| `POST /api/v1/lists/:id/cart-transfer` | `server/routes/recommend.js` | Transfer cart to a specific store (mark list as completed) |
+| `POST /api/v1/lists/:id/replacement-search` | `server/routes/recommend.js` | Find replacements for a missing item at a specific store |
+| `POST /api/v1/compare/cart` | `server/routes/compare.js` | Cross-store comparison (auth required) |
+| `GET /api/v1/orders` | `server/routes/orders.js` | Returns completed shopping lists with items and lifecycle columns (auth required) |
+| `PATCH /api/v1/orders/:id/handoff` | `server/routes/orders.js` | Sets `order_status=pending`; records `completed_store_id`, `savings_eur`, `total_eur`, `completed_at` (auth required) |
+| `PATCH /api/v1/orders/:id/confirm` | `server/routes/orders.js` | Advances `order_status` from `pending` → `placed` (auth required) |
+| `DELETE /api/v1/orders/:id` | `server/routes/orders.js` | Cancels/deletes the order record (auth required) |
+| `PATCH /api/v1/orders/:id/rating` | `server/routes/orders.js` | Sets `rating` 1–5 on delivered orders (auth required) |
+| `PATCH /api/v1/orders/:id/status` | `server/routes/orders.js` | Advances `order_status` through lifecycle: `placed→shipped→delivered→issue` (auth required) |
 | `GET /api/v1/member-count` | inline in `server/index.js` | Display member count |
 | `POST /api/v1/contact` | `server/routes/contact.js` | Contact form |
 | `POST /api/v1/waitlist` | `server/routes/waitlist.js` | Waitlist signup |
@@ -56,21 +77,21 @@ Schema: `server/db/schema.sql` — auto-applied on startup. Key tables:
 | Table | Purpose |
 |---|---|
 | `stores` | Store registry (id, name, url, platform, crawl status) |
-| `deals` | Active/inactive deals; deduped by `product_url` per store |
-| `deal_price_history` | Daily price snapshot per product (for Real Savings comparison) |
+| `store_products` | Crawled listings; deduped by `product_url` per store; `is_active` flag |
+| `store_product_mappings` | Links `store_products` rows to `canonical_products` |
+| `price_history` | Daily price snapshot per product (for Real Savings comparison) |
 | `crawl_runs` | Crawl run metadata and error log |
 | `crawl_store_results` | Per-store per-run result stats |
 | `crawl_locks` | Distributed lock to prevent concurrent crawls |
 | `job_runs` | Generic scheduled job ledger |
-| `canonical_products` | Canonical product registry (entity resolution) |
-| `deal_mappings` | Maps deal rows to canonical products |
+| `canonical_products` | One row per distinct product across stores. Key columns: `canonical_name`, `category`, `base_key`, `brand_slots` (JSON), `weight_value`, `weight_unit`, `image_url`. |
 | `entity_resolution_queue` | Ambiguous mappings pending admin review |
 | `known_brands` | Brand whitelist used for canonical slot decomposition. `name TEXT UNIQUE`, `aliases TEXT` (JSON array of lowercase strings). Source of truth for which tokens are brand identifiers. |
 | `brand_remap_jobs` | Audit log for admin-triggered remap runs. `status`: running/completed/failed. `stats` JSON: `{canonicalsRedecomposed, canonicalsDeleted, newlyMapped, stillUnmapped, duration_ms}`. |
 | `users` | User accounts (email, Google OAuth, postcode, preferences) |
 | `email_auth_tokens` | Passwordless email magic links |
 | `refresh_tokens` | JWT refresh token sessions |
-| `shopping_lists` / `list_items` | Saved shopping lists |
+| `shopping_lists` / `list_items` | Saved shopping lists. `shopping_lists` has 7 order lifecycle columns added via `alwaysMigrations`: `order_status` (TEXT, pending/placed/shipped/delivered/issue), `completed_store_id`, `savings_eur` (REAL), `total_eur` (REAL), `rating` (INT 1–5), `eta_date` (TEXT), `issue_text` (TEXT), `tracking_url` (TEXT) |
 | `price_alerts` / `alert_notifications` | Price alert subscriptions |
 | `events` / `search_queries` | Analytics events |
 | `app_settings` | Generic key-value config |
@@ -79,7 +100,7 @@ Key indexes: `deals(is_active, display_date, display_order)` — the main query 
 
 ## Auth
 
-`server/middleware/auth.js` — checks `Authorization: Bearer <token>`. Admin routes require `ADMIN_SECRET`; user routes validate JWT access tokens. Refresh tokens are stored hashed in `refresh_tokens` table.
+`server/middleware/auth.js` — admin routes; checks `Authorization: Bearer <ADMIN_SECRET>`. `server/middleware/user-auth.js` — user-facing routes; validates JWT access token (HS256, payload must include `type:"access"`). `server/utils/jwt.js` — `signJwt(payload, secret, expiresInSec)` / `verifyJwt(token, secret)` using Node `crypto` HMAC. Admin routes require `ADMIN_SECRET`; user routes validate JWT access tokens. Refresh tokens are stored hashed in `refresh_tokens` table.
 
 Email auth flow: start → magic link sent → user clicks → `complete` endpoint validates hash → issues access + refresh tokens.
 
@@ -120,6 +141,33 @@ After serialization, every response path calls `batchGetRealSavings` + `computeR
 `server/db/index.js` connects to **Turso** when `DESI_DEALS_DB_TURSO_DATABASE_URL` is present in env. Falls back to local SQLite when no Turso URL is set. Run locally with `DB_FILE=data/prod_local.db npm run dev`.
 
 **prod_local.db (as of 2026-04-21):** `data/prod_local.db` is the curated local snapshot used as the replacement for the live Turso DB. State: 14,598 canonical products (12,443 with `is_match_priority=1`), 3,003 with `base_key` populated, 22 unmapped active deals in entity_resolution_queue. `base_key` column added 2026-04-21 and backfilled from `resolveBaseProduct()`. All active `deals.product_category` values synced to match `canonical_products.category` (18,507 rows updated, 0 active drift).
+
+## Recommender service
+
+`server/services/recommender.js` — powers `POST /api/v1/lists/:id/recommend`. For each cart item, finds the best matching deal at every store.
+
+**Two-path matching per item:**
+
+- **Path 1 (no brand / any-brand):** text-search only. Brand is stripped from `raw_item_text` before SQL `LIKE` query so "Any brand Amchur Powder" searches for "Amchur Powder" — prevents MDH-prefix hits from inflating brand_match scores in the ranker.
+- **Path 2 (specific brand):** SQL query includes brand token; smart ranker scores all candidates.
+
+**Combination engine (`findStrictExactCandidatesAtStore`):** expands the base pool via `base_key` (all canonicals sharing the same catalog base product). Accepts `rawItemText` to apply `applySubVariantPreference` — if the item is "Extra Long Basmati Rice", candidates matching "extra long" are preferred. Falls back to full pool when no preferred candidates exist at that store.
+
+**Smart ranker (`server/services/smart-ranker.js` → `rankMatch`):** scores each candidate on 5 features: embedding similarity (30%), brand match (25%), token overlap (20%), weight match (15%), phonetic (10%). Minimum confidence threshold: `SMART_MATCH_THRESHOLD = 0.45`.
+
+**`SUB_VARIANT_KEYWORDS`:** `["extra long", "long grain", "short grain", "everyday", "classic", "premium", "organic", "aged", "traditional", "original"]` — keywords extracted from cart item text to prefer matching sub-variants. These are stripped by `QUALITY_QUALIFIERS` in `base-product-catalog.js` when building `base_key`, so both "Extra Long" and "Everyday" Basmati map to the same base key. The post-filter restores the preference.
+
+**Response shape per store:**
+```json
+{
+  "store_name": "Dookan",
+  "store_id": "dookan",
+  "confirmed_total": 12.45,
+  "coverage": { "available": 5, "replaced": 1, "missing": 1, "total": 7 },
+  "items": [{ "product_name": "...", "effective_price": 2.49, "packs_needed": 2, ... }],
+  "items_not_found": ["Amchur Powder"]
+}
+```
 
 ## Related pages
 

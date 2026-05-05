@@ -244,6 +244,13 @@ const ready = (async () => {
     "ALTER TABLE shopping_lists ADD COLUMN status TEXT DEFAULT 'pending'",
     "ALTER TABLE shopping_lists ADD COLUMN completed_store_id TEXT",
     "ALTER TABLE shopping_lists ADD COLUMN completed_at DATETIME",
+    "ALTER TABLE shopping_lists ADD COLUMN order_status TEXT DEFAULT 'pending' CHECK (order_status IN ('pending','placed','shipped','delivered','issue'))",
+    "ALTER TABLE shopping_lists ADD COLUMN savings_eur   REAL",
+    "ALTER TABLE shopping_lists ADD COLUMN total_eur     REAL",
+    "ALTER TABLE shopping_lists ADD COLUMN rating        INTEGER CHECK (rating BETWEEN 1 AND 5)",
+    "ALTER TABLE shopping_lists ADD COLUMN eta_date      TEXT",
+    "ALTER TABLE shopping_lists ADD COLUMN issue_text    TEXT",
+    "ALTER TABLE shopping_lists ADD COLUMN tracking_url  TEXT",
   ];
   for (const sql of alwaysMigrations) {
     try {

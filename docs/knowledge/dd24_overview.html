@@ -467,6 +467,10 @@
           <h4>Product Replacements</h4>
           <p>Slot fields + product_group_id → T1/T2/T3/T4 alternatives. Same canonical-linked deals always skipped.</p>
         </div>
+        <div class="feature-box blue">
+          <h4>Platform v1 APIs</h4>
+          <p><code>/api/v1/catalog</code> — canonical product browse with cheapest-store CTE. <code>/api/v1/compare/cart</code> — cross-store cart comparison ranked by confirmed total. <code>/api/v1/orders</code> — shopping list history + mark-complete.</p>
+        </div>
       </div>
     </div>
 
@@ -474,21 +478,53 @@
     <div id="view-trigger" class="view">
       <div class="section-header">
         <div class="section-title">What Triggers a Crawl</div>
-        <div class="section-sub">Three paths into the crawl pipeline — cron, startup flag, and manual admin call.</div>
+        <div class="section-sub">Three crawl modes, five trigger paths — daily deals cron, weekly full-catalog cron, on-demand queue drain, startup flag, and manual admin call.</div>
       </div>
+
       <div class="card">
+        <div class="card-title">Three crawl modes</div>
         <table class="data-table">
-          <thead><tr><th>Trigger</th><th>When</th></tr></thead>
+          <thead><tr><th>Mode</th><th>Script</th><th>What it crawls</th><th>Timeout</th></tr></thead>
           <tbody>
-            <tr><td>Daily cron</td><td>08:00 Europe/Berlin — <code>0 8 * * *</code> via node-cron</td></tr>
-            <tr><td>Startup flag</td><td><code>CRAWL_ON_STARTUP=true</code> env var; fires 2s after server boot</td></tr>
-            <tr><td>Manual</td><td>Admin HTTP call (Bearer token required)</td></tr>
+            <tr>
+              <td><span class="badge badge-green">Mode 1 — daily</span></td>
+              <td><code>npm run crawl</code> → <code>crawler/index.js</code></td>
+              <td>Deals &amp; discounts only. Marks old deals inactive. Sequential, 2–5s inter-store delay. Rebuilds FTS after.</td>
+              <td>3 h</td>
+            </tr>
+            <tr>
+              <td><span class="badge badge-blue">Mode 2 — weekly</span></td>
+              <td><code>npm run crawl:mode2</code> → <code>scripts/mode2-crawl.js</code></td>
+              <td>Full product catalog for all Shopify + WooCommerce stores (not just deals). <code>ON CONFLICT</code> upsert. Rebuilds FTS after. Uses <code>store_crawl_state.catalog_cursor</code> for resumable pagination.</td>
+              <td>6 h</td>
+            </tr>
+            <tr>
+              <td><span class="badge badge-amber">Mode 3 — on-demand</span></td>
+              <td><code>crawler/on-demand-crawl.js</code> → <code>drainPendingCrawls()</code></td>
+              <td>User-triggered per-product search across all stores. Reads from <code>pending_on_demand_crawls</code> queue. Drained on every server startup. Max 5 concurrent per drain run.</td>
+              <td>—</td>
+            </tr>
           </tbody>
         </table>
       </div>
+
+      <div class="card">
+        <div class="card-title">Trigger paths</div>
+        <table class="data-table">
+          <thead><tr><th>Trigger</th><th>Mode</th><th>When / How</th></tr></thead>
+          <tbody>
+            <tr><td>Daily cron (GitHub Actions)</td><td>Mode 1</td><td><code>50 5 * * *</code> UTC — waits until 08:00 Europe/Berlin, then <code>npm run crawl</code>. Manual dispatch skips the wait.</td></tr>
+            <tr><td>Weekly cron (GitHub Actions)</td><td>Mode 2</td><td><code>0 1 * * 0</code> UTC — every Sunday 01:00 UTC. Manual dispatch available.</td></tr>
+            <tr><td>On-demand drain</td><td>Mode 3</td><td>Always runs at server startup — <code>drainPendingCrawls()</code> called in <code>server/index.js</code> startup path. Processes <code>pending_on_demand_crawls</code> queue.</td></tr>
+            <tr><td>Startup flag</td><td>Mode 1</td><td><code>CRAWL_ON_STARTUP=true</code> env var; fires 2s after server boot via <code>setTimeout</code>.</td></tr>
+            <tr><td>Manual admin</td><td>Mode 1</td><td>Admin HTTP call (Bearer token required).</td></tr>
+          </tbody>
+        </table>
+      </div>
+
       <div class="card blue">
         <div class="card-title">crawler/scheduler.js</div>
-        <p style="color:var(--text2);font-size:12px;">Owns all three trigger paths. Cron expression and timezone are both configured here. The startup path uses <code>setTimeout(runCrawl, 2000)</code> to let the server fully bind before crawling begins.</p>
+        <p style="color:var(--text2);font-size:12px;">Owns the local Mode 1 trigger paths (daily node-cron + startup). Skipped in serverless mode — GitHub Actions handles the 08:00 Europe/Berlin cron instead. Mode 2 (weekly) is GitHub Actions only; no local scheduler equivalent.</p>
       </div>
     </div>
 
@@ -502,22 +538,22 @@
       <div class="card">
         <div class="card-title">Adapter types</div>
         <table class="data-table">
-          <thead><tr><th>Type</th><th>Stores</th><th>Method</th></tr></thead>
+          <thead><tr><th>Type</th><th>Stores (32 total)</th><th>Method</th></tr></thead>
           <tbody>
             <tr>
               <td><span class="badge badge-blue">Shopify JSON</span></td>
-              <td>jamoona, dookan, namma-markt</td>
-              <td><code>/collections/{handle}/products.json?limit=250</code> — paginated JSON, no HTML parsing needed</td>
+              <td>Jamoona, Dookan, Namma Markt, Global Food Hub, Desigros, Zora Supermarkt, MD Store, Indian Supermarkt, Indian Store Stuttgart, AnuHita Groceries, SAIRAS, Bajwa Shop, Indian Spice Basket, Transfood Lebensmittelvertrieb, Village Foods <em style="color:var(--text3)">(15 stores)</em></td>
+              <td><code>/collections/{handle}/products.json?limit=250</code> — paginated JSON, no HTML parsing. Three sub-adapters: <code>shopify-catalog</code>, <code>createShopifyDealsAdapter</code>, or direct fetch.</td>
             </tr>
             <tr>
               <td><span class="badge badge-amber">WooCommerce HTML</span></td>
-              <td>little-india</td>
+              <td>Little India, Annachi Europe, Asian Grocery Store, Asiatischer Lebensmittelladen, Barkat Food, Indian Food Store, Indische-Lebensmittel-Online, Spicelands, Swadesh, Zaki Asian Foods <em style="color:var(--text3)">(10 stores)</em></td>
               <td>Cheerio HTML scrape with pagination <code>/page/N/</code>; parses product cards from DOM</td>
             </tr>
             <tr>
-              <td><span class="badge badge-slate">HTMX + Cheerio</span></td>
-              <td>grocera</td>
-              <td>Multi-selector fallback; lazy-loaded JS limits yield to ~1–3 deals (known limitation)</td>
+              <td><span class="badge badge-slate">Custom Cheerio</span></td>
+              <td>Grocera, Desi Store, Namaste Deutschland, India Store, India Express Food, Yogi Mart, MAS Impex <em style="color:var(--text3)">(7 stores)</em></td>
+              <td>Custom node-fetch + Cheerio per store. Grocera: HTMX multi-selector fallback, lazy-loaded JS limits yield to ~1–3 deals (known limitation).</td>
             </tr>
           </tbody>
         </table>
@@ -1033,8 +1069,8 @@ name: <span class="str">"HEERA SOAN PAPDI 500GMS"</span>
               <td><code>recordStoreHistory(storeId)</code> — delete-then-insert pattern</td>
             </tr>
             <tr>
-              <td><code>server/routes/deals.js</code></td>
-              <td>Main deals API</td>
+              <td><code>server/routes/store-products.js</code></td>
+              <td>Main store-products API</td>
               <td>Dynamic SQL query builder; no ORM</td>
             </tr>
             <tr>
@@ -1048,6 +1084,41 @@ name: <span class="str">"HEERA SOAN PAPDI 500GMS"</span>
               <td>Primary write path for brand_slots; approve/reject queue items</td>
             </tr>
             <tr>
+              <td><code>server/routes/catalog.js</code></td>
+              <td>Canonical product catalog (Platform v1)</td>
+              <td><code>GET /api/v1/catalog</code> — paginated, filterable by q/category/store/is_discounted/min_discount/hide_expired; cheapest-store CTE; <code>GET /api/v1/catalog/suggest</code> — typeahead returning up to 3 products, categories, stores</td>
+            </tr>
+            <tr>
+              <td><code>server/routes/compare.js</code></td>
+              <td>Cross-store cart comparison (Platform v1)</td>
+              <td><code>POST /api/v1/compare/cart</code> — requireUserAuth; body: <code>{items:[{canonical_id,quantity}]}</code>; delegates to cart-comparator service; max 100 items</td>
+            </tr>
+            <tr>
+              <td><code>server/routes/orders.js</code></td>
+              <td>Order history / shopping list completion (Platform v1)</td>
+              <td><code>GET /api/v1/orders</code> — returns user's shopping_lists with items; <code>PATCH /api/v1/orders/:id/complete</code> — sets status=completed, completed_store_id, completed_at</td>
+            </tr>
+            <tr>
+              <td><code>server/services/cart-comparator.js</code></td>
+              <td>Cart comparison engine</td>
+              <td><code>compareCart(db, items)</code> — iterates all stores, finds cheapest active listing per canonical per store, computes confirmed_total, sorts by price asc; skips stores with 0 available items</td>
+            </tr>
+            <tr>
+              <td><code>scripts/mode2-crawl.js</code></td>
+              <td>Weekly full-catalog crawl (Mode 2)</td>
+              <td>Crawls all Shopify + WooCommerce stores for entire product catalog; upserts with <code>crawl_mode='catalog'</code>; uses <code>store_crawl_state.catalog_cursor</code> for resumable pagination; rebuilds FTS after</td>
+            </tr>
+            <tr>
+              <td><code>crawler/scheduler.js</code></td>
+              <td>Local Mode 1 scheduler</td>
+              <td>node-cron at 08:00 Europe/Berlin + <code>CRAWL_ON_STARTUP</code> path; skipped in serverless/GitHub Actions mode</td>
+            </tr>
+            <tr>
+              <td><code>crawler/on-demand-crawl.js</code></td>
+              <td>Mode 3 on-demand crawl engine</td>
+              <td><code>drainPendingCrawls()</code> — drains <code>pending_on_demand_crawls</code> queue at startup; searches all stores for a canonical product by base_key; max 5 concurrent; confidence threshold 80</td>
+            </tr>
+            <tr>
               <td><code>server/db/schema.sql</code></td>
               <td>DB schema</td>
               <td>All table definitions: deals, canonical_products, deal_mappings, entity_resolution_queue, deal_price_history</td>
@@ -1055,7 +1126,7 @@ name: <span class="str">"HEERA SOAN PAPDI 500GMS"</span>
             <tr>
               <td><code>server/db/index.js</code></td>
               <td>DB singleton + migrations</td>
-              <td>better-sqlite3 setup; ALTER TABLE migrations; store seeds</td>
+              <td>libsql/Turso async client; <code>alwaysMigrations</code> for Turso compat; store seeds. All <code>db.prepare().get/all/run()</code> return Promises — always <code>await</code>.</td>
             </tr>
             <tr>
               <td><code>scripts/backfill-base-product-slots.js</code></td>
@@ -1095,7 +1166,7 @@ const COLORS = {
 const NODES = [
   { id:'stores',        x:14,  y:115, w:118, h:52, group:'crawl',      label:'Stores ×32',         sub:'Shopify, WooCommerce',  section:'view-scrape' },
   { id:'crawler',       x:154, y:115, w:118, h:52, group:'crawl',      label:'Crawler',             sub:'Sequential, 2–5s delay', section:'view-trigger' },
-  { id:'deals_table',   x:302, y:50,  w:130, h:52, group:'core',       label:'deals',               sub:'INSERT / deactivate',    section:'view-reconcile' },
+  { id:'deals_table',   x:302, y:50,  w:130, h:52, group:'core',       label:'store_products',      sub:'INSERT / deactivate',    section:'view-reconcile' },
   { id:'price_history', x:302, y:175, w:130, h:52, group:'core',       label:'deal_price_history',  sub:'Daily snapshots',        section:'view-history' },
   { id:'auto_mapper',   x:462, y:50,  w:130, h:52, group:'resolution', label:'Auto-mapper',         sub:'Slot-based, Pass A',     section:'view-automap' },
   { id:'fuzzy_canon',   x:462, y:175, w:130, h:52, group:'resolution', label:'Fuzzy canonicalizer', sub:'Pass B, ≥0.90',          section:'view-canonicalize' },

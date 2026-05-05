@@ -291,22 +291,6 @@ export function updateAuthSessionUser(user) {
   writeAuthSession({ ...session, user: { ...(session.user || {}), ...user } });
 }
 
-export function fetchBookmarks() {
-  return authRequest("/bookmarks", { cache: "no-store" });
-}
-
-export function addBookmark(dealId) {
-  return authRequest(`/bookmarks/${encodeURIComponent(dealId)}`, {
-    method: "POST",
-  });
-}
-
-export function removeBookmark(dealId) {
-  return authRequest(`/bookmarks/${encodeURIComponent(dealId)}`, {
-    method: "DELETE",
-  });
-}
-
 export async function startEmailAuth({ email, referral_code } = {}) {
   const res = await fetch(buildUrl("/auth/email-link/start"), {
     method: "POST",
@@ -319,6 +303,10 @@ export async function startEmailAuth({ email, referral_code } = {}) {
 
 export function fetchBrands() {
   return authRequest("/admin-dashboard/brands");
+}
+
+export function fetchProductBrands(canonicalId) {
+  return request(`/catalog/${canonicalId}/brands`);
 }
 
 export function triggerBrandRemap(brands) {
@@ -399,6 +387,20 @@ export function fetchSameProductOtherStores(canonicalId, storeId) {
   });
 }
 
+// ── Catalog ───────────────────────────────────────────────────────────────────
+
+export function fetchCatalog(params = {}) {
+  return request("/catalog", params);
+}
+
+export function fetchCatalogProduct(canonicalId) {
+  return request(`/catalog/${canonicalId}`);
+}
+
+export function fetchCatalogSuggest(q) {
+  return request("/catalog/suggest", { q });
+}
+
 // ── Shopping lists ────────────────────────────────────────────────────────────
 
 export function fetchLists() {
@@ -430,7 +432,10 @@ export async function removeListItem(listId, itemId) {
 }
 
 export async function mergeCartIntoList(listId, cartItems) {
-  return Promise.all(cartItems.map(item => addListItem(listId, item)));
+  return Promise.all(cartItems.map(item => addListItem(listId, {
+    ...item,
+    brand_pref: item.anyBrand ? "*" : (item.brand || null),
+  })));
 }
 
 // ── Comparison ────────────────────────────────────────────────────────────────
@@ -448,5 +453,46 @@ export async function cartTransfer(listId, storeId, items) {
     method: "POST",
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify({ store_id: storeId, items }),
+  });
+}
+
+export async function searchListReplacements({ listId, listItemId, storeId, query, limit }) {
+  const body = { store_id: storeId, list_item_id: listItemId };
+  if (query) body.query = query;
+  if (limit) body.limit = limit;
+  return authRequest(`/lists/${listId}/replacement-search`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(body),
+  });
+}
+
+// ── Orders ────────────────────────────────────────────────────────────────────
+
+export function fetchOrders() {
+  return authRequest("/orders");
+}
+
+export function handoffOrder(listId, storeId, savingsEur, totalEur) {
+  return authRequest(`/orders/${listId}/handoff`, {
+    method: "PATCH",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ store_id: storeId, savings_eur: savingsEur ?? null, total_eur: totalEur ?? null }),
+  });
+}
+
+export function confirmOrder(listId) {
+  return authRequest(`/orders/${listId}/confirm`, { method: "PATCH" });
+}
+
+export function cancelOrder(listId) {
+  return authRequest(`/orders/${listId}`, { method: "DELETE" });
+}
+
+export function rateOrder(listId, rating) {
+  return authRequest(`/orders/${listId}/rating`, {
+    method: "PATCH",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ rating }),
   });
 }
