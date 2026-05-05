@@ -65,9 +65,9 @@ const CATALOG_SQL = `
     c.weight_raw,
     json_extract(cp.brand_slots, '$[0][0]')   AS primary_brand
   FROM canonical_products cp
-  JOIN cheapest c  ON c.canonical_id = cp.id
-  JOIN stores   s  ON s.id = c.store_id
-  JOIN counts   ct ON ct.canonical_id = cp.id
+  LEFT JOIN cheapest c  ON c.canonical_id = cp.id
+  LEFT JOIN stores   s  ON s.id = c.store_id
+  LEFT JOIN counts   ct ON ct.canonical_id = cp.id
 `;
 
 router.get("/", async (req, res, next) => {
@@ -132,7 +132,7 @@ router.get("/", async (req, res, next) => {
     };
     const orderBy = Object.hasOwn(ORDER_BY_MAP, sort)
       ? ORDER_BY_MAP[sort]
-      : "c.sale_price ASC, cp.id ASC";
+      : "c.sale_price ASC NULLS LAST, cp.id ASC";
 
     const rows = await db.prepare(
       `${CATALOG_SQL} ${whereClause} ORDER BY ${orderBy} LIMIT ? OFFSET ?`
