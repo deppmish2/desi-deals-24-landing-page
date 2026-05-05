@@ -1,13 +1,47 @@
 #!/usr/bin/env node
 "use strict";
 
+require("dotenv").config();
+require("dotenv").config({ path: ".env.local", override: true });
+
 const db = require("../server/db");
 const { crawlShopifyFullCatalog } = require("../crawler/shopify-full-catalog");
 const { crawlWooCommerceFullCatalog } = require("../crawler/woocommerce-full-catalog");
 const { rebuildAll } = require("../crawler/fts-rebuild");
+const { getZonedParts, BERLIN_TIME_ZONE } = require("../server/services/berlin-time");
 
 const INTER_STORE_DELAY_MS = 1000;
 function sleep(ms) { return new Promise(r => setTimeout(r, ms)); }
+
+// Day 0 = Sunday, 1 = Monday, ..., 6 = Saturday
+const DAY_GROUPS = {
+  0: ["anuhita-groceries", "zora-supermarkt"],
+  1: ["dookan", "sairas"],
+  2: ["globalfoodhub", "md-store"],
+  3: ["indiansupermarkt", "bajwa-shop"],
+  4: ["namma-markt", "indianspicebasket"],
+  5: ["jamoona", "transfoodlev"],
+  6: ["desigros", "villagefoods"],
+};
+
+function getBerlinWeekday() {
+  const parts = getZonedParts(new Date(), BERLIN_TIME_ZONE);
+  const berlinDate = new Date(`${parts.year}-${String(parts.month).padStart(2, "0")}-${String(parts.day).padStart(2, "0")}T12:00:00`);
+  return berlinDate.getDay();
+}
+
+function parseArgs() {
+  const args = process.argv.slice(2);
+  if (args.includes("--all")) return { mode: "all" };
+  const dayIdx = args.indexOf("--day");
+  if (dayIdx !== -1 && args[dayIdx + 1] != null) {
+    const day = parseInt(args[dayIdx + 1], 10);
+    if (day >= 0 && day <= 6) return { mode: "day", day };
+    console.error("Error: --day must be 0-6");
+    process.exit(1);
+  }
+  return { mode: "day", day: getBerlinWeekday() };
+}
 
 async function upsertRows(rows, runId) {
   for (const r of rows) {
@@ -35,11 +69,32 @@ async function upsertRows(rows, runId) {
 (async () => {
   await new Promise(r => setTimeout(r, 2000));
 
-  const stores = await db.prepare(
-    "SELECT id, url, platform FROM stores WHERE platform IN ('shopify','woocommerce') ORDER BY platform, id"
-  ).all();
+  const opts = parseArgs();
+  let storeIds;
 
-  console.log(`[mode2] crawling ${stores.length} stores`);
+  if (opts.mode === "all") {
+    storeIds = Object.values(DAY_GROUPS).flat();
+    console.log(`[mode2] --all: crawling all ${storeIds.length} stores`);
+  } else {
+    storeIds = DAY_GROUPS[opts.day] || [];
+    const dayNames = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"];
+    console.log(`[mode2] day=${opts.day} (${dayNames[opts.day]}): crawling ${storeIds.length} stores: ${storeIds.join(", ")}`);
+  }
+
+  if (storeIds.length === 0) {
+    console.log("[mode2] no stores for today, exiting");
+    process.exit(0);
+  }
+
+  const placeholders = storeIds.map(() => "?").join(",");
+  const stores = await db.prepare(
+    `SELECT id, url, platform FROM stores WHERE id IN (${placeholders}) ORDER BY id`
+  ).all(...storeIds);
+
+  if (stores.length === 0) {
+    console.log("[mode2] no matching stores found in DB (check stores.platform or store IDs)");
+    process.exit(0);
+  }
 
   const runId = "mode2_" + Date.now();
 
@@ -56,11 +111,14 @@ async function upsertRows(rows, runId) {
         { storeId: store.id, storeUrl: store.url },
         state?.catalog_cursor || null
       );
-    } else {
+    } else if (store.platform === "woocommerce") {
       result = await crawlWooCommerceFullCatalog(
         { storeId: store.id, storeUrl: store.url },
         state?.catalog_cursor ? parseInt(state.catalog_cursor, 10) : 1
       );
+    } else {
+      console.log(`[mode2] ${store.id}: skipping (platform=${store.platform}, no catalog crawler)`);
+      continue;
     }
 
     if (result.rows.length) {
@@ -83,7 +141,10 @@ async function upsertRows(rows, runId) {
     );
 
     console.log(`[mode2] ${store.id}: ${result.rows.length} products, ${result.error || "ok"}`);
-    await sleep(INTER_STORE_DELAY_MS);
+
+    if (stores.indexOf(store) < stores.length - 1) {
+      await sleep(INTER_STORE_DELAY_MS);
+    }
   }
 
   await rebuildAll();
