@@ -6,7 +6,12 @@ let cachedSuggestIndex = null;
 let cachedAt = 0;
 const CACHE_TTL_MS = 3600 * 1000;
 
+const usingRemoteDb = Boolean(
+  process.env.TURSO_DATABASE_URL || process.env.DESI_DEALS_DB_TURSO_DATABASE_URL
+);
+
 async function rebuildFtsIndex() {
+  if (usingRemoteDb) return; // fts_canonicals is local SQLite only, not Turso
   await db.execute("DELETE FROM fts_canonicals");
   await db.execute(`
     INSERT INTO fts_canonicals (canonical_id, canonical_name, base_key, aliases_text, category, brands_text)
