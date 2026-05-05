@@ -251,6 +251,10 @@ const ready = (async () => {
     "ALTER TABLE shopping_lists ADD COLUMN eta_date      TEXT",
     "ALTER TABLE shopping_lists ADD COLUMN issue_text    TEXT",
     "ALTER TABLE shopping_lists ADD COLUMN tracking_url  TEXT",
+    // Backfill stores.platform
+    `UPDATE stores SET platform = 'shopify' WHERE id IN ('jamoona','dookan','namma-markt','globalfoodhub','indiansupermarkt','desigros','md-store','sairas','anuhita-groceries','bajwa-shop','indianspicebasket','transfoodlev','villagefoods','zora-supermarkt') AND platform = 'unknown'`,
+    `UPDATE stores SET platform = 'cheerio' WHERE id IN ('annachi','asiangrocerystore','asiatischer-lebensmittelladen','barkatfood','desistore','india-express-food','india-store','indische-lebensmittel-online','indianfoodstore','indianstorestuttgart','little-india','masimpex','namastedeutschland','spicelands','swadesh','yogimart','zakiasianfoods') AND platform = 'unknown'`,
+    `UPDATE stores SET platform = 'custom-api' WHERE id = 'grocera' AND platform = 'unknown'`,
   ];
   for (const sql of alwaysMigrations) {
     try {
