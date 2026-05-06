@@ -5,10 +5,27 @@ const { expandQuery } = require("../services/search-expander");
 const router  = express.Router();
 
 function buildSearchCondition(q, column) {
-  const terms = expandQuery(q).slice(0, 8);
-  const clauses = terms.map(() => `lower(${column}) LIKE '%' || ? || '%'`);
-  const params  = terms.map(t => t.toLowerCase());
-  return { clause: `(${clauses.join(" OR ")})`, params };
+  const words = q.trim().split(/\s+/).filter(Boolean);
+
+  if (words.length <= 1) {
+    // Single word: OR across all synonym/phonetic variants
+    const terms = expandQuery(q).slice(0, 8);
+    const clauses = terms.map(() => `lower(${column}) LIKE '%' || ? || '%'`);
+    const params  = terms.map(t => t.toLowerCase());
+    return { clause: `(${clauses.join(" OR ")})`, params };
+  }
+
+  // Multi-word: AND each word so order doesn't matter.
+  // Within each word, OR across its synonyms/phonetic variants.
+  const andClauses = [];
+  const params = [];
+  for (const word of words) {
+    const wordTerms = expandQuery(word).slice(0, 6);
+    const orClauses = wordTerms.map(() => `lower(${column}) LIKE '%' || ? || '%'`);
+    andClauses.push(`(${orClauses.join(" OR ")})`);
+    params.push(...wordTerms.map(t => t.toLowerCase()));
+  }
+  return { clause: `(${andClauses.join(" AND ")})`, params };
 }
 
 const CATALOG_SQL = `
