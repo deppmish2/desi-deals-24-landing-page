@@ -29,3 +29,9 @@ test("parseItemIntent: paneer with brand gets itemType paneer (not null)", () =>
   const result = parseItemIntent("Amul paneer", null, null);
   assert.equal(result.itemType, "paneer");
 });
+
+test("parseItemIntent: paneer masala gets itemType masala (not paneer)", () => {
+  const result = parseItemIntent("MDH Karahi Paneer Masala", null, null);
+  assert.equal(result.itemType, "masala",
+    "paneer masala must not be classified as itemType paneer — check ITEM_TYPE_KEYWORDS ordering");
+});
