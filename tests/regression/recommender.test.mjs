@@ -154,3 +154,20 @@ test("deal query returns cp.base_key from joined canonical", async () => {
     "recommender deal SELECT must include cp.base_key"
   );
 });
+
+test("resolveBaseMetaCached uses DB base_key without calling CSV when dbBaseKey provided", () => {
+  const recommenderSrc = fs.readFileSync(
+    new URL("../../server/services/recommender.js", import.meta.url),
+    "utf8"
+  );
+  // Verify the signature includes dbBaseKey
+  assert.ok(
+    recommenderSrc.includes("resolveBaseMetaCached(cache, text, dbBaseKey)"),
+    "resolveBaseMetaCached must accept dbBaseKey as third arg"
+  );
+  // Verify call sites pass deal.base_key
+  assert.ok(
+    recommenderSrc.includes("deal.base_key || null"),
+    "recommender call sites must pass deal.base_key to resolveBaseMetaCached"
+  );
+});
