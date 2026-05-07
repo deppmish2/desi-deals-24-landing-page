@@ -40,36 +40,40 @@ Convert `resolveBaseProduct` from runtime to write-time:
 
 For each canonical with `base_key IS NULL OR base_key = ''`:
 1. `resolveBaseProduct(canonical_name)` → if match, use `result.base_key`
-2. Fallback: `normalizeText(canonical_name)` (lowercase, strip punctuation) → use as base_key. Does NOT strip brand or weight — produces over-specific keys (e.g. `"priya poha thick 500g"` instead of `"poha thick"`). Intentional — conservative, no false cross-category matches. Products not in CSV won't group with brand variants; that is acceptable.
+2. If no CSV hit: **leave base_key NULL**. Do not derive from `normalizeText`. Rationale: canonicals not in the CSV currently get no base_key → recommender uses other matching paths. A derived-but-over-specific key (e.g. `"priya poha thick 500g"`) would be treated as a real base_key by call sites that filter on it, silently breaking matches that currently work. NULL preserves current behaviour for unrecognised products.
 
 **Script behaviour:**
 - Dry run by default; `--apply` flag to write
+- Dry run dumps proposed changes to `scripts/out/base-key-backfill-preview.json` as `[{id, canonical_name, old_base_key, proposed_base_key}]` for review before applying
 - Batched in chunks of 500 with transactions
 - Idempotent — skips rows where base_key already set
 - Runs against SQLite (local) or Turso (prod) via env var, same dual-mode pattern as `migrate-schema-to-prod-20260504.js`
 
-**Expected scope:** ~11,670 local + ~12,878 prod canonicals get base_key written.
+**Expected scope:** Only canonicals that get a CSV hit. Likely a fraction of the ~11,670 / ~12,878 with NULL base_key — exact count determined by dry-run preview.
 
 **Run order:** local first → verify coverage → prod Turso.
 
-## Section 2: Query Fix (sp.canonical_id gap)
+## Section 2: sp.canonical_id Gap Fix
 
-Active products have `sp.canonical_id = NULL` — they were mapped via `store_product_mappings`, not by writing `sp.canonical_id` directly.
+**Root cause:** `store_product_mappings` PRIMARY KEY is `(deal_id, canonical_id)` — one deal can have multiple canonical rows. The automapper syncs `sp.canonical_id` from spm using `LIMIT 1`. Canonicalizer and review-queue both write `sp.canonical_id` directly. The local DB gap (864 active with `sp.canonical_id` vs 2,757 in spm) is a snapshot artifact: the automapper nulls all active `sp.canonical_id` before re-syncing. No persistent bug in the pipeline.
 
-Fix in deal queries that need base_key:
+**Fix:** One-time backfill in the backfill script. For active products with `sp.canonical_id IS NULL` that have a spm entry:
 
 ```sql
--- Before
-LEFT JOIN canonical_products cp ON cp.id = sp.canonical_id
-
--- After
-LEFT JOIN store_product_mappings spm2 ON spm2.deal_id = sp.id
-LEFT JOIN canonical_products cp ON cp.id = COALESCE(sp.canonical_id, spm2.canonical_id)
+UPDATE store_products
+SET canonical_id = (
+  SELECT canonical_id FROM store_product_mappings
+  WHERE deal_id = store_products.id
+  ORDER BY match_confidence DESC
+  LIMIT 1
+)
+WHERE canonical_id IS NULL
+  AND EXISTS (SELECT 1 FROM store_product_mappings WHERE deal_id = store_products.id);
 ```
 
-Add `cp.base_key` to the SELECT. Alias `spm2` avoids conflict with existing `spm` joins in the recommender.
+This keeps the existing JOIN pattern unchanged (`LEFT JOIN canonical_products cp ON cp.id = sp.canonical_id`). No COALESCE needed. Avoids the multiplicity problem: a plain `LEFT JOIN store_product_mappings` would multiply rows for the 1,311 deals that have 2+ spm entries.
 
-Affects: main deal-fetch query (~line 1639 in `recommender.js`) and any other query that currently uses `sp.canonical_id` for canonical resolution.
+**SELECT addition:** Once sp.canonical_id is complete, add `cp.base_key` to the deal queries that already do `LEFT JOIN canonical_products cp ON cp.id = sp.canonical_id`. No JOIN changes needed.
 
 ## Section 3: resolveBaseMetaCached Change
 
@@ -110,14 +114,16 @@ CSV stays loaded at startup. No change to how `base-product-catalog.js` initiali
 
 ## Migration Order
 
-1. Implement + test backfill script locally
-2. Verify local base_key coverage ≥ 95% of canonicals
-3. Apply to prod Turso
-4. Fix recommender deal queries (spm2 JOIN + `cp.base_key` in SELECT)
-5. Update `resolveBaseMetaCached` to accept `dbBaseKey`
-6. Update recommender call sites to pass `deal.base_key`
-7. Update other call sites (Section 4)
-8. Add regression test: product with canonical + base_key in DB never falls through to `resolveBaseProduct`
+1. Implement backfill script (base_key + sp.canonical_id gap)
+2. Dry run locally → review `scripts/out/base-key-backfill-preview.json`
+3. Apply locally with `--apply`
+4. Dry run against prod Turso → review output
+5. Apply to prod Turso
+6. Add `cp.base_key` to recommender deal queries (existing JOIN already covers sp.canonical_id)
+7. Update `resolveBaseMetaCached` to accept `dbBaseKey`
+8. Update recommender call sites to pass `deal.base_key`
+9. Update other call sites (Section 4)
+10. Add regression test: product with canonical + base_key in DB never falls through to `resolveBaseProduct`
 
 ## What Does NOT Change
 
