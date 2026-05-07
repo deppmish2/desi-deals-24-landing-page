@@ -27,6 +27,7 @@ const { createClient } = require("@libsql/client");
 const { matchesCanonical, norm } = require("../crawler/utils/auto-mapper");
 
 const APPLY = process.argv.includes("--apply");
+const PHASE2_CHUNK = 200;
 const TARGET_CATEGORY = "Ready Meals & Mixes";
 
 const RTE_STANDALONE = ["ready to eat", "ready-to-eat", "ready meal", "ready-meal"];
@@ -144,7 +145,11 @@ async function main() {
     weightUnit:  r.weight_unit  ?? null,
   }));
 
-  console.log(`[Phase 2] ${rteCanonicalsForMatch.length} RTE canonical(s) available for re-mapping`);
+  if (rteCanonicalsForMatch.length === 0) {
+    console.warn("[Phase 2] WARNING: no RTE canonicals with is_match_priority=1 — all products will go to review queue");
+  } else {
+    console.log(`[Phase 2] ${rteCanonicalsForMatch.length} RTE canonical(s) available for re-mapping`);
+  }
 
   const remapped = [];
   const sentToReview = [];
@@ -193,7 +198,9 @@ async function main() {
     }
   }
 
-  await client.batch(stmts, "write");
+  for (let i = 0; i < stmts.length; i += PHASE2_CHUNK) {
+    await client.batch(stmts.slice(i, i + PHASE2_CHUNK), "write");
+  }
 
   console.log(`\n[Phase 2] Remapped: ${remapped.length}, sent to review: ${sentToReview.length}`);
   for (const r of remapped) console.log(`  ✓ ${r.product_name} → ${r.canonical_name}`);
