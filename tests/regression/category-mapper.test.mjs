@@ -19,3 +19,11 @@ test("mapCategory: 'Quick Oats' → Rice & Grains (no false positive — oats no
 test("mapCategory: 'Maggi 2-Minute Instant Noodles' → Noodles & Pasta (instant + noodle, not grain)", () => {
   assert.equal(mapCategory("Maggi 2-Minute Instant Noodles"), "Noodles & Pasta");
 });
+
+test("mapCategory: 'MTR Ready to Eat Upma' → Ready Meals & Mixes (no quick/instant — standalone phrase)", () => {
+  assert.equal(mapCategory("MTR Ready to Eat Upma"), "Ready Meals & Mixes");
+});
+
+test("mapCategory: 'Instant-Upma Cup' → Ready Meals & Mixes (hyphenated compound token)", () => {
+  assert.equal(mapCategory("Instant-Upma Cup"), "Ready Meals & Mixes");
+});

@@ -11,6 +11,7 @@ const SNACK_PHRASES = [
 
 const RTE_QUICK_TOKENS = ["quick", "instant"];
 const RTE_GRAIN_TOKENS = ["poha", "upma", "khichdi", "biryani", "pulao", "dosa", "idli", "rava", "semolina"];
+const RTE_PHRASES = ["ready to eat", "ready-to-eat", "ready meal", "ready-meal"];
 
 const CATEGORIES = [
   [
@@ -173,10 +174,11 @@ const CATEGORIES = [
 function mapCategory(productName) {
   if (!productName) return "Other";
   const lower = productName.toLowerCase();
-  const words = lower.split(/\s+/);
+  const words = lower.split(/[\s-]+/);
   const hasQuickInstant = RTE_QUICK_TOKENS.some((t) => words.includes(t));
   const hasRteGrain = RTE_GRAIN_TOKENS.some((t) => words.includes(t));
   if (hasQuickInstant && hasRteGrain) return "Ready Meals & Mixes";
+  if (RTE_PHRASES.some((phrase) => lower.includes(phrase))) return "Ready Meals & Mixes";
   if (SNACK_PHRASES.some((phrase) => lower.includes(phrase))) return "Snacks & Sweets";
   for (const [category, keywords] of CATEGORIES) {
     if (keywords.some((kw) => new RegExp(`\\b${kw}\\b`).test(lower))) return category;
