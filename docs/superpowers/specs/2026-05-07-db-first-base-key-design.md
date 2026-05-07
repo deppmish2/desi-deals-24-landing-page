@@ -11,7 +11,7 @@
 
 ## Goal
 
-Make `base_key` a write-once DB field. Resolve it at query time via JOIN. CSV stays as startup-loaded fallback for the ~30% of products with no canonical mapping — not a runtime hot path.
+Make `base_key` a write-once DB field resolved at query time via JOIN, so it can be admin-curated and is not re-derived from fuzzy text matching on every request. CSV still runs at runtime for `category` and `base_product` metadata — only `base_key` moves to DB authority. **Immediate behavioural change is small** (DB and CSV agree for backfilled products); the real payoff is enabling admin curation of `base_key` without CSV changes.
 
 ## Current State
 
@@ -22,6 +22,8 @@ Make `base_key` a write-once DB field. Resolve it at query time via JOIN. CSV st
 | Active store products | 3,136 | — |
 | Active with canonical mapping | 2,757 (88%) | — |
 | Active with sp.canonical_id set | 864 (28%) | — |
+
+Existing base_key values (the 20%) were written by `backfillBaseKeys` in `base-product-catalog.js`, which runs for canonicals mapped to 2+ stores. These are CSV-derived and consistent with what the new backfill script will produce — they are trusted; no validation pass is needed before use.
 
 Key gap: active (newly crawled) products have `sp.canonical_id = NULL` but exist in `store_product_mappings`. The recommender JOINs on `sp.canonical_id` only, so active products never get `cp.base_key` from the query.
 
