@@ -1,5 +1,16 @@
 import React, { useContext } from "react";
 import { CartContext } from "../hooks/CartContext";
+import { matchBrand } from "../utils/brands";
+
+function detectBrand(deal) {
+  if (deal.primary_brand) return { brand: deal.primary_brand, anyBrand: false };
+  const words = (deal.product_name || "").split(/\s+/);
+  for (let len = Math.min(3, words.length); len >= 1; len--) {
+    const b = matchBrand(words.slice(0, len).join(" "));
+    if (b) return { brand: b, anyBrand: false };
+  }
+  return { brand: null, anyBrand: true };
+}
 
 export default function CartButton({ deal, fullWidth = false, className = "" }) {
   const { addItem, items } = useContext(CartContext);
@@ -12,12 +23,18 @@ export default function CartButton({ deal, fullWidth = false, className = "" }) 
   function handleAdd(e) {
     e.preventDefault();
     e.stopPropagation();
+    const { brand, anyBrand } = detectBrand(deal);
     addItem({
       raw_item_text: deal.product_name,
       canonical_id: deal.canonical_id || null,
+      product_category: deal.product_category || null,
+      image_url: deal.image_url || null,
+      weight_raw: deal.weight_raw || null,
       quantity: deal.weight_value || null,
       quantity_unit: deal.weight_unit || null,
       item_count: 1,
+      brand,
+      anyBrand,
     });
   }
 

@@ -4,28 +4,67 @@ const db      = require("../db");
 const { expandQuery } = require("../services/search-expander");
 const router  = express.Router();
 
-function buildSearchCondition(q, column) {
-  const words = q.trim().split(/\s+/).filter(Boolean);
+// Tokens like "250gm", "1kg", "500ml" don't appear in canonical names — strip them
+// so "Ayurveda Indian Paneer 250gm" matches "Ayurveda Indian Paneer".
+const WEIGHT_TOKEN_RE = /^\d+(\.\d+)?(g|gm|kg|ml|l|oz|lb|lbs|mg|pack|pcs?|piece|ct|unit|units)$/i;
+const BARE_NUMBER_RE = /^\d+$/;
+const SEARCH_STOP_WORDS = new Set(["a", "an", "the", "of", "x", "and", "&", "bundle", "pack", "set", "combo"]);
 
-  if (words.length <= 1) {
+function buildSearchCondition(q, column) {
+  const allWords = q.trim().split(/\s+/)
+    .map(w => w.replace(/^[^a-zA-Z0-9]+|[^a-zA-Z0-9]+$/g, ""))
+    .filter(Boolean);
+  const words = allWords.filter(w =>
+    !WEIGHT_TOKEN_RE.test(w) &&
+    !BARE_NUMBER_RE.test(w) &&
+    /[a-zA-Z0-9]/.test(w) &&
+    !SEARCH_STOP_WORDS.has(w.toLowerCase())
+  );
+  const effective = words.length ? words : allWords; // fallback if query is only weight tokens
+
+  // Word-boundary LIKE: pad column with spaces so short terms like "aval" don't
+  // match mid-word (e.g. "Athavale" contains "aval" but " athavale " does not contain " aval ").
+  const paddedCol = `' ' || lower(${column}) || ' '`;
+  const makeLike = (t) => ({ clause: `${paddedCol} LIKE '%' || ? || '%'`, param: ` ${t.toLowerCase()} ` });
+
+  if (effective.length <= 1) {
     // Single word: OR across all synonym/phonetic variants
-    const terms = expandQuery(q).slice(0, 8);
-    const clauses = terms.map(() => `lower(${column}) LIKE '%' || ? || '%'`);
-    const params  = terms.map(t => t.toLowerCase());
-    return { clause: `(${clauses.join(" OR ")})`, params };
+    const terms = expandQuery(effective[0] || q).slice(0, 8);
+    const pairs = terms.map(makeLike);
+    return { clause: `(${pairs.map(p => p.clause).join(" OR ")})`, params: pairs.map(p => p.param) };
   }
 
   // Multi-word: AND each word so order doesn't matter.
   // Within each word, OR across its synonyms/phonetic variants.
   const andClauses = [];
   const params = [];
-  for (const word of words) {
+  for (const word of effective) {
     const wordTerms = expandQuery(word).slice(0, 6);
-    const orClauses = wordTerms.map(() => `lower(${column}) LIKE '%' || ? || '%'`);
-    andClauses.push(`(${orClauses.join(" OR ")})`);
-    params.push(...wordTerms.map(t => t.toLowerCase()));
+    const pairs = wordTerms.map(makeLike);
+    andClauses.push(`(${pairs.map(p => p.clause).join(" OR ")})`);
+    params.push(...pairs.map(p => p.param));
   }
   return { clause: `(${andClauses.join(" AND ")})`, params };
+}
+
+function parseSlots(raw) {
+  try { return JSON.parse(raw || "[]"); } catch { return []; }
+}
+
+function joinSlots(slots) {
+  return slots.map(g => (Array.isArray(g) ? g[0] : g)).filter(Boolean).join(" ") || null;
+}
+
+function serializeCatalogRow(row) {
+  const brandSlots = parseSlots(row.brand_slots_raw);
+  const typeSlots  = parseSlots(row.type_slots_raw);
+  return {
+    ...row,
+    primary_brand: joinSlots(brandSlots),
+    primary_type:  joinSlots(typeSlots),
+    brand_slots_raw: undefined,
+    type_slots_raw:  undefined,
+  };
 }
 
 const CATALOG_SQL = `
@@ -63,6 +102,17 @@ const CATALOG_SQL = `
     SELECT canonical_id, COUNT(DISTINCT store_id) AS store_count
     FROM ranked
     GROUP BY canonical_id
+  ),
+  last_seen AS (
+    SELECT canonical_id, store_id FROM (
+      SELECT spm.canonical_id, sp.store_id,
+             ROW_NUMBER() OVER (
+               PARTITION BY spm.canonical_id
+               ORDER BY sp.crawl_timestamp DESC, sp.store_id ASC
+             ) AS rn
+      FROM store_product_mappings spm
+      JOIN store_products sp ON sp.id = spm.deal_id
+    ) WHERE rn = 1
   )
   SELECT
     cp.id           AS canonical_id,
@@ -75,16 +125,20 @@ const CATALOG_SQL = `
     c.price_per_kg,
     c.best_before,
     c.store_id      AS cheapest_store_id,
-    s.name          AS cheapest_store_name,
+    COALESCE(s.name, sf.name) AS cheapest_store_name,
     ct.store_count,
     COALESCE(cp.weight_value, c.weight_value) AS weight_value,
     COALESCE(cp.weight_unit,  c.weight_unit)  AS weight_unit,
     c.weight_raw,
-    json_extract(cp.brand_slots, '$[0][0]')   AS primary_brand
+    json_extract(cp.brand_slots, '$[0][0]')   AS primary_brand,
+    cp.brand_slots                             AS brand_slots_raw,
+    cp.type_slots                              AS type_slots_raw
   FROM canonical_products cp
   LEFT JOIN cheapest c  ON c.canonical_id = cp.id
   LEFT JOIN stores   s  ON s.id = c.store_id
   LEFT JOIN counts   ct ON ct.canonical_id = cp.id
+  LEFT JOIN last_seen ls ON ls.canonical_id = cp.id AND c.canonical_id IS NULL
+  LEFT JOIN stores   sf ON sf.id = ls.store_id
 `;
 
 router.get("/", async (req, res, next) => {
@@ -156,7 +210,7 @@ router.get("/", async (req, res, next) => {
     ).all(...params, limit, offset);
 
     res.json({
-      data: rows,
+      data: rows.map(serializeCatalogRow),
       pagination: {
         page,
         limit,
@@ -220,6 +274,30 @@ router.get("/known-brands", async (req, res, next) => {
         try { aliases = JSON.parse(r.aliases || "[]"); } catch { aliases = []; }
         return { name: r.name, aliases };
       }),
+    });
+  } catch (err) {
+    next(err);
+  }
+});
+
+router.get("/:id", async (req, res, next) => {
+  try {
+    const { id } = req.params;
+    const row = await db.prepare(
+      "SELECT id, canonical_name, category, brand_slots, type_slots FROM canonical_products WHERE id = ?"
+    ).get(id);
+    if (!row) return res.status(404).json({ error: "Not found" });
+
+    let brandSlots = [], typeSlots = [];
+    try { brandSlots = JSON.parse(row.brand_slots || "[]"); } catch { brandSlots = []; }
+    try { typeSlots = JSON.parse(row.type_slots || "[]"); } catch { typeSlots = []; }
+
+    res.json({
+      id: row.id,
+      canonical_name: row.canonical_name,
+      category: row.category,
+      primary_brand: joinSlots(brandSlots),
+      product_type: joinSlots(typeSlots),
     });
   } catch (err) {
     next(err);

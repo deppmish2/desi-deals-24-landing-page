@@ -7,6 +7,14 @@ const { decomposeCanonical, buildBrandAliasMap } = require("../../crawler/utils/
 const { resolveBaseProduct } = require("../services/base-product-catalog");
 const { loadPriorityCanonicals, autoMapDeals, matchesCanonical, norm } = require("../../crawler/utils/auto-mapper");
 const { canonicalizeDeals } = require("../services/canonicalizer");
+const { cascadeCategoryChange } = require("../services/category-cascade");
+
+const VALID_CATEGORIES = [
+  "Rice & Grains", "Flours & Baking", "Lentils & Pulses", "Spices & Masalas",
+  "Oils & Ghee", "Sauces & Pastes", "Snacks & Sweets", "Snacks & Namkeen", "Beverages",
+  "Dairy & Paneer", "Frozen Foods", "Fresh Produce", "Noodles & Pasta",
+  "Canned & Packaged", "Personal Care", "Household", "Ready Meals & Mixes", "Other",
+];
 
 const router = Router();
 router.use(requireAdminAuth);
@@ -312,6 +320,22 @@ router.get("/brands/remap-status/:jobId", async (req, res) => {
       error: row.error || null,
     });
   } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+router.post("/canonical/:id/change-category", async (req, res) => {
+  const { category } = req.body || {};
+  if (!category || !VALID_CATEGORIES.includes(category)) {
+    return res.status(400).json({ error: `category must be one of: ${VALID_CATEGORIES.join(", ")}` });
+  }
+  try {
+    const result = await cascadeCategoryChange(db, req.params.id, category);
+    res.json(result);
+  } catch (err) {
+    if (err.message && err.message.startsWith("Canonical not found")) {
+      return res.status(404).json({ error: err.message });
+    }
     res.status(500).json({ error: err.message });
   }
 });

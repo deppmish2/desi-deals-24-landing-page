@@ -53,6 +53,7 @@ export default function CatalogPage() {
   const [loginModal, setLoginModal] = useState(null);
   const [session, setSession] = useState(() => getAuthSession());
   const isLoggedIn = Boolean(session?.accessToken);
+  const isAdmin = Boolean(session?.user?.is_admin) || import.meta.env.DEV;
 
   useEffect(() => {
     function onAuthChange() { setSession(getAuthSession()); }
@@ -353,7 +354,7 @@ export default function CatalogPage() {
           )}
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-5">
             {products.map(p => (
-              <ProductCard key={p.canonical_id} product={p} context="catalog" />
+              <ProductCard key={p.canonical_id} product={p} context="catalog" isAdmin={isAdmin} />
             ))}
           </div>
           {loading && (

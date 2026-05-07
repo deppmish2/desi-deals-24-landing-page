@@ -69,6 +69,7 @@ const ITEM_TYPE_KEYWORDS = [
   ["chai", "beverage"],
   ["coffee", "beverage"],
   ["juice", "beverage"],
+  ["paneer", "paneer"],
 ];
 
 const VARIANT_MAP = {
