@@ -64,12 +64,18 @@ function toBaseUnit(value, unit) {
   return { value, unit };
 }
 
-function matchesCanonical(normedTitle, dealWeightValue, dealWeightUnit, canon) {
+function matchesCanonical(normedTitle, dealWeightValue, dealWeightUnit, canon, dealCategory) {
   const brandSlots = parseSlots(canon.brandSlots);
   const baseProductSlots = parseSlots(canon.baseProductSlots);
   const typeSlots = parseSlots(canon.typeSlots) || [];
 
   if (!brandSlots && !baseProductSlots) return null;
+
+  if (
+    dealCategory && dealCategory !== "Other" &&
+    canon.category && canon.category !== "Other" &&
+    dealCategory !== canon.category
+  ) return null;
 
   // Use pre-compiled regexes when available (loaded via loadPriorityCanonicals),
   // fall back to per-call iteration for ad-hoc use (e.g. tests).
@@ -123,7 +129,7 @@ async function loadPriorityCanonicals(db) {
   let rows;
   try {
     const res = await db.execute(
-      `SELECT id, canonical_name,
+      `SELECT id, canonical_name, category,
               brand_slots, base_product_slots, type_slots,
               weight_value, weight_unit
        FROM canonical_products
@@ -138,7 +144,7 @@ async function loadPriorityCanonicals(db) {
       // is_match_priority not yet added — fall back to is_priority
       try {
         const res2 = await db.execute(
-          `SELECT id, canonical_name,
+          `SELECT id, canonical_name, category,
                   brand_slots, base_product_slots, type_slots,
                   weight_value, weight_unit
            FROM canonical_products
@@ -174,6 +180,7 @@ async function loadPriorityCanonicals(db) {
     return {
       id: r.id,
       canonical_name: r.canonical_name,
+      category: r.category ?? null,
       brandSlots,
       baseProductSlots,
       typeSlots,
@@ -209,7 +216,7 @@ async function autoMapDeals(db, deals, priorityCanonicals) {
     const dealWeightUnit = deal.weight_unit ?? null;
 
     for (const canon of priorityCanonicals) {
-      if (matchesCanonical(normedName, dealWeightValue, dealWeightUnit, canon) !== true) continue;
+      if (matchesCanonical(normedName, dealWeightValue, dealWeightUnit, canon, deal.product_category ?? null) !== true) continue;
       stmts.push({
         sql: `INSERT INTO store_product_mappings (deal_id, canonical_id, match_method, match_confidence)
               VALUES (?, ?, 'slot_match', 0.85)

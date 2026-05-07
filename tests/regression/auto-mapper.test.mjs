@@ -124,3 +124,27 @@ test("autoMapDeals does NOT match Knorr deal when weight differs by > 10%", asyn
   await autoMapDeals(db, deals, [KNORR]);
   assert.equal(db.inserts.length, 0, "480g deal should not match 400g canonical");
 });
+
+// ── Category guard ───────────────────────────────────────────────────────────
+
+test("matchesCanonical returns null when dealCategory differs from canon.category (cross-category guard)", () => {
+  const rteCanon = { ...KNORR, category: "Ready Meals & Mixes" };
+  const result = matchesCanonical(
+    "knorr bouillon cubes chicken 400gm",
+    400, "g",
+    rteCanon,
+    "Rice & Grains",
+  );
+  assert.equal(result, null, "cross-category match must return null, not false");
+});
+
+test("matchesCanonical still matches when both dealCategory and canon.category are 'Other'", () => {
+  const otherCanon = { ...KNORR, category: "Other" };
+  const result = matchesCanonical(
+    "knorr bouillon cubes chicken 400gm",
+    400, "g",
+    otherCanon,
+    "Other",
+  );
+  assert.equal(result, true, "Other vs Other must not block slot match");
+});
