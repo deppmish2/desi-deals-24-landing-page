@@ -13,10 +13,10 @@ async function cascadeCategoryChange(db, canonicalId, newCategory) {
     return { products_unchanged: 0, products_remapped: 0, products_queued: 0 };
   }
 
-  // 1. Update canonical category
+  // Write canonical update first — loadPriorityCanonicals must see the new category
   await db.prepare("UPDATE canonical_products SET category = ? WHERE id = ?").run(newCategory, canonicalId);
 
-  // 2. Find all active store products mapped to this canonical
+  // Find all active store products mapped to this canonical
   const mapped = await db.prepare(
     `SELECT id, product_name, product_category, weight_value, weight_unit, store_id
      FROM store_products WHERE canonical_id = ? AND is_active = 1`
@@ -24,10 +24,11 @@ async function cascadeCategoryChange(db, canonicalId, newCategory) {
 
   if (!mapped.length) return { products_unchanged: 0, products_remapped: 0, products_queued: 0 };
 
-  // 3. Load all priority canonicals for re-matching
+  // Load all priority canonicals for re-matching (sees updated category above)
   const priorityCanonicals = await loadPriorityCanonicals(db);
 
   let products_unchanged = 0, products_remapped = 0, products_queued = 0;
+  const stmts = [];
 
   for (const sp of mapped) {
     // Mirrors matchesCanonical category guard: mismatch only when both sides are non-Other and differ
@@ -42,8 +43,10 @@ async function cascadeCategoryChange(db, canonicalId, newCategory) {
     }
 
     // Clear invalid mapping
-    await db.prepare("DELETE FROM store_product_mappings WHERE deal_id = ?").run(sp.id);
-    await db.prepare("UPDATE store_products SET canonical_id = NULL WHERE id = ?").run(sp.id);
+    stmts.push(
+      { sql: "DELETE FROM store_product_mappings WHERE deal_id = ?", args: [sp.id] },
+      { sql: "UPDATE store_products SET canonical_id = NULL WHERE id = ?", args: [sp.id] },
+    );
 
     // Try to find a new canonical in product's own category
     const normedName = norm(sp.product_name);
@@ -52,20 +55,23 @@ async function cascadeCategoryChange(db, canonicalId, newCategory) {
     );
 
     if (matched) {
-      await db.prepare(
-        "INSERT OR REPLACE INTO store_product_mappings (deal_id, canonical_id, match_method, match_confidence) VALUES (?, ?, 'slot_match', 0.85)"
-      ).run(sp.id, matched.id);
-      await db.prepare("UPDATE store_products SET canonical_id = ? WHERE id = ?").run(matched.id, sp.id);
+      stmts.push(
+        { sql: "INSERT OR REPLACE INTO store_product_mappings (deal_id, canonical_id, match_method, match_confidence) VALUES (?, ?, 'slot_match', 0.85)", args: [sp.id, matched.id] },
+        { sql: "UPDATE store_products SET canonical_id = ? WHERE id = ?", args: [matched.id, sp.id] },
+      );
       products_remapped++;
     } else {
-      await db.prepare(
-        `INSERT OR IGNORE INTO entity_resolution_queue
-         (deal_id, raw_name, normalised_name, status, store_id, category)
-         VALUES (?, ?, ?, 'pending', ?, ?)`
-      ).run(sp.id, sp.product_name, normedName, sp.store_id, sp.product_category);
+      // DELETE existing pending entry before INSERT to ensure idempotency
+      // (entity_resolution_queue has no UNIQUE constraint on deal_id, so OR IGNORE would not fire)
+      stmts.push(
+        { sql: "DELETE FROM entity_resolution_queue WHERE deal_id = ? AND status = 'pending'", args: [sp.id] },
+        { sql: "INSERT INTO entity_resolution_queue (deal_id, raw_name, normalised_name, status, store_id, category) VALUES (?, ?, ?, 'pending', ?, ?)", args: [sp.id, sp.product_name, normedName, sp.store_id, sp.product_category] },
+      );
       products_queued++;
     }
   }
+
+  if (stmts.length > 0) await db.batch(stmts, "write");
 
   return { products_unchanged, products_remapped, products_queued };
 }

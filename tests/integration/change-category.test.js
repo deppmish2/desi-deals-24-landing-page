@@ -19,6 +19,11 @@ function makeDb(sqlite) {
     execute(sql) {
       return Promise.resolve({ rows: sqlite.prepare(sql).all() });
     },
+    // batch: run each statement sequentially via sync SQLite
+    batch(stmts) {
+      for (const { sql, args } of stmts) sqlite.prepare(sql).run(...(args || []));
+      return Promise.resolve([]);
+    },
   };
 }
 
@@ -78,6 +83,10 @@ test("product with product_category=Other stays unchanged", async () => {
   const mapping = sqlite.prepare("SELECT * FROM store_product_mappings WHERE deal_id = 'sp-other'").get();
   assert.ok(mapping, "mapping should still exist");
   assert.equal(mapping.canonical_id, "canon-rice");
+
+  // sp-other canonical_id must not be cleared
+  const spOther = sqlite.prepare("SELECT canonical_id FROM store_products WHERE id = 'sp-other'").get();
+  assert.equal(spOther.canonical_id, "canon-rice", "sp-other canonical_id must not be cleared");
 });
 
 test("no-op when category unchanged", async () => {
@@ -87,4 +96,40 @@ test("no-op when category unchanged", async () => {
 
   const result = await cascadeCategoryChange(db, "canon-rice", "Rice & Grains");
   assert.deepEqual(result, { products_unchanged: 0, products_remapped: 0, products_queued: 0 });
+});
+
+test("cross-category product remapped to correct canonical", async () => {
+  const sqlite = createTestDb();
+
+  // brand_slots: [["priya"]] — matches "priya" in normed name
+  // base_product_slots: [["poha"],["thin"]] — matches "poha" and "thin" in normed name
+  // norm("Priya Poha Thin 500g") = "priya poha thin"
+  sqlite.exec(`
+    INSERT INTO stores (id, name, url) VALUES ('s1', 'Test Store', 'https://test.com');
+    INSERT INTO canonical_products (id, canonical_name, category, is_match_priority, brand_slots, base_product_slots)
+      VALUES
+        ('canon-rice', 'Priya Poha Thick 500g', 'Rice & Grains', 1, NULL, NULL),
+        ('canon-thin', 'Priya Poha Thin 500g', 'Rice & Grains', 1,
+         '[["priya"]]', '[["poha"],["thin"]]');
+    INSERT INTO store_products
+      (id, crawl_run_id, crawl_timestamp, store_id, product_name, product_category,
+       product_url, canonical_id, is_active, sale_price)
+      VALUES
+        ('sp-remap', 'run1', '2026-01-01', 's1', 'Priya Poha Thin 500g',
+         'Rice & Grains', 'https://test.com/3', 'canon-rice', 1, 1.99);
+    INSERT INTO store_product_mappings (deal_id, canonical_id, match_method, match_confidence)
+      VALUES ('sp-remap', 'canon-rice', 'slot_match', 0.9);
+  `);
+  const db = makeDb(sqlite);
+
+  const result = await cascadeCategoryChange(db, "canon-rice", "Ready Meals & Mixes");
+
+  // sp-remap should be remapped to canon-thin
+  const sp = sqlite.prepare("SELECT canonical_id FROM store_products WHERE id = 'sp-remap'").get();
+  assert.equal(sp.canonical_id, "canon-thin");
+
+  const mapping = sqlite.prepare("SELECT canonical_id FROM store_product_mappings WHERE deal_id = 'sp-remap'").get();
+  assert.equal(mapping.canonical_id, "canon-thin");
+
+  assert.equal(result.products_remapped, 1);
 });
