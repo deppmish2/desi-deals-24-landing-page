@@ -231,7 +231,7 @@ router.post("/brands/remap", async (req, res) => {
               JSON.stringify(decomposed.brandSlots),
               JSON.stringify(decomposed.baseProductSlots),
               decomposed.productGroupId,
-              resolveBaseProduct(canonical.canonical_name)?.base_key ?? null,
+              canonical.base_key ?? resolveBaseProduct(canonical.canonical_name)?.base_key ?? null,
               canonical.id,
             ],
           });
