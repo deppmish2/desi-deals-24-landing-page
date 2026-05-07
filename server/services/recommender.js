@@ -1106,7 +1106,7 @@ function hasOtherBrandReplacementAtStore(storeDeals, item, baseMeta, baseCache) 
   if (!Number.isFinite(qty) || qty <= 0) return false;
   const sourceCategory = String(item?.canonical_category || baseMeta.category || "").trim();
   const filteredDeals = sourceCategory
-    ? storeDeals.filter((d) => String(d?.product_category || "").trim() === sourceCategory)
+    ? storeDeals.filter((d) => String(d?.canonical_category || d?.product_category || "").trim() === sourceCategory)
     : storeDeals;
   const pool = buildBaseMatchedDealPool(filteredDeals, baseMeta, baseCache);
   return pool.length > 0;
