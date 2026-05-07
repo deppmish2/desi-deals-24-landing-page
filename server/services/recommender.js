@@ -1069,13 +1069,17 @@ function toCombinationRows(comboCombinations) {
   }));
 }
 
-function resolveBaseMetaCached(cache, text) {
+function resolveBaseMetaCached(cache, text, dbBaseKey) {
   const key = normalizeBrand(text);
   if (!key) return null;
-  if (cache.has(key)) return cache.get(key);
-  const resolved = resolveBaseProduct(text);
-  cache.set(key, resolved || null);
-  return resolved || null;
+  if (!cache.has(key)) {
+    const resolved = resolveBaseProduct(text);
+    cache.set(key, resolved || null);
+  }
+  const cached = cache.get(key);
+  if (!dbBaseKey) return cached;
+  const meta = cached || { base_key: null, category: null, base_product: null };
+  return { ...meta, base_key: dbBaseKey };
 }
 
 function buildBaseMatchedDealPool(dealsAtStore, baseMeta, baseCache) {
@@ -1083,7 +1087,7 @@ function buildBaseMatchedDealPool(dealsAtStore, baseMeta, baseCache) {
     return [];
   }
   return dealsAtStore.filter((deal) => {
-    const resolved = resolveBaseMetaCached(baseCache, deal.product_name);
+    const resolved = resolveBaseMetaCached(baseCache, deal.product_name, deal.base_key || null);
     return resolved && resolved.base_key === baseMeta.base_key;
   });
 }
@@ -1743,6 +1747,7 @@ async function recommendForList(
         const dealBaseMeta = resolveBaseMetaCached(
           baseResolutionCache,
           weightedDeal.product_name,
+          weightedDeal.base_key || null,
         );
         const baseMatched =
           !requestedBaseMeta ||
@@ -1902,7 +1907,7 @@ async function recommendForList(
       // cup products matching plain grain requests via shared tokens like "poha").
       const dealMatchesBase = (deal) => {
         if (!requestedBaseMeta) return true;
-        const dealMeta = resolveBaseMetaCached(baseResolutionCache, deal.product_name || "");
+        const dealMeta = resolveBaseMetaCached(baseResolutionCache, deal.product_name || "", deal.base_key || null);
         return !dealMeta || dealMeta.base_key === requestedBaseMeta.base_key;
       };
       let evaluation = (primaryEvaluation?.ok && (
