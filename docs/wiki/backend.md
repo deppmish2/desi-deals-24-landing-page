@@ -1,7 +1,7 @@
 ---
 title: Backend
-last_updated: 2026-05-04
-source_count: 4
+last_updated: 2026-05-08
+source_count: 5
 ---
 
 The backend is an Express app (`server/index.js`) using CommonJS modules throughout. It serves the REST API, handles auth, and in non-serverless mode starts the cron scheduler. In production (Vercel), the scheduler is skipped — crawls are triggered by GitHub Actions instead.
@@ -39,7 +39,9 @@ Static assets: `client/dist/assets/` served with `Cache-Control: max-age=1y, imm
 | `GET /api/v1/admin-dashboard/brands` | `server/routes/admin-dashboard.js` | Returns all `known_brands` rows |
 | `POST /api/v1/admin-dashboard/brands/remap` | `server/routes/admin-dashboard.js` | Replaces brand list, re-decomposes all canonicals, maps unmapped deals. Runs **synchronously** — returns result in response body. |
 | `GET /api/v1/admin-dashboard/brands/remap-status/:jobId` | `server/routes/admin-dashboard.js` | Reads `brand_remap_jobs` row by id (retained for legacy polling clients) |
-| `GET /api/v1/catalog` | `server/routes/catalog.js` | Paginated canonical product catalog. Params: `q`, `category`, `store`, `sort`, `is_discounted`, `min_discount`, `hide_expired`, `page`, `limit`. `sort` ∈ `{price, price_per_kg, discount, real_savings}` (default `price ASC`); `store` is case-insensitive (`lower(s.name) = lower(?)` join). Returns `{data, pagination}`. |
+| `GET /api/v1/admin-dashboard/mapped-products` | `server/routes/admin-dashboard.js` | Returns active store products with canonical mapping info |
+| `POST /api/v1/admin-dashboard/canonical/:id/change-category` | `server/routes/admin-dashboard.js` | Changes canonical category + cascades: evicts mismatched store-product mappings, re-maps what matches, queues failures in `entity_resolution_queue`. Body: `{ category }`. Validated against `VALID_CATEGORIES` (18 values). Returns `{ products_unchanged, products_remapped, products_queued }`. Auth: admin Bearer token. |
+| `GET /api/v1/catalog` | `server/routes/catalog.js` | Paginated canonical product catalog. Params: `q`, `category`, `store`, `sort`, `is_discounted`, `min_discount`, `hide_expired`, `page`, `limit`. `sort` ∈ `{price, price_per_kg, discount, real_savings}` (default `price ASC`); `store` is case-insensitive. Search uses `expandQuery()` synonym expansion with **word-boundary LIKE** — `' ' \|\| lower(col) \|\| ' ' LIKE '% term %'` — prevents short synonyms (e.g. `aval` = Tamil for poha) from matching mid-word in brand names (e.g. "Ath**aval**e"). Returns `{data, pagination}`. |
 | `GET /api/v1/catalog/suggest` | `server/routes/catalog.js` | Typeahead: returns `{products, categories, stores}` matching `?q=`. |
 | `GET /api/v1/catalog/:id/brands` | `server/routes/catalog.js` | Returns flat brand list from `brand_slots` for a canonical product. |
 | `GET /api/v1/lists` | `server/routes/lists.js` | Returns user's shopping lists (auth required) |
@@ -110,6 +112,23 @@ OAuth: Google only. Two URL patterns supported for compatibility with older fron
 
 In non-serverless mode (`!process.env.VERCEL`), `server/index.js` starts `crawler/scheduler.js` which runs the crawl on a Berlin-time morning schedule. In production, GitHub Actions handles this — the server explicitly skips the scheduler.
 
+## Category cascade service (`server/services/category-cascade.js`)
+
+`cascadeCategoryChange(db, canonicalId, newCategory)` — called by `POST /canonical/:id/change-category`. Algorithm:
+
+1. Fetch canonical by id; throw if not found.
+2. No-op early return if `canonical.category === newCategory`.
+3. `UPDATE canonical_products SET category = newCategory` — must run **before** `loadPriorityCanonicals` so re-matching sees the new category.
+4. Load all active store products where `canonical_id = id`.
+5. `loadPriorityCanonicals(db)` — reloads priority canonicals (now with updated category).
+6. For each store product: `matchesCanonical(normedName, wv, wu, updatedCanon, product_category)`.
+   - Returns `true` → product stays (`products_unchanged++`).
+   - Returns `null` (category mismatch) → delete mapping + NULL `canonical_id`, attempt re-match against all priority canonicals in the product's own category, insert new mapping if found (`products_remapped++`) or queue in `entity_resolution_queue` (`products_queued++`).
+7. All per-product DB mutations collected and executed as a single `db.batch(stmts, "write")` — atomic write.
+8. Queue insert: `DELETE WHERE deal_id AND status='pending'` then `INSERT` — idempotent (no UNIQUE constraint on `deal_id`).
+
+**`VALID_CATEGORIES`** (18 values, defined in `admin-dashboard.js`): Rice & Grains, Flours & Baking, Lentils & Pulses, Spices & Masalas, Oils & Ghee, Sauces & Pastes, Snacks & Sweets, Snacks & Namkeen, Beverages, Dairy & Paneer, Frozen Foods, Fresh Produce, Noodles & Pasta, Canned & Packaged, Personal Care, Household, Ready Meals & Mixes, Other.
+
 ## Brand remap endpoint (`POST /brands/remap`)
 
 Accepts `{ brands: [{name, aliases}] }`. Steps:
@@ -121,6 +140,10 @@ Accepts `{ brands: [{name, aliases}] }`. Steps:
 5. Returns `{ jobId, status: "completed", stats }` synchronously.
 
 **Critical:** This runs synchronously within the HTTP request. Do **not** convert it back to a background async — Vercel kills background work when the response is sent. All prior stuck jobs (status='running' forever) were caused by the background-async pattern.
+
+## Store-products serialization
+
+`server/routes/store-products.js → serializeDeal(row)` — converts a DB row to the API response shape. `BASE_DEALS_SQL` LEFT JOINs `canonical_products` to expose `primary_brand` (first element of `brand_slots` JSON array via `json_extract(cp.brand_slots, '$[0][0]')`). This lets `CartButton` use `deal.primary_brand` directly without re-deriving it client-side.
 
 ## Deal serialization & enrichment
 
