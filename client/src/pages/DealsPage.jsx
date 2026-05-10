@@ -20,11 +20,13 @@ import {
 } from "../utils/formatters";
 import {
   fetchCanonicalPriceData,
+  fetchCatalogProduct,
   fetchDealStores,
   fetchDeals,
   getAuthSession,
   logoutUser,
 } from "../utils/api";
+import AdminProductEditor from "../components/AdminProductEditor";
 import {
   buildDealsSearchParams,
   readDealsViewState,
@@ -270,6 +272,23 @@ function DealCard({
   const [imageDebugPos, setImageDebugPos] = useState({ top: 0, left: 0 });
   const [loadingCanonical, setLoadingCanonical] = useState(false);
   const [canonicalData, setCanonicalData] = useState(null);
+  const [editOpen, setEditOpen] = useState(false);
+  const [editLoading, setEditLoading] = useState(false);
+  const [editData, setEditData] = useState(null);
+  const [serverData, setServerData] = useState(null);
+
+  useEffect(() => {
+    if (!deal.canonical_id) return;
+    function onUpdated(e) {
+      if (e.detail.oldId !== deal.canonical_id) return;
+      fetchCatalogProduct(e.detail.newId).then(data => {
+        setServerData(data);
+        setEditData(data);
+      }).catch(() => {});
+    }
+    window.addEventListener("dd24-canonical-updated", onUpdated);
+    return () => window.removeEventListener("dd24-canonical-updated", onUpdated);
+  }, [deal.canonical_id]);
   const badgeRef = useRef(null);
 
   const proxyImg = proxyDealImageUrl(deal);
@@ -288,6 +307,8 @@ function DealCard({
     .filter(Boolean)
     .join(" | ");
 
+  const displayName = serverData?.canonical_name || deal.product_name;
+
   const permalink = dealPermalink(deal.id);
   return (
     <div
@@ -299,8 +320,67 @@ function DealCard({
         boxShadow: highlighted
           ? "0 0 0 4px rgba(22,163,74,0.15), 0px 2px 12px rgba(0,0,0,0.06)"
           : "0px 2px 12px rgba(0,0,0,0.06)",
+        position: "relative",
       }}
     >
+      {editOpen && editData && (
+        <AdminProductEditor
+          canonicalId={deal.canonical_id}
+          initialName={editData.canonical_name}
+          initialBrand={editData.primary_brand || ""}
+          initialType={editData.product_type || ""}
+          initialCategory={editData.category || "Other"}
+          onClose={() => setEditOpen(false)}
+          onSaved={() => setEditOpen(false)}
+        />
+      )}
+      {editOpen && editLoading && (
+        <div style={{
+          position: "absolute", inset: 0, background: "rgba(15,23,42,0.85)",
+          borderRadius: 20, zIndex: 20, display: "flex", alignItems: "center", justifyContent: "center",
+        }}>
+          <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#60a5fa" strokeWidth="2.5" strokeLinecap="round">
+            <path d="M12 2v4M12 18v4M4.93 4.93l2.83 2.83M16.24 16.24l2.83 2.83M2 12h4M18 12h4M4.93 19.07l2.83-2.83M16.24 7.76l2.83-2.83">
+              <animateTransform attributeName="transform" type="rotate" from="0 12 12" to="360 12 12" dur="0.8s" repeatCount="indefinite"/>
+            </path>
+          </svg>
+        </div>
+      )}
+      {isAdmin && deal.canonical_id && (
+        <button
+          type="button"
+          onClick={async (e) => {
+            e.stopPropagation();
+            if (editOpen) { setEditOpen(false); return; }
+            setEditOpen(true);
+            if (!editData) {
+              setEditLoading(true);
+              try {
+                const data = await fetchCatalogProduct(deal.canonical_id);
+                setEditData(data);
+              } catch {
+                setEditData({ canonical_name: "", primary_brand: "", product_type: "" });
+              } finally {
+                setEditLoading(false);
+              }
+            }
+          }}
+          title="Edit metadata"
+          style={{
+            position: "absolute", top: 8, left: 8, zIndex: 10,
+            background: "rgba(15,23,42,0.75)", border: "none",
+            borderRadius: 6, padding: "3px 6px",
+            display: "flex", alignItems: "center", gap: 3,
+            cursor: "pointer",
+          }}
+        >
+          <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="#93c5fd" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+            <path d="M11 4H4a2 2 0 00-2 2v14a2 2 0 002 2h14a2 2 0 002-2v-7"/>
+            <path d="M18.5 2.5a2.121 2.121 0 013 3L12 15l-4 1 1-4 9.5-9.5z"/>
+          </svg>
+          <span style={{ color: "#93c5fd", fontSize: 9, fontWeight: 700, letterSpacing: "0.5px" }}>EDIT</span>
+        </button>
+      )}
       {/* Image — not clickable */}
       <div
         className="relative block w-full h-[200px] bg-white flex items-center justify-center p-5 overflow-hidden rounded-t-[20px]"
@@ -317,7 +397,7 @@ function DealCard({
               ? 'data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" width="112" height="112" viewBox="0 0 112 112"><rect fill="%23ffffff" width="112" height="112"/><text fill="%2394a3b8" font-size="28" text-anchor="middle" dominant-baseline="middle" x="56" y="58">🛒</text></svg>'
               : proxyImg
           }
-          alt={deal.product_name}
+          alt={displayName}
           loading={priority ? "eager" : "lazy"}
           fetchpriority={priority ? "high" : "auto"}
           className="w-full h-full object-contain"
@@ -394,7 +474,7 @@ function DealCard({
             {deal.store?.name || "Store"}
           </p>
           <p className="text-[#1e293b] text-[15px] leading-[22px] font-bold line-clamp-2 min-h-[44px]">
-            {deal.product_name}
+            {displayName}
           </p>
           <div className="flex items-baseline justify-between gap-2">
             <div className="flex items-baseline gap-2">

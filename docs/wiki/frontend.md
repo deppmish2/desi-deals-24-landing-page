@@ -1,7 +1,7 @@
 ---
 title: Frontend
-last_updated: 2026-05-04
-source_count: 4
+last_updated: 2026-05-08
+source_count: 5
 ---
 
 The frontend is a React 18 SPA built with Vite and Tailwind CSS. It uses React Router v6 for client-side routing and a single `useDeals` hook as the primary data layer. The dev server proxies `/api` to port 3000 (the Express backend). In production, the built `client/dist/` is served directly by the Express server.
@@ -91,6 +91,8 @@ Key functions:
 - `fetchBrands()` — `GET /admin-dashboard/brands`
 - `fetchCanonicalStats()` — `GET /admin-dashboard/canonical-stats`
 - `triggerBrandRemap(brands)` — `POST /admin-dashboard/brands/remap`; synchronous result (no polling)
+- `changeCanonicalCategory(id, category)` — `POST /admin-dashboard/canonical/:id/change-category`; returns `{ products_unchanged, products_remapped, products_queued }`
+- `updateCanonical(id, data)` — `PATCH /admin-dashboard/review-queue/canonical/:id`; updates name/brand/type/category without cascade
 - Auth session stored in `localStorage` under key `dd24_auth_session` (JSON: `{ accessToken, refreshToken, user }`)
 - Client session ID (analytics) stored in `sessionStorage` under `dd24_client_session_id`; sent as `X-DD24-Session-Id` header
 
@@ -204,12 +206,33 @@ Key display rules:
 
 ## `ProductCard` (`/products`)
 
-`client/src/components/ProductCard.jsx` — used in `CatalogPage`.
+`client/src/components/ProductCard.jsx` — used in `CatalogPage` (with `isAdmin` prop; `CatalogPage` derives `isAdmin = Boolean(session?.user?.is_admin) || import.meta.env.DEV`).
 
-- "Add to cart" calls `CartContext.addItem` with brand extracted via `extractBrandFromName` (checks `KNOWN_BRANDS` set) or `product.primary_brand`.
+- "Add to cart" calls `CartContext.addItem` with brand from `product.primary_brand` or name-derived fallback.
 - `anyBrand: !detectedBrand` — when no brand identified, the cart item gets any-brand mode.
 - Image proxied via `/api/v1/admin/proxy/image?url=` (non-Shopify) or Shopify CDN with `?width=400`.
-- **Weight/pack size badge**: composed as `[weight_raw, formatPricePerKg(price_per_kg, weight_unit)].filter(Boolean).join(" | ")` — e.g. `62g | 0.32 €/kg`. Mirrors `DealsPage` deal-card pattern. Catalog API returns `weight_raw`, `weight_value`, `weight_unit` from `COALESCE(canonical_products, canonicals)`.
+- **Weight/pack size badge**: composed as `[weight_raw, formatPricePerKg(price_per_kg, weight_unit)].filter(Boolean).join(" | ")` — e.g. `62g | 0.32 €/kg`. Mirrors `DealsPage` deal-card pattern.
+- **Admin edit overlay**: when `isAdmin && product.canonical_id`, shows an edit button that opens `AdminProductEditor` inside the card (absolute-positioned overlay). Passes `initialCategory={product.category || product.product_category || "Other"}`.
+
+## `AdminProductEditor`
+
+`client/src/components/AdminProductEditor.jsx` — admin overlay inside `ProductCard` (catalog) and `DealsPage` (deal cards). Props: `canonicalId`, `initialName`, `initialBrand`, `initialType`, `initialCategory`, `onClose`, `onSaved`.
+
+Fields: Canonical name, Brand, Type/Variant, **Category** (`<select>` with all 18 CATEGORIES). Category label shows amber "· will remap products" when `category !== initialCategory`.
+
+Save handler:
+1. If category changed → `changeCanonicalCategory(canonicalId, category)` first (cascade).
+2. `updateCanonical(canonicalId, { canonical_name, brand, product_type, category })` — updates metadata via existing PATCH route.
+3. Dispatches `dd24-canonical-updated` `CustomEvent` with `{ oldId, newId }`.
+4. Save button shows `"Saved ✓ · N remapped, Y queued"` summary when category was changed, otherwise `"Saved ✓"`. Auto-closes after 2 s.
+
+## `CartButton`
+
+`client/src/components/CartButton.jsx` — "Add to cart" button used in deal cards.
+
+Brand detection: prefers `deal.primary_brand` (from `primary_brand` join in `store-products.js`). Falls back to sliding-window name scan: tries 3-word, 2-word, 1-word prefixes against `matchBrand()` from `client/src/utils/brands.js`. Sets `anyBrand: true` when no brand found.
+
+Cart item shape includes: `raw_item_text`, `canonical_id`, `product_category`, `image_url`, `weight_raw`, `quantity`, `quantity_unit`, `item_count`, `brand`, `anyBrand`.
 
 ## Shared search / filters / sort (search-parity)
 

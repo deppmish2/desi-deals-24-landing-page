@@ -15,7 +15,7 @@
     "test:regression": "node --test tests/regression/*.test.mjs",
     "test:er-accuracy": "node scripts/entity-resolution-accuracy.js",
     "perf:smoke": "node scripts/perf-smoke.js",
-    "test:integration": "node --test tests/integration/*.test.js",
+    "test:integration": "node --test tests/integration/*.test.js tests/regression/*.test.mjs",
     "test:e2e": "node --test tests/e2e/*.test.js",
     "migrate:real-savings": "node scripts/migrate-real-savings.js",
     "seed:canonicals": "node scripts/seed-priority-canonicals.js",

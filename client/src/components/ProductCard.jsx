@@ -3,6 +3,8 @@ import { CartContext } from "../hooks/CartContext";
 import { formatPrice, formatPricePerKg } from "../utils/formatters";
 import { resolveAbsoluteImageUrl } from "../utils/images";
 import { matchBrand } from "../utils/brands";
+import AdminProductEditor from "./AdminProductEditor";
+import { fetchCatalogProduct } from "../utils/api";
 
 function proxyCatalogImageUrl(imageUrl) {
   const abs = resolveAbsoluteImageUrl(imageUrl, null);
@@ -27,11 +29,22 @@ function extractBrandFromName(name) {
   return null;
 }
 
-export default function ProductCard({ product, context }) {
+export default function ProductCard({ product, context, isAdmin }) {
   const { addItem } = useContext(CartContext);
   const [imgError, setImgError] = useState(false);
   const [inCart, setInCart] = useState(false);
+  const [editOpen, setEditOpen] = useState(false);
+  const [serverData, setServerData] = useState(null);
   const inCartTimerRef = useRef(null);
+
+  useEffect(() => {
+    function onUpdated(e) {
+      if (e.detail.oldId !== product.canonical_id) return;
+      fetchCatalogProduct(e.detail.newId).then(setServerData).catch(() => {});
+    }
+    window.addEventListener("dd24-canonical-updated", onUpdated);
+    return () => window.removeEventListener("dd24-canonical-updated", onUpdated);
+  }, [product.canonical_id]);
 
   const handleAddToCart = useCallback((e) => {
     e.stopPropagation();
@@ -57,6 +70,9 @@ export default function ProductCard({ product, context }) {
     return () => { if (inCartTimerRef.current) clearTimeout(inCartTimerRef.current); };
   }, []);
 
+  const displayName = serverData?.canonical_name || product.canonical_name;
+  const displayBrand = serverData?.primary_brand ?? product.primary_brand ?? null;
+
   const discountPct = product.discount_pct ? Math.round(product.discount_pct) : null;
   const priceText = product.cheapest_price != null ? formatPrice(product.cheapest_price) : null;
   const originalPriceText = product.original_price ? formatPrice(product.original_price) : null;
@@ -66,14 +82,45 @@ export default function ProductCard({ product, context }) {
   ]
     .filter(Boolean)
     .join(" | ");
-  const whatsappUrl = `https://wa.me/?text=${encodeURIComponent(`Check out ${product.canonical_name} on DesiDeals24!`)}`;
+  const whatsappUrl = `https://wa.me/?text=${encodeURIComponent(`Check out ${displayName} on DesiDeals24!`)}`;
   const proxiedImg = proxyCatalogImageUrl(product.image_url);
 
   return (
     <div
       className="bg-white rounded-[20px] flex flex-col border border-[#f1f5f9]"
-      style={{ boxShadow: "0px 2px 12px rgba(0,0,0,0.06)" }}
+      style={{ boxShadow: "0px 2px 12px rgba(0,0,0,0.06)", position: "relative" }}
     >
+      {editOpen && product.canonical_id && (
+        <AdminProductEditor
+          canonicalId={product.canonical_id}
+          initialName={displayName}
+          initialBrand={displayBrand || ""}
+          initialType={serverData?.primary_type || product.primary_type || ""}
+          initialCategory={product.category || product.product_category || "Other"}
+          onClose={() => setEditOpen(false)}
+          onSaved={() => setEditOpen(false)}
+        />
+      )}
+      {isAdmin && product.canonical_id && (
+        <button
+          type="button"
+          onClick={e => { e.stopPropagation(); setEditOpen(v => !v); }}
+          title="Edit metadata"
+          style={{
+            position: "absolute", top: 8, left: 8, zIndex: 10,
+            background: "rgba(15,23,42,0.75)", border: "none",
+            borderRadius: 6, padding: "3px 6px",
+            display: "flex", alignItems: "center", gap: 3,
+            cursor: "pointer",
+          }}
+        >
+          <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="#93c5fd" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+            <path d="M11 4H4a2 2 0 00-2 2v14a2 2 0 002 2h14a2 2 0 002-2v-7"/>
+            <path d="M18.5 2.5a2.121 2.121 0 013 3L12 15l-4 1 1-4 9.5-9.5z"/>
+          </svg>
+          <span style={{ color: "#93c5fd", fontSize: 9, fontWeight: 700, letterSpacing: "0.5px" }}>EDIT</span>
+        </button>
+      )}
       {/* Image */}
       <div className="relative w-full h-[200px] bg-white flex items-center justify-center p-5 overflow-hidden rounded-t-[20px]">
         <img
@@ -82,7 +129,7 @@ export default function ProductCard({ product, context }) {
               ? 'data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" width="112" height="112" viewBox="0 0 112 112"><rect fill="%23ffffff" width="112" height="112"/><text fill="%2394a3b8" font-size="28" text-anchor="middle" dominant-baseline="middle" x="56" y="58">%F0%9F%9B%92</text></svg>'
               : proxiedImg
           }
-          alt={product.canonical_name}
+          alt={displayName}
           loading="lazy"
           className="w-full h-full object-contain"
           onError={() => setImgError(true)}
@@ -119,7 +166,7 @@ export default function ProductCard({ product, context }) {
             {product.category}
           </p>
           <p className="text-[#1e293b] text-[15px] leading-[22px] font-bold line-clamp-2 min-h-[44px]">
-            {product.canonical_name}
+            {displayName}
           </p>
           {product.cheapest_store_name && (
             <p className="text-[#94a3b8] text-[11px] leading-[15px]">

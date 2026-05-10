@@ -1,4 +1,4 @@
-import React, { useContext, useState, useEffect } from "react";
+import React, { useContext, useState, useEffect, useRef } from "react";
 import { createPortal } from "react-dom";
 import { useNavigate } from "react-router-dom";
 import { CartContext } from "../hooks/CartContext";
@@ -9,10 +9,119 @@ import {
   mergeCartIntoList,
   fetchProductBrands,
   fetchOAuthAuthUrl,
+  runComparison,
+  cartTransfer,
+  handoffOrder,
 } from "../utils/api";
 import { matchBrand, loadBrands, isBrandsLoaded } from "../utils/brands";
+import StoreComparisonCard from "../components/comparison/StoreComparisonCard";
 
 const POST_AUTH_REDIRECT_KEY = "dd24_post_auth_redirect";
+
+const SORT_OPTIONS = [
+  { key: "confirmed_total", label: "Best value" },
+  { key: "estimated_total", label: "Estimated" },
+  { key: "coverage_pct",    label: "Coverage" },
+];
+
+function sortStores(stores, key) {
+  return [...stores].sort((a, b) => {
+    if (key === "coverage_pct") return (b.coverage_pct ?? 0) - (a.coverage_pct ?? 0);
+    return (a[key] ?? Infinity) - (b[key] ?? Infinity);
+  });
+}
+
+function SkeletonBlock({ width = "100%", height = 14, radius = 6, style = {} }) {
+  return (
+    <div style={{
+      width, height, borderRadius: radius,
+      background: "linear-gradient(90deg, #f1f5f9 25%, #e8edf3 50%, #f1f5f9 75%)",
+      backgroundSize: "200% 100%",
+      animation: "shimmer 1.4s ease-in-out infinite",
+      ...style,
+    }} />
+  );
+}
+
+function CompareCardSkeleton({ isFirst }) {
+  return (
+    <div style={{
+      background: "#fff",
+      border: isFirst ? "2px solid #d1fae5" : "1px solid #e2e8f0",
+      borderRadius: 20,
+      overflow: "hidden",
+    }}>
+      {isFirst && (
+        <div style={{ background: "#d1fae5", height: 28, padding: "0 14px", display: "flex", alignItems: "center" }}>
+          <SkeletonBlock width={80} height={10} radius={4} style={{ background: "rgba(255,255,255,0.5)", backgroundSize: "200% 100%", animation: "shimmer 1.4s ease-in-out infinite" }} />
+        </div>
+      )}
+      <div style={{ padding: "16px 16px 0" }}>
+        <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", marginBottom: 12 }}>
+          <div style={{ flex: 1, display: "flex", flexDirection: "column", gap: 8 }}>
+            <SkeletonBlock width="55%" height={18} radius={8} />
+            <SkeletonBlock width="38%" height={11} radius={5} />
+          </div>
+          <div style={{ textAlign: "right", display: "flex", flexDirection: "column", gap: 6, alignItems: "flex-end" }}>
+            <SkeletonBlock width={72} height={28} radius={8} />
+            <SkeletonBlock width={52} height={10} radius={4} />
+          </div>
+        </div>
+        <SkeletonBlock width="100%" height={4} radius={99} style={{ marginBottom: 16 }} />
+      </div>
+      <div style={{ padding: "0 16px 16px" }}>
+        <SkeletonBlock width="100%" height={48} radius={14} />
+      </div>
+    </div>
+  );
+}
+
+function CartItemSkeleton() {
+  return (
+    <div style={{
+      background: "#fff", border: "1px solid #f1f5f9",
+      borderRadius: 20, overflow: "hidden",
+    }}>
+      <div style={{ padding: "14px 14px 10px", display: "flex", gap: 12, alignItems: "flex-start" }}>
+        <SkeletonBlock width={56} height={56} radius={12} style={{ flexShrink: 0 }} />
+        <div style={{ flex: 1, display: "flex", flexDirection: "column", gap: 8, paddingTop: 4 }}>
+          <SkeletonBlock width="80%" height={14} radius={6} />
+          <SkeletonBlock width="40%" height={11} radius={5} />
+          <SkeletonBlock width="24%" height={20} radius={6} />
+        </div>
+      </div>
+      <div style={{ padding: "8px 14px 14px", borderTop: "1px solid #f8fafc", display: "flex", justifyContent: "space-between" }}>
+        <SkeletonBlock width={70} height={22} radius={8} />
+        <SkeletonBlock width={96} height={32} radius={10} />
+      </div>
+    </div>
+  );
+}
+
+function normalizeStores(data) {
+  const rawStores = data.stores || data.data || [];
+  return rawStores.map(s => {
+    const itemsMatched = s.items_matched ?? s.coverage?.available ?? 0;
+    const itemsMissing = (s.items_not_found?.length) ?? s.coverage?.missing ?? 0;
+    const itemsTotal   = s.items_total ?? s.coverage?.total ?? (itemsMatched + itemsMissing);
+    return {
+      ...s,
+      store_name:      s.store_name ?? s.store?.name,
+      store_id:        s.store_id   ?? s.store?.id,
+      store_url:       s.store_url  ?? s.store?.url,
+      confirmed_total: s.confirmed_total ?? s.subtotal ?? s.total ?? 0,
+      estimated_total: s.estimated_total ?? null,
+      coverage_pct:    s.coverage_pct ?? (itemsTotal > 0 ? itemsMatched / itemsTotal : 0),
+      coverage: s.coverage ?? {
+        available: itemsMatched,
+        replaced:  0,
+        missing:   itemsMissing,
+        total:     itemsTotal,
+      },
+      items: s.items ?? s.matched_items ?? [],
+    };
+  });
+}
 
 function extractBrandFromName(name) {
   if (!name) return null;
@@ -184,14 +293,19 @@ function CartItemCard({ item, index, onRemove, onDecrement, onIncrement, onBrand
                   <button
                     onClick={() => setShowBrandPicker(true)}
                     style={{
-                      background: "none", border: "none", padding: 0, cursor: "pointer",
-                      fontSize: 14, fontWeight: 700,
+                      display: "inline-flex", alignItems: "center", gap: 3,
+                      background: anyBrand ? "#f8fafc" : "#f0fdf4",
+                      border: anyBrand ? "1.5px dashed #cbd5e1" : "1.5px solid #86efac",
+                      borderRadius: 8, padding: "1px 6px 1px 7px",
+                      cursor: "pointer", lineHeight: "inherit",
+                      fontSize: 13, fontWeight: 700,
                       color: anyBrand ? "#94a3b8" : "#16a34a",
-                      borderBottom: anyBrand ? "1.5px dashed #cbd5e1" : "1.5px solid #86efac",
-                      lineHeight: "inherit",
                     }}
                   >
                     {anyBrand ? "Any brand" : (brand || "Any brand")}
+                    <svg width="10" height="10" viewBox="0 0 10 10" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={{ flexShrink: 0, opacity: 0.7 }}>
+                      <polyline points="2 3.5 5 6.5 8 3.5"/>
+                    </svg>
                   </button>
                   {" "}
                 </>
@@ -290,7 +404,73 @@ export default function CartPage() {
   const [findError, setFindError] = useState(null);
   const [needsLogin, setNeedsLogin] = useState(false);
   const [authLoading, setAuthLoading] = useState(false);
+
+  // Desktop split-screen state
+  const [compareListId, setCompareListId] = useState(null);
+  const [compareLoading, setCompareLoading] = useState(false);
+  const [compareStores, setCompareStores] = useState([]);
+  const [compareError, setCompareError] = useState(null);
+  const [compareSort, setCompareSort] = useState("confirmed_total");
+  const [compareItemCount, setCompareItemCount] = useState(0);
+  const [comparisonDirty, setComparisonDirty] = useState(false);
+  const compareLoadedRef = useRef(false);
+
+  const [isDesktop, setIsDesktop] = useState(
+    () => typeof window !== "undefined" && window.matchMedia("(min-width: 1024px)").matches
+  );
+
   const navigate = useNavigate();
+
+  // Track desktop breakpoint changes
+  useEffect(() => {
+    const mq = window.matchMedia("(min-width: 1024px)");
+    const handler = (e) => {
+      setIsDesktop(e.matches);
+      // If compare is open and user resizes to mobile, hand off to compare route
+      if (!e.matches && compareListId) {
+        navigate(`/compare/${compareListId}`, { replace: true });
+      }
+    };
+    mq.addEventListener("change", handler);
+    return () => mq.removeEventListener("change", handler);
+  }, [compareListId, navigate]);
+
+  // Fetch comparison data when compareListId changes (desktop only)
+  useEffect(() => {
+    if (!compareListId || !isDesktop) return;
+    let cancelled = false;
+    setCompareLoading(true);
+    setCompareError(null);
+    setCompareStores([]);
+    compareLoadedRef.current = false;
+    runComparison(compareListId)
+      .then(data => {
+        if (cancelled) return;
+        const raw = normalizeStores(data);
+        setCompareStores(raw);
+        if (raw[0]?.coverage?.total) setCompareItemCount(raw[0].coverage.total);
+        else if (raw[0]?.items?.length) setCompareItemCount(raw[0].items.length);
+        compareLoadedRef.current = true;
+        setComparisonDirty(false);
+      })
+      .catch(err => {
+        if (cancelled) return;
+        setCompareError(
+          err.message.includes("access token") || err.message.includes("401") ? "auth" : err.message
+        );
+      })
+      .finally(() => { if (!cancelled) setCompareLoading(false); });
+    return () => { cancelled = true; };
+  }, [compareListId, isDesktop]);
+
+  // Mark comparison dirty when cart items change after comparison loaded
+  const prevItemsRef = useRef(items);
+  useEffect(() => {
+    if (compareLoadedRef.current && compareListId && prevItemsRef.current !== items) {
+      setComparisonDirty(true);
+    }
+    prevItemsRef.current = items;
+  }, [items, compareListId]);
 
   const handleDecrement = (index) => {
     const qty = items[index].item_count || 1;
@@ -331,7 +511,12 @@ export default function CartPage() {
       const createData = await createList("My Shopping List");
       const list = createData.data || createData;
       await mergeCartIntoList(list.id, items);
-      navigate(`/compare/${list.id}`);
+      if (isDesktop) {
+        setCompareListId(list.id);
+        compareLoadedRef.current = false;
+      } else {
+        navigate(`/compare/${list.id}`);
+      }
     } catch (err) {
       setFindError("Something went wrong. Please try again.");
       console.error("Find best price error:", err);
@@ -340,6 +525,247 @@ export default function CartPage() {
     }
   };
 
+  const handleShop = async (store) => {
+    clearCart();
+    try {
+      const minOther = compareStores
+        .filter(s => s.store_id !== store.store_id)
+        .reduce((min, s) => { const t = s.confirmed_total ?? 0; return t < min ? t : min; }, Infinity);
+      const savings = Number.isFinite(minOther) ? minOther - (store.confirmed_total ?? 0) : null;
+      await Promise.all([
+        cartTransfer(compareListId, store.store_id, store.items || []),
+        handoffOrder(compareListId, store.store_id, savings, store.confirmed_total ?? null),
+      ]);
+    } catch {
+      // best-effort
+    }
+    if (store.store_url) window.open(store.store_url, "_blank", "noopener");
+  };
+
+  const showSplit = isDesktop && compareListId !== null;
+  const sortedCompareStores = sortStores(compareStores, compareSort);
+
+  // ── Desktop split layout ──────────────────────────────────────────────────
+  if (showSplit) {
+    return (
+      <div style={{
+        height: "100vh", display: "flex", flexDirection: "column",
+        background: "#f8fbff",
+        fontFamily: "'DM Sans', system-ui, sans-serif",
+        overflow: "hidden",
+      }}>
+        {/* Unified header */}
+        <div style={{
+          background: "#fff", borderBottom: "1px solid #f1f5f9",
+          display: "flex", alignItems: "stretch", flexShrink: 0,
+          zIndex: 50,
+        }}>
+          {/* Cart header section */}
+          <div style={{
+            width: "clamp(420px, 35%, 520px)", flexShrink: 0,
+            padding: "14px 16px", display: "flex", alignItems: "center", gap: 10,
+            borderRight: "1px solid #f1f5f9",
+          }}>
+            <button
+              onClick={() => navigate(-1)}
+              style={{ background: "none", border: "none", cursor: "pointer", fontSize: 16, color: "#94a3b8", padding: 0, lineHeight: 1 }}
+            >←</button>
+            <div style={{ flex: 1 }}>
+              <p style={{ margin: 0, fontSize: 16, fontWeight: 700, color: "#1e293b" }}>Cart</p>
+              <p style={{ margin: "1px 0 0", fontSize: 11, color: "#94a3b8" }}>
+                {items.length} item{items.length !== 1 ? "s" : ""}
+              </p>
+            </div>
+          </div>
+          {/* Compare header section */}
+          <div style={{
+            flex: 1, padding: "14px 20px",
+            display: "flex", alignItems: "center", justifyContent: "space-between",
+          }}>
+            <div>
+              <p style={{ margin: 0, fontSize: 16, fontWeight: 700, color: "#1e293b" }}>Price comparison</p>
+              {compareItemCount > 0 && (
+                <p style={{ margin: "1px 0 0", fontSize: 11, color: "#94a3b8" }}>
+                  {compareItemCount} item{compareItemCount !== 1 ? "s" : ""}
+                </p>
+              )}
+            </div>
+            {/* Sort pills */}
+            <div style={{ display: "flex", gap: 6 }}>
+              {SORT_OPTIONS.map(opt => (
+                <button
+                  key={opt.key}
+                  type="button"
+                  onClick={() => setCompareSort(opt.key)}
+                  style={{
+                    padding: "6px 14px", borderRadius: 99, border: "none", cursor: "pointer",
+                    fontSize: 12, fontWeight: compareSort === opt.key ? 700 : 500,
+                    background: compareSort === opt.key ? "#16a34a" : "#f1f5f9",
+                    color: compareSort === opt.key ? "#fff" : "#64748b",
+                    transition: "all 0.15s",
+                  }}
+                >
+                  {opt.label}
+                </button>
+              ))}
+            </div>
+          </div>
+        </div>
+
+        {/* Main content: split columns */}
+        <div style={{ flex: 1, display: "flex", overflow: "hidden" }}>
+
+          {/* ── Left: Cart column ── */}
+          <div style={{
+            width: "clamp(420px, 35%, 520px)", flexShrink: 0,
+            display: "flex", flexDirection: "column",
+            borderRight: "1px solid #f1f5f9",
+            background: "radial-gradient(circle at top, #ffffff 0%, #f8fbff 100%)",
+          }}>
+            {/* Cart items - scrollable */}
+            <div style={{ flex: 1, overflowY: "auto", padding: "16px 16px" }}>
+              {items.length === 0 ? (
+                <div style={{ display: "flex", flexDirection: "column", alignItems: "center", paddingTop: 48, textAlign: "center" }}>
+                  <div style={{ width: 56, height: 56, borderRadius: 16, background: "#f8fafc", display: "flex", alignItems: "center", justifyContent: "center", marginBottom: 12 }}>
+                    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#94a3b8" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
+                      <path d="M6 2L3 6v14a2 2 0 002 2h14a2 2 0 002-2V6l-3-4z"/>
+                      <line x1="3" y1="6" x2="21" y2="6"/>
+                      <path d="M16 10a4 4 0 01-8 0"/>
+                    </svg>
+                  </div>
+                  <p style={{ margin: 0, fontSize: 14, fontWeight: 700, color: "#1e293b" }}>Cart is empty</p>
+                </div>
+              ) : (
+                <div style={{ display: "flex", flexDirection: "column", gap: 12 }}>
+                  {items.map((item, index) => (
+                    <CartItemCard
+                      key={item.canonical_id || String(index)}
+                      item={item}
+                      index={index}
+                      onRemove={removeItem}
+                      onDecrement={handleDecrement}
+                      onIncrement={handleIncrement}
+                      onBrandSelect={setBrand}
+                    />
+                  ))}
+                </div>
+              )}
+            </div>
+
+            {/* Cart bottom bar - inline (not position:fixed) */}
+            <div style={{
+              flexShrink: 0, padding: "12px 16px 20px",
+              borderTop: "1px solid #f1f5f9", background: "#fff",
+            }}>
+              {comparisonDirty && (
+                <div style={{
+                  marginBottom: 10, padding: "8px 12px", borderRadius: 10,
+                  background: "#fffbeb", border: "1px solid #fde68a",
+                  fontSize: 12, color: "#92400e",
+                }}>
+                  Cart changed — refresh to update comparison
+                </div>
+              )}
+              {findError && (
+                <p style={{ margin: "0 0 8px", fontSize: 12, color: "#ef4444", textAlign: "center" }}>{findError}</p>
+              )}
+              <button
+                onClick={handleFindBestPrice}
+                disabled={!items.length || finding}
+                style={{
+                  width: "100%", height: 48, borderRadius: 14, border: "none",
+                  cursor: items.length && !finding ? "pointer" : "not-allowed",
+                  background: items.length ? (comparisonDirty ? "#f59e0b" : "#16a34a") : "#f1f5f9",
+                  color: items.length ? "#fff" : "#94a3b8",
+                  fontSize: 14, fontWeight: 800,
+                  display: "flex", alignItems: "center", justifyContent: "center", gap: 8,
+                  transition: "background 0.2s",
+                }}
+              >
+                {finding ? "Saving list…" : comparisonDirty ? "Refresh comparison →" : "Refresh comparison →"}
+              </button>
+            </div>
+          </div>
+
+          {/* ── Right: Compare column ── */}
+          <div style={{
+            flex: 1, overflowY: "auto",
+            background: "radial-gradient(circle at top right, #f0fdf4 0%, #f8fbff 40%, #f3f6fb 100%)",
+            animation: "slideInRight 0.28s cubic-bezier(0.22, 1, 0.36, 1)",
+          }}>
+            <div style={{ maxWidth: 720, margin: "0 auto", padding: "16px 20px", display: "flex", flexDirection: "column", gap: 12 }}>
+              {compareLoading && (
+                <>
+                  <div style={{ display: "flex", alignItems: "center", gap: 10, padding: "4px 0 8px" }}>
+                    <div style={{
+                      width: 16, height: 16, borderRadius: "50%",
+                      border: "2px solid #16a34a", borderTopColor: "transparent",
+                      animation: "spin 0.7s linear infinite", flexShrink: 0,
+                    }} />
+                    <span style={{ fontSize: 13, color: "#94a3b8" }}>Comparing prices across stores…</span>
+                  </div>
+                  {[true, false, false].map((isFirst, i) => (
+                    <CompareCardSkeleton key={i} isFirst={isFirst} />
+                  ))}
+                </>
+              )}
+
+              {compareError && (
+                <div style={{ textAlign: "center", padding: 64 }}>
+                  {compareError === "auth" ? (
+                    <p style={{ fontSize: 14, color: "#64748b" }}>Session expired. Please sign in again.</p>
+                  ) : (
+                    <>
+                      <p style={{ fontSize: 14, color: "#ef4444", marginBottom: 16 }}>{compareError}</p>
+                      <button
+                        type="button"
+                        onClick={() => { const id = compareListId; setCompareListId(null); setTimeout(() => setCompareListId(id), 0); }}
+                        style={{ padding: "10px 24px", background: "#16a34a", color: "#fff", border: "none", borderRadius: 14, cursor: "pointer", fontSize: 14, fontWeight: 600 }}
+                      >
+                        Try again
+                      </button>
+                    </>
+                  )}
+                </div>
+              )}
+
+              {!compareLoading && !compareError && sortedCompareStores.length === 0 && (
+                <p style={{ fontSize: 14, color: "#94a3b8", textAlign: "center", padding: 64 }}>
+                  No stores found for this cart.
+                </p>
+              )}
+
+              {!compareLoading && !compareError && sortedCompareStores.map((store, i) => (
+                <StoreComparisonCard
+                  key={store.store_id}
+                  listId={compareListId}
+                  store={store}
+                  onShop={handleShop}
+                  isWinner={i === 0}
+                  priceDiff={i > 0 ? (store.confirmed_total - sortedCompareStores[0].confirmed_total) : 0}
+                  savingsVsMax={i === 0 ? ((sortedCompareStores[sortedCompareStores.length - 1]?.confirmed_total ?? 0) - sortedCompareStores[0].confirmed_total) : 0}
+                />
+              ))}
+            </div>
+          </div>
+        </div>
+
+        <style>{`
+          @keyframes spin { to { transform: rotate(360deg); } }
+          @keyframes slideInRight {
+            from { opacity: 0; transform: translateX(24px); }
+            to   { opacity: 1; transform: translateX(0); }
+          }
+          @keyframes shimmer {
+            0%   { background-position: 200% 0; }
+            100% { background-position: -200% 0; }
+          }
+        `}</style>
+      </div>
+    );
+  }
+
+  // ── Mobile / default layout (unchanged) ──────────────────────────────────
   return (
     <div style={{
       background: "radial-gradient(circle at top, #ffffff 0%, #f8fbff 32%, #f3f6fb 100%)",
@@ -450,26 +876,32 @@ export default function CartPage() {
               </button>
             </div>
           ) : (
-          <button
-            onClick={handleFindBestPrice}
-            disabled={!items.length || finding}
-            style={{
-              width: "100%", height: 52, borderRadius: 16, border: "none",
-              cursor: items.length && !finding ? "pointer" : "not-allowed",
-              background: items.length ? "#16a34a" : "#f1f5f9",
-              color: items.length ? "#fff" : "#94a3b8",
-              fontSize: 15, fontWeight: 800,
-              display: "flex", alignItems: "center", justifyContent: "center", gap: 10,
-            }}
-          >
-            <span>{finding ? "Saving list…" : "Find best price"}</span>
-            {!finding && <span>→</span>}
-          </button>
+            <button
+              onClick={handleFindBestPrice}
+              disabled={!items.length || finding}
+              style={{
+                width: "100%", height: 52, borderRadius: 16, border: "none",
+                cursor: items.length && !finding ? "pointer" : "not-allowed",
+                background: items.length ? "#16a34a" : "#f1f5f9",
+                color: items.length ? "#fff" : "#94a3b8",
+                fontSize: 15, fontWeight: 800,
+                display: "flex", alignItems: "center", justifyContent: "center", gap: 10,
+              }}
+            >
+              <span>{finding ? "Saving list…" : "Find best price"}</span>
+              {!finding && <span>→</span>}
+            </button>
           )}
         </div>
       </div>
 
-      <style>{`@keyframes spin { to { transform: rotate(360deg); } }`}</style>
+      <style>{`
+        @keyframes spin { to { transform: rotate(360deg); } }
+        @keyframes shimmer {
+          0%   { background-position: 200% 0; }
+          100% { background-position: -200% 0; }
+        }
+      `}</style>
     </div>
   );
 }

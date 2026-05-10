@@ -49,7 +49,7 @@ async function main() {
   }
 
   const res = await db.execute(
-    `SELECT id, product_url, product_name, weight_value, weight_unit
+    `SELECT id, product_url, product_name, weight_value, weight_unit, product_category
      FROM store_products
      WHERE is_active = 1`,
   );
@@ -68,6 +68,7 @@ async function main() {
           deal.weight_value,
           deal.weight_unit,
           canon,
+          deal.product_category ?? null,
         );
         if (result === true) { wouldMap++; break; }
         // null = no slots → skip (no legacy fallback)

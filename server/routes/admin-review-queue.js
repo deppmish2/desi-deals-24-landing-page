@@ -179,8 +179,9 @@ router.post("/review-queue/canonical", async (req, res) => {
     // Override slots with explicit admin input if provided
     if (brand !== undefined || base_product !== undefined || product_type !== undefined) {
       const tok = (s) => normalise(String(s || "")).split(/\s+/).filter(Boolean).map((w) => [w]);
+      const brandTok = (s) => { const t = String(s || "").trim(); return t ? [[t]] : []; };
       const first = (slots) => slots.map((g) => (Array.isArray(g) ? g[0] : g)).filter(Boolean);
-      if (brand !== undefined) brandSlots = tok(brand);
+      if (brand !== undefined) brandSlots = brandTok(brand);
       if (base_product !== undefined) baseProductSlots = tok(base_product);
       if (product_type !== undefined) typeSlots = tok(product_type);
       productGroupId = [...first(brandSlots || []), ...first(baseProductSlots), ...first(typeSlots)].join("-") || productGroupId;
@@ -295,8 +296,10 @@ router.patch("/review-queue/canonical/:id", async (req, res) => {
     if (!existing) return res.status(404).json({ error: "Canonical not found" });
 
     const tok = (s) => normalise(String(s || "")).split(/\s+/).filter(Boolean).map((w) => [w]);
+    // Brand is a proper noun phrase — store as single slot to avoid "mother","s","recipe" split
+    const brandTok = (s) => { const t = String(s || "").trim(); return t ? [[t]] : []; };
     const first = (slots) => slots.map((g) => (Array.isArray(g) ? g[0] : g)).filter(Boolean);
-    const brandSlots = brand !== undefined ? tok(brand) : JSON.parse(existing.brand_slots || "[]");
+    const brandSlots = brand !== undefined ? brandTok(brand) : JSON.parse(existing.brand_slots || "[]");
     const baseProductSlots = base_product !== undefined ? tok(base_product) : JSON.parse(existing.base_product_slots || "[]");
     const typeSlots = product_type !== undefined ? tok(product_type) : JSON.parse(existing.type_slots || "[]");
     const productGroupId = [...first(brandSlots), ...first(baseProductSlots), ...first(typeSlots)].join("-") || existing.product_group_id;
@@ -304,7 +307,7 @@ router.patch("/review-queue/canonical/:id", async (req, res) => {
     const resolvedName = (canonical_name || "").trim() || existing.canonical_name;
     const newId = await ensureUniqueCanonicalId(db, slugify(resolvedName));
     const idChanged = newId !== id;
-    const baseKey = resolveBaseProduct(resolvedName)?.base_key ?? null;
+    const baseKey = existing.base_key ?? resolveBaseProduct(resolvedName)?.base_key ?? null;
 
     if (idChanged) {
       // Explicit INSERT to avoid INSERT...SELECT param issues with libsql

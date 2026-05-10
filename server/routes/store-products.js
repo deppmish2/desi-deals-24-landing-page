@@ -128,6 +128,7 @@ function serializeDeal(row) {
     availability: row.availability,
     bulk_pricing: row.bulk_pricing ? JSON.parse(row.bulk_pricing) : null,
     best_before: row.best_before || null,
+    primary_brand: row.primary_brand || null,
   };
 }
 
@@ -138,9 +139,11 @@ const BASE_DEALS_SQL = `
     d.product_name, d.product_category, d.product_url,
     d.image_url, d.weight_raw, d.weight_value, d.weight_unit,
     d.sale_price, d.original_price, d.discount_percent,
-    d.price_per_kg, d.currency, d.availability, d.bulk_pricing, d.best_before
+    d.price_per_kg, d.currency, d.availability, d.bulk_pricing, d.best_before,
+    json_extract(cp.brand_slots, '$[0][0]') AS primary_brand
   FROM store_products d
   JOIN stores s ON s.id = d.store_id
+  LEFT JOIN canonical_products cp ON cp.id = d.canonical_id
 `;
 
 const ACTIVE_DEALS_SQL = `

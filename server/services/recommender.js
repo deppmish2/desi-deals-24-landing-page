@@ -473,6 +473,7 @@ function mapDealCategoryToItemType(categoryValue) {
   if (/\b(oil|ghee)\b/.test(text)) return "oil";
   if (/\b(beverage|drink|tea|coffee|juice)\b/.test(text)) return "beverage";
   if (/\b(fruit|vegetable|produce)\b/.test(text)) return "produce";
+  if (/\b(dairy|paneer)\b/.test(text)) return "paneer";
   return null;
 }
 
@@ -506,6 +507,7 @@ function inferStrictItemTypeFromName(productName) {
   if (/\b(oil|ghee)\b/.test(text)) return "oil";
   if (/\b(tea|coffee|juice|drink|beverage)\b/.test(text)) return "beverage";
   if (/\b(vegetable|fruit|produce)\b/.test(text)) return "produce";
+  if (/\bpaneer\b/.test(text)) return "paneer";
   return null;
 }
 
@@ -1067,13 +1069,17 @@ function toCombinationRows(comboCombinations) {
   }));
 }
 
-function resolveBaseMetaCached(cache, text) {
+function resolveBaseMetaCached(cache, text, dbBaseKey) {
   const key = normalizeBrand(text);
   if (!key) return null;
-  if (cache.has(key)) return cache.get(key);
-  const resolved = resolveBaseProduct(text);
-  cache.set(key, resolved || null);
-  return resolved || null;
+  if (!cache.has(key)) {
+    const resolved = resolveBaseProduct(text);
+    cache.set(key, resolved || null);
+  }
+  const cached = cache.get(key);
+  if (!dbBaseKey) return cached;
+  const meta = cached || { base_key: null, category: null, base_product: null };
+  return { ...meta, base_key: dbBaseKey };
 }
 
 function buildBaseMatchedDealPool(dealsAtStore, baseMeta, baseCache) {
@@ -1081,7 +1087,7 @@ function buildBaseMatchedDealPool(dealsAtStore, baseMeta, baseCache) {
     return [];
   }
   return dealsAtStore.filter((deal) => {
-    const resolved = resolveBaseMetaCached(baseCache, deal.product_name);
+    const resolved = resolveBaseMetaCached(baseCache, deal.product_name, deal.base_key || null);
     return resolved && resolved.base_key === baseMeta.base_key;
   });
 }
@@ -1100,7 +1106,7 @@ function hasOtherBrandReplacementAtStore(storeDeals, item, baseMeta, baseCache) 
   if (!Number.isFinite(qty) || qty <= 0) return false;
   const sourceCategory = String(item?.canonical_category || baseMeta.category || "").trim();
   const filteredDeals = sourceCategory
-    ? storeDeals.filter((d) => String(d?.product_category || "").trim() === sourceCategory)
+    ? storeDeals.filter((d) => String(d?.canonical_category || d?.product_category || "").trim() === sourceCategory)
     : storeDeals;
   const pool = buildBaseMatchedDealPool(filteredDeals, baseMeta, baseCache);
   return pool.length > 0;
@@ -1633,13 +1639,16 @@ async function recommendForList(
     const missingItems = [];
     const storeDeals = (await db
       .prepare(
-        `SELECT id, product_name, product_category, product_url, sale_price, currency,
-                weight_value, weight_unit, price_per_kg, image_url, canonical_id
-         FROM store_products
-         WHERE is_active = 1
-           AND availability = 'in_stock'
-           AND store_id = ?
-         ORDER BY sale_price ASC
+        `SELECT sp.id, sp.product_name, sp.product_category, sp.product_url, sp.sale_price, sp.currency,
+                sp.weight_value, sp.weight_unit, sp.price_per_kg, sp.image_url, sp.canonical_id,
+                COALESCE(cp.category, sp.product_category) AS canonical_category,
+                cp.base_key
+         FROM store_products sp
+         LEFT JOIN canonical_products cp ON cp.id = sp.canonical_id
+         WHERE sp.is_active = 1
+           AND sp.availability = 'in_stock'
+           AND sp.store_id = ?
+         ORDER BY sp.sale_price ASC
          LIMIT 1500`,
       )
       .all(store.id))
@@ -1647,6 +1656,16 @@ async function recommendForList(
 
     for (const item of items) {
       console.log(`[recommender] item: "${item.raw_item_text}" qty=${item.quantity} unit=${item.quantity_unit} count=${item.item_count}`);
+      // Restrict to same canonical category when known — prevents e.g. paneer masala
+      // spice or ready-to-eat curries matching a fresh paneer request.
+      const itemCategory = String(item.canonical_category || "").trim();
+      const itemStoreDeals = itemCategory
+        ? storeDeals.filter((d) => String(d.canonical_category || d.product_category || "").trim() === itemCategory)
+        : storeDeals;
+      // Set of deal IDs that pass the category filter — used to reject cross-category
+      // text matches from findBestDealForItemAtStore (which runs its own SQL, bypassing
+      // the itemStoreDeals filter above).
+      const itemStoreDealsIds = itemCategory ? new Set(itemStoreDeals.map(d => d.id)) : null;
       const intent = parseItemIntent(
         item.raw_item_text,
         item.quantity,
@@ -1728,6 +1747,7 @@ async function recommendForList(
         const dealBaseMeta = resolveBaseMetaCached(
           baseResolutionCache,
           weightedDeal.product_name,
+          weightedDeal.base_key || null,
         );
         const baseMatched =
           !requestedBaseMeta ||
@@ -1771,7 +1791,7 @@ async function recommendForList(
         }
 
         const strictCandidates = findStrictExactCandidatesAtStore({
-          dealsAtStore: storeDeals,
+          dealsAtStore: itemStoreDeals,
           baseMeta: requestedBaseMeta,
           brandCandidates: requestedBrandCandidates,
           targetBase,
@@ -1781,7 +1801,7 @@ async function recommendForList(
         let selectedStrict = strictCandidates.candidates[0] || null;
         if (!selectedStrict) {
           // Snap to nearest available pack when exact combo fails (e.g. 252g → 250g).
-          const rawSnapPool = buildBaseMatchedDealPool(storeDeals, requestedBaseMeta, baseResolutionCache);
+          const rawSnapPool = buildBaseMatchedDealPool(itemStoreDeals, requestedBaseMeta, baseResolutionCache);
           const basePool = applySubVariantPreference(rawSnapPool, item.raw_item_text);
           const packOpts = buildPackOptions(basePool, targetBase.type);
           let nearestOpt = null;
@@ -1882,7 +1902,18 @@ async function recommendForList(
       const primaryEvaluation = primaryDeal
         ? isAcceptableDeal(primaryDeal)
         : null;
-      let evaluation = primaryEvaluation;
+      // Reject primary match if it falls outside the item's canonical category,
+      // or if its base_key differs from what was requested (catches ready-to-eat
+      // cup products matching plain grain requests via shared tokens like "poha").
+      const dealMatchesBase = (deal) => {
+        if (!requestedBaseMeta) return true;
+        const dealMeta = resolveBaseMetaCached(baseResolutionCache, deal.product_name || "", deal.base_key || null);
+        return !dealMeta || dealMeta.base_key === requestedBaseMeta.base_key;
+      };
+      let evaluation = (primaryEvaluation?.ok && (
+        (itemStoreDealsIds && !itemStoreDealsIds.has(primaryDeal.id)) ||
+        !dealMatchesBase(primaryDeal)
+      )) ? null : primaryEvaluation;
 
       if (!evaluation?.ok) {
         // Canonical mappings can be over-specific/noisy; retry with raw-text-only search.
@@ -1893,7 +1924,9 @@ async function recommendForList(
         const fallbackEvaluation = fallbackDeal
           ? isAcceptableDeal(fallbackDeal)
           : null;
-        if (fallbackEvaluation?.ok) {
+        if (fallbackEvaluation?.ok &&
+          !(itemStoreDealsIds && !itemStoreDealsIds.has(fallbackDeal.id)) &&
+          dealMatchesBase(fallbackDeal)) {
           evaluation = fallbackEvaluation;
         }
       }
