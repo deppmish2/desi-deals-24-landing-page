@@ -85,6 +85,14 @@ See `server/db/schema.sql`. Key tables:
 ## PRD
 `/Users/rasha/Documents/Rahul/Deals24/crawler-spice-stores/DesiDeals24_PRD.md` — original PRD (27 stores listed; 31 now implemented).
 
+## Knowledge Docs
+After any of these changes, update `docs/knowledge/`:
+- `schema.sql` change (new table/column/index) → `dd24_db_explorer.html` (add column to Key Columns table + callout if noteworthy)
+- New route or API endpoint → `dd24_overview.html`
+- New service or architectural pattern → both files
+- Store count change → both files (badge rows, canvas diagram, growth calc)
+- Search logic change → `dd24_overview.html` (search architecture section)
+
 ## Token Efficiency
 - `grep -n` before reading — find the section, then read with offset/limit
 - Filter test output: `| tail -20` or `| grep -E "pass|fail|Error"`

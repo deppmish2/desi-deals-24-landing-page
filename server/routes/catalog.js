@@ -2,6 +2,7 @@
 const express = require("express");
 const db      = require("../db");
 const { expandQuery } = require("../services/search-expander");
+const { expandQueryWord } = require("../services/search-synonyms");
 const router  = express.Router();
 
 // Tokens like "250gm", "1kg", "500ml" don't appear in canonical names — strip them
@@ -25,11 +26,16 @@ function buildSearchCondition(q, column) {
   // Word-boundary LIKE: pad column with spaces so short terms like "aval" don't
   // match mid-word (e.g. "Athavale" contains "aval" but " athavale " does not contain " aval ").
   const paddedCol = `' ' || lower(${column}) || ' '`;
-  const makeLike = (t) => ({ clause: `${paddedCol} LIKE '%' || ? || '%'`, param: ` ${t.toLowerCase()} ` });
+  const makeLike = (t) => ({ clause: `${paddedCol} LIKE '%' || ? || '%'`, param: ` ${t.toLowerCase()}` });
+
+  const expandWord = (w) => {
+    const merged = new Set([...expandQuery(w), ...expandQueryWord(w)]);
+    return [...merged];
+  };
 
   if (effective.length <= 1) {
     // Single word: OR across all synonym/phonetic variants
-    const terms = expandQuery(effective[0] || q).slice(0, 8);
+    const terms = expandWord(effective[0] || q).slice(0, 10);
     const pairs = terms.map(makeLike);
     return { clause: `(${pairs.map(p => p.clause).join(" OR ")})`, params: pairs.map(p => p.param) };
   }
@@ -39,7 +45,7 @@ function buildSearchCondition(q, column) {
   const andClauses = [];
   const params = [];
   for (const word of effective) {
-    const wordTerms = expandQuery(word).slice(0, 6);
+    const wordTerms = expandWord(word).slice(0, 8);
     const pairs = wordTerms.map(makeLike);
     andClauses.push(`(${pairs.map(p => p.clause).join(" OR ")})`);
     params.push(...pairs.map(p => p.param));
@@ -48,7 +54,7 @@ function buildSearchCondition(q, column) {
 }
 
 function parseSlots(raw) {
-  try { return JSON.parse(raw || "[]"); } catch { return []; }
+  try { const v = JSON.parse(raw || "[]"); return Array.isArray(v) ? v : []; } catch { return []; }
 }
 
 function joinSlots(slots) {
@@ -80,11 +86,28 @@ const CATALOG_SQL = `
       sp.image_url    AS deal_image_url,
       sp.weight_value,
       sp.weight_unit,
-      sp.weight_raw
+      sp.weight_raw,
+      st.platform
     FROM store_product_mappings spm
     JOIN store_products sp ON sp.id = spm.deal_id AND sp.is_active = 1
+    JOIN stores st ON st.id = sp.store_id
   ),
-  cheapest AS (
+  cheapest_cart AS (
+    SELECT canonical_id, sale_price, original_price, discount_percent,
+           price_per_kg, best_before, store_id, deal_image_url,
+           weight_value, weight_unit, weight_raw
+    FROM (
+      SELECT r.*,
+             ROW_NUMBER() OVER (
+               PARTITION BY r.canonical_id
+               ORDER BY r.sale_price ASC, r.store_id ASC
+             ) AS rn
+      FROM ranked r
+      WHERE lower(r.platform) IN ('shopify', 'woocommerce')
+    )
+    WHERE rn = 1
+  ),
+  cheapest_any AS (
     SELECT canonical_id, sale_price, original_price, discount_percent,
            price_per_kg, best_before, store_id, deal_image_url,
            weight_value, weight_unit, weight_raw
@@ -117,28 +140,30 @@ const CATALOG_SQL = `
   SELECT
     cp.id           AS canonical_id,
     cp.canonical_name,
-    COALESCE(cp.image_url, c.deal_image_url) AS image_url,
+    COALESCE(cp.image_url, COALESCE(cc.deal_image_url, ca.deal_image_url)) AS image_url,
     cp.category,
-    c.sale_price    AS cheapest_price,
-    c.original_price,
-    c.discount_percent AS discount_pct,
-    c.price_per_kg,
-    c.best_before,
-    c.store_id      AS cheapest_store_id,
-    COALESCE(s.name, sf.name) AS cheapest_store_name,
+    COALESCE(cc.sale_price,       ca.sale_price)       AS cheapest_price,
+    COALESCE(cc.original_price,   ca.original_price)   AS original_price,
+    COALESCE(cc.discount_percent, ca.discount_percent) AS discount_pct,
+    COALESCE(cc.price_per_kg,     ca.price_per_kg)     AS price_per_kg,
+    COALESCE(cc.best_before,      ca.best_before)      AS best_before,
+    COALESCE(cc.store_id,         ca.store_id)         AS cheapest_store_id,
+    COALESCE(sc.name, sa.name, sf.name)                AS cheapest_store_name,
     ct.store_count,
-    COALESCE(cp.weight_value, c.weight_value) AS weight_value,
-    COALESCE(cp.weight_unit,  c.weight_unit)  AS weight_unit,
-    c.weight_raw,
-    json_extract(cp.brand_slots, '$[0][0]')   AS primary_brand,
-    cp.brand_slots                             AS brand_slots_raw,
-    cp.type_slots                              AS type_slots_raw
+    COALESCE(cp.weight_value, COALESCE(cc.weight_value, ca.weight_value)) AS weight_value,
+    COALESCE(cp.weight_unit,  COALESCE(cc.weight_unit,  ca.weight_unit))  AS weight_unit,
+    COALESCE(cc.weight_raw,   ca.weight_raw)           AS weight_raw,
+    json_extract(cp.brand_slots, '$[0][0]')            AS primary_brand,
+    cp.brand_slots                                     AS brand_slots_raw,
+    cp.type_slots                                      AS type_slots_raw
   FROM canonical_products cp
-  LEFT JOIN cheapest c  ON c.canonical_id = cp.id
-  LEFT JOIN stores   s  ON s.id = c.store_id
-  LEFT JOIN counts   ct ON ct.canonical_id = cp.id
-  LEFT JOIN last_seen ls ON ls.canonical_id = cp.id AND c.canonical_id IS NULL
-  LEFT JOIN stores   sf ON sf.id = ls.store_id
+  LEFT JOIN cheapest_cart cc ON cc.canonical_id = cp.id
+  LEFT JOIN cheapest_any  ca ON ca.canonical_id = cp.id
+  LEFT JOIN stores        sc ON sc.id = cc.store_id
+  LEFT JOIN stores        sa ON sa.id = ca.store_id
+  LEFT JOIN counts        ct ON ct.canonical_id = cp.id
+  LEFT JOIN last_seen     ls ON ls.canonical_id = cp.id AND ca.canonical_id IS NULL
+  LEFT JOIN stores        sf ON sf.id = ls.store_id
 `;
 
 router.get("/", async (req, res, next) => {
@@ -154,7 +179,7 @@ router.get("/", async (req, res, next) => {
     const minDiscount  = parseFloat(req.query.min_discount || "0") || 0;
     const hideExpired  = req.query.hide_expired === "1";
 
-    const conditions = [];
+    const conditions = ["COALESCE(cc.sale_price, ca.sale_price) IS NOT NULL"];
     const params     = [];
 
     if (q) {
@@ -176,14 +201,14 @@ router.get("/", async (req, res, next) => {
       params.push(store);
     }
     if (isDiscounted) {
-      conditions.push("c.discount_percent > 0");
+      conditions.push("COALESCE(cc.discount_percent, ca.discount_percent) > 0");
     }
     if (minDiscount > 0) {
-      conditions.push("c.discount_percent >= ?");
+      conditions.push("COALESCE(cc.discount_percent, ca.discount_percent) >= ?");
       params.push(minDiscount);
     }
     if (hideExpired) {
-      conditions.push("(c.best_before IS NULL OR c.best_before >= date('now'))");
+      conditions.push("(COALESCE(cc.best_before, ca.best_before) IS NULL OR COALESCE(cc.best_before, ca.best_before) >= date('now'))");
     }
 
     const whereClause = conditions.length
@@ -196,14 +221,14 @@ router.get("/", async (req, res, next) => {
     const total = countRow?.n ?? 0;
 
     const ORDER_BY_MAP = {
-      price:        "c.sale_price ASC, cp.id ASC",
-      price_per_kg: "c.price_per_kg ASC NULLS LAST, cp.id ASC",
-      discount:     "c.discount_percent DESC NULLS LAST, cp.id ASC",
-      real_savings: "(c.original_price - c.sale_price) DESC NULLS LAST, cp.id ASC",
+      price:        "COALESCE(cc.sale_price, ca.sale_price) ASC, cp.id ASC",
+      price_per_kg: "COALESCE(cc.price_per_kg, ca.price_per_kg) ASC NULLS LAST, cp.id ASC",
+      discount:     "COALESCE(cc.discount_percent, ca.discount_percent) DESC NULLS LAST, cp.id ASC",
+      real_savings: "(COALESCE(cc.original_price, ca.original_price) - COALESCE(cc.sale_price, ca.sale_price)) DESC NULLS LAST, cp.id ASC",
     };
     const orderBy = Object.hasOwn(ORDER_BY_MAP, sort)
       ? ORDER_BY_MAP[sort]
-      : "c.sale_price ASC NULLS LAST, cp.id ASC";
+      : "COALESCE(cc.sale_price, ca.sale_price) ASC NULLS LAST, cp.id ASC";
 
     const rows = await db.prepare(
       `${CATALOG_SQL} ${whereClause} ORDER BY ${orderBy} LIMIT ? OFFSET ?`
