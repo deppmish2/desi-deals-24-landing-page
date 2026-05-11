@@ -126,17 +126,6 @@ const CATALOG_SQL = `
     FROM ranked
     GROUP BY canonical_id
   ),
-  last_seen AS (
-    SELECT canonical_id, store_id FROM (
-      SELECT spm.canonical_id, sp.store_id,
-             ROW_NUMBER() OVER (
-               PARTITION BY spm.canonical_id
-               ORDER BY sp.crawl_timestamp DESC, sp.store_id ASC
-             ) AS rn
-      FROM store_product_mappings spm
-      JOIN store_products sp ON sp.id = spm.deal_id
-    ) WHERE rn = 1
-  )
   SELECT
     cp.id           AS canonical_id,
     cp.canonical_name,
@@ -148,7 +137,7 @@ const CATALOG_SQL = `
     COALESCE(cc.price_per_kg,     ca.price_per_kg)     AS price_per_kg,
     COALESCE(cc.best_before,      ca.best_before)      AS best_before,
     COALESCE(cc.store_id,         ca.store_id)         AS cheapest_store_id,
-    COALESCE(sc.name, sa.name, sf.name)                AS cheapest_store_name,
+    COALESCE(sc.name, sa.name)                         AS cheapest_store_name,
     ct.store_count,
     COALESCE(cp.weight_value, COALESCE(cc.weight_value, ca.weight_value)) AS weight_value,
     COALESCE(cp.weight_unit,  COALESCE(cc.weight_unit,  ca.weight_unit))  AS weight_unit,
@@ -162,8 +151,6 @@ const CATALOG_SQL = `
   LEFT JOIN stores        sc ON sc.id = cc.store_id
   LEFT JOIN stores        sa ON sa.id = ca.store_id
   LEFT JOIN counts        ct ON ct.canonical_id = cp.id
-  LEFT JOIN last_seen     ls ON ls.canonical_id = cp.id AND ca.canonical_id IS NULL
-  LEFT JOIN stores        sf ON sf.id = ls.store_id
 `;
 
 router.get("/", async (req, res, next) => {

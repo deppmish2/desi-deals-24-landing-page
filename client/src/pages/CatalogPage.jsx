@@ -131,18 +131,20 @@ export default function CatalogPage() {
   }
 
   function applyFilters() {
+    const newStore    = filterDraft.stores[0] || "";
+    const newCategory = filterDraft.category  || "";
+    const newHideExp  = filterDraft.hideExpired;
     setFiltersOpen(false);
     setSearchParams(p => {
       const next = new URLSearchParams(p);
-      if (filterDraft.stores.length > 0) next.set("store", filterDraft.stores[0]);
-      else next.delete("store");
-      if (filterDraft.category) next.set("category", filterDraft.category);
-      else next.delete("category");
-      if (filterDraft.hideExpired) next.set("hide_expired", "1");
-      else next.delete("hide_expired");
+      if (newStore)    next.set("store", newStore);    else next.delete("store");
+      if (newCategory) next.set("category", newCategory); else next.delete("category");
+      if (newHideExp)  next.set("hide_expired", "1"); else next.delete("hide_expired");
       next.delete("page");
       return next;
     });
+    setPage(1);
+    load({ q, category: newCategory, store: newStore, sort, hideExpired: newHideExp, page: 1 }, true);
   }
 
   function clearFilters() {
