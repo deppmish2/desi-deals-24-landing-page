@@ -461,7 +461,7 @@
       <div class="feature-row">
         <div class="feature-box green">
           <h4>Real Savings</h4>
-          <p>Canonical price_per_kg × 90-day deal_price_history → verified savings badge. Requires ≥3 observations across ≥2 stores.</p>
+          <p>Canonical price_per_kg × 90-day price_history → verified savings badge. Requires ≥3 observations across ≥2 stores.</p>
         </div>
         <div class="feature-box amber">
           <h4>Product Replacements</h4>
@@ -469,7 +469,7 @@
         </div>
         <div class="feature-box blue">
           <h4>Platform v1 APIs</h4>
-          <p><code>/api/v1/catalog</code> — canonical product browse with cheapest-store CTE. <code>/api/v1/compare/cart</code> — cross-store cart comparison ranked by confirmed total. <code>/api/v1/orders</code> — shopping list history + mark-complete.</p>
+          <p><code>/api/v1/catalog</code> — canonical product browse; dual CTE (cheapest_cart for shopify/woocommerce, cheapest_any for all); prefix-boundary LIKE search with dual expander (expandQuery + expandQueryWord). <code>/api/v1/compare/cart</code> — cross-store cart comparison ranked by confirmed total. <code>/api/v1/orders</code> — shopping list history + mark-complete.</p>
         </div>
       </div>
     </div>
@@ -601,8 +601,8 @@
     <!-- ═══════════════════════════════════════ RECONCILE ═══ -->
     <div id="view-reconcile" class="view">
       <div class="section-header">
-        <div class="section-title">Reconciling Deals (deals table)</div>
-        <div class="section-sub"><code>reconcileStoreDeals()</code> compares incoming scraped URLs against existing rows in the <code>deals</code> table.</div>
+        <div class="section-title">Reconciling Deals (store_products table)</div>
+        <div class="section-sub"><code>reconcileStoreDeals()</code> compares incoming scraped URLs against existing rows in the <code>store_products</code> table.</div>
       </div>
 
       <div class="card">
@@ -647,13 +647,13 @@
     <!-- ═══════════════════════════════════════ HISTORY ═══ -->
     <div id="view-history" class="view">
       <div class="section-header">
-        <div class="section-title">Daily Price Snapshots (deal_price_history)</div>
+        <div class="section-title">Daily Price Snapshots (price_history table)</div>
         <div class="section-sub">Provides the 90-day historical baseline required by the Real Savings engine.</div>
       </div>
 
       <div class="card">
         <div class="card-title">Why this table exists</div>
-        <p style="color:var(--text2);font-size:12px;">The <code>deals</code> table only keeps the <em>current</em> price. To compute whether today's price is genuinely low, Real Savings needs a reference baseline — the median normal price over the past 90 days. <code>deal_price_history</code> stores one row per deal per crawl day, giving that time series.</p>
+        <p style="color:var(--text2);font-size:12px;">The <code>store_products</code> table only keeps the <em>current</em> price. To compute whether today's price is genuinely low, Real Savings needs a reference baseline — the median normal price over the past 90 days. <code>price_history</code> stores one row per product per crawl day, giving that time series.</p>
       </div>
 
       <div class="card">
@@ -706,7 +706,7 @@
             </tr>
             <tr>
               <td><code>autoMapDeals(storeDeals)</code></td>
-              <td>For each unmatched deal, iterates priority canonicals, calls matchesCanonical. On match: writes <code>deal_mappings</code> row with <code>match_method='slot_match'</code>, <code>confidence=0.85</code>.</td>
+              <td>For each unmatched deal, iterates priority canonicals, calls matchesCanonical. On match: writes <code>store_product_mappings</code> row with <code>match_method='slot_match'</code>, <code>confidence=0.85</code>.</td>
             </tr>
           </tbody>
         </table>
@@ -735,7 +735,7 @@ name: <span class="str">"HEERA SOAN PAPDI 500GMS"</span>
 
       <div class="card amber">
         <div class="card-title">Important: canonical_id sync</div>
-        <p style="color:var(--text2);font-size:12px;"><code>autoMapDeals()</code> writes <code>deal_mappings</code> rows but does <strong>NOT</strong> update <code>deals.canonical_id</code>. That sync only happens when <code>upsertDealMapping()</code> is called from the canonicalizer in Pass B. A slot-matched deal gets its <code>deals.canonical_id</code> set during Phase 4 of the same crawl run.</p>
+        <p style="color:var(--text2);font-size:12px;"><code>autoMapDeals()</code> writes <code>store_product_mappings</code> rows but does <strong>NOT</strong> update <code>store_products.canonical_id</code>. That sync only happens when <code>upsertDealMapping()</code> is called from the canonicalizer in Pass B. A slot-matched deal gets its <code>store_products.canonical_id</code> set during Phase 4 of the same crawl run.</p>
       </div>
     </div>
 
@@ -754,8 +754,8 @@ name: <span class="str">"HEERA SOAN PAPDI 500GMS"</span>
          │    └─ YES → map, confidence=1.0, done
          │
          ├─ fuzzy match ≥ 0.90?
-         │    └─ YES → auto-map, write deal_mappings,
-         │             update deals.canonical_id, done
+         │    └─ YES → auto-map, write store_product_mappings,
+         │             update store_products.canonical_id, done
          │
          └─ NO match / confidence &lt; 0.90
               └─ INSERT into entity_resolution_queue
@@ -799,8 +799,8 @@ name: <span class="str">"HEERA SOAN PAPDI 500GMS"</span>
 
       <div class="card">
         <div class="card-title">What is a canonical?</div>
-        <p style="color:var(--text2);font-size:12px;margin-bottom:10px;">A canonical product is a normalised product identity that multiple store deals can be linked to via <code>deal_mappings</code>. It answers: "Is the Heera Basmati 5kg at Jamoona the same product as HEERA BASMATI RICE 5KG at Dookan?" — yes, one canonical, two deals.</p>
-        <p style="color:var(--text2);font-size:12px;">Currently ~300+ canonical identities in the database.</p>
+        <p style="color:var(--text2);font-size:12px;margin-bottom:10px;">A canonical product is a normalised product identity that multiple store deals can be linked to via <code>store_product_mappings</code>. It answers: "Is the Heera Basmati 5kg at Jamoona the same product as HEERA BASMATI RICE 5KG at Dookan?" — yes, one canonical, two deals.</p>
+        <p style="color:var(--text2);font-size:12px;">Currently 14,598 canonical identities in the database (1,891 mapped to at least one active store product).</p>
       </div>
 
       <div class="card">
@@ -877,7 +877,7 @@ name: <span class="str">"HEERA SOAN PAPDI 500GMS"</span>
         <table class="data-table">
           <thead><tr><th>Step</th><th>Detail</th></tr></thead>
           <tbody>
-            <tr><td>1. Load history</td><td>Query <code>deal_price_history</code> for last 90 days, <code>is_deal=0</code> rows (normal-price days), joined through <code>deal_mappings</code> to group by <code>canonical_id</code></td></tr>
+            <tr><td>1. Load history</td><td>Query <code>price_history</code> for last 90 days, <code>is_deal=0</code> rows (normal-price days), joined through <code>store_product_mappings</code> to group by <code>canonical_id</code></td></tr>
             <tr><td>2. Qualify baseline</td><td>Require ≥3 observations. Canonical grouping pools <em>all</em> pack sizes of the same brand+product across all stores into one reference price</td></tr>
             <tr><td>3. Compute median</td><td>Median of <code>normal_price_per_kg</code> (= <code>COALESCE(original_price, sale_price) × price_per_kg / sale_price</code>) as baseline</td></tr>
             <tr><td>4. Compare</td><td>Current deal's <code>price_per_kg</code> vs baseline → <code>real_discount_pct = (baseline − current) / baseline × 100</code></td></tr>
@@ -984,6 +984,7 @@ name: <span class="str">"HEERA SOAN PAPDI 500GMS"</span>
             <tr><td>T1 slot check</td><td>Requires exact slot match to prevent "Split Chilka" vs "Whole" from being treated as size variants</td></tr>
             <tr><td>Cross-store matching</td><td><code>same-product-other-stores</code> uses SQL <code>JOIN canonical_products ON cp.base_key = ? AND cp.category = ?</code>. Category guard blocks snack/lentil false positives. Falls back to exact <code>canonical_id</code> when <code>base_key</code> is null.</td></tr>
             <tr><td><code>canonical_products.base_key</code></td><td>TEXT column; populated by <code>resolveBaseProduct()</code> at canonical write time (canonicalizer, admin-review-queue, brand remap, promote-bootstrap-staging, seed-priority-canonicals). 3,003 of 14,598 rows populated. Indexed. All INSERT sites now set this field.</td></tr>
+            <tr><td>Category cascade</td><td><code>server/services/category-cascade.js</code> — <code>cascadeCategoryChange(db, canonicalId, newCategory)</code>: updates <code>canonical_products.category</code>, re-runs auto-mapper on all active mapped store products, either remaps them to the new category or queues them for review. Triggered via <code>POST /api/admin/canonical/:id/change-category</code>.</td></tr>
           </tbody>
         </table>
       </div>
@@ -1054,6 +1055,11 @@ name: <span class="str">"HEERA SOAN PAPDI 500GMS"</span>
               <td><code>upsertDealMapping()</code> — writes canonical_id back to deals</td>
             </tr>
             <tr>
+              <td><code>server/services/category-cascade.js</code></td>
+              <td>Canonical category change + cascade</td>
+              <td><code>cascadeCategoryChange(db, canonicalId, newCategory)</code> — updates canonical, re-runs auto-mapper on all active mapped store products; remaps or queues each</td>
+            </tr>
+            <tr>
               <td><code>server/services/real-savings.js</code></td>
               <td>Real savings computation</td>
               <td><code>batchGetRealSavings()</code>, <code>computeRealSavings()</code></td>
@@ -1075,8 +1081,8 @@ name: <span class="str">"HEERA SOAN PAPDI 500GMS"</span>
             </tr>
             <tr>
               <td><code>server/routes/admin-dashboard.js</code></td>
-              <td>Admin: brands, canonical stats, remap</td>
-              <td>Write path for brand_slots, base_product_slots</td>
+              <td>Admin: brands, canonical stats, remap, category cascade</td>
+              <td>Write path for brand_slots, base_product_slots; <code>POST /api/admin/canonical/:id/change-category</code> — calls <code>cascadeCategoryChange()</code>, remaps all active store products</td>
             </tr>
             <tr>
               <td><code>server/routes/admin-review-queue.js</code></td>
@@ -1086,7 +1092,7 @@ name: <span class="str">"HEERA SOAN PAPDI 500GMS"</span>
             <tr>
               <td><code>server/routes/catalog.js</code></td>
               <td>Canonical product catalog (Platform v1)</td>
-              <td><code>GET /api/v1/catalog</code> — paginated, filterable by q/category/store/is_discounted/min_discount/hide_expired; cheapest-store CTE; <code>GET /api/v1/catalog/suggest</code> — typeahead returning up to 3 products, categories, stores</td>
+              <td><code>GET /api/v1/catalog</code> — paginated, filterable by q/category/store/is_discounted/min_discount/hide_expired; dual CTE (<code>cheapest_cart</code> shopify/woocommerce, <code>cheapest_any</code> all platforms), COALESCE image fallback; search uses prefix-boundary LIKE with dual synonym expansion (<code>expandQuery</code> + <code>expandQueryWord</code>); <code>GET /api/v1/catalog/suggest</code> — typeahead; <code>GET /api/v1/catalog/known-brands</code>; <code>GET /api/v1/catalog/:id</code>; <code>GET /api/v1/catalog/:id/brands</code></td>
             </tr>
             <tr>
               <td><code>server/routes/compare.js</code></td>
@@ -1121,7 +1127,7 @@ name: <span class="str">"HEERA SOAN PAPDI 500GMS"</span>
             <tr>
               <td><code>server/db/schema.sql</code></td>
               <td>DB schema</td>
-              <td>All table definitions: deals, canonical_products, deal_mappings, entity_resolution_queue, deal_price_history</td>
+              <td>All table definitions: store_products, canonical_products, store_product_mappings, entity_resolution_queue, price_history, and 30 more tables</td>
             </tr>
             <tr>
               <td><code>server/db/index.js</code></td>
@@ -1167,10 +1173,10 @@ const NODES = [
   { id:'stores',        x:14,  y:115, w:118, h:52, group:'crawl',      label:'Stores ×32',         sub:'Shopify, WooCommerce',  section:'view-scrape' },
   { id:'crawler',       x:154, y:115, w:118, h:52, group:'crawl',      label:'Crawler',             sub:'Sequential, 2–5s delay', section:'view-trigger' },
   { id:'deals_table',   x:302, y:50,  w:130, h:52, group:'core',       label:'store_products',      sub:'INSERT / deactivate',    section:'view-reconcile' },
-  { id:'price_history', x:302, y:175, w:130, h:52, group:'core',       label:'deal_price_history',  sub:'Daily snapshots',        section:'view-history' },
+  { id:'price_history', x:302, y:175, w:130, h:52, group:'core',       label:'price_history',       sub:'Daily snapshots',        section:'view-history' },
   { id:'auto_mapper',   x:462, y:50,  w:130, h:52, group:'resolution', label:'Auto-mapper',         sub:'Slot-based, Pass A',     section:'view-automap' },
   { id:'fuzzy_canon',   x:462, y:175, w:130, h:52, group:'resolution', label:'Fuzzy canonicalizer', sub:'Pass B, ≥0.90',          section:'view-canonicalize' },
-  { id:'canonicals',    x:622, y:50,  w:138, h:52, group:'resolution', label:'canonical_products',  sub:'~300+ identities',       section:'view-canonicals' },
+  { id:'canonicals',    x:622, y:50,  w:138, h:52, group:'resolution', label:'canonical_products',  sub:'14,598 identities',      section:'view-canonicals' },
   { id:'erq',           x:622, y:175, w:138, h:52, group:'resolution', label:'entity_res_queue',    sub:'Admin review',           section:'view-canonicalize' },
 ];
 

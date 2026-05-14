@@ -85,7 +85,8 @@ export default function ComparePage() {
     } catch {
       // best-effort
     }
-    if (store.store_url) window.open(store.store_url, "_blank", "noopener");
+    const destination = store.cart_url || store.store_url;
+    if (destination) window.open(destination, "_blank", "noopener");
   };
 
   return (

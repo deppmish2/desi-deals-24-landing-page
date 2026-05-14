@@ -538,8 +538,8 @@
     <!-- Welcome -->
     <div id="view-welcome" class="welcome" style="display:none">
       <div style="font-size:11px;color:var(--text3);letter-spacing:0.1em;text-transform:uppercase;margin-bottom:4px">DesiDeals24 / Database</div>
-      <div class="welcome-title">30 tables.<br><span>Select one.</span></div>
-      <div class="welcome-sub">Full schema reference for all 30 tables — columns, types, foreign keys, and the architectural risks that matter for Phase 2 and Phase 3.</div>
+      <div class="welcome-title">35 tables.<br><span>Select one.</span></div>
+      <div class="welcome-sub">Full schema reference for all 35 tables — columns, types, foreign keys, and the architectural risks that matter for Phase 2 and Phase 3.</div>
     </div>
 
     <!-- ── OVERVIEW ── -->
@@ -547,7 +547,7 @@
       <div class="tv-header">
         <div class="tv-breadcrumb">architecture</div>
         <div class="tv-name">Architecture map</div>
-        <div class="tv-sub">30 tables across 5 domains. Hover any table to highlight its FK relationships. Click to jump to its detail view.</div>
+        <div class="tv-sub">35 tables across 5 domains. Hover any table to highlight its FK relationships. Click to jump to its detail view.</div>
         <div class="badge-row">
           <span class="badge badge-green">● core deals</span>
           <span class="badge badge-amber">● entity resolution</span>
@@ -599,6 +599,7 @@
             <tr><td class="col-name">price_per_kg</td><td class="col-type">REAL</td><td class="col-note">Normalised for cross-weight comparison. Central to Phase 3 basket comparison.</td></tr>
             <tr><td class="col-name">is_active</td><td class="col-type">INTEGER</td><td class="col-note">0 at crawl start, 1 for newly crawled. Soft delete pattern — deals are never hard-deleted.</td></tr>
             <tr><td class="col-name">availability</td><td class="col-type">TEXT</td><td class="col-note">'unknown' default. in_stock / out_of_stock / limited.</td></tr>
+            <tr><td class="col-name">image_url</td><td class="col-type">TEXT</td><td class="col-note">Scraped product image URL from the store. Populated by all scrapers. Shopify CDN URLs get a <code>?width=400</code> param appended; all other URLs are proxied via <code>/api/v1/admin/proxy/image</code>. This is the primary image source — used as fallback in CATALOG_SQL when <code>canonical_products.image_url</code> is NULL. Goes NULL only if the store page had no image at crawl time.</td></tr>
           </tbody>
         </table>
       </div>
@@ -757,7 +758,7 @@
         </div>
         <div class="callout callout-amber">
           <strong>⚠ Growth & Query Performance</strong>
-          32 stores × ~500 products × 365 days ≈ 5.8M rows/year. The Phase 2 baseline query (median over 90 days, grouped by product_url) will get expensive. Add a composite index on (product_url, crawl_date, is_deal) before Phase 2 ships.
+          32 stores × ~500 products × 365 days ≈ 5.84M rows/year. The Phase 2 baseline query (median over 90 days, grouped by product_url) will get expensive. Add a composite index on (product_url, crawl_date, is_deal) before Phase 2 ships.
         </div>
         <div class="callout callout-amber">
           <strong>⚠ 90-Day Minimum Data Required</strong>
@@ -771,10 +772,10 @@
       <div class="tv-header">
         <div class="tv-breadcrumb">entity resolution</div>
         <div class="tv-name">canonical_products</div>
-        <div class="tv-sub">Central entity-resolution hub. ~90 unique product identities. Every raw deal eventually resolves to a row here — or fails and enters the review queue. The entire cross-store comparison engine depends on this table being clean.</div>
+        <div class="tv-sub">Central entity-resolution hub. 14,598 unique product identities (1,891 mapped to at least one active store product). Every raw deal eventually resolves to a row here — or fails and enters the review queue. The entire cross-store comparison engine depends on this table being clean.</div>
         <div class="badge-row">
           <span class="badge badge-green">PK: id (TEXT slug)</span>
-          <span class="badge badge-amber">~90 canonical products</span>
+          <span class="badge badge-amber">14,598 canonical products</span>
           <span class="badge badge-red">Manual rename cascades</span>
         </div>
       </div>
@@ -814,6 +815,7 @@
             <tr><td class="col-name">verified</td><td class="col-type">INTEGER</td><td class="col-note">0 = auto-created, 1 = admin-reviewed. Never use unverified rows for Phase 2 pricing logic.</td></tr>
             <tr><td class="col-name">is_priority / is_match_priority</td><td class="col-type">INTEGER</td><td class="col-note">Weighting flags. Higher-priority canonicals win ties during fuzzy matching.</td></tr>
             <tr><td class="col-name">common_aliases</td><td class="col-type">TEXT (JSON)</td><td class="col-note">Alt names for matching. Training data for the fuzzy matcher.</td></tr>
+            <tr><td class="col-name">image_url</td><td class="col-type">TEXT</td><td class="col-note">Canonical-level image. <strong>NULL for most products</strong> — nothing auto-populates it at entity-resolution time. CATALOG_SQL resolves via: <code>COALESCE(cp.image_url, cc.deal_image_url, ca.deal_image_url)</code> where cc = cheapest active Shopify/WooCommerce product, ca = cheapest active any-platform product. If all three are NULL (e.g. all store products inactive), the card shows a placeholder. Backfill from store_products on entity resolution is the correct long-term fix.</td></tr>
           </tbody>
         </table>
       </div>
@@ -838,6 +840,10 @@
           <strong>⚠ TEXT Slug PK — Rename is Dangerous</strong>
           No ON UPDATE CASCADE. A canonical_id rename requires manually updating store_products, store_product_mappings, list_items, price_alerts, entity_resolution_queue. Miss one table and you get silent orphans. No migration script exists for this yet.
         </div>
+        <div class="callout callout-blue">
+          <strong>ℹ Category Change — Use cascadeCategoryChange()</strong>
+          Changing <code>canonical_products.category</code> directly leaves all mapped store products with a stale category. Always use <code>POST /api/admin/canonical/:id/change-category</code> — it calls <code>server/services/category-cascade.js</code> which updates the canonical, then re-runs the auto-mapper on every active mapped store product and remaps or queues each one.
+        </div>
         <div class="callout callout-amber">
           <strong>⚠ Phase 2 Minimum Deal Count Threshold</strong>
           If a canonical has only one deal mapped to it, the "cross-store median" is just that price — no comparison possible. Define and enforce a minimum deal count before a canonical is eligible for Real Savings ratings.
@@ -848,7 +854,11 @@
         </div>
         <div class="callout callout-blue">
           <strong>ℹ Coverage Gap</strong>
-          With ~90 canonicals across 27 stores, any unmapped deals sit as canonical_id=NULL on deals or in entity_resolution_queue. That gap directly limits Phase 2 and Phase 3 at launch.
+          With 14,598 canonicals across 32 stores, only 1,891 are mapped to at least one active store product. Unmapped canonicals and products with canonical_id=NULL still limit Real Savings coverage at launch.
+        </div>
+        <div class="callout callout-amber">
+          <strong>⚠ Image URL Gap</strong>
+          <code>canonical_products.image_url</code> is NULL for virtually all rows — entity resolution never backfills it. Images surface only via the COALESCE fallback to active <code>store_products.image_url</code>. When store products become inactive, images disappear for single-source canonicals. Currently 8 stores have zero active products (AnuHita Groceries, Asiatischer Lebensmittelladen, India Store, Indian Food Store, Indian Store Stuttgart, Indische-Lebensmittel-Online, MD Store, Village Foods) — any canonical mapped only to those stores will show no image. Fix: backfill <code>canonical_products.image_url</code> from the best available store product image at entity-resolution time, or extend the COALESCE to include inactive store products for the image field only.
         </div>
       </div>
     </div>
@@ -962,15 +972,13 @@
         <div class="tv-name">known_brands</div>
         <div class="tv-sub">Brand registry with JSON aliases. Used by decomposeCanonical() for brand slot extraction during entity resolution.</div>
         <div class="badge-row">
-          <span class="badge badge-green">16 seeded brands</span>
+          <span class="badge badge-green">97 seeded brands</span>
           <span class="badge badge-amber">Feeds decomposeCanonical()</span>
         </div>
       </div>
       <div class="section">
         <div class="section-title">Seeded Brands</div>
-        <div class="code-block">Aachi, Aashirvaad, Bambino, Daawat, Gits, Haldiram's,
-Heer, ITC, Knorr, LKK, Maggi, MTR, Nanak,
-Priya, Shan, Swad</div>
+        <div class="code-block">97 brands seeded as of 2026-05-01. Includes major Indian grocery brands e.g. Aachi, Aashirvaad, Bambino, Daawat, Gits, Haldiram's, Heera, ITC, Knorr, LKK, Maggi, MTR, Nanak, Priya, Shan, Swad, and 81 more. Query <code>SELECT brand_name FROM known_brands ORDER BY brand_name</code> for full list.</div>
       </div>
       <div class="section">
         <div class="section-title">Role in Pipeline</div>
@@ -978,9 +986,9 @@ Priya, Shan, Swad</div>
           <strong>ℹ Brand Token Extraction</strong>
           During entity resolution, decomposeCanonical() checks the incoming product name against known_brands.aliases (JSON array of spelling variants). A hit populates brand_slots on the canonical_products row. Miss = brand goes unrecognised and may cause a fuzzy mismatch.
         </div>
-        <div class="callout callout-amber">
-          <strong>⚠ 16 Brands is Thin Coverage</strong>
-          Indian grocery market has dozens of relevant brands. Every unrecognised brand that appears in raw product names degrades matching quality. This table needs continuous expansion as new stores and products are crawled.
+        <div class="callout callout-blue">
+          <strong>ℹ Brand Coverage at 97 — Expand Continuously</strong>
+          97 seeded brands gives reasonable coverage, but new stores bring new brands. Every unrecognised brand that appears in raw product names degrades matching quality. Add new brands to this table as they are encountered during crawl review.
         </div>
       </div>
     </div>
@@ -1376,20 +1384,14 @@ Priya, Shan, Swad</div>
             <tr><td class="col-name">brand_pref</td><td class="col-type">TEXT</td><td class="col-note">Preferred brand for this line item — influences deal ranking.</td></tr>
             <tr><td class="col-name">resolved / unresolvable</td><td class="col-type">INTEGER</td><td class="col-note">resolved=1 if canonical_id found. unresolvable=1 if all attempts failed.</td></tr>
             <tr><td class="col-name">item_count</td><td class="col-type">INTEGER</td><td class="col-note">Number of units wanted. Default 1.</td></tr>
-            <tr><td class="col-name">locked_deal_id / locked_store_*</td><td class="col-type">TEXT</td><td class="col-note">Snapshot of the selected deal at checkout time. Preserved even if deal changes.</td></tr>
-            <tr><td class="col-name">locked_weight_* / locked_image_url</td><td class="col-type">TEXT / REAL</td><td class="col-note">Full deal snapshot for cart handoff without re-querying deals.</td></tr>
           </tbody>
         </table>
       </div>
       <div class="section">
         <div class="section-title">Risks & Notes</div>
         <div class="callout callout-amber">
-          <strong>⚠ No FK on canonical_id or locked_deal_id</strong>
-          These are soft references — no referential integrity enforced. A canonical rename or deal deletion won't clean up locked fields. The UI must tolerate stale snapshots gracefully.
-        </div>
-        <div class="callout callout-blue">
-          <strong>ℹ Checkout Snapshot Pattern</strong>
-          locked_* columns capture the deal state at the moment the user "locks" an item for cart transfer. This ensures the cart export remains consistent even if the live deal is updated or deactivated before checkout.
+          <strong>⚠ No FK on canonical_id</strong>
+          canonical_id is a soft reference — no referential integrity enforced. A canonical rename won't cascade to list_items. The UI must tolerate stale canonical_id values gracefully.
         </div>
       </div>
     </div>

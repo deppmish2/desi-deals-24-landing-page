@@ -303,6 +303,11 @@ async function canonicalizeDeals(db, { runId, unmappedOnly } = {}) {
           method: resolved.method,
           confidence: resolved.confidence == null ? null : Number(resolved.confidence),
         });
+        if (!canonicalRow.image_url && deal.image_url) {
+          await db.prepare("UPDATE canonical_products SET image_url = ? WHERE id = ?")
+            .run(deal.image_url, canonicalRow.id);
+          canonicalRow.image_url = deal.image_url;
+        }
         stats.mapped += 1;
         continue;
       }

@@ -849,7 +849,7 @@ router.get("/proxy/image", async (req, res) => {
   if (!url) return res.status(400).json({ error: "url param required" });
 
   try {
-    const upstream = await fetch(decodeURIComponent(url), {
+    const upstream = await fetch(url, {
       headers: { "User-Agent": "Mozilla/5.0" },
       timeout: 10000,
     });

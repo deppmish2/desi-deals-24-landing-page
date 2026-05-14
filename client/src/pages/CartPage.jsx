@@ -413,6 +413,8 @@ export default function CartPage() {
   const [compareSort, setCompareSort] = useState("confirmed_total");
   const [compareItemCount, setCompareItemCount] = useState(0);
   const [comparisonDirty, setComparisonDirty] = useState(false);
+  const [pendingStores, setPendingStores] = useState([]);
+  const [confirmingStore, setConfirmingStore] = useState(null);
   const compareLoadedRef = useRef(false);
 
   const [isDesktop, setIsDesktop] = useState(
@@ -526,7 +528,12 @@ export default function CartPage() {
   };
 
   const handleShop = async (store) => {
-    clearCart();
+    setPendingStores(prev => {
+      const exists = prev.find(s => s.store_id === store.store_id);
+      if (exists) return prev;
+      return [...prev, store];
+    });
+    setConfirmingStore(store);
     try {
       const minOther = compareStores
         .filter(s => s.store_id !== store.store_id)
@@ -539,7 +546,14 @@ export default function CartPage() {
     } catch {
       // best-effort
     }
-    if (store.store_url) window.open(store.store_url, "_blank", "noopener");
+    const destination = store.cart_url || store.store_url;
+    if (destination) window.open(destination, "_blank", "noopener");
+  };
+
+  const handleConfirmOrder = (confirmed) => {
+    if (confirmed) clearCart();
+    setPendingStores([]);
+    setConfirmingStore(null);
   };
 
   const showSplit = isDesktop && compareListId !== null;
@@ -735,6 +749,111 @@ export default function CartPage() {
                 </p>
               )}
 
+              {pendingStores.length > 0 && (
+                <div style={{
+                  background: "linear-gradient(135deg, #fffbeb 0%, #fef9ec 100%)",
+                  borderRadius: 14,
+                  padding: "14px 16px 14px 20px",
+                  boxShadow: "0 2px 16px rgba(245,158,11,0.14), 0 1px 4px rgba(0,0,0,0.06)",
+                  animation: "confirmSlideIn 0.28s cubic-bezier(0.22,1,0.36,1)",
+                  position: "relative",
+                  overflow: "hidden",
+                  border: "1px solid #fde68a",
+                  borderLeft: "4px solid #f59e0b",
+                }}>
+                  <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
+                    {/* single-store: icon sits left, vertically centered with the text block */}
+                    {pendingStores.length === 1 && (
+                      <div style={{
+                        width: 32, height: 32, borderRadius: 9, flexShrink: 0,
+                        background: "#fef3c7", border: "1.5px solid #fcd34d",
+                        display: "flex", alignItems: "center", justifyContent: "center",
+                      }}>
+                        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="#d97706" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                          <circle cx="9" cy="21" r="1"/><circle cx="20" cy="21" r="1"/>
+                          <path d="M1 1h4l2.68 13.39a2 2 0 001.99 1.61h9.72a2 2 0 001.95-1.55l1.57-7.45H6"/>
+                        </svg>
+                      </div>
+                    )}
+
+                    <div style={{ flex: 1, minWidth: 0 }}>
+                      {pendingStores.length === 1 ? (
+                        <p style={{ margin: 0, fontSize: 13, fontWeight: 700, color: "#78350f", lineHeight: 1.35 }}>
+                          Did you complete your order at{" "}
+                          <span style={{ color: "#b45309" }}>{confirmingStore?.store_name ?? confirmingStore?.store?.name}</span>?
+                        </p>
+                      ) : (
+                        <>
+                          <p style={{ margin: "0 0 7px", fontSize: 13, fontWeight: 700, color: "#78350f" }}>
+                            Which store did you order from?
+                          </p>
+                          {/* icon lives inside the chip row — guaranteed same-line alignment */}
+                          <div style={{ display: "flex", gap: 5, flexWrap: "wrap", alignItems: "center" }}>
+                            <div style={{
+                              width: 32, height: 32, borderRadius: 9, flexShrink: 0,
+                              background: "#fef3c7", border: "1.5px solid #fcd34d",
+                              display: "flex", alignItems: "center", justifyContent: "center",
+                            }}>
+                              <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="#d97706" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                                <circle cx="9" cy="21" r="1"/><circle cx="20" cy="21" r="1"/>
+                                <path d="M1 1h4l2.68 13.39a2 2 0 001.99 1.61h9.72a2 2 0 001.95-1.55l1.57-7.45H6"/>
+                              </svg>
+                            </div>
+                            {pendingStores.map(s => {
+                              const name = s.store_name ?? s.store?.name;
+                              const isSelected = confirmingStore?.store_id === s.store_id;
+                              return (
+                                <button key={s.store_id} type="button" onClick={() => setConfirmingStore(s)} style={{
+                                  height: 32, padding: "0 12px", borderRadius: 7, cursor: "pointer",
+                                  fontSize: 12, fontWeight: 600, transition: "all 0.15s",
+                                  border: isSelected ? "1.5px solid #d97706" : "1.5px solid #fcd34d",
+                                  background: isSelected ? "#d97706" : "#fff",
+                                  color: isSelected ? "#fff" : "#92400e",
+                                  display: "flex", alignItems: "center",
+                                }}>
+                                  {isSelected ? "✓ " : ""}{name}
+                                </button>
+                              );
+                            })}
+                          </div>
+                        </>
+                      )}
+                      <p style={{ margin: "3px 0 0", fontSize: 11, color: "#a16207", fontWeight: 400 }}>
+                        {pendingStores.length === 1
+                          ? "Tap 'Yes, done' to clear your cart"
+                          : confirmingStore ? `Confirming order at ${confirmingStore.store_name ?? confirmingStore.store?.name}` : "Select a store to confirm"}
+                      </p>
+                    </div>
+
+                    <div style={{ display: "flex", gap: 6, flexShrink: 0 }}>
+                      <button type="button" onClick={() => handleConfirmOrder(false)} style={{
+                        padding: "7px 13px", borderRadius: 8,
+                        border: "1.5px solid #fcd34d", background: "#fff", color: "#92400e",
+                        fontSize: 12, fontWeight: 600, cursor: "pointer", whiteSpace: "nowrap",
+                      }}>
+                        Not yet
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => handleConfirmOrder(true)}
+                        disabled={pendingStores.length > 1 && !confirmingStore}
+                        style={{
+                          padding: "7px 14px", borderRadius: 8, border: "none",
+                          background: (pendingStores.length > 1 && !confirmingStore) ? "#fef3c7" : "#d97706",
+                          color: (pendingStores.length > 1 && !confirmingStore) ? "#d97706" : "#fff",
+                          fontSize: 12, fontWeight: 700,
+                          cursor: (pendingStores.length > 1 && !confirmingStore) ? "not-allowed" : "pointer",
+                          whiteSpace: "nowrap",
+                          boxShadow: (pendingStores.length > 1 && !confirmingStore) ? "none" : "0 2px 8px rgba(217,119,6,0.28)",
+                        }}
+                      >
+                        Yes, done ✓
+                      </button>
+                    </div>
+                  </div>
+                </div>
+              )}
+
               {!compareLoading && !compareError && sortedCompareStores.map((store, i) => (
                 <StoreComparisonCard
                   key={store.store_id}
@@ -755,6 +874,14 @@ export default function CartPage() {
           @keyframes slideInRight {
             from { opacity: 0; transform: translateX(24px); }
             to   { opacity: 1; transform: translateX(0); }
+          }
+          @keyframes confirmSlideIn {
+            from { opacity: 0; transform: translateY(-10px) scale(0.98); }
+            to   { opacity: 1; transform: translateY(0) scale(1); }
+          }
+          @keyframes shimmerBar {
+            0%   { background-position: 200% 0; }
+            100% { background-position: -200% 0; }
           }
           @keyframes shimmer {
             0%   { background-position: 200% 0; }

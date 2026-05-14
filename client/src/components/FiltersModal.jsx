@@ -42,10 +42,6 @@ export default function FiltersModal({
   const { stores = [], category } = draft;
 
   function handleApply() {
-    if (!isLoggedIn) {
-      onSignIn();
-      return;
-    }
     onApply();
   }
 
