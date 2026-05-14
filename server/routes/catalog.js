@@ -48,7 +48,10 @@ function buildSearchCondition(q, column) {
 }
 
 function parseSlots(raw) {
-  try { return JSON.parse(raw || "[]"); } catch { return []; }
+  try {
+    const parsed = JSON.parse(raw || "[]");
+    return Array.isArray(parsed) ? parsed : [];
+  } catch { return []; }
 }
 
 function joinSlots(slots) {
@@ -207,7 +210,7 @@ router.get("/", async (req, res, next) => {
 
     const rows = await db.prepare(
       `${CATALOG_SQL} ${whereClause} ORDER BY ${orderBy} LIMIT ? OFFSET ?`
-    ).all(...params, limit, offset) || [];
+    ).all(...params, limit, offset);
 
     res.json({
       data: rows.map(serializeCatalogRow),
