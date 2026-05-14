@@ -207,7 +207,7 @@ router.get("/", async (req, res, next) => {
 
     const rows = await db.prepare(
       `${CATALOG_SQL} ${whereClause} ORDER BY ${orderBy} LIMIT ? OFFSET ?`
-    ).all(...params, limit, offset);
+    ).all(...params, limit, offset) || [];
 
     res.json({
       data: rows.map(serializeCatalogRow),

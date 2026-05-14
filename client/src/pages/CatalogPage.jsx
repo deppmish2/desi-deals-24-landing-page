@@ -76,7 +76,8 @@ export default function CatalogPage() {
         hide_expired: params.hideExpired ? "1" : undefined,
       });
       if (reqIdRef.current !== myId) return;
-      const { data: rows = [], pagination } = data;
+      const { data: rawRows, pagination } = data;
+      const rows = rawRows || [];
       setProducts(prev => reset ? rows : [...prev, ...rows]);
       setHasMore(pagination.page < pagination.total_pages);
       if (reset) setTotalProducts(pagination.total ?? null);

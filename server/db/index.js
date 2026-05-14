@@ -83,7 +83,7 @@ const db = {
     return {
       async all(...args) {
         const rs = await client.execute({ sql, args: normalizeA(args) });
-        return rs.rows;
+        return rs.rows ?? [];
       },
       async get(...args) {
         const rs = await client.execute({ sql, args: normalizeA(args) });
